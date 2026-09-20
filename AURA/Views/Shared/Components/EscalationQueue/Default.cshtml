@@ -1,46 +1,48 @@
 ﻿@model IEnumerable<AURA.Models.ReimbursementRequest>
 
 <div class="escalation-queue">
-    <h3 class="mb-4">Danh Sách Cần Sếp Duyệt (Escalated)</h3>
+    <h4 class="mb-4" style="color: var(--colors-ink);">Danh Sách Cần Sếp Duyệt</h4>
     @if (Model == null || !Model.Any())
     {
-        <div class="alert alert-info">Hiện không có ca nào cần duyệt.</div>
+        <div class="alert alert-info feature-card" style="padding: 16px;">Hiện không có ca nào cần duyệt.</div>
     }
     else
     {
-        <table class="table table-dark table-hover">
-            <thead>
-                <tr>
-                    <th>Mã Đơn</th>
-                    <th>Nhân Viên</th>
-                    <th>Số Tiền</th>
-                    <th>Lý do từ AI</th>
-                    <th>Hành Động</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model.Where(m => m.Status == "ESCALATE"))
-                {
+        <div style="overflow-x: auto;">
+            <table class="table-aura">
+                <thead>
                     <tr>
-                        <td>@item.Id.Substring(0, 8)...</td>
-                        <td>@item.EmployeeName</td>
-                        <td>@item.ClaimedAmount.ToString("N0") VNĐ</td>
-                        <td><span class="text-danger">@item.AiReasoning</span></td>
-                        <td>
-                            <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline">
-                                <input type="hidden" name="id" value="@item.Id" />
-                                <input type="hidden" name="decision" value="APPROVE" />
-                                <button type="submit" class="btn btn-sm btn-success">Duyệt Bỏ Qua</button>
-                            </form>
-                            <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline">
-                                <input type="hidden" name="id" value="@item.Id" />
-                                <input type="hidden" name="decision" value="REJECT" />
-                                <button type="submit" class="btn btn-sm btn-danger">Từ Chối</button>
-                            </form>
-                        </td>
+                        <th>Mã Đơn</th>
+                        <th>Nhân Viên</th>
+                        <th>Số Tiền</th>
+                        <th>Lý do từ AI</th>
+                        <th>Hành Động</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Where(m => m.Status == "ESCALATE"))
+                    {
+                        <tr>
+                            <td style="font-family: monospace;">@item.Id.Substring(0, 8)...</td>
+                            <td>@item.EmployeeName</td>
+                            <td style="font-weight: 500;">@item.ClaimedAmount.ToString("N0") VND</td>
+                            <td><span style="color: #f87171;">@item.AiReasoning</span></td>
+                            <td>
+                                <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="decision" value="APPROVE" />
+                                    <button type="submit" class="button-ghost-sm success">Duyệt Bỏ Qua</button>
+                                </form>
+                                <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline" style="margin-left: 8px;">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="decision" value="REJECT" />
+                                    <button type="submit" class="button-ghost-sm danger">Từ Chối</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
 </div>

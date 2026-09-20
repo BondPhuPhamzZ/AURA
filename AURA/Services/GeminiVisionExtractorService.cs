@@ -87,7 +87,7 @@ namespace AURA.Services
             
             var text = candidates[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString();
             
-            // Dọn dẹp markdown nếu API trả về dư thừa
+            // Clean up potential markdown formatting if Gemini ignored the prompt instruction
             if (text.StartsWith("`json"))
             {
                 text = text.Replace("`json", "").Replace("`", "").Trim();
@@ -98,4 +98,3 @@ namespace AURA.Services
         }
     }
 }
-

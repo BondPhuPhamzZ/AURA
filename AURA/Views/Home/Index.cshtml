@@ -1,46 +1,48 @@
 ﻿@{
-    ViewData["Title"] = "Cổng Thẩm Định (Harness)";
+    ViewData["Title"] = "Trang Chủ";
 }
 
-<div class="container mt-5">
-    <h2>AURA - Auto Approval System (Verify Harness)</h2>
-    
+<div class="hero-band">
+    <h1 class="hero-title">AURA Approval System</h1>
+    <p class="hero-subtitle">Zero-Cloud Exposure. Deterministic AI Processing.</p>
+</div>
+
+<div class="container" style="max-width: 900px;">
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">@TempData["Error"]</div>
+        <div class="alert alert-danger feature-card mb-4">@TempData["Error"]</div>
     }
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">@TempData["Success"]</div>
+        <div class="alert alert-success feature-card mb-4">@TempData["Success"]</div>
     }
 
-    <!-- Tabs cho Applicant (Nhân viên) và Reviewer (Sếp) -->
-    <ul class="nav nav-tabs mt-4" id="auraTabs" role="tablist">
+    <!-- Tabs chuẩn Vercel -->
+    <ul class="nav nav-tabs aura-nav-pills" id="auraTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="applicant-tab" data-bs-toggle="tab" data-bs-target="#applicant" type="button" role="tab">Giao Diện Nhân Viên (Nộp Đơn)</button>
+            <button class="nav-link active" id="applicant-tab" data-bs-toggle="tab" data-bs-target="#applicant" type="button" role="tab">Nộp Đơn (Nhân Viên)</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="reviewer-tab" data-bs-toggle="tab" data-bs-target="#reviewer" type="button" role="tab">Giao Diện Quản Lý (Duyệt Ngoại Lệ)</button>
+            <button class="nav-link" id="reviewer-tab" data-bs-toggle="tab" data-bs-target="#reviewer" type="button" role="tab">Quản Lý (Duyệt Đơn)</button>
         </li>
     </ul>
 
     <div class="tab-content" id="auraTabsContent">
         <!-- Tab Nhân Viên -->
-        <div class="tab-pane fade show active p-4 border border-top-0 bg-dark text-white" id="applicant" role="tabpanel">
-            <h4>Nộp Hóa Đơn / Chứng Từ</h4>
-            <p>Sử dụng các ảnh hóa đơn thật đã được map vào test_data</p>
+        <div class="tab-pane fade show active feature-card" id="applicant" role="tabpanel">
+            <h4 class="mb-4" style="color: var(--colors-ink);">Tạo Đơn Thanh Toán</h4>
             
             <form asp-controller="Applicant" asp-action="UploadReceipt" method="post" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label class="form-label">Tải ảnh hóa đơn (.jpg, .png, .pdf)</label>
-                    <input type="file" name="receiptFile" class="form-control" accept=".jpg,.png,.pdf" required />
+                <div class="mb-4">
+                    <label class="form-label">Tải ảnh hóa đơn (.jpg, .png)</label>
+                    <input type="file" name="receiptFile" class="text-input" accept=".jpg,.png" required />
                 </div>
-                <button type="submit" class="btn btn-primary">Chạy AI Verify (Gửi Đơn)</button>
+                <button type="submit" class="button-primary">Chạy AI Verify (Gửi Đơn)</button>
             </form>
         </div>
 
         <!-- Tab Quản Lý -->
-        <div class="tab-pane fade p-4 border border-top-0 bg-dark text-white" id="reviewer" role="tabpanel">
+        <div class="tab-pane fade feature-card" id="reviewer" role="tabpanel">
             @await Component.InvokeAsync("EscalationQueue")
         </div>
     </div>
