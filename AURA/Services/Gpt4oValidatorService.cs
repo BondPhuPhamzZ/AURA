@@ -31,11 +31,7 @@ namespace AURA.Services
             var sw = Stopwatch.StartNew();
             var apiKey = _config["OpenAI:ApiKey"];
             
-            if (string.IsNullOrEmpty(apiKey) || apiKey == "sk-mock-key-replace-me")
-            {
-                // Fallback to mock logic if API key is not set
-                return await MockValidationAsync(request, sw);
-            }
+            if (string.IsNullOrEmpty(apiKey) || apiKey == "sk-mock-key-replace-me") { request.Status = "ESCALATE - ERROR"; request.AiReasoning = "Chưa cấu hình API Key thật!"; sw.Stop(); request.ProcessingLatencyMs = sw.ElapsedMilliseconds; return request; }
 
             try
             {
@@ -128,38 +124,6 @@ namespace AURA.Services
             return request;
         }
 
-        private async Task<ReimbursementRequest> MockValidationAsync(ReimbursementRequest request, Stopwatch sw)
-        {
-            await Task.Delay(150); // Simulate network latency
+        
 
-            if (request.ClaimedAmount > 1000000)
-            {
-                request.Status = "ESCALATE";
-                request.ManagerQuestion = $"Số tiền {request.ClaimedAmount}đ vượt quá hạn mức duyệt tự động. Sếp có muốn duyệt ngoại lệ không? [CÓ/KHÔNG]";
-                request.AiReasoning = "Vượt hạn mức 1,000,000đ theo chính sách.";
-            }
-            else if (request.ClaimedAmount == 200000) // Trigger for Fact Escalate (No Tax ID)
-            {
-                request.Status = "ESCALATE";
-                request.ManagerQuestion = "Hóa đơn không có Mã số thuế hợp lệ. Sếp có chấp nhận thanh toán khoản này không? [CÓ/KHÔNG]";
-                request.AiReasoning = "Không tìm thấy Mã Số Thuế hợp lệ.";
-            }
-            else if (request.ClaimedAmount == 850000) // Trigger for Policy Escalate (Alcohol)
-            {
-                request.Status = "ESCALATE";
-                request.ManagerQuestion = "Phát hiện 'Bia' vi phạm nội quy. Tuy nhiên đây là nhân sự Sales đi tiếp khách. Sếp có duyệt ngoại lệ khoản này không? [CÓ/KHÔNG]";
-                request.AiReasoning = "Phát hiện mặt hàng cấm: Bia.";
-            }
-            else
-            {
-                request.Status = "AUTO_APPROVE";
-                request.AiReasoning = "Thỏa mãn 100% chính sách. Đã tự động ghi vào Sổ cái SHA-256.";
-            }
-
-            sw.Stop();
-            request.ProcessingLatencyMs = sw.ElapsedMilliseconds;
-            return request;
-        }
-    }
-}
 
