@@ -1,18 +1,30 @@
-﻿# Build Log (Sprint 1)
+# Build Log - Sprint 1
 
-## Công cụ AI đã sử dụng
-- **Gemini 1.5 Flash (via Google AI Studio)**: Dùng để trích xuất hóa đơn thành dạng JSON cấu trúc (Extract Facts).
-- **GitHub Copilot / Agent**: Hỗ trợ code và refactoring kiến trúc từ MVC thuần sang kiến trúc tách bạch Extraction và Rule Engine.
+## Công cụ AI và cách sử dụng
 
-## Lợi ích
-- Tăng tốc độ code gấp 3 lần.
-- Kiến trúc deterministic đảm bảo 100% không bị hallucination ở bước ra quyết định.
+- **Gemini 3.6 Flash qua Google AI Studio/API:** đọc một ảnh hóa đơn và trả dữ kiện theo Structured Output. Gemini không được quyền tự quyết định duyệt/chuyển tiếp.
+- **Codex:** đọc code/tài liệu, truy nguyên route và JavaScript, hỗ trợ refactor, viết test, build và smoke-test. Mọi thay đổi được chia thành commit nhỏ để giữ lịch sử phát triển.
 
-## Chi phí & Thời gian
-- API Cost:  (Sử dụng Free Tier của Google AI Studio).
-- Thời gian setup: ~10 giờ.
+## Điều mang lại hiệu quả
 
-## Tính năng lớn nhất đã cắt giảm
-- Hỗ trợ PDF nhiều trang.
-- Fine-tuning model riêng (Sử dụng zero-shot extraction với cấu trúc JSON strict).
-- Hệ thống user authentication (Hiện tại ai cũng có thể Verify để giám khảo dễ test).
+- Tách extraction khỏi deterministic policy giúp kết quả giải thích và unit-test được.
+- Benchmark 5 fixture tổng hợp đạt 5/5 trong khoảng 32 giây tổng vào 20/09/2026.
+- 22 policy tests chạy dưới một giây và khóa precedence `FACT -> POLICY -> AUTHORITY`.
+- Structured Output giảm parsing lỗi so với JSON tự do.
+
+## Chi phí/thời gian và sự cố thực tế
+
+- Dùng Gemini Free Tier cho prototype; quota/rate limit không được bảo đảm.
+- Một request upload sau benchmark gặp HTTP 503. Hệ thống đã được bổ sung retry backoff ba lần và fallback sang `ESCALATE_SYSTEM_ERROR`; không giả quyết định nghiệp vụ.
+- LocalDB chỉ phù hợp phát triển Windows. Deploy cần SQL Server/Azure SQL và persistent volume cho ảnh.
+- Dữ liệu test đẹp hơn hóa đơn đời thực, nên 5/5 không được xem là accuracy tổng quát.
+
+## Tính năng lớn nhất cắt giảm
+
+- PDF/hóa đơn nhiều trang, antivirus, tax/e-invoice lookup, ngoại tệ và xác thực người dùng theo role chưa triển khai trong Sprint 1.
+- Không fine-tune hoặc setup model local để tránh rủi ro trễ deadline; dùng Gemini API + policy C# để có sản phẩm deploy được.
+- Ưu tiên một vertical slice chạy thật: upload -> extract -> decide -> audit -> human override/undo -> tra cứu chứng từ.
+
+## Minh bạch dữ liệu
+
+Năm fixture Verify là dữ liệu tổng hợp sinh bằng script; không có hóa đơn cá nhân thật. Ảnh upload được gửi tới Gemini API, vì vậy AURA không tuyên bố on-premise hoặc zero-cloud.
