@@ -20,7 +20,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IReimbursementRepository, ReimbursementRepository>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 builder.Services.AddHttpClient();
-builder.Services.AddScoped<IVisualValidator, Gpt4oValidatorService>();
+builder.Services.AddScoped<IVisionExtractor, GeminiVisionExtractorService>();
 
 var app = builder.Build();
 
@@ -43,5 +43,7 @@ app.MapControllerRoute(
     ;
 
 app.Run();
+
+
 
 
