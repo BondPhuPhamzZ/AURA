@@ -45,7 +45,7 @@ namespace AURA.Controllers
 
                 try 
                 {
-                    var imagePath = Path.Combine(_env.ContentRootPath, "test_data", "images", testCase.ImageName);
+                    var imagePath = Path.Combine(_env.WebRootPath, "test_data", "images", testCase.ImageName);
                     
                     var tempWebPath = Path.Combine(_env.WebRootPath, "temp_test", testCase.ImageName);
                     Directory.CreateDirectory(Path.Combine(_env.WebRootPath, "temp_test"));
@@ -85,6 +85,7 @@ namespace AURA.Controllers
 
     }
 }
+
 
 
 

@@ -44,26 +44,37 @@ namespace AURA.Services
             string extension = Path.GetExtension(fullPath).ToLowerInvariant();
             string mimeType = extension == ".png" ? "image/png" : "image/jpeg";
 
-            var payload = new
+                var businessRulesPath = Path.Combine(_env.WebRootPath, "BUSINESS_RULES.md");
+    string promptText;
+    if (File.Exists(businessRulesPath))
+    {
+        promptText = await File.ReadAllTextAsync(businessRulesPath);
+    }
+    else
+    {
+        promptText = "Analyze this receipt image. Return only valid JSON. Do not include markdown or text outside the JSON object.";
+    }
+
+    var payload = new
+    {
+        contents = new[]
+        {
+            new
             {
-                contents = new[]
+                parts = new object[]
                 {
+                    new { text = promptText },
                     new
                     {
-                        parts = new object[]
+                        inlineData = new
                         {
-                            new { text = "Analyze this receipt image. Return only valid JSON with this structure: { \"merchantName\": \"string or null\", \"invoiceNumber\": \"string or null\", \"invoiceDate\": \"YYYY-MM-DD or null\", \"currency\": \"string or null\", \"subtotal\": \"number or null\", \"tax\": \"number or null\", \"totalAmount\": \"number or null\", \"lineItems\": [ { \"description\": \"string\", \"quantity\": \"number or null\", \"unitPrice\": \"number or null\", \"amount\": \"number or null\" } ], \"missingFields\": [], \"warnings\": [], \"confidence\": 0.0 }. Do not guess text that is unreadable. Use null for information that cannot be verified from the image. The confidence value must be between 0 and 1. Do not include markdown or text outside the JSON object." },
-                            new
-                            {
-                                inlineData = new
-                                {
-                                    mimeType = mimeType,
-                                    data = base64Image
-                                }
-                            }
+                            mimeType = mimeType,
+                            data = base64Image
                         }
                     }
-                },
+                }
+            }
+        },
                 generationConfig = new
                 {
                     responseMimeType = "application/json"
@@ -98,5 +109,6 @@ namespace AURA.Services
         }
     }
 }
+
 
 
