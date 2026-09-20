@@ -56,7 +56,6 @@ public sealed class ApplicantController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequestFormLimits(MultipartBodyLengthLimit = 5 * 1024 * 1024)]
     public async Task<IActionResult> UploadReceipt(IFormFile? receiptFile, decimal claimedAmount,
         CancellationToken cancellationToken)
     {
@@ -159,7 +158,9 @@ public sealed class ApplicantController : Controller
     {
         var contentRoot = Path.GetFullPath(_environment.ContentRootPath);
         var root = Path.GetFullPath(Path.Combine(contentRoot, _storageOptions.Directory));
-        if (!root.StartsWith(contentRoot, StringComparison.OrdinalIgnoreCase))
+        var contentRootPrefix = contentRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
+        if (!root.StartsWith(contentRootPrefix, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("ReceiptStorage:Directory phải nằm trong thư mục ứng dụng.");
         return root;
     }

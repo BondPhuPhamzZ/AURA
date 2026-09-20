@@ -37,7 +37,9 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
 
         var contentRoot = Path.GetFullPath(_environment.ContentRootPath);
         var policyPath = Path.GetFullPath(Path.Combine(contentRoot, _options.PolicyPath));
-        if (!policyPath.StartsWith(contentRoot, StringComparison.OrdinalIgnoreCase) || !File.Exists(policyPath))
+        var contentRootPrefix = contentRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
+        if (!policyPath.StartsWith(contentRootPrefix, StringComparison.OrdinalIgnoreCase) || !File.Exists(policyPath))
             throw new InvalidOperationException($"Không tìm thấy tài liệu chính sách bắt buộc tại '{_options.PolicyPath}'.");
 
         var imageBytes = await File.ReadAllBytesAsync(fullImagePath, cancellationToken);

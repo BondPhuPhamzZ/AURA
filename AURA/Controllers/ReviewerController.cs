@@ -49,15 +49,18 @@ namespace AURA.Controllers
             if (decision == "APPROVE")
             {
                 req.Status = "APPROVED_BY_MANAGER";
-                await _audit.LogActionAsync(req.Id, "MANAGER_APPROVE", "Sếp đã duyệt ngoại lệ thành công.");
             }
             else if (decision == "REJECT")
             {
                 req.Status = "REJECTED_BY_MANAGER";
-                await _audit.LogActionAsync(req.Id, "MANAGER_REJECT", "Sếp đã từ chối hóa đơn này.");
             }
 
             await _repo.UpdateRequestAsync(req);
+            var auditAction = decision == "APPROVE" ? "MANAGER_APPROVE" : "MANAGER_REJECT";
+            var auditDetails = decision == "APPROVE"
+                ? "Quản lý đã duyệt ngoại lệ."
+                : "Quản lý đã từ chối hồ sơ.";
+            await _audit.LogActionAsync(req.Id, auditAction, auditDetails);
             
             TempData["Success"] = $"Đã xử lý hồ sơ {id} thành công!";
             return RedirectToAction("Index", "Home");
