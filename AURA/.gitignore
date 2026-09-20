@@ -1,3 +1,7 @@
 # Runtime receipt evidence is retained by the deployed instance, never committed.
 App_Data/receipts/*
 !App_Data/receipts/.gitkeep
+
+# Legacy/runtime upload folders must never be published from wwwroot.
+wwwroot/uploads/
+wwwroot/temp_test/
