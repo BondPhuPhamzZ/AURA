@@ -30,18 +30,20 @@ namespace AURA.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
+        public IActionResult Index() => RedirectToAction("Index", "Home");
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UploadReceipt(IFormFile receiptFile)
+        public async Task<IActionResult> UploadReceipt(IFormFile receiptFile, decimal claimedAmount)
         {
             if (receiptFile == null || receiptFile.Length == 0)
             {
                 return Json(new { error = "Vui lòng chọn file hóa đơn hợp lệ." });
+            }
+
+            if (claimedAmount <= 0)
+            {
+                return BadRequest(new { error = "Số tiền đề nghị hoàn ứng phải lớn hơn 0." });
             }
 
             // 1. Kiểm tra file
@@ -74,7 +76,7 @@ namespace AURA.Controllers
                 Id = Guid.NewGuid().ToString(),
                 
                 
-                ClaimedAmount = 0m,
+                ClaimedAmount = claimedAmount,
                 ImageUrl = "/uploads/" + uniqueFileName,
                 CreatedAt = DateTime.UtcNow
             };
@@ -107,7 +109,18 @@ namespace AURA.Controllers
             await _repo.AddRequestAsync(request);
             await _audit.LogActionAsync(request.Id, $"AI_PROCESSED_{request.Status}", $"Reasoning: {request.AiReasoning} | Latency: {sw.ElapsedMilliseconds}ms");
 
-            return RedirectToAction("Index", "Home");
+            return Json(new
+            {
+                caseId = request.Id,
+                image = receiptFile.FileName,
+                expected = "N/A",
+                actual = request.Status,
+                pass = request.Status != "ESCALATE_SYSTEM_ERROR",
+                reason = request.AiReasoning,
+                question = request.ManagerQuestion,
+                latencyMs = request.ProcessingLatencyMs,
+                timestamp = request.CreatedAt
+            });
         }
     }
 }

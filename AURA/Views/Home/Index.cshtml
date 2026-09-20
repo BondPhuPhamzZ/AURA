@@ -18,7 +18,7 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
                 <span id="btnVerifyText">Chạy Verify Harness (90s)</span>
             </button>
-            <form id="verifyFormDummy" action="/Verify/RunHarness" method="post" style="display: none;">
+            <form id="verifyFormDummy" asp-controller="Verify" asp-action="RunHarness" method="post" style="display: none;">
                 @Html.AntiForgeryToken()
             </form>
         </div>
@@ -28,7 +28,7 @@
     <div style="margin-bottom: 32px;">
         <h3 style="font-size: 1.1rem; margin-bottom: 16px;">Hoặc tải lên hóa đơn kiểm thử lẻ:</h3>
         
-        <form id="uploadForm" action="/Applicant/UploadReceipt" method="post" enctype="multipart/form-data">
+        <form id="uploadForm" asp-controller="Applicant" asp-action="UploadReceipt" method="post" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
             
             <div class="dropzone-area" id="dropzone" onclick="document.getElementById('receiptFile').click()">
@@ -39,6 +39,13 @@
                 </div>
                 <div class="dropzone-text" id="dropzoneText">Kéo thả ảnh hóa đơn vào đây</div>
                 <div class="dropzone-subtext" style="color: var(--colors-ink-subtle); margin-top: 8px; font-size: 0.875rem;">Hỗ trợ JPG, PNG (Tối đa 5MB)</div>
+            </div>
+
+            <div class="mt-3">
+                <label for="claimedAmount" class="form-label fw-semibold">Số tiền đề nghị hoàn ứng (VND)</label>
+                <input id="claimedAmount" name="claimedAmount" type="number" min="1" step="1" required
+                       class="form-control" placeholder="Ví dụ: 150000" />
+                <div class="form-text">Số tiền này được đối chiếu trực tiếp với tổng tiền AI đọc từ hóa đơn.</div>
             </div>
 
             <div style="display: flex; justify-content: flex-end; margin-top: 16px;">

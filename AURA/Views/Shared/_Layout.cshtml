@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
 </head>
 <body>
     <header class="aura-header">
-        <a href="/" class="aura-logo">
+        <a asp-controller="Home" asp-action="Index" class="aura-logo">
             <div class="logo-icon">A</div>
             AURA <span style="font-weight:400; color:var(--colors-ink-subtle); font-size:14px; border-left:1px solid var(--colors-border); padding-left:12px; margin-left:12px;">Zero-Cloud Exposure</span>
         </a>
@@ -31,7 +31,7 @@
         @RenderBody()
     </main>
 
-    <script src="~/lib/jquery/dist/jquery.min.css"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
@@ -55,15 +55,6 @@
             }
         }
         
-        function startVerifyHarness() {
-            switchTab('verify');
-            if (typeof runTests === 'function') {
-                runTests();
-            } else {
-                alert("Vui lòng quay lại trang chủ để chạy Verify Harness.");
-                window.location.href = '/';
-            }
-        }
     </script>
 </body>
 </html>
