@@ -1,0 +1,18 @@
+﻿@model IEnumerable<AURA.Models.ReimbursementRequest>
+
+<div class="escalation-queue">
+    <h3>Danh Sách Chờ Sếp Duyệt (ViewComponent)</h3>
+    @if (!Model.Any())
+    {
+        <p>Hiện không có ca nào cần duyệt.</p>
+    }
+    else
+    {
+        <ul>
+            @foreach (var item in Model)
+            {
+                <li>@item.EmployeeName - @item.ClaimedAmount đ - <span style="color: red;">@item.Status</span></li>
+            }
+        </ul>
+    }
+</div>
