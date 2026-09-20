@@ -44,37 +44,37 @@ namespace AURA.Services
             string extension = Path.GetExtension(fullPath).ToLowerInvariant();
             string mimeType = extension == ".png" ? "image/png" : "image/jpeg";
 
-                var businessRulesPath = Path.Combine(_env.WebRootPath, "BUSINESS_RULES.md");
-    string promptText;
-    if (File.Exists(businessRulesPath))
-    {
-        promptText = await File.ReadAllTextAsync(businessRulesPath);
-    }
-    else
-    {
-        promptText = "Analyze this receipt image. Return only valid JSON. Do not include markdown or text outside the JSON object.";
-    }
-
-    var payload = new
-    {
-        contents = new[]
-        {
-            new
+            var businessRulesPath = Path.Combine(_env.WebRootPath, "BUSINESS_RULES.md");
+            string promptText;
+            if (File.Exists(businessRulesPath))
             {
-                parts = new object[]
+                promptText = await File.ReadAllTextAsync(businessRulesPath);
+            }
+            else
+            {
+                promptText = "Analyze this receipt image. Return only valid JSON. Do not include markdown or text outside the JSON object.";
+            }
+
+            var payload = new
+            {
+                contents = new[]
                 {
-                    new { text = promptText },
                     new
                     {
-                        inlineData = new
+                        parts = new object[]
                         {
-                            mimeType = mimeType,
-                            data = base64Image
+                            new { text = promptText },
+                            new
+                            {
+                                inlineData = new
+                                {
+                                    mimeType = mimeType,
+                                    data = base64Image
+                                }
+                            }
                         }
                     }
-                }
-            }
-        },
+                },
                 generationConfig = new
                 {
                     responseMimeType = "application/json"
