@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AURA.Interfaces;
 using AURA.Models;
 using AURA.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace AURA.Services
 {
@@ -26,6 +27,22 @@ namespace AURA.Services
             };
             await _context.AuditLogs.AddAsync(log);
             await _context.SaveChangesAsync();
+        }
+
+        public Task<List<AuditLog>> GetRecentAsync(int limit = 100)
+        {
+            return _context.AuditLogs.AsNoTracking()
+                .OrderByDescending(x => x.Timestamp)
+                .Take(Math.Clamp(limit, 1, 500))
+                .ToListAsync();
+        }
+
+        public Task<List<AuditLog>> GetByRequestIdAsync(string requestId)
+        {
+            return _context.AuditLogs.AsNoTracking()
+                .Where(x => x.RequestId == requestId)
+                .OrderByDescending(x => x.Timestamp)
+                .ToListAsync();
         }
     }
 }

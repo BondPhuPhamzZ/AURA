@@ -17,6 +17,7 @@
                         <th>Nhân Viên</th>
                         <th>Số Tiền</th>
                         <th>Lý do từ AI</th>
+                        <th>Chứng Từ</th>
                         <th>Hành Động</th>
                     </tr>
                 </thead>
@@ -32,6 +33,7 @@
                                 <span style="color: #b91c1c;">@item.AiReasoning</span><br />
                                 <small>@item.ManagerQuestion</small>
                             </td>
+                            <td><a href="@item.ImageUrl" target="_blank" rel="noopener">Xem hóa đơn</a></td>
                             <td>
                                 <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline">
                                     <input type="hidden" name="id" value="@item.Id" />

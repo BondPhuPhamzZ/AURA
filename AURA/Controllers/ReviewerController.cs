@@ -20,14 +20,31 @@ namespace AURA.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EscalateAction(string id, string decision)
         {
-            if (string.IsNullOrWhiteSpace(id) || decision is not ("APPROVE" or "REJECT"))
+            if (string.IsNullOrWhiteSpace(id) || decision is not ("APPROVE" or "REJECT" or "UNDO"))
                 return BadRequest();
 
             var req = await _repo.GetRequestByIdAsync(id);
             if (req == null) return NotFound();
 
-            if (!PolicyDecisionEngine.IsEscalation(req.Status))
+            if (decision != "UNDO" && !PolicyDecisionEngine.IsEscalation(req.Status))
                 return Conflict("Hồ sơ này không còn ở trạng thái chờ quyết định của quản lý.");
+
+            if (decision == "UNDO")
+            {
+                if (req.Status is not ("APPROVED_BY_MANAGER" or "REJECTED_BY_MANAGER"))
+                    return Conflict("Chỉ có thể hoàn tác quyết định gần nhất của quản lý.");
+
+                var logs = await _audit.GetByRequestIdAsync(req.Id);
+                var priorAiAction = logs.FirstOrDefault(x => x.Action.StartsWith("AI_PROCESSED_ESCALATE_", StringComparison.Ordinal)
+                    || x.Action.StartsWith("VERIFY_ESCALATE_", StringComparison.Ordinal));
+                if (priorAiAction is null) return Conflict("Không tìm thấy trạng thái chuyển tiếp ban đầu để hoàn tác.");
+
+                req.Status = priorAiAction.Action[(priorAiAction.Action.IndexOf("ESCALATE_", StringComparison.Ordinal))..];
+                await _repo.UpdateRequestAsync(req);
+                await _audit.LogActionAsync(req.Id, "MANAGER_UNDO", $"Đã hoàn tác quyết định, khôi phục {req.Status}.");
+                TempData["Success"] = $"Đã hoàn tác quyết định cho hồ sơ {id}.";
+                return RedirectToAction("Index", "Home");
+            }
 
             if (decision == "APPROVE")
             {

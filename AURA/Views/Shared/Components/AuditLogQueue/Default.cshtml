@@ -1,7 +1,9 @@
-﻿@model IEnumerable<AURA.Models.ReimbursementRequest>
+@model IEnumerable<AURA.ViewModels.AuditEntryViewModel>
 
 <div class="audit-log-queue">
-    <h4 class="mb-4 form-header">Lịch Sử Hoạt Động (Audit Log)</h4>
+    <h4 class="mb-2 form-header">Nhật Ký Kiểm Toán</h4>
+    <p class="text-muted mb-4">Mỗi dòng ghi rõ thao tác, thời gian, hồ sơ đầu vào và lý do. Quyết định của quản lý có thể được hoàn tác.</p>
+
     @if (Model == null || !Model.Any())
     {
         <div class="alert alert-info feature-card" style="padding: 16px;">Chưa có dữ liệu lịch sử.</div>
@@ -12,40 +14,62 @@
             <table class="table-aura">
                 <thead>
                     <tr>
-                        <th>Mã Đơn</th>
                         <th>Thời Gian</th>
-                        <th>Trạng Thái</th>
+                        <th>Mã Đơn</th>
+                        <th>Thao Tác</th>
+                        <th>Trạng Thái Hiện Tại</th>
+                        <th>Dữ Liệu Đầu Vào</th>
                         <th>Chi Tiết / Lý Do</th>
+                        <th>Can Thiệp</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model)
+                    @foreach (var entry in Model)
                     {
+                        var request = entry.Request;
                         <tr>
-                            <td style="font-family: monospace;">@item.Id.Substring(0, 8)...</td>
-                            <td>@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td>@entry.Log.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td style="font-family: monospace;">@entry.Log.RequestId[..Math.Min(8, entry.Log.RequestId.Length)]</td>
+                            <td><span class="badge bg-secondary">@entry.Log.Action</span></td>
                             <td>
-                                @if (item.Status == "AUTO_APPROVE")
+                                @if (request is not null)
                                 {
-                                    <span class="badge bg-success">AUTO_APPROVE</span>
-                                }
-                                else if (item.Status.StartsWith("ESCALATE_", StringComparison.Ordinal))
-                                {
-                                    <span class="badge bg-warning text-dark">@item.Status</span>
+                                    var badgeClass = request.Status == "AUTO_APPROVE" ? "bg-success"
+                                        : request.Status.StartsWith("ESCALATE_", StringComparison.Ordinal) ? "bg-warning text-dark"
+                                        : request.Status == "APPROVED_BY_MANAGER" ? "bg-success"
+                                        : request.Status == "REJECTED_BY_MANAGER" ? "bg-danger"
+                                        : "bg-secondary";
+                                    <span class="badge @badgeClass">@request.Status</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary">@item.Status</span>
+                                    <span class="text-muted">Không còn hồ sơ</span>
                                 }
                             </td>
                             <td>
-                                @if (!string.IsNullOrEmpty(item.AiReasoning))
+                                @if (request is not null && !string.IsNullOrWhiteSpace(request.ImageUrl))
                                 {
-                                    <span style="color: var(--colors-body);">@item.AiReasoning</span>
+                                    <a href="@request.ImageUrl" target="_blank" rel="noopener">@request.OriginalFileName</a>
+                                    <div><small>@request.ClaimedAmount.ToString("N0") VND</small></div>
                                 }
                                 else
                                 {
-                                    <span style="color: var(--colors-muted); font-style: italic;">Không có</span>
+                                    <span class="text-muted">Không khả dụng</span>
+                                }
+                            </td>
+                            <td style="max-width: 420px; overflow-wrap: anywhere;">@entry.Log.Details</td>
+                            <td>
+                                @if (request?.Status is "APPROVED_BY_MANAGER" or "REJECTED_BY_MANAGER")
+                                {
+                                    <form asp-controller="Reviewer" asp-action="EscalateAction" method="post">
+                                        <input type="hidden" name="id" value="@request.Id" />
+                                        <input type="hidden" name="decision" value="UNDO" />
+                                        <button type="submit" class="button-ghost-sm">Hoàn tác</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
                                 }
                             </td>
                         </tr>
