@@ -9,14 +9,14 @@ using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Đăng ký Services
 builder.Services.AddControllersWithViews();
 
-// Setup Entity Framework Core SQL Server
+// Cấu hình Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register AURA DI Services
+// Đăng ký Dependency Injection
 builder.Services.AddScoped<IReimbursementRepository, ReimbursementRepository>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 builder.Services.AddHttpClient();
@@ -24,7 +24,7 @@ builder.Services.AddScoped<IVisionExtractor, GeminiVisionExtractorService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Cấu hình HTTP Pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -43,6 +43,7 @@ app.MapControllerRoute(
     ;
 
 app.Run();
+
 
 
 

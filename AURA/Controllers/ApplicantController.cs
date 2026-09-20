@@ -45,7 +45,7 @@ namespace AURA.Controllers
                 return View("Index");
             }
 
-            // 1. File Upload Validation
+            // 1. Kiểm tra file
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
             var extension = Path.GetExtension(receiptFile.FileName).ToLowerInvariant();
             if (!allowedExtensions.Contains(extension))
@@ -60,7 +60,7 @@ namespace AURA.Controllers
                 return View("Index");
             }
 
-            // 2. Safe File Save
+            // 2. Lưu ảnh
             var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
             
@@ -82,14 +82,14 @@ namespace AURA.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
-            // 3. Vision Extraction & Deterministic Policy Engine
+            // 3. AI Trích xuất & Xét duyệt
             var sw = Stopwatch.StartNew();
             try 
             {
-                // Step A: Extract Facts
+                // - Đọc dữ liệu hóa đơn
                 var facts = await _vision.ExtractFactsAsync(request.ImageUrl);
                 
-                // Step B: Apply Policy
+                // - Áp dụng luật công ty
                 var decision = PolicyDecisionEngine.Evaluate(facts, request.ClaimedAmount);
                 
                 request.Status = decision.Status;
@@ -106,7 +106,7 @@ namespace AURA.Controllers
             sw.Stop();
             request.ProcessingLatencyMs = sw.ElapsedMilliseconds;
 
-            // 4. Persistence & Audit
+            // 4. Lưu DB & Log
             await _repo.AddRequestAsync(request);
             await _audit.LogActionAsync(request.Id, $"AI_PROCESSED_{request.Status}", $"Reasoning: {request.AiReasoning} | Latency: {sw.ElapsedMilliseconds}ms");
 
@@ -114,3 +114,4 @@ namespace AURA.Controllers
         }
     }
 }
+

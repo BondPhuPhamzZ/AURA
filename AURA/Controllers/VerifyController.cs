@@ -48,10 +48,7 @@ namespace AURA.Controllers
                 try 
                 {
                     var imagePath = Path.Combine(_env.ContentRootPath, "test_data", "images", testCase.ImageName);
-                    // Copy to webroot temporarily if needed, or pass absolute path to extractor
-                    // For now, assume IVisionExtractor can handle absolute paths if we modify it slightly.
-                    // Wait, our Extractor uses WebRootPath. Let's just pass relative path if we copied it there.
-                    // Let's copy it to webroot for the test
+                    
                     var tempWebPath = Path.Combine(_env.WebRootPath, "temp_test", testCase.ImageName);
                     Directory.CreateDirectory(Path.Combine(_env.WebRootPath, "temp_test"));
                     if (System.IO.File.Exists(imagePath)) System.IO.File.Copy(imagePath, tempWebPath, true);
@@ -95,4 +92,5 @@ namespace AURA.Controllers
         }
     }
 }
+
 
