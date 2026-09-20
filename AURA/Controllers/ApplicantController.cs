@@ -37,7 +37,7 @@ namespace AURA.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UploadReceipt(string employeeId, string employeeName, decimal claimedAmount, IFormFile receiptFile)
+        public async Task<IActionResult> UploadReceipt(IFormFile receiptFile)
         {
             if (receiptFile == null || receiptFile.Length == 0)
             {
@@ -75,9 +75,9 @@ namespace AURA.Controllers
             var request = new ReimbursementRequest
             {
                 Id = Guid.NewGuid().ToString(),
-                EmployeeId = employeeId,
-                EmployeeName = employeeName,
-                ClaimedAmount = claimedAmount,
+                
+                
+                ClaimedAmount = 0m,
                 ImageUrl = "/uploads/" + uniqueFileName,
                 CreatedAt = DateTime.UtcNow
             };
@@ -114,4 +114,5 @@ namespace AURA.Controllers
         }
     }
 }
+
 
