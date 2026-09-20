@@ -2,13 +2,19 @@
 
 <div class="escalation-queue">
     <h4 class="mb-4 form-header">Danh Sách Cần Sếp Duyệt</h4>
-    @{ var escalations = Model?.Where(m => m.Status.StartsWith("ESCALATE_", StringComparison.Ordinal)).ToList(); }
-    @if (escalations == null || escalations.Count == 0)
+    @if (ViewData["LoadError"] is string loadError)
     {
-        <div class="alert alert-info feature-card" style="padding: 16px;">Hiện không có ca nào cần duyệt.</div>
+        <div class="alert alert-danger feature-card" style="padding: 16px;">@loadError</div>
     }
     else
     {
+        var escalations = Model?.Where(m => m.Status.StartsWith("ESCALATE_", StringComparison.Ordinal)).ToList();
+        if (escalations == null || escalations.Count == 0)
+        {
+            <div class="alert alert-info feature-card" style="padding: 16px;">Hiện không có ca nào cần duyệt.</div>
+        }
+        else
+        {
         <div style="overflow-x: auto;">
             <table class="table-aura">
                 <thead>
@@ -51,6 +57,7 @@
                 </tbody>
             </table>
         </div>
+        }
     }
 </div>
 

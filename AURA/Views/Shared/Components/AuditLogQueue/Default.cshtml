@@ -4,7 +4,11 @@
     <h4 class="mb-2 form-header">Nhật Ký Kiểm Toán</h4>
     <p class="text-muted mb-4">Mỗi dòng ghi rõ thao tác, thời gian, hồ sơ đầu vào và lý do. Quyết định của quản lý có thể được hoàn tác.</p>
 
-    @if (Model == null || !Model.Any())
+    @if (ViewData["LoadError"] is string loadError)
+    {
+        <div class="alert alert-danger feature-card" style="padding: 16px;">@loadError</div>
+    }
+    else if (Model == null || !Model.Any())
     {
         <div class="alert alert-info feature-card" style="padding: 16px;">Chưa có dữ liệu lịch sử.</div>
     }
