@@ -1,0 +1,61 @@
+﻿@{
+    ViewData["Title"] = "Verify Harness";
+}
+
+<div class="container mt-5">
+    <h2>Verify Harness (Automated Audit)</h2>
+    <p>Chạy hệ thống kiểm thử tự động với 5 ca Canonical (Track A).</p>
+    
+    <form asp-controller="Verify" asp-action="RunHarness" method="post" id="verifyForm">
+        <button type="button" class="btn btn-primary" onclick="runTests()">Run 5 Canonical Cases</button>
+    </form>
+
+    <div class="mt-4" id="resultsContainer" style="display:none;">
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Case ID</th>
+                    <th>Image</th>
+                    <th>Expected</th>
+                    <th>Actual</th>
+                    <th>PASS/FAIL</th>
+                    <th>Reasoning</th>
+                    <th>Latency</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    async function runTests() {
+        document.getElementById('resultsContainer').style.display = 'block';
+        document.getElementById('resultsBody').innerHTML = '<tr><td colspan="7">Running tests... Please wait.</td></tr>';
+        
+        const form = document.getElementById('verifyForm');
+        const formData = new FormData(form);
+
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        let html = '';
+        data.forEach(item => {
+            const badge = item.pass ? '<span class="badge bg-success">PASS</span>' : '<span class="badge bg-danger">FAIL</span>';
+            html += <tr>
+                <td> + item.caseId + </td>
+                <td> + item.image + </td>
+                <td> + item.expected + </td>
+                <td> + item.actual + </td>
+                <td> + badge + </td>
+                <td> + item.reason + <br/><small><i> + (item.question || '') + </i></small></td>
+                <td> + item.latencyMs + ms</td>
+            </tr>;
+        });
+        document.getElementById('resultsBody').innerHTML = html;
+    }
+</script>

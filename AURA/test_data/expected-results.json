@@ -1,0 +1,27 @@
+﻿[
+  {
+    "id": "1",
+    "expectedStatus": "AUTO_APPROVE",
+    "imageName": "case1_grab.png"
+  },
+  {
+    "id": "2",
+    "expectedStatus": "AUTO_APPROVE",
+    "imageName": "case2_pho24.png"
+  },
+  {
+    "id": "3",
+    "expectedStatus": "AUTO_APPROVE",
+    "imageName": "case3_stationery.png"
+  },
+  {
+    "id": "4",
+    "expectedStatus": "ESCALATE_FACT",
+    "imageName": "case4_unverifiable.png"
+  },
+  {
+    "id": "5",
+    "expectedStatus": "ESCALATE_POLICY",
+    "imageName": "case5_alcohol.png"
+  }
+]
