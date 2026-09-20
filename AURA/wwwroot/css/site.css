@@ -307,3 +307,48 @@ h1, h2, h3, h4, h5, h6 {
 .alert-danger { background-color: #fef2f2; border-color: #fecaca; color: #991b1b; }
 .alert-success { background-color: #f0fdf4; border-color: #bbf7d0; color: #166534; }
 .alert-info { background-color: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+
+/* Drag and Drop Zone */
+.dropzone-area {
+    border: 2px dashed var(--colors-border-strong);
+    border-radius: var(--rounded-md);
+    padding: 40px 20px;
+    text-align: center;
+    background-color: var(--colors-surface-soft);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 24px;
+    position: relative;
+}
+.dropzone-area.dragover {
+    background-color: #f0fdf4; /* Light green */
+    border-color: #22c55e;
+}
+.dropzone-icon {
+    font-size: 48px;
+    color: var(--colors-muted);
+    margin-bottom: 12px;
+}
+.dropzone-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--colors-ink);
+    margin-bottom: 8px;
+}
+.dropzone-subtext {
+    font-size: 13px;
+    color: var(--colors-muted);
+}
+.dropzone-area.has-file {
+    border-style: solid;
+    border-color: var(--colors-link);
+    background-color: #eff6ff;
+}
+.dropzone-area.has-file .dropzone-icon {
+    color: var(--colors-link);
+}
+.file-name-display {
+    font-weight: 600;
+    color: var(--colors-link);
+    margin-top: 8px;
+}

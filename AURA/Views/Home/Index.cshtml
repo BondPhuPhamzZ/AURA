@@ -34,7 +34,7 @@
         <div class="tab-pane fade show active feature-card" id="applicant" role="tabpanel">
             <h4 class="mb-4 form-header">Tạo Đơn Thanh Toán</h4>
             
-            <form asp-controller="Applicant" asp-action="UploadReceipt" method="post" enctype="multipart/form-data" id="uploadForm" onsubmit="showLoading()">
+            <form asp-controller="Applicant" asp-action="UploadReceipt" method="post" enctype="multipart/form-data" id="uploadForm" onsubmit="return validateAndSubmit()">
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Mã Nhân Viên</label>
@@ -45,13 +45,18 @@
                         <input type="text" name="employeeName" class="text-input" value="Nguyễn Văn A" required />
                     </div>
                 </div>
-                <div class="mb-3">
+                <div class="mb-4">
                     <label class="form-label">Số Tiền Cần Thanh Toán (VND)</label>
                     <input type="number" name="claimedAmount" class="text-input" value="150000" required />
                 </div>
-                <div class="mb-4">
-                    <label class="form-label">Tải ảnh hóa đơn (.jpg, .png)</label>
-                    <input type="file" name="receiptFile" class="text-input" accept=".jpg,.png" required />
+                
+                <!-- Drag and Drop Zone -->
+                <label class="form-label">Tải ảnh hóa đơn</label>
+                <div id="dropzone" class="dropzone-area" onclick="document.getElementById('receiptFile').click()">
+                    <div class="dropzone-icon">☁️</div>
+                    <div class="dropzone-text" id="dropzoneText">Kéo & Thả ảnh vào đây</div>
+                    <div class="dropzone-subtext">hoặc click để chọn file (.jpg, .png)</div>
+                    <input type="file" name="receiptFile" id="receiptFile" accept=".jpg,.png" required style="display: none;" onchange="handleFileSelect(this)" />
                 </div>
                 
                 <button type="submit" class="button-primary" id="submitBtn">
@@ -79,10 +84,76 @@
 </div>
 
 <script>
-    function showLoading() {
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('receiptFile');
+    const dropzoneText = document.getElementById('dropzoneText');
+    const dropzoneSubtext = document.querySelector('.dropzone-subtext');
+
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Highlight dropzone on drag
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        dropzone.classList.add('dragover');
+    }
+
+    function unhighlight(e) {
+        dropzone.classList.remove('dragover');
+    }
+
+    // Handle dropped files
+    dropzone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            fileInput.files = files;
+            updateDropzoneUI(files[0].name);
+        }
+    }
+
+    // Handle manual file selection
+    function handleFileSelect(input) {
+        if (input.files && input.files.length > 0) {
+            updateDropzoneUI(input.files[0].name);
+        }
+    }
+
+    function updateDropzoneUI(fileName) {
+        dropzone.classList.add('has-file');
+        dropzoneText.innerHTML = '<div class="file-name-display">' + fileName + '</div>';
+        dropzoneSubtext.innerText = 'Click hoặc kéo thả ảnh khác để thay đổi';
+        document.querySelector('.dropzone-icon').innerText = '📄';
+    }
+
+    function validateAndSubmit() {
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert("Vui lòng tải lên ảnh hóa đơn!");
+            return false;
+        }
+        
         document.getElementById('submitBtn').disabled = true;
         document.getElementById('btnText').innerText = 'Đang xử lý...';
         document.getElementById('loadingSpinner').style.display = 'inline-block';
         document.getElementById('loadingOverlay').style.display = 'flex';
+        return true;
     }
 </script>
