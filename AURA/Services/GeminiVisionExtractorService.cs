@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Net;
 using System.Text.Json;
 using AURA.Interfaces;
 using AURA.Models;
@@ -66,17 +67,11 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
             }
         };
 
-        using var request = new HttpRequestMessage(HttpMethod.Post,
-            $"models/{Uri.EscapeDataString(_options.Model)}:generateContent");
-        request.Headers.Add("x-goog-api-key", _options.ApiKey);
-        request.Content = JsonContent.Create(payload);
-
-        using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        var responseText = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode)
+        var (statusCode, responseText) = await SendWithRetryAsync(payload, cancellationToken);
+        if ((int)statusCode is < 200 or >= 300)
         {
-            _logger.LogWarning("Gemini returned HTTP {StatusCode}.", (int)response.StatusCode);
-            throw new InvalidOperationException($"Gemini không xử lý được yêu cầu (HTTP {(int)response.StatusCode}).");
+            _logger.LogWarning("Gemini returned HTTP {StatusCode} after retries.", (int)statusCode);
+            throw new InvalidOperationException($"Gemini không xử lý được yêu cầu (HTTP {(int)statusCode}).");
         }
 
         using var responseDocument = JsonDocument.Parse(responseText);
@@ -107,6 +102,36 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
         facts.Confidence = Math.Clamp(facts.Confidence, 0, 1);
         return facts;
     }
+
+    private async Task<(HttpStatusCode StatusCode, string Body)> SendWithRetryAsync(
+        object payload, CancellationToken cancellationToken)
+    {
+        const int maxAttempts = 3;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post,
+                $"models/{Uri.EscapeDataString(_options.Model)}:generateContent");
+            request.Headers.Add("x-goog-api-key", _options.ApiKey);
+            request.Content = JsonContent.Create(payload);
+
+            using var response = await _httpClient.SendAsync(
+                request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (response.IsSuccessStatusCode || !IsTransient(response.StatusCode) || attempt == maxAttempts)
+                return (response.StatusCode, body);
+
+            var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromMilliseconds(500 * (1 << (attempt - 1)));
+            _logger.LogWarning("Gemini returned transient HTTP {StatusCode}; retry {Attempt}/{MaxAttempts} after {DelayMs}ms.",
+                (int)response.StatusCode, attempt + 1, maxAttempts, retryAfter.TotalMilliseconds);
+            await Task.Delay(retryAfter, cancellationToken);
+        }
+
+        throw new InvalidOperationException("Gemini retry loop ended unexpectedly.");
+    }
+
+    private static bool IsTransient(HttpStatusCode statusCode) => statusCode is
+        HttpStatusCode.TooManyRequests or HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or
+        HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout;
 
     private static string GetMimeType(string filePath) => Path.GetExtension(filePath).ToLowerInvariant() switch
     {
