@@ -29,13 +29,9 @@
                                 {
                                     <span class="badge bg-success">AUTO_APPROVE</span>
                                 }
-                                else if (item.Status == "ESCALATE")
+                                else if (item.Status.StartsWith("ESCALATE_", StringComparison.Ordinal))
                                 {
-                                    <span class="badge bg-warning text-dark">ESCALATE</span>
-                                }
-                                else if (item.Status == "AI_PROCESSED_SYSTEM_ERROR")
-                                {
-                                    <span class="badge bg-danger">SYSTEM_ERROR</span>
+                                    <span class="badge bg-warning text-dark">@item.Status</span>
                                 }
                                 else
                                 {

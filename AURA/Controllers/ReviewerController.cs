@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using AURA.Interfaces;
+using AURA.Services;
 
 namespace AURA.Controllers
 {
@@ -19,15 +20,21 @@ namespace AURA.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EscalateAction(string id, string decision)
         {
+            if (string.IsNullOrWhiteSpace(id) || decision is not ("APPROVE" or "REJECT"))
+                return BadRequest();
+
             var req = await _repo.GetRequestByIdAsync(id);
             if (req == null) return NotFound();
+
+            if (!PolicyDecisionEngine.IsEscalation(req.Status))
+                return Conflict("Hồ sơ này không còn ở trạng thái chờ quyết định của quản lý.");
 
             if (decision == "APPROVE")
             {
                 req.Status = "APPROVED_BY_MANAGER";
                 await _audit.LogActionAsync(req.Id, "MANAGER_APPROVE", "Sếp đã duyệt ngoại lệ thành công.");
             }
-            else
+            else if (decision == "REJECT")
             {
                 req.Status = "REJECTED_BY_MANAGER";
                 await _audit.LogActionAsync(req.Id, "MANAGER_REJECT", "Sếp đã từ chối hóa đơn này.");
