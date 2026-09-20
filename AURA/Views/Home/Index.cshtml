@@ -1,8 +1,76 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="action-bar">
+    <button class="verify-btn" onclick="runVerify()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+        Chạy Verify Harness (5 Ca Kiểm Thử)
+    </button>
 </div>
+
+<div id="applicant-view">
+    <h1 class="hero-title">Nộp Hồ Sơ Hoàn Ứng (Expense Reimbursement)</h1>
+    <p class="hero-sub">Hệ thống AI tự động trích xuất Mã số thuế, Đối chiếu chính sách và Duyệt tức thì.</p>
+    
+    <div class="upload-portal" style="background-color: var(--bg-panel); border: 2px dashed var(--border-color); border-radius: 12px; padding: 60px 40px; text-align: center;">
+        <h3 style="margin:0 0 8px 0;">Kéo thả ảnh Hóa Đơn (PDF/JPG) vào đây</h3>
+        <p style="margin:0; color:var(--text-secondary); font-size:14px;">Chấp nhận Hóa đơn GTGT, Hóa đơn Grab/Shopee, Bill nhà hàng.</p>
+    </div>
+</div>
+
+<div id="verify-view" style="display:none;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+        <div>
+            <h1 class="hero-title">Báo Cáo Kiểm Thử Tự Động (Verify Harness)</h1>
+            <p class="hero-sub">Thực thi bộ 5 ca chuẩn hóa. Đánh giá tính minh bạch và độ chính xác của AI.</p>
+        </div>
+    </div>
+
+    <div style="background-color: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead style="background-color: rgba(0,0,0,0.2);">
+                <tr>
+                    <th style="padding:16px;">Nhân Viên</th>
+                    <th style="padding:16px;">Số Tiền Claim</th>
+                    <th style="padding:16px;">File Minh Chứng</th>
+                    <th style="padding:16px;">Trạng Thái Phân Loại</th>
+                    <th style="padding:16px;">Lý Do / Câu Hỏi Cho Sếp</th>
+                    <th style="padding:16px;">Độ Trễ</th>
+                </tr>
+            </thead>
+            <tbody id="results-body">
+                <!-- Data populated by AJAX -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function runVerify() {
+            document.getElementById('applicant-view').style.display = 'none';
+            document.getElementById('verify-view').style.display = 'block';
+            
+            var tbody = document.getElementById('results-body');
+            tbody.innerHTML = '<tr><td colspan="6" style="padding:16px; text-align:center;">Đang xử lý bằng AI...</td></tr>';
+
+            $.post('/Home/RunVerifyHarness', function(data) {
+                tbody.innerHTML = '';
+                data.forEach(function(item) {
+                    var badgeClass = item.status === 'AUTO_APPROVE' ? 'badge-auto' : (item.status.includes('FACT') ? 'badge-warn' : 'badge-esc');
+                    
+                    var html = '<tr>' +
+                        '<td style="padding:16px;"><strong>' + item.employeeName + '</strong></td>' +
+                        '<td style="padding:16px;">' + item.claimedAmount.toLocaleString() + 'đ</td>' +
+                        '<td style="padding:16px;"><img src="' + item.imageUrl + '" style="max-height:40px; border-radius:4px;" alt="Receipt"/></td>' +
+                        '<td style="padding:16px;"><span class="badge ' + badgeClass + '" style="padding:4px 12px; border-radius:100px; font-weight:600; font-size:12px;">' + item.status + '</span></td>' +
+                        '<td style="padding:16px;">' + (item.managerQuestion ? item.managerQuestion : item.aiReasoning) + '</td>' +
+                        '<td style="padding:16px; font-family:monospace;">' + item.processingLatencyMs + 'ms</td>' +
+                        '</tr>';
+                    tbody.innerHTML += html;
+                });
+            });
+        }
+    </script>
+}
