@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AURA.Models;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -84,14 +85,11 @@ namespace AURA.Controllers
             return Json(results);
         }
 
-        public class ExpectedResult
-        {
-            public string Id { get; set; }
-            public string ExpectedStatus { get; set; }
-            public string ImageName { get; set; }
-        }
+
     }
 }
+
+
 
 
 
