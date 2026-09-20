@@ -1,22 +1,47 @@
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+﻿:root {
+    --bg-base: #0B0F19;
+    --bg-panel: #111827;
+    --border-color: #1F2937;
+    --text-primary: #F9FAFB;
+    --text-secondary: #9CA3AF;
+    --accent-blue: #3B82F6;
+    --badge-green-bg: rgba(16, 185, 129, 0.1);
+    --badge-green-text: #10B981;
+    --badge-red-bg: rgba(239, 68, 68, 0.1);
+    --badge-red-text: #EF4444;
+    --badge-yellow-bg: rgba(245, 158, 11, 0.1);
+    --badge-yellow-text: #F59E0B;
 }
 
 body {
-  margin-bottom: 60px;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
 }
+
+.header {
+    background-color: var(--bg-panel);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo-area { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 18px; }
+.logo-icon { background: linear-gradient(135deg, #3B82F6, #8B5CF6); color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+.tabs { display: flex; background-color: var(--bg-base); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color); }
+.tab { padding: 6px 16px; font-size: 14px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-radius: 6px; }
+.tab.active { background-color: var(--bg-panel); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+.container { max-width: 1200px; margin: 20px auto; padding: 0 24px; }
+
+.hero-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+.hero-sub { color: var(--text-secondary); font-size: 15px; margin-bottom: 32px; }
+
+.action-bar { display: flex; justify-content: flex-end; margin-bottom: 24px; }
+.verify-btn { background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; gap: 8px; }
