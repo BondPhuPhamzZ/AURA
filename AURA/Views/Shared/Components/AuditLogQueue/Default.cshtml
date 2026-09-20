@@ -1,0 +1,61 @@
+﻿@model IEnumerable<AURA.Models.ReimbursementRequest>
+
+<div class="audit-log-queue">
+    <h4 class="mb-4 form-header">Lịch Sử Hoạt Động (Audit Log)</h4>
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info feature-card" style="padding: 16px;">Chưa có dữ liệu lịch sử.</div>
+    }
+    else
+    {
+        <div style="overflow-x: auto;">
+            <table class="table-aura">
+                <thead>
+                    <tr>
+                        <th>Mã Đơn</th>
+                        <th>Thời Gian</th>
+                        <th>Trạng Thái</th>
+                        <th>Chi Tiết / Lý Do</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td style="font-family: monospace;">@item.Id.Substring(0, 8)...</td>
+                            <td>@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td>
+                                @if (item.Status == "AUTO_APPROVE")
+                                {
+                                    <span class="badge bg-success">AUTO_APPROVE</span>
+                                }
+                                else if (item.Status == "ESCALATE")
+                                {
+                                    <span class="badge bg-warning text-dark">ESCALATE</span>
+                                }
+                                else if (item.Status == "AI_PROCESSED_SYSTEM_ERROR")
+                                {
+                                    <span class="badge bg-danger">SYSTEM_ERROR</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@item.Status</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.AiReasoning))
+                                {
+                                    <span style="color: var(--colors-body);">@item.AiReasoning</span>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--colors-muted); font-style: italic;">Không có</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
