@@ -1,71 +1,119 @@
 ﻿@{
-    ViewData["Title"] = "Trang Chủ";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="hero-band">
-    <div class="container" style="max-width: 1000px;">
-        <h1 class="hero-title">Nộp Hồ Sơ Hoàn Ứng (Expense Reimbursement)</h1>
-        <p class="hero-subtitle">Hệ thống AI tự động trích xuất Mã số thuế, Đối chiếu chính sách và Duyệt tức thì.</p>
-        <div style="margin-top: 10px; font-size: 14px; color: var(--colors-ink-subtle);">
-            <i class="bi bi-info-circle"></i> Chấp nhận Hóa đơn GTGT, Hóa đơn Grab/Shopee, Bill nhà hàng (PDF/JPG).
+<div style="display: flex; gap: 24px;">
+    <!-- Sidebar -->
+    <div style="width: 280px; flex-shrink: 0;">
+        <div class="feature-card">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--colors-primary); display: flex; align-items: center; justify-content: center; color: white;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1rem;">AURA Workspace</h3>
+                    <div style="color: var(--colors-ink-subtle); font-size: 0.875rem;">Ver. 2.0.1</div>
+                </div>
+            </div>
+            
+            <nav style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="nav-btn active" onclick="switchTab('pane-applicant', this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    Nộp Đơn (Applicant)
+                </button>
+                <button class="nav-btn" onclick="switchTab('pane-reviewer', this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                    Duyệt Đơn (Reviewer)
+                </button>
+                <button class="nav-btn" onclick="switchTab('pane-audit', this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    Lịch Sử (Audit Log)
+                </button>
+            </nav>
         </div>
     </div>
-</div>
 
-<div class="container" style="max-width: 1000px;">
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert feature-card mb-4" style="background-color: var(--badge-red-bg); color: var(--badge-red-text); border-color: var(--badge-red-text);">@TempData["Error"]</div>
-    }
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert feature-card mb-4" style="background-color: var(--badge-green-bg); color: var(--badge-green-text); border-color: var(--badge-green-text);">@TempData["Success"]</div>
-    }
-
-    <div id="auraTabsContent">
-        <!-- Tab Nhân Viên -->
-        <div class="tab-content-pane feature-card" id="pane-applicant" style="display: block;">
-                        <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
-                <button type="button" class="btn btn-success verify-btn-inline" style="display: flex; align-items: center; gap: 8px; font-weight: 500; border-radius: 8px; padding: 10px 20px;" onclick="startVerifyHarness()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
-                    Chạy Verify Harness (90s)
-                </button>
-            </div>
-            <form asp-action="UploadReceipt" method="post" enctype="multipart/form-data" id="uploadForm" onsubmit="return validateAndSubmit()">
-                <!-- Drag and Drop Zone -->
-                <div id="dropzone" class="dropzone-area" onclick="document.getElementById('receiptFile').click()">
-                    <div class="dropzone-icon" style="font-size: 48px; margin-bottom: 16px;">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--colors-primary)" stroke-width="1.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
-                    </div>
-                    <div class="dropzone-text" id="dropzoneText" style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Kéo thả ảnh Hóa Đơn (PDF/JPG) vào đây</div>
-                    <div class="dropzone-subtext" style="color: var(--colors-ink-subtle); font-size: 14px;">hoặc click để chọn file</div>
-                    <input type="file" name="receiptFile" id="receiptFile" accept=".jpg,.png,.pdf" required style="display: none;" onchange="handleFileSelect(this)" />
+    <!-- Main Content -->
+    <div style="flex-grow: 1;">
+        
+        <!-- Tab Applicant / Tester -->
+        <div class="tab-content-pane feature-card active" id="pane-applicant" style="padding: 24px;">
+            
+            <!-- Hướng dẫn & Verify Harness (Top Section) -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--colors-border);">
+                <div style="max-width: 60%;">
+                    <h2 class="hero-title" style="font-size: 1.5rem; margin-bottom: 8px;">Kiểm Thử Tự Động (Verify Harness)</h2>
+                    <p class="hero-sub" style="color: var(--colors-ink-subtle); margin: 0; font-size: 0.95rem;">
+                        Nhấn nút bên phải để AI tự động chạy kiểm thử trên bộ 5 hóa đơn chuẩn hóa. Bạn cũng có thể tải lên 1 hóa đơn thủ công ở khung bên dưới.
+                    </p>
                 </div>
+                <div>
+                    <button type="button" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px; font-weight: 600; border-radius: 8px; padding: 12px 24px;" onclick="startVerifyHarness()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+                        <span id="btnVerifyText">Chạy Verify Harness (90s)</span>
+                    </button>
+                    <form id="verifyFormDummy" action="/Verify/RunHarness" method="post" style="display: none;">
+                        @Html.AntiForgeryToken()
+                    </form>
+                </div>
+            </div>
+
+            <!-- Upload Thủ Công (Middle Section) -->
+            <div style="margin-bottom: 32px;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 16px;">Hoặc tải lên hóa đơn kiểm thử lẻ:</h3>
                 
-                <div class="text-center" style="margin-top: 24px;">
-                    <button type="submit" class="button-primary" id="submitBtn">
-                        <span id="btnText">AI tự động kiểm</span>
-                        <div class="spinner-border spinner-border-sm ms-2" role="status" id="loadingSpinner" style="display: none;">
-                            <span class="visually-hidden">Loading...</span>
+                <form id="uploadForm" action="/Applicant/UploadReceipt" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    
+                    <div class="dropzone" id="dropzone" onclick="document.getElementById('receiptFile').click()">
+                        <input type="file" id="receiptFile" name="receiptFile" accept=".jpg,.jpeg,.png" style="display: none;" onchange="handleFileSelect(this)">
+                        
+                        <div class="dropzone-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                         </div>
+                        <div class="dropzone-text" id="dropzoneText">Kéo thả ảnh hóa đơn vào đây</div>
+                        <div class="dropzone-subtext">Hỗ trợ JPG, PNG (Tối đa 5MB)</div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+                        <button type="button" id="submitBtn" class="btn btn-primary" onclick="submitUpload()" style="padding: 10px 24px; font-weight: 500;">
+                            <span id="btnText">AI tự động kiểm</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Bảng Kết Quả Hợp Nhất (Bottom Section) -->
+            <div id="unifiedResultsSection" style="padding-top: 24px; border-top: 1px solid var(--colors-border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="font-size: 1.25rem; margin: 0;">Bảng Kết Quả Thẩm Định</h3>
+                    <button type="button" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.875rem;" onclick="switchTab('pane-audit', document.querySelectorAll('.nav-btn')[2])">
+                        Xem Lịch Sử
                     </button>
                 </div>
-            </form>
-            
-            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-                <div class="text-center">
-                    <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
-                    <h5 style="color: white;">AI đang đọc hóa đơn...</h5>
-                    <p style="color: var(--colors-ink-subtle);">Vui lòng không đóng trình duyệt.</p>
+                
+                <div style="overflow-x: auto;">
+                    <table class="table-aura">
+                        <thead>
+                            <tr>
+                                <th>Case ID</th>
+                                <th>Image</th>
+                                <th>Expected</th>
+                                <th>Actual</th>
+                                <th>PASS/FAIL</th>
+                                <th>Reasoning & Query</th>
+                                <th>Latency</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                            <tr><td colspan="7" class="text-center" style="color: var(--colors-ink-subtle);">Chưa có dữ liệu. Vui lòng nộp đơn hoặc chạy Verify Harness.</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- Tab Quản Lý -->
+        <!-- Tab Reviewer -->
         <div class="tab-content-pane feature-card" id="pane-reviewer" style="display: none;">
             @await Component.InvokeAsync("EscalationQueue")
         </div>
@@ -74,51 +122,46 @@
         <div class="tab-content-pane feature-card" id="pane-audit" style="display: none;">
             @await Component.InvokeAsync("AuditLogQueue")
         </div>
-        
-        <!-- Tab Verify Harness -->
-        <div class="tab-content-pane feature-card" id="pane-verify" style="display: none; padding: 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
-                <div>
-                    <h2 class="hero-title" style="font-size: 2rem; margin-bottom: 8px;">Verify Harness: Kết Quả Thẩm Định</h2>
-                    <p class="hero-sub" style="color: var(--colors-ink-subtle); margin: 0;">Chạy tự động bộ 5 ca kiểm thử chuẩn hóa.</p>
-                </div>
-            </div>
-
-            <div style="overflow-x: auto; position: relative;">
-                <div id="verifyLoadingOverlay" class="loading-overlay" style="display: none; position: absolute;">
-                    <div class="text-center">
-                        <div class="spinner-border mb-3" style="width: 3rem; height: 3rem; color: var(--colors-primary);" role="status"></div>
-                        <h5 style="color: var(--colors-ink);">AI đang đọc 5 hóa đơn...</h5>
-                        <p style="color: var(--colors-body);">Quá trình này mất khoảng 30s-90s.</p>
-                    </div>
-                </div>
-                
-                <form id="verifyFormDummy" action="/Verify/RunHarness" method="post" style="display: none;">
-                    @Html.AntiForgeryToken()
-                </form>
-
-                <table class="table-aura">
-                    <thead>
-                        <tr>
-                            <th>Case ID</th>
-                            <th>Image</th>
-                            <th>Expected</th>
-                            <th>Actual</th>
-                            <th>PASS/FAIL</th>
-                            <th>Reasoning & Query</th>
-                            <th>Latency</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultsBody">
-                        <tr><td colspan="7" class="text-center" style="color: var(--colors-ink-subtle);">Đang đợi lệnh chạy...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
     </div>
 </div>
 
+<style>
+    /* CSS for skeleton loading animation */
+    .skeleton-row td {
+        position: relative;
+        overflow: hidden;
+    }
+    .skeleton-row td::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+        animation: loading 1.5s infinite;
+    }
+    @@keyframes loading {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    .skeleton-text {
+        height: 16px;
+        background-color: var(--colors-surface-alt);
+        border-radius: 4px;
+        width: 80%;
+    }
+</style>
+
 <script>
+    // Tab switching logic (already present via _Layout, but defining locally just in case)
+    function switchTab(paneId, btnElem) {
+        document.querySelectorAll('.tab-content-pane').forEach(p => p.style.display = 'none');
+        document.getElementById(paneId).style.display = 'block';
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        if(btnElem) btnElem.classList.add('active');
+    }
+
     // Drag & Drop logic for upload
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('receiptFile');
@@ -169,32 +212,107 @@
     }
 
     function updateDropzoneUI(fileName) {
-        dropzoneText.innerHTML = '<div style="color: var(--colors-primary);">' + fileName + '</div>';
+        dropzoneText.innerHTML = '<div style="color: var(--colors-primary); font-weight: 600;">' + fileName + '</div>';
         dropzoneSubtext.innerText = 'Click hoặc kéo thả ảnh khác để thay đổi';
         document.querySelector('.dropzone-icon').innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--colors-primary)" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>';
     }
 
-    function validateAndSubmit() {
+    function getSkeletonRow() {
+        return '<tr class="skeleton-row">' +
+            '<td><div class="skeleton-text" style="width: 40px;"></div></td>' +
+            '<td><div class="skeleton-text" style="width: 100px;"></div></td>' +
+            '<td><div class="skeleton-text" style="width: 80px;"></div></td>' +
+            '<td><div class="skeleton-text" style="width: 80px;"></div></td>' +
+            '<td><div class="skeleton-text" style="width: 50px;"></div></td>' +
+            '<td><div class="skeleton-text" style="width: 100%;"></div><div class="skeleton-text" style="width: 60%; margin-top: 4px;"></div></td>' +
+            '<td><div class="skeleton-text" style="width: 60px;"></div></td>' +
+            '</tr>';
+    }
+
+    function renderResultRow(item) {
+        const passBadge = item.pass ? '<span class="badge bg-success">PASS</span>' : '<span class="badge bg-danger">FAIL</span>';
+        let expectedBadge = '<span class="badge bg-secondary">' + item.expected + '</span>';
+        if(item.expected === 'AUTO_APPROVE') expectedBadge = '<span class="badge bg-success">APPROVE</span>';
+        if(item.expected === 'ESCALATE') expectedBadge = '<span class="badge bg-warning text-dark">ESCALATE</span>';
+        
+        let actualBadge = '<span class="badge bg-secondary">' + item.actual + '</span>';
+        if(item.actual === 'AUTO_APPROVE') actualBadge = '<span class="badge bg-success">APPROVE</span>';
+        if(item.actual === 'ESCALATE') actualBadge = '<span class="badge bg-warning text-dark">ESCALATE</span>';
+        if(item.actual === 'ESCALATE_SYSTEM_ERROR') actualBadge = '<span class="badge bg-danger">SYSTEM_ERROR</span>';
+        
+        return '<tr>' +
+            '<td style="font-family: monospace;">' + (item.caseId ? item.caseId.substring(0,6) : '') + '</td>' +
+            '<td>' + item.image + '</td>' +
+            '<td>' + expectedBadge + '</td>' +
+            '<td>' + actualBadge + '</td>' +
+            '<td>' + passBadge + '</td>' +
+            '<td><strong style="color: var(--colors-ink);">' + item.reason + '</strong><br/><small style="color: var(--colors-ink-subtle);"><i>' + (item.question || '') + '</i></small></td>' +
+            '<td style="font-family: monospace; color: var(--colors-ink-subtle);">' + item.latencyMs + ' ms</td>' +
+        '</tr>';
+    }
+
+    function scrollToResults() {
+        document.getElementById('unifiedResultsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // AJAX Upload Single File
+    async function submitUpload() {
         if (!fileInput.files || fileInput.files.length === 0) {
             alert("Vui lòng tải lên ảnh hóa đơn!");
-            return false;
+            return;
         }
-        document.getElementById('submitBtn').disabled = true;
-        document.getElementById('btnText').innerText = 'Đang xử lý...';
-        document.getElementById('loadingSpinner').style.display = 'inline-block';
-        document.getElementById('loadingOverlay').style.display = 'flex';
-        return true;
+
+        const btn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const originalText = btnText.innerText;
+        
+        btn.disabled = true;
+        btnText.innerText = 'Đang xử lý...';
+        
+        // Show 1 skeleton row
+        document.getElementById('resultsBody').innerHTML = getSkeletonRow();
+        scrollToResults();
+
+        const form = document.getElementById('uploadForm');
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            
+            if (data.error) {
+                document.getElementById('resultsBody').innerHTML = '<tr><td colspan="7" class="text-danger text-center">Lỗi: ' + data.error + '</td></tr>';
+            } else {
+                document.getElementById('resultsBody').innerHTML = renderResultRow(data);
+            }
+        } catch(e) {
+            document.getElementById('resultsBody').innerHTML = '<tr><td colspan="7" class="text-danger text-center">Có lỗi hệ thống: ' + e.message + '</td></tr>';
+        } finally {
+            btn.disabled = false;
+            btnText.innerText = originalText;
+        }
     }
     
-    // Verify Harness logic
-    async function runTests() {
-        const btnHeader = document.querySelector('.verify-btn');
-        const oldText = btnHeader.innerHTML;
-        btnHeader.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Đang chạy...';
-        btnHeader.disabled = true;
+    // Verify Harness logic (AJAX)
+    async function startVerifyHarness() {
+        const btn = document.querySelector('.btn-primary[onclick="startVerifyHarness()"]');
+        const btnText = document.getElementById('btnVerifyText');
+        const originalText = btnText.innerText;
         
-        document.getElementById('verifyLoadingOverlay').style.display = 'flex';
-        document.getElementById('resultsBody').innerHTML = '';
+        btn.disabled = true;
+        btnText.innerText = 'Đang chạy 5 hóa đơn...';
+        
+        // Show 5 skeleton rows
+        let skeletonHtml = '';
+        for(let i=0; i<5; i++) {
+            skeletonHtml += getSkeletonRow();
+        }
+        document.getElementById('resultsBody').innerHTML = skeletonHtml;
+        scrollToResults();
         
         const dummyForm = document.getElementById('verifyFormDummy');
         const formData = new FormData(dummyForm);
@@ -210,33 +328,22 @@
             }
 
             const data = await response.json();
+            
+            if (data.error) {
+                document.getElementById('resultsBody').innerHTML = '<tr><td colspan="7" class="text-danger text-center">Lỗi: ' + data.error + '</td></tr>';
+                return;
+            }
+
             let html = '';
             data.forEach(item => {
-                const passBadge = item.pass ? '<span class="badge bg-success">PASS</span>' : '<span class="badge bg-danger">FAIL</span>';
-                const expectedBadge = item.expected === 'AUTO_APPROVE' ? '<span class="badge bg-success">APPROVE</span>' : '<span class="badge bg-warning text-dark">ESCALATE</span>';
-                
-                let actualBadge = '<span class="badge bg-secondary">' + item.actual + '</span>';
-                if(item.actual === 'AUTO_APPROVE') actualBadge = '<span class="badge bg-success">APPROVE</span>';
-                if(item.actual === 'ESCALATE') actualBadge = '<span class="badge bg-warning text-dark">ESCALATE</span>';
-                if(item.actual === 'ESCALATE_SYSTEM_ERROR') actualBadge = '<span class="badge bg-danger">SYSTEM_ERROR</span>';
-                
-                html += '<tr>' +
-                    '<td style="font-family: monospace;">' + item.caseId + '</td>' +
-                    '<td>' + item.image + '</td>' +
-                    '<td>' + expectedBadge + '</td>' +
-                    '<td>' + actualBadge + '</td>' +
-                    '<td>' + passBadge + '</td>' +
-                    '<td><strong style="color: var(--colors-ink);">' + item.reason + '</strong><br/><small style="color: var(--colors-ink-subtle);"><i>' + (item.question || '') + '</i></small></td>' +
-                    '<td style="font-family: monospace; color: var(--colors-ink-subtle);">' + item.latencyMs + ' ms</td>' +
-                '</tr>';
+                html += renderResultRow(item);
             });
             document.getElementById('resultsBody').innerHTML = html;
         } catch(e) {
             document.getElementById('resultsBody').innerHTML = '<tr><td colspan="7" class="text-danger text-center">Có lỗi xảy ra: ' + e.message + '</td></tr>';
         } finally {
-            btnHeader.innerHTML = oldText;
-            btnHeader.disabled = false;
-            document.getElementById('verifyLoadingOverlay').style.display = 'none';
+            btn.disabled = false;
+            btnText.innerText = originalText;
         }
     }
 </script>

@@ -41,8 +41,7 @@ namespace AURA.Controllers
         {
             if (receiptFile == null || receiptFile.Length == 0)
             {
-                ModelState.AddModelError("", "Vui lòng chọn file hóa đơn hợp lệ.");
-                return View("Index");
+                return Json(new { error = "Vui lòng chọn file hóa đơn hợp lệ." });
             }
 
             // 1. Kiểm tra file
@@ -50,14 +49,12 @@ namespace AURA.Controllers
             var extension = Path.GetExtension(receiptFile.FileName).ToLowerInvariant();
             if (!allowedExtensions.Contains(extension))
             {
-                ModelState.AddModelError("", "Chỉ chấp nhận file ảnh (JPG, PNG).");
-                return View("Index");
+                return Json(new { error = "Chỉ chấp nhận file ảnh (JPG, PNG)." });
             }
 
             if (receiptFile.Length > 5 * 1024 * 1024)
             {
-                ModelState.AddModelError("", "Kích thước file không được vượt quá 5MB.");
-                return View("Index");
+                return Json(new { error = "Kích thước file không được vượt quá 5MB." });
             }
 
             // 2. Lưu ảnh
@@ -114,6 +111,8 @@ namespace AURA.Controllers
         }
     }
 }
+
+
 
 
 
