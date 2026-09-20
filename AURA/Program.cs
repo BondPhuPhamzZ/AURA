@@ -1,5 +1,9 @@
 ﻿using AURA.Interfaces;
 using AURA.Services;
+using AURA.Data;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // Register AURA DI Services
+builder.Services.AddSingleton<IReimbursementRepository, MockReimbursementRepository>();
 builder.Services.AddScoped<IVisualValidator, Gpt4oValidatorService>();
 
 var app = builder.Build();
