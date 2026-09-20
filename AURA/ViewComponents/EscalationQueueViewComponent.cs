@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using AURA.Data;
+using AURA.Interfaces;
 
 namespace AURA.ViewComponents
 {
@@ -15,7 +16,7 @@ namespace AURA.ViewComponents
 
         public async Task<IViewComponentResult> InvokeAsync()
         {
-            var items = _repo.GetAllRequests();
+            var items = await _repo.GetAllRequestsAsync();
             return View(items);
         }
     }

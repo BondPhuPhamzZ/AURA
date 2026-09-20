@@ -59,7 +59,7 @@ namespace AURA.Services
                 var payload = new
                 {
                     model = "gpt-4o",
-                    messages = new[]
+                    messages = new object[]
                     {
                         new
                         {
@@ -162,3 +162,4 @@ namespace AURA.Services
         }
     }
 }
+
