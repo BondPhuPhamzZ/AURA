@@ -60,7 +60,7 @@ namespace AURA.Services
                         new
                         {
                             role = "system",
-                            content = "You are an AI financial auditor. Analyze the receipt image. Output MUST be valid JSON with strictly two fields: 'status' (must be exactly 'AUTO_APPROVE' or 'ESCALATE') and 'reasoning' (a brief explanation in Vietnamese). Rule: Reject if missing Tax ID, or if it contains alcohol."
+                            content = await System.IO.File.ReadAllTextAsync(Path.Combine(_env.WebRootPath, "BUSINESS_RULES.md"))
                         },
                         new
                         {
@@ -127,5 +127,6 @@ namespace AURA.Services
 }
 
         
+
 
 
