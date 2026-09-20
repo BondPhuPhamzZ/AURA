@@ -30,7 +30,7 @@ namespace AURA.Services
         {
             var sw = Stopwatch.StartNew();
             var apiKey = _config["OpenAI:ApiKey"];
-            
+
             if (string.IsNullOrEmpty(apiKey) || apiKey == "sk-mock-key-replace-me") { request.Status = "ESCALATE - ERROR"; request.AiReasoning = "Chưa cấu hình API Key thật!"; sw.Stop(); request.ProcessingLatencyMs = sw.ElapsedMilliseconds; return request; }
 
             try
@@ -47,7 +47,7 @@ namespace AURA.Services
                 // 2. Read to Base64
                 byte[] imageArray = await File.ReadAllBytesAsync(filePath);
                 string base64ImageRepresentation = Convert.ToBase64String(imageArray);
-                
+
                 string extension = Path.GetExtension(filePath).ToLowerInvariant();
                 string mediaType = extension == ".png" ? "image/png" : "image/jpeg";
 
@@ -94,13 +94,13 @@ namespace AURA.Services
                 {
                     using var doc = JsonDocument.Parse(responseString);
                     var contentStr = doc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
-                    
+
                     if (!string.IsNullOrEmpty(contentStr))
                     {
                         using var resultDoc = JsonDocument.Parse(contentStr);
                         request.Status = resultDoc.RootElement.GetProperty("status").GetString() ?? "ESCALATE - ERROR";
                         request.AiReasoning = resultDoc.RootElement.GetProperty("reasoning").GetString() ?? "Lỗi bóc tách JSON từ GPT";
-                        
+
                         if (request.Status.Contains("ESCALATE"))
                         {
                             request.ManagerQuestion = "Hệ thống phát hiện rủi ro. Sếp có duyệt ngoại lệ không? [CÓ/KHÔNG]";
@@ -123,6 +123,8 @@ namespace AURA.Services
             request.ProcessingLatencyMs = sw.ElapsedMilliseconds;
             return request;
         }
+    }
+}
 
         
 
