@@ -1,0 +1,3 @@
+# Runtime receipt evidence is retained by the deployed instance, never committed.
+App_Data/receipts/*
+!App_Data/receipts/.gitkeep

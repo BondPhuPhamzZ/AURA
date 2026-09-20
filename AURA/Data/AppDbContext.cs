@@ -19,6 +19,13 @@ namespace AURA.Data
             // Index for faster queries on status
             modelBuilder.Entity<ReimbursementRequest>()
                 .HasIndex(r => r.Status);
+
+            modelBuilder.Entity<ReimbursementRequest>()
+                .HasIndex(r => r.FileSha256);
+
+            modelBuilder.Entity<ReimbursementRequest>()
+                .Property(r => r.ClaimedAmount)
+                .HasPrecision(18, 2);
         }
     }
 }

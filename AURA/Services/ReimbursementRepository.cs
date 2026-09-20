@@ -18,7 +18,10 @@ namespace AURA.Services
 
         public async Task<List<ReimbursementRequest>> GetAllRequestsAsync()
         {
-            return await _context.ReimbursementRequests.ToListAsync();
+            return await _context.ReimbursementRequests
+                .AsNoTracking()
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
         }
 
         public async Task AddRequestAsync(ReimbursementRequest request)
@@ -36,6 +39,11 @@ namespace AURA.Services
         {
             _context.ReimbursementRequests.Update(request);
             await _context.SaveChangesAsync();
+        }
+
+        public Task<bool> ExistsByFileHashAsync(string sha256)
+        {
+            return _context.ReimbursementRequests.AnyAsync(x => x.FileSha256 == sha256);
         }
     }
 }

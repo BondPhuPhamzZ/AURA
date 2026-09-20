@@ -10,7 +10,24 @@ namespace AURA.Models
         
         public decimal ClaimedAmount { get; set; }
         
-        public string ImageUrl { get; set; }
+        [Required, StringLength(500)]
+        public string ImageUrl { get; set; } = string.Empty;
+
+        [Required, StringLength(255)]
+        public string OriginalFileName { get; set; } = string.Empty;
+
+        [Required, StringLength(255)]
+        public string StoredFileName { get; set; } = string.Empty;
+
+        [Required, StringLength(100)]
+        public string ContentType { get; set; } = string.Empty;
+
+        public long FileSizeBytes { get; set; }
+
+        [Required, StringLength(64)]
+        public string FileSha256 { get; set; } = string.Empty;
+
+        public string? ExtractedFactsJson { get; set; }
         
         public string Status { get; set; } = "PENDING"; // PENDING, ESCALATE, AUTO_APPROVE, REJECTED
         
