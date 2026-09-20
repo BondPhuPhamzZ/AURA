@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<AURA.Models.ReimbursementRequest>
 
 <div class="escalation-queue">
-    <h4 class="mb-4" style="color: var(--colors-ink);">Danh Sách Cần Sếp Duyệt</h4>
+    <h4 class="mb-4 form-header">Danh Sách Cần Sếp Duyệt</h4>
     @if (Model == null || !Model.Any())
     {
         <div class="alert alert-info feature-card" style="padding: 16px;">Hiện không có ca nào cần duyệt.</div>
@@ -24,9 +24,9 @@
                     {
                         <tr>
                             <td style="font-family: monospace;">@item.Id.Substring(0, 8)...</td>
-                            <td>@item.EmployeeName</td>
+                            <td style="font-weight: 500;">@item.EmployeeName</td>
                             <td style="font-weight: 500;">@item.ClaimedAmount.ToString("N0") VND</td>
-                            <td><span style="color: #f87171;">@item.AiReasoning</span></td>
+                            <td><span style="color: #b91c1c;">@item.AiReasoning</span></td>
                             <td>
                                 <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline">
                                     <input type="hidden" name="id" value="@item.Id" />

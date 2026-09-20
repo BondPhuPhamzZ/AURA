@@ -32,7 +32,7 @@ namespace AURA.Controllers
         public async Task<IActionResult> RunHarness()
         {
             var results = new List<object>();
-            var expectedJsonPath = Path.Combine(_env.ContentRootPath, "test_data", "expected-results.json");
+            var expectedJsonPath = Path.Combine(_env.WebRootPath, "test_data", "expected-results.json");
             
             if (!System.IO.File.Exists(expectedJsonPath)) return Json(new { error = "Không tìm thấy expected-results.json" });
 
@@ -92,5 +92,6 @@ namespace AURA.Controllers
         }
     }
 }
+
 
 

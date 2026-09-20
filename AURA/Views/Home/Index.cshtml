@@ -3,8 +3,10 @@
 }
 
 <div class="hero-band">
-    <h1 class="hero-title">AURA Approval System</h1>
-    <p class="hero-subtitle">Zero-Cloud Exposure. Deterministic AI Processing.</p>
+    <div class="container" style="max-width: 900px;">
+        <h1 class="hero-title">AURA Approval System</h1>
+        <p class="hero-subtitle">Zero-Cloud Exposure. Deterministic AI Processing.</p>
+    </div>
 </div>
 
 <div class="container" style="max-width: 900px;">
@@ -17,7 +19,7 @@
         <div class="alert alert-success feature-card mb-4">@TempData["Success"]</div>
     }
 
-    <!-- Tabs chuẩn Vercel -->
+    <!-- Tabs chuẩn Airtable -->
     <ul class="nav nav-tabs aura-nav-pills" id="auraTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="applicant-tab" data-bs-toggle="tab" data-bs-target="#applicant" type="button" role="tab">Nộp Đơn (Nhân Viên)</button>
@@ -30,15 +32,43 @@
     <div class="tab-content" id="auraTabsContent">
         <!-- Tab Nhân Viên -->
         <div class="tab-pane fade show active feature-card" id="applicant" role="tabpanel">
-            <h4 class="mb-4" style="color: var(--colors-ink);">Tạo Đơn Thanh Toán</h4>
+            <h4 class="mb-4 form-header">Tạo Đơn Thanh Toán</h4>
             
-            <form asp-controller="Applicant" asp-action="UploadReceipt" method="post" enctype="multipart/form-data">
+            <form asp-controller="Applicant" asp-action="UploadReceipt" method="post" enctype="multipart/form-data" id="uploadForm" onsubmit="showLoading()">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Mã Nhân Viên</label>
+                        <input type="text" name="employeeId" class="text-input" value="EMP001" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Tên Nhân Viên</label>
+                        <input type="text" name="employeeName" class="text-input" value="Nguyễn Văn A" required />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Số Tiền Cần Thanh Toán (VND)</label>
+                    <input type="number" name="claimedAmount" class="text-input" value="150000" required />
+                </div>
                 <div class="mb-4">
                     <label class="form-label">Tải ảnh hóa đơn (.jpg, .png)</label>
                     <input type="file" name="receiptFile" class="text-input" accept=".jpg,.png" required />
                 </div>
-                <button type="submit" class="button-primary">Chạy AI Verify (Gửi Đơn)</button>
+                
+                <button type="submit" class="button-primary" id="submitBtn">
+                    <span id="btnText">Chạy AI Verify (Gửi Đơn)</span>
+                    <div class="spinner-border spinner-border-sm ms-2" role="status" id="loadingSpinner" style="display: none;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </button>
             </form>
+            
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+                    <h5 style="color: var(--colors-ink);">AI đang đọc hóa đơn...</h5>
+                    <p style="color: var(--colors-body);">Vui lòng không đóng trình duyệt.</p>
+                </div>
+            </div>
         </div>
 
         <!-- Tab Quản Lý -->
@@ -47,3 +77,12 @@
         </div>
     </div>
 </div>
+
+<script>
+    function showLoading() {
+        document.getElementById('submitBtn').disabled = true;
+        document.getElementById('btnText').innerText = 'Đang xử lý...';
+        document.getElementById('loadingSpinner').style.display = 'inline-block';
+        document.getElementById('loadingOverlay').style.display = 'flex';
+    }
+</script>
