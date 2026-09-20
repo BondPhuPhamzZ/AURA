@@ -11,6 +11,11 @@ using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Keep logging portable across Windows development, containers and cloud hosts.
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
 // Đăng ký Services
 builder.Services.AddControllersWithViews();
 builder.Services.AddOptions<GeminiOptions>()
@@ -47,7 +52,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseStaticFiles();
 
 app.UseRouting();
