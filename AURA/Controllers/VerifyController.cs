@@ -16,14 +16,16 @@ namespace AURA.Controllers
     {
         private readonly IVisionExtractor _vision;
         private readonly IWebHostEnvironment _env;
+        private readonly IReimbursementRepository _repo;
+        private readonly IAuditLogger _audit;
 
-        public VerifyController(IVisionExtractor vision, IWebHostEnvironment env)
+        public VerifyController(IVisionExtractor vision, IWebHostEnvironment env, IReimbursementRepository repo, IAuditLogger audit)
         {
             _vision = vision;
             _env = env;
+            _repo = repo;
+            _audit = audit;
         }
-
-        
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -52,16 +54,33 @@ namespace AURA.Controllers
                     if (System.IO.File.Exists(imagePath)) System.IO.File.Copy(imagePath, tempWebPath, true);
 
                     var facts = await _vision.ExtractFactsAsync("/temp_test/" + testCase.ImageName);
-                    var decision = PolicyDecisionEngine.Evaluate(facts, 500000); // Dummy 500k for test
+                    var decision = PolicyDecisionEngine.Evaluate(facts, 500000);
 
                     actualStatus = decision.Status;
                     reason = decision.Reason;
                     question = decision.ManagerQuestion;
+                    
+                    // Save to DB
+                    var req = new ReimbursementRequest {
+                        Id = Guid.NewGuid().ToString(),
+                        ClaimedAmount = 500000,
+                        ImageUrl = "/temp_test/" + testCase.ImageName,
+                        CreatedAt = DateTime.UtcNow,
+                        Status = actualStatus,
+                        AiReasoning = reason,
+                        ManagerQuestion = question,
+                        ProcessingLatencyMs = sw.ElapsedMilliseconds
+                    };
+                    await _repo.AddRequestAsync(req);
+                    await _audit.LogActionAsync(req.Id, $"AI_PROCESSED_{actualStatus}", $"[HARNESS] Reason: {reason}");
                 }
                 catch (Exception ex)
                 {
                     actualStatus = "ESCALATE_SYSTEM_ERROR";
                     reason = ex.Message;
+                    
+                    var reqId = Guid.NewGuid().ToString();
+                    await _audit.LogActionAsync(reqId, $"AI_PROCESSED_SYSTEM_ERROR", $"[HARNESS] Error: {ex.Message}");
                 }
 
                 sw.Stop();
@@ -81,14 +100,5 @@ namespace AURA.Controllers
 
             return Json(results);
         }
-
-
     }
 }
-
-
-
-
-
-
-

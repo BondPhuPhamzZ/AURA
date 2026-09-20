@@ -25,7 +25,13 @@
     <div id="auraTabsContent">
         <!-- Tab Nhân Viên -->
         <div class="tab-content-pane feature-card" id="pane-applicant" style="display: block;">
-            <form asp-controller="Applicant" asp-action="UploadReceipt" method="post" enctype="multipart/form-data" id="uploadForm" onsubmit="return validateAndSubmit()">
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+                <button type="button" class="btn btn-success verify-btn-inline" style="display: flex; align-items: center; gap: 8px; font-weight: 500; border-radius: 8px; padding: 10px 20px;" onclick="startVerifyHarness()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+                    Chạy Verify Harness (90s)
+                </button>
+            </div>
+            <form asp-action="UploadReceipt" method="post" enctype="multipart/form-data" id="uploadForm" onsubmit="return validateAndSubmit()">
                 <!-- Drag and Drop Zone -->
                 <div id="dropzone" class="dropzone-area" onclick="document.getElementById('receiptFile').click()">
                     <div class="dropzone-icon" style="font-size: 48px; margin-bottom: 16px;">
@@ -42,7 +48,7 @@
                 
                 <div class="text-center" style="margin-top: 24px;">
                     <button type="submit" class="button-primary" id="submitBtn">
-                        <span id="btnText">Chạy AI Tự Động Tạo Đơn</span>
+                        <span id="btnText">AI tự động kiểm</span>
                         <div class="spinner-border spinner-border-sm ms-2" role="status" id="loadingSpinner" style="display: none;">
                             <span class="visually-hidden">Loading...</span>
                         </div>
@@ -234,3 +240,4 @@
         }
     }
 </script>
+
