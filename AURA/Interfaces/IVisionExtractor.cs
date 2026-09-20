@@ -5,6 +5,6 @@ namespace AURA.Interfaces
 {
     public interface IVisionExtractor
     {
-        Task<ReceiptExtractionDto> ExtractFactsAsync(string imagePath);
+        Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath, CancellationToken cancellationToken = default);
     }
 }

@@ -1,115 +1,145 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Net.Http;
-using System.Text;
+using System.Net.Http.Json;
 using System.Text.Json;
-using System.Threading.Tasks;
 using AURA.Interfaces;
 using AURA.Models;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
+using AURA.Options;
+using Microsoft.Extensions.Options;
 
-namespace AURA.Services
+namespace AURA.Services;
+
+public sealed class GeminiVisionExtractorService : IVisionExtractor
 {
-    public class GeminiVisionExtractorService : IVisionExtractor
+    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+    private readonly HttpClient _httpClient;
+    private readonly GeminiOptions _options;
+    private readonly IWebHostEnvironment _environment;
+    private readonly ILogger<GeminiVisionExtractorService> _logger;
+
+    public GeminiVisionExtractorService(HttpClient httpClient, IOptions<GeminiOptions> options,
+        IWebHostEnvironment environment, ILogger<GeminiVisionExtractorService> logger)
     {
-        private readonly HttpClient _httpClient;
-        private readonly IConfiguration _config;
-        private readonly IWebHostEnvironment _env;
-
-        public GeminiVisionExtractorService(HttpClient httpClient, IConfiguration config, IWebHostEnvironment env)
-        {
-            _httpClient = httpClient;
-            _config = config;
-            _env = env;
-        }
-
-        public async Task<ReceiptExtractionDto> ExtractFactsAsync(string imagePath)
-        {
-            var apiKey = _config["Gemini:ApiKey"];
-            if (string.IsNullOrEmpty(apiKey))
-            {
-                throw new Exception("Chưa cấu hình Gemini:ApiKey trong Secret Manager.");
-            }
-
-            var fullPath = Path.Combine(_env.WebRootPath, imagePath.TrimStart('/'));
-            if (!File.Exists(fullPath))
-            {
-                throw new FileNotFoundException("Không tìm thấy file ảnh", fullPath);
-            }
-
-            byte[] imageArray = await File.ReadAllBytesAsync(fullPath);
-            string base64Image = Convert.ToBase64String(imageArray);
-            string extension = Path.GetExtension(fullPath).ToLowerInvariant();
-            string mimeType = extension == ".png" ? "image/png" : "image/jpeg";
-
-            var businessRulesPath = Path.Combine(_env.WebRootPath, "BUSINESS_RULES.md");
-            string promptText;
-            if (File.Exists(businessRulesPath))
-            {
-                promptText = await File.ReadAllTextAsync(businessRulesPath);
-            }
-            else
-            {
-                promptText = "Analyze this receipt image. Return only valid JSON. Do not include markdown or text outside the JSON object.";
-            }
-
-            var payload = new
-            {
-                contents = new[]
-                {
-                    new
-                    {
-                        parts = new object[]
-                        {
-                            new { text = promptText },
-                            new
-                            {
-                                inlineData = new
-                                {
-                                    mimeType = mimeType,
-                                    data = base64Image
-                                }
-                            }
-                        }
-                    }
-                },
-                generationConfig = new
-                {
-                    responseMimeType = "application/json"
-                }
-            };
-
-            var requestContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={apiKey}";
-            
-            var response = await _httpClient.PostAsync(url, requestContent);
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"Gemini API Error: {response.StatusCode} - {responseString}");
-            }
-
-            using var doc = JsonDocument.Parse(responseString);
-            var candidates = doc.RootElement.GetProperty("candidates");
-            if (candidates.GetArrayLength() == 0) throw new Exception("No response from Gemini.");
-            
-            var text = candidates[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString();
-            
-            // Clean up potential markdown formatting if Gemini ignored the prompt instruction
-            if (text.StartsWith("`json"))
-            {
-                text = text.Replace("`json", "").Replace("`", "").Trim();
-            }
-
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            return JsonSerializer.Deserialize<ReceiptExtractionDto>(text, options);
-        }
+        _httpClient = httpClient;
+        _options = options.Value;
+        _environment = environment;
+        _logger = logger;
     }
+
+    public async Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(_options.ApiKey))
+            throw new InvalidOperationException("Gemini API chưa được cấu hình. Hãy đặt secret 'Gemini:ApiKey'.");
+
+        var fullImagePath = Path.GetFullPath(physicalImagePath);
+        if (!File.Exists(fullImagePath))
+            throw new FileNotFoundException("Không tìm thấy ảnh hóa đơn cần phân tích.", fullImagePath);
+
+        var contentRoot = Path.GetFullPath(_environment.ContentRootPath);
+        var policyPath = Path.GetFullPath(Path.Combine(contentRoot, _options.PolicyPath));
+        if (!policyPath.StartsWith(contentRoot, StringComparison.OrdinalIgnoreCase) || !File.Exists(policyPath))
+            throw new InvalidOperationException($"Không tìm thấy tài liệu chính sách bắt buộc tại '{_options.PolicyPath}'.");
+
+        var imageBytes = await File.ReadAllBytesAsync(fullImagePath, cancellationToken);
+        var policy = await File.ReadAllTextAsync(policyPath, cancellationToken);
+        var payload = new
+        {
+            systemInstruction = new { parts = new[] { new { text = policy } } },
+            contents = new[]
+            {
+                new
+                {
+                    role = "user",
+                    parts = new object[]
+                    {
+                        new { text = "Trích xuất dữ kiện từ ảnh hóa đơn này. Không tự đưa ra quyết định duyệt hay chuyển tiếp." },
+                        new { inlineData = new { mimeType = GetMimeType(fullImagePath), data = Convert.ToBase64String(imageBytes) } }
+                    }
+                }
+            },
+            generationConfig = new
+            {
+                temperature = 0,
+                maxOutputTokens = 4096,
+                responseMimeType = "application/json",
+                responseJsonSchema = BuildResponseSchema(),
+                thinkingConfig = new { thinkingLevel = "LOW" }
+            }
+        };
+
+        using var request = new HttpRequestMessage(HttpMethod.Post,
+            $"models/{Uri.EscapeDataString(_options.Model)}:generateContent");
+        request.Headers.Add("x-goog-api-key", _options.ApiKey);
+        request.Content = JsonContent.Create(payload);
+
+        using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        var responseText = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogWarning("Gemini returned HTTP {StatusCode}.", (int)response.StatusCode);
+            throw new InvalidOperationException($"Gemini không xử lý được yêu cầu (HTTP {(int)response.StatusCode}).");
+        }
+
+        using var responseDocument = JsonDocument.Parse(responseText);
+        var root = responseDocument.RootElement;
+        if (root.TryGetProperty("promptFeedback", out var feedback) &&
+            feedback.TryGetProperty("blockReason", out var blockReason))
+            throw new InvalidOperationException($"Gemini đã từ chối đầu vào: {blockReason.GetString()}.");
+
+        if (!root.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
+            throw new InvalidOperationException("Gemini không trả về kết quả trích xuất.");
+
+        var candidate = candidates[0];
+        if (candidate.TryGetProperty("finishReason", out var finishReason) &&
+            finishReason.GetString() is not ("STOP" or "MAX_TOKENS"))
+            throw new InvalidOperationException($"Gemini dừng bất thường: {finishReason.GetString() ?? "không rõ"}.");
+
+        if (!candidate.TryGetProperty("content", out var content) ||
+            !content.TryGetProperty("parts", out var parts) || parts.GetArrayLength() == 0 ||
+            !parts[0].TryGetProperty("text", out var textElement))
+            throw new InvalidOperationException("Phản hồi Gemini không chứa JSON trích xuất.");
+
+        var facts = JsonSerializer.Deserialize<ReceiptExtractionDto>(textElement.GetString() ?? string.Empty, JsonOptions)
+            ?? throw new InvalidOperationException("Không thể đọc JSON do Gemini trả về.");
+        facts.LineItems ??= [];
+        facts.MissingFields ??= [];
+        facts.Warnings ??= [];
+        facts.SuspiciousSignals ??= [];
+        facts.Confidence = Math.Clamp(facts.Confidence, 0, 1);
+        return facts;
+    }
+
+    private static string GetMimeType(string filePath) => Path.GetExtension(filePath).ToLowerInvariant() switch
+    {
+        ".png" => "image/png",
+        ".jpg" or ".jpeg" => "image/jpeg",
+        _ => throw new InvalidOperationException("Định dạng ảnh không được hỗ trợ.")
+    };
+
+    private static object BuildResponseSchema() => new
+    {
+        type = "object",
+        additionalProperties = false,
+        required = new[] { "documentType", "merchantName", "taxId", "bookingId", "invoiceNumber",
+            "invoiceDate", "invoiceTime", "currency", "subtotal", "tax", "totalAmount", "lineItems",
+            "missingFields", "warnings", "suspiciousSignals", "confidence" },
+        properties = new Dictionary<string, object>
+        {
+            ["documentType"] = NullableString(), ["merchantName"] = NullableString(),
+            ["taxId"] = NullableString(), ["bookingId"] = NullableString(),
+            ["invoiceNumber"] = NullableString(), ["invoiceDate"] = NullableString(),
+            ["invoiceTime"] = NullableString(), ["currency"] = NullableString(),
+            ["subtotal"] = NullableNumber(), ["tax"] = NullableNumber(), ["totalAmount"] = NullableNumber(),
+            ["lineItems"] = new { type = "array", items = new { type = "object", additionalProperties = false,
+                required = new[] { "description", "quantity", "unitPrice", "amount" },
+                properties = new Dictionary<string, object> { ["description"] = new { type = "string" },
+                    ["quantity"] = NullableNumber(), ["unitPrice"] = NullableNumber(), ["amount"] = NullableNumber() } } },
+            ["missingFields"] = StringArray(), ["warnings"] = StringArray(),
+            ["suspiciousSignals"] = StringArray(),
+            ["confidence"] = new { type = "number", minimum = 0, maximum = 1 }
+        }
+    };
+
+    private static object NullableString() => new { type = new[] { "string", "null" } };
+    private static object NullableNumber() => new { type = new[] { "number", "null" } };
+    private static object StringArray() => new { type = "array", items = new { type = "string" } };
 }
-
-
-
-
