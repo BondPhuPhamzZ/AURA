@@ -1,0 +1,117 @@
+using AURA.Models;
+using AURA.Services;
+using Xunit;
+
+namespace AURA.Tests;
+
+public sealed class PolicyDecisionEngineTests
+{
+    private static readonly DateTime Now = new(2026, 9, 20, 0, 0, 0, DateTimeKind.Utc);
+
+    [Fact]
+    public void Ordinary_valid_receipt_is_auto_approved()
+    {
+        Assert.Equal("AUTO_APPROVE", Decide(ValidFacts()).Status);
+    }
+
+    [Fact]
+    public void Null_extraction_is_fact_escalation()
+    {
+        Assert.Equal("ESCALATE_FACT", PolicyDecisionEngine.Evaluate(null, 150_000, utcNow: Now).Status);
+    }
+
+    [Theory]
+    [InlineData("low-confidence")]
+    [InlineData("missing-total")]
+    [InlineData("amount-mismatch")]
+    [InlineData("missing-merchant")]
+    [InlineData("missing-invoice-number")]
+    [InlineData("missing-tax-id")]
+    [InlineData("unsupported-currency")]
+    [InlineData("invalid-date")]
+    [InlineData("future-date")]
+    [InlineData("stale-date")]
+    [InlineData("weekend")]
+    [InlineData("late-night")]
+    [InlineData("blurred")]
+    public void Uncertain_or_unverifiable_evidence_is_fact_escalation(string scenario)
+    {
+        var facts = ValidFacts();
+        var claimedAmount = 150_000m;
+        switch (scenario)
+        {
+            case "low-confidence": facts.Confidence = 0.5; break;
+            case "missing-total": facts.TotalAmount = null; break;
+            case "amount-mismatch": claimedAmount = 151_000; break;
+            case "missing-merchant": facts.MerchantName = null; break;
+            case "missing-invoice-number": facts.InvoiceNumber = null; break;
+            case "missing-tax-id": facts.TaxId = null; break;
+            case "unsupported-currency": facts.Currency = "USD"; break;
+            case "invalid-date": facts.InvoiceDate = "18/09/26"; break;
+            case "future-date": facts.InvoiceDate = "2026-09-25"; break;
+            case "stale-date": facts.InvoiceDate = "2026-01-02"; break;
+            case "weekend": facts.InvoiceDate = "2026-09-19"; break;
+            case "late-night": facts.InvoiceTime = "23:30"; break;
+            case "blurred": facts.Warnings.Add("blurry total"); break;
+        }
+
+        Assert.Equal("ESCALATE_FACT", Decide(facts, claimedAmount).Status);
+    }
+
+    [Fact]
+    public void Duplicate_image_is_fact_escalation()
+    {
+        Assert.Equal("ESCALATE_FACT", PolicyDecisionEngine.Evaluate(ValidFacts(), 150_000, true, Now).Status);
+    }
+
+    [Theory]
+    [InlineData("Tiger Beer")]
+    [InlineData("Thuốc lá")]
+    [InlineData("Karaoke client event")]
+    [InlineData("Personal item")]
+    public void Prohibited_item_is_policy_escalation(string item)
+    {
+        var facts = ValidFacts();
+        facts.LineItems = [new ReceiptLineItem { Description = item, Amount = 150_000 }];
+
+        Assert.Equal("ESCALATE_POLICY", Decide(facts).Status);
+    }
+
+    [Fact]
+    public void Reliable_receipt_over_limit_is_authority_escalation()
+    {
+        var facts = ValidFacts();
+        facts.TotalAmount = 1_000_001;
+
+        Assert.Equal("ESCALATE_AUTHORITY", Decide(facts, 1_000_001).Status);
+    }
+
+    [Fact]
+    public void Fact_uncertainty_has_priority_over_policy_and_authority()
+    {
+        var facts = ValidFacts();
+        facts.Confidence = 0.4;
+        facts.TotalAmount = 2_000_000;
+        facts.LineItems = [new ReceiptLineItem { Description = "Tiger Beer", Amount = 2_000_000 }];
+
+        Assert.Equal("ESCALATE_FACT", Decide(facts, 2_000_000).Status);
+    }
+
+    private static (string Status, string Reason, string ManagerQuestion) Decide(
+        ReceiptExtractionDto facts, decimal claimedAmount = 150_000) =>
+        PolicyDecisionEngine.Evaluate(facts, claimedAmount, utcNow: Now);
+
+    private static ReceiptExtractionDto ValidFacts() => new()
+    {
+        DocumentType = "VAT_INVOICE",
+        MerchantName = "AURA Taxi",
+        TaxId = "0312345678",
+        InvoiceNumber = "AA/26E-000001",
+        InvoiceDate = "2026-09-18",
+        InvoiceTime = "09:00",
+        Currency = "VND",
+        TotalAmount = 150_000,
+        Confidence = 0.98,
+        LineItems = [new ReceiptLineItem { Description = "Business taxi trip", Amount = 150_000 }]
+    };
+}
