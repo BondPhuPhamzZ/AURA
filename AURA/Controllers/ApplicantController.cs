@@ -23,6 +23,7 @@ namespace AURA.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadReceipt(IFormFile receiptFile)
         {
             if (receiptFile == null || receiptFile.Length == 0)
@@ -63,3 +64,4 @@ namespace AURA.Controllers
         }
     }
 }
+

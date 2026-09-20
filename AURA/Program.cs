@@ -19,6 +19,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Register AURA DI Services
 builder.Services.AddScoped<IReimbursementRepository, ReimbursementRepository>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<IVisualValidator, Gpt4oValidatorService>();
 
 var app = builder.Build();
@@ -42,3 +43,4 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 app.Run();
+

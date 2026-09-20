@@ -16,6 +16,7 @@ namespace AURA.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> EscalateAction(string id, string decision)
         {
             var req = await _repo.GetRequestByIdAsync(id);
@@ -39,3 +40,4 @@ namespace AURA.Controllers
         }
     }
 }
+
