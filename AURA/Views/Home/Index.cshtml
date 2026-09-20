@@ -4,10 +4,10 @@
 
 <div class="hero-band">
     <div class="container" style="max-width: 1000px;">
-        <h1 class="hero-title">AURA Approval System</h1>
-        <p class="hero-subtitle">Zero-Cloud Exposure. Hỗ trợ bóc tách hóa đơn tự động 100%.</p>
-        <div style="margin-top: 10px; font-size: 14px; color: var(--colors-muted);">
-            <i class="bi bi-info-circle"></i> Hướng dẫn test: Kéo thả ảnh hóa đơn vào vùng bên dưới. Hệ thống sẽ tự động đối soát và lưu vào Lịch sử. Giám khảo có thể dùng tab Verify Harness để test đồng loạt.
+        <h1 class="hero-title">Nộp Hồ Sơ Hoàn Ứng (Expense Reimbursement)</h1>
+        <p class="hero-subtitle">Hệ thống AI tự động trích xuất Mã số thuế, Đối chiếu chính sách và Duyệt tức thì.</p>
+        <div style="margin-top: 10px; font-size: 14px; color: var(--colors-ink-subtle);">
+            <i class="bi bi-info-circle"></i> Chấp nhận Hóa đơn GTGT, Hóa đơn Grab/Shopee, Bill nhà hàng (PDF/JPG).
         </div>
     </div>
 </div>
@@ -15,46 +15,33 @@
 <div class="container" style="max-width: 1000px;">
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger feature-card mb-4">@TempData["Error"]</div>
+        <div class="alert feature-card mb-4" style="background-color: var(--badge-red-bg); color: var(--badge-red-text); border-color: var(--badge-red-text);">@TempData["Error"]</div>
     }
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success feature-card mb-4">@TempData["Success"]</div>
+        <div class="alert feature-card mb-4" style="background-color: var(--badge-green-bg); color: var(--badge-green-text); border-color: var(--badge-green-text);">@TempData["Success"]</div>
     }
 
-    <!-- Tabs chuẩn Airtable -->
-    <ul class="nav nav-tabs aura-nav-pills" id="auraTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="applicant-tab" data-bs-toggle="tab" data-bs-target="#applicant" type="button" role="tab">Nộp Đơn (Nhân Viên)</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="reviewer-tab" data-bs-toggle="tab" data-bs-target="#reviewer" type="button" role="tab">Quản Lý (Cấp Trên)</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button" role="tab">Lịch Sử (Audit Log)</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="verify-tab" data-bs-toggle="tab" data-bs-target="#verify" type="button" role="tab">Verify Harness (Dev)</button>
-        </li>
-    </ul>
-
-    <div class="tab-content" id="auraTabsContent">
+    <div id="auraTabsContent">
         <!-- Tab Nhân Viên -->
-        <div class="tab-pane fade show active feature-card" id="applicant" role="tabpanel">
-            <h4 class="mb-4 form-header" style="text-align: center;">Tạo Đơn Thanh Toán Tự Động</h4>
-            <p style="text-align: center; color: var(--colors-muted); margin-bottom: 30px;">Hệ thống AI sẽ bóc tách và tạo đơn hoàn toàn tự động, bạn không cần nhập thêm thông tin.</p>
-            
+        <div class="tab-content-pane feature-card" id="pane-applicant" style="display: block;">
             <form asp-controller="Applicant" asp-action="UploadReceipt" method="post" enctype="multipart/form-data" id="uploadForm" onsubmit="return validateAndSubmit()">
                 <!-- Drag and Drop Zone -->
-                <div id="dropzone" class="dropzone-area" style="padding: 80px 20px; font-size: 1.1rem; border-width: 3px;" onclick="document.getElementById('receiptFile').click()">
-                    <div class="dropzone-icon" style="font-size: 64px;">☁️</div>
-                    <div class="dropzone-text" id="dropzoneText">Kéo & Thả ảnh hóa đơn vào đây</div>
-                    <div class="dropzone-subtext">hoặc click để chọn file (.jpg, .png)</div>
-                    <input type="file" name="receiptFile" id="receiptFile" accept=".jpg,.png" required style="display: none;" onchange="handleFileSelect(this)" />
+                <div id="dropzone" class="dropzone-area" onclick="document.getElementById('receiptFile').click()">
+                    <div class="dropzone-icon" style="font-size: 48px; margin-bottom: 16px;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--colors-primary)" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <div class="dropzone-text" id="dropzoneText" style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Kéo thả ảnh Hóa Đơn (PDF/JPG) vào đây</div>
+                    <div class="dropzone-subtext" style="color: var(--colors-ink-subtle); font-size: 14px;">hoặc click để chọn file</div>
+                    <input type="file" name="receiptFile" id="receiptFile" accept=".jpg,.png,.pdf" required style="display: none;" onchange="handleFileSelect(this)" />
                 </div>
                 
-                <div class="text-center">
-                    <button type="submit" class="button-primary" id="submitBtn" style="padding: 12px 32px; font-size: 16px;">
+                <div class="text-center" style="margin-top: 24px;">
+                    <button type="submit" class="button-primary" id="submitBtn">
                         <span id="btnText">Chạy AI Tự Động Tạo Đơn</span>
                         <div class="spinner-border spinner-border-sm ms-2" role="status" id="loadingSpinner" style="display: none;">
                             <span class="visually-hidden">Loading...</span>
@@ -66,34 +53,67 @@
             <div id="loadingOverlay" class="loading-overlay" style="display: none;">
                 <div class="text-center">
                     <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
-                    <h5 style="color: var(--colors-ink);">AI đang đọc hóa đơn...</h5>
-                    <p style="color: var(--colors-body);">Vui lòng không đóng trình duyệt.</p>
+                    <h5 style="color: white;">AI đang đọc hóa đơn...</h5>
+                    <p style="color: var(--colors-ink-subtle);">Vui lòng không đóng trình duyệt.</p>
                 </div>
             </div>
         </div>
 
         <!-- Tab Quản Lý -->
-        <div class="tab-pane fade feature-card" id="reviewer" role="tabpanel">
+        <div class="tab-content-pane feature-card" id="pane-reviewer" style="display: none;">
             @await Component.InvokeAsync("EscalationQueue")
         </div>
 
         <!-- Tab Audit Log -->
-        <div class="tab-pane fade feature-card" id="audit" role="tabpanel">
+        <div class="tab-content-pane feature-card" id="pane-audit" style="display: none;">
             @await Component.InvokeAsync("AuditLogQueue")
         </div>
         
-        <!-- Tab Verify -->
-        <div class="tab-pane fade feature-card" id="verify" role="tabpanel">
-            <h4 class="mb-4 form-header">Hệ Thống Kiểm Thử (Verify Harness)</h4>
-            <p>Module này tự động quét các file ảnh trong thư mục test và so sánh kết quả xử lý của AI với kết quả kỳ vọng.</p>
-            <form action="/Verify/RunVerify" method="post" id="verifyForm">
-                <button type="submit" class="button-primary" id="btnRunVerify">Chạy 5 Ca Kiểm Thử Tự Động</button>
-            </form>
+        <!-- Tab Verify Harness -->
+        <div class="tab-content-pane feature-card" id="pane-verify" style="display: none; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+                <div>
+                    <h2 class="hero-title" style="font-size: 2rem; margin-bottom: 8px;">Verify Harness: Kết Quả Thẩm Định</h2>
+                    <p class="hero-sub" style="color: var(--colors-ink-subtle); margin: 0;">Chạy tự động bộ 5 ca kiểm thử chuẩn hóa.</p>
+                </div>
+            </div>
+
+            <div style="overflow-x: auto; position: relative;">
+                <div id="verifyLoadingOverlay" class="loading-overlay" style="display: none; position: absolute;">
+                    <div class="text-center">
+                        <div class="spinner-border mb-3" style="width: 3rem; height: 3rem; color: var(--colors-primary);" role="status"></div>
+                        <h5 style="color: var(--colors-ink);">AI đang đọc 5 hóa đơn...</h5>
+                        <p style="color: var(--colors-body);">Quá trình này mất khoảng 30s-90s.</p>
+                    </div>
+                </div>
+                
+                <form id="verifyFormDummy" action="/Verify/RunHarness" method="post" style="display: none;">
+                    @Html.AntiForgeryToken()
+                </form>
+
+                <table class="table-aura">
+                    <thead>
+                        <tr>
+                            <th>Case ID</th>
+                            <th>Image</th>
+                            <th>Expected</th>
+                            <th>Actual</th>
+                            <th>PASS/FAIL</th>
+                            <th>Reasoning & Query</th>
+                            <th>Latency</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody">
+                        <tr><td colspan="7" class="text-center" style="color: var(--colors-ink-subtle);">Đang đợi lệnh chạy...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+    // Drag & Drop logic for upload
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('receiptFile');
     const dropzoneText = document.getElementById('dropzoneText');
@@ -143,10 +163,9 @@
     }
 
     function updateDropzoneUI(fileName) {
-        dropzone.classList.add('has-file');
-        dropzoneText.innerHTML = '<div class="file-name-display">' + fileName + '</div>';
+        dropzoneText.innerHTML = '<div style="color: var(--colors-primary);">' + fileName + '</div>';
         dropzoneSubtext.innerText = 'Click hoặc kéo thả ảnh khác để thay đổi';
-        document.querySelector('.dropzone-icon').innerText = '📄';
+        document.querySelector('.dropzone-icon').innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--colors-primary)" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>';
     }
 
     function validateAndSubmit() {
@@ -161,8 +180,57 @@
         return true;
     }
     
-    document.getElementById('verifyForm').addEventListener('submit', function() {
-        document.getElementById('btnRunVerify').disabled = true;
-        document.getElementById('btnRunVerify').innerText = 'Đang chạy kiểm thử...';
-    });
+    // Verify Harness logic
+    async function runTests() {
+        const btnHeader = document.querySelector('.verify-btn');
+        const oldText = btnHeader.innerHTML;
+        btnHeader.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Đang chạy...';
+        btnHeader.disabled = true;
+        
+        document.getElementById('verifyLoadingOverlay').style.display = 'flex';
+        document.getElementById('resultsBody').innerHTML = '';
+        
+        const dummyForm = document.getElementById('verifyFormDummy');
+        const formData = new FormData(dummyForm);
+        
+        try {
+            const response = await fetch(dummyForm.action, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error("Lỗi kết nối. HTTP " + response.status);
+            }
+
+            const data = await response.json();
+            let html = '';
+            data.forEach(item => {
+                const passBadge = item.pass ? '<span class="badge bg-success">PASS</span>' : '<span class="badge bg-danger">FAIL</span>';
+                const expectedBadge = item.expected === 'AUTO_APPROVE' ? '<span class="badge bg-success">APPROVE</span>' : '<span class="badge bg-warning text-dark">ESCALATE</span>';
+                
+                let actualBadge = '<span class="badge bg-secondary">' + item.actual + '</span>';
+                if(item.actual === 'AUTO_APPROVE') actualBadge = '<span class="badge bg-success">APPROVE</span>';
+                if(item.actual === 'ESCALATE') actualBadge = '<span class="badge bg-warning text-dark">ESCALATE</span>';
+                if(item.actual === 'ESCALATE_SYSTEM_ERROR') actualBadge = '<span class="badge bg-danger">SYSTEM_ERROR</span>';
+                
+                html += '<tr>' +
+                    '<td style="font-family: monospace;">' + item.caseId + '</td>' +
+                    '<td>' + item.image + '</td>' +
+                    '<td>' + expectedBadge + '</td>' +
+                    '<td>' + actualBadge + '</td>' +
+                    '<td>' + passBadge + '</td>' +
+                    '<td><strong style="color: var(--colors-ink);">' + item.reason + '</strong><br/><small style="color: var(--colors-ink-subtle);"><i>' + (item.question || '') + '</i></small></td>' +
+                    '<td style="font-family: monospace; color: var(--colors-ink-subtle);">' + item.latencyMs + ' ms</td>' +
+                '</tr>';
+            });
+            document.getElementById('resultsBody').innerHTML = html;
+        } catch(e) {
+            document.getElementById('resultsBody').innerHTML = '<tr><td colspan="7" class="text-danger text-center">Có lỗi xảy ra: ' + e.message + '</td></tr>';
+        } finally {
+            btnHeader.innerHTML = oldText;
+            btnHeader.disabled = false;
+            document.getElementById('verifyLoadingOverlay').style.display = 'none';
+        }
+    }
 </script>

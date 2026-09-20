@@ -23,10 +23,7 @@ namespace AURA.Controllers
             _env = env;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
+        
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -88,6 +85,7 @@ namespace AURA.Controllers
 
     }
 }
+
 
 
 
