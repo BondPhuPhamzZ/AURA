@@ -71,7 +71,7 @@ namespace AURA.Services
             };
 
             var requestContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}";
             
             var response = await _httpClient.PostAsync(url, requestContent);
             var responseString = await response.Content.ReadAsStringAsync();
@@ -98,4 +98,5 @@ namespace AURA.Services
         }
     }
 }
+
 
