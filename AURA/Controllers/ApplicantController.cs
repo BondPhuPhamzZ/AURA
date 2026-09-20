@@ -1,67 +1,116 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using AURA.Interfaces;
 using AURA.Models;
-using AURA.ViewModels;
-using System.Linq;
+using AURA.Services;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace AURA.Controllers
 {
     public class ApplicantController : Controller
     {
+        private readonly IWebHostEnvironment _env;
         private readonly IReimbursementRepository _repo;
-        private readonly IVisualValidator _validator;
         private readonly IAuditLogger _audit;
+        private readonly IVisionExtractor _vision;
+        private readonly ILogger<ApplicantController> _logger;
 
-        public ApplicantController(IReimbursementRepository repo, IVisualValidator validator, IAuditLogger audit)
+        public ApplicantController(IWebHostEnvironment env, IReimbursementRepository repo, IAuditLogger audit, IVisionExtractor vision, ILogger<ApplicantController> logger)
         {
+            _env = env;
             _repo = repo;
-            _validator = validator;
             _audit = audit;
+            _vision = vision;
+            _logger = logger;
+        }
+
+        public IActionResult Index()
+        {
+            return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UploadReceipt(IFormFile receiptFile)
+        public async Task<IActionResult> UploadReceipt(string employeeId, string employeeName, decimal claimedAmount, IFormFile receiptFile)
         {
             if (receiptFile == null || receiptFile.Length == 0)
             {
-                TempData["Error"] = "Vui lòng chọn file hóa đơn hợp lệ.";
-                return RedirectToAction("Index", "Home");
+                ModelState.AddModelError("", "Vui lòng chọn file hóa đơn hợp lệ.");
+                return View("Index");
             }
 
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf" };
+            // 1. File Upload Validation
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
             var extension = Path.GetExtension(receiptFile.FileName).ToLowerInvariant();
-
             if (!allowedExtensions.Contains(extension))
             {
-                TempData["Error"] = "Chỉ chấp nhận file định dạng JPG, PNG hoặc PDF.";
-                return RedirectToAction("Index", "Home");
+                ModelState.AddModelError("", "Chỉ chấp nhận file ảnh (JPG, PNG).");
+                return View("Index");
             }
 
-            // Dummy processing for the sprint 1 mock
-            var req = new ReimbursementRequest
+            if (receiptFile.Length > 5 * 1024 * 1024)
             {
-                EmployeeId = "EMP001",
-                EmployeeName = "Nhân viên Upload",
-                ClaimedAmount = 500000,
-                ImageUrl = $"/test_data/images/{receiptFile.FileName}"
+                ModelState.AddModelError("", "Kích thước file không được vượt quá 5MB.");
+                return View("Index");
+            }
+
+            // 2. Safe File Save
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+            
+            var uniqueFileName = Guid.NewGuid().ToString() + extension;
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await receiptFile.CopyToAsync(stream);
+            }
+
+            var request = new ReimbursementRequest
+            {
+                Id = Guid.NewGuid().ToString(),
+                EmployeeId = employeeId,
+                EmployeeName = employeeName,
+                ClaimedAmount = claimedAmount,
+                ImageUrl = "/uploads/" + uniqueFileName,
+                CreatedAt = DateTime.UtcNow
             };
 
-            // Call AI
-            var validatedReq = await _validator.ValidateReceiptAsync(req);
-            
-            // Save to DB
-            await _repo.AddRequestAsync(validatedReq);
+            // 3. Vision Extraction & Deterministic Policy Engine
+            var sw = Stopwatch.StartNew();
+            try 
+            {
+                // Step A: Extract Facts
+                var facts = await _vision.ExtractFactsAsync(request.ImageUrl);
+                
+                // Step B: Apply Policy
+                var decision = PolicyDecisionEngine.Evaluate(facts, request.ClaimedAmount);
+                
+                request.Status = decision.Status;
+                request.AiReasoning = decision.Reason;
+                request.ManagerQuestion = decision.ManagerQuestion;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Vision extraction failed");
+                request.Status = "ESCALATE_SYSTEM_ERROR";
+                request.AiReasoning = $"Lỗi trích xuất hệ thống: {ex.Message}";
+                request.ManagerQuestion = "Hệ thống AI không thể xử lý ảnh do lỗi kỹ thuật. Sếp có muốn kiểm tra thủ công?";
+            }
+            sw.Stop();
+            request.ProcessingLatencyMs = sw.ElapsedMilliseconds;
 
-            // Audit
-            await _audit.LogActionAsync(validatedReq.Id, "UPLOAD_AND_SCAN", $"User uploaded receipt. AI Status: {validatedReq.Status}");
+            // 4. Persistence & Audit
+            await _repo.AddRequestAsync(request);
+            await _audit.LogActionAsync(request.Id, $"AI_PROCESSED_{request.Status}", $"Reasoning: {request.AiReasoning} | Latency: {sw.ElapsedMilliseconds}ms");
 
-            TempData["Success"] = "Đã phân tích hóa đơn và lưu thành công!";
             return RedirectToAction("Index", "Home");
         }
     }
 }
-
