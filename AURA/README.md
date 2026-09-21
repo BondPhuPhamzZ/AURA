@@ -5,8 +5,8 @@ AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứn
 ## Trạng thái Sprint 1
 
 - Build sạch: 0 warning, 0 error.
-- 53 kiểm thử tự động: 47 test chính sách/workflow, 3 test hợp đồng OpenRouter/Qwen offline và 3 test toàn vẹn manifest/ảnh Test Kit (gồm gói BGK đúng 15 ca).
-- Verify Vision v2: 5 ảnh tổng hợp đa layout gồm 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`; đang chờ đúng một lượt benchmark sau deploy để bảo toàn quota. Kết quả 5/5 ngày 20/09/2026 thuộc fixture v1 và chỉ là lịch sử.
+- 54 kiểm thử tự động: 48 test chính sách/workflow/audit, 3 test hợp đồng OpenRouter/Qwen offline và 3 test toàn vẹn manifest/ảnh Test Kit (gồm gói BGK đúng 15 ca).
+- Verify Vision v2: người dùng đã xác nhận local đạt đúng 5/5 ngày 22/09/2026 với 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`. Trước video vẫn cần đúng một lượt smoke trên Live URL để xác nhận cấu hình deploy; không suy rộng 5 fixture tổng hợp thành accuracy thực tế.
 - Route upload, Verify, audit, quản lý, CSRF và tra cứu chứng từ đã smoke-test local.
 - Giao diện upload ba cột hiển thị trực tiếp facts AI đã đọc. Kết quả cho biết số ca tự động duyệt/chuyển tiếp; ca tự duyệt vào lịch sử, ca chuyển tiếp được giữ trong bảng kết quả ngay cả sau reload.
 - Hàng đợi nhân viên, quản lý và audit cập nhật ngay sau thao tác bằng fragment AJAX, đồng thời polling nhẹ mỗi 10 giây để đồng bộ các tab đang mở.
@@ -68,4 +68,4 @@ Không đặt API key trong `appsettings*.json`, Git, ảnh chụp hoặc log. K
 - OpenRouter/provider có thể trả `429/5xx`; ứng dụng không retry `429`, chỉ retry tối đa một lần với lỗi `5xx`, và luôn chuyển thủ công nếu trích xuất thất bại.
 - Theo dõi request, token và chi phí tại **OpenRouter → Activity**. Không chạy Verify lặp lại vì mỗi lượt dùng tối đa năm request trả phí; xem quy trình trong [runbook](docs/RUNBOOK.md).
 
-Xem [case study chọn model](docs/MODEL_SELECTION_CASE_STUDY.md), [hướng dẫn deploy](docs/DEPLOYMENT.md), [nội dung 5 slide và kịch bản video](docs/SPRINT1_SLIDES_AND_DEMO.md), [runbook](docs/RUNBOOK.md), [test matrix](docs/TEST_CASES.md), [trạng thái Sprint 1](docs/SPRINT1_SUBMISSION.md) và [báo cáo kiểm định](PROJECT_AUDIT.md).
+Xem [workflow đầy đủ](submission/AURA_WORKFLOW_SPEC.md), [checklist nộp](submission/SUBMISSION_CHECKLIST.md), [case study chọn model](docs/MODEL_SELECTION_CASE_STUDY.md), [hướng dẫn deploy](docs/DEPLOYMENT.md), [runbook](docs/RUNBOOK.md), [test matrix](docs/TEST_CASES.md) và [báo cáo kiểm định](PROJECT_AUDIT.md).

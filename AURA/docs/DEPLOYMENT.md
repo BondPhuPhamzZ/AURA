@@ -1,57 +1,100 @@
-# Triển khai AURA và lấy Live URL
+# Deploy AURA và lấy Live URL
 
-## 1. Trạng thái hiện tại
+Cập nhật: 22/09/2026. Phương án khuyến nghị cho bản nộp là **SmarterASP.NET 60-day trial**, vì AURA đang dùng ASP.NET Core 8 + SQL Server và cần lưu ảnh hóa đơn bền. Render Free chỉ nên dùng làm preview stateless.
 
-Project đã sẵn sàng để publish .NET 8 trên Linux. Dockerfile dùng build nhiều tầng, chạy bằng user không đặc quyền, lắng nghe cổng `8080` và có health endpoint `/healthz`. Database production vẫn phải là SQL Server/Azure SQL; LocalDB trong `appsettings.json` chỉ dùng trên Windows local.
+## 1. Chuẩn bị local
 
-Không có nền tảng nào được xem là đã deploy cho tới khi URL public trả `200`, database hoạt động và ảnh vẫn mở lại sau một lần restart/redeploy.
+1. Bảo đảm nhánh nộp đã push lên GitHub và không có secret trong Git.
+2. Chạy:
 
-## 2. Phương án khuyến nghị cho Sprint 1: Azure App Service
+```powershell
+dotnet build --no-restore
+dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
+```
 
-Azure phù hợp nhất với stack hiện tại vì hỗ trợ ASP.NET Core, Azure SQL và vùng lưu bền `/home`. Tạo tài nguyên bằng tài khoản của nhóm; không gửi publish profile, API key hay connection string qua chat/Git.
+Kỳ vọng hiện tại: build 0 warning/error và 54/54 test pass. Không cần gọi API AI ở bước này.
 
-1. Tạo Azure SQL Database và ghi lại connection string có mã hóa.
-2. Tạo Web App Linux chạy container .NET 8 hoặc deploy source .NET 8 từ GitHub.
-3. Trong **Configuration / Environment variables**, thêm:
+3. Trong Visual Studio, mở `AURA.csproj` và chọn **Publish → Folder** hoặc **Publish → Web Deploy**. Target framework là `net8.0`, cấu hình `Release`.
+
+## 2. Tạo trial SmarterASP.NET
+
+1. Đăng ký tại `https://www.smarterasp.net/free_trial` bằng tài khoản của nhóm.
+2. Trong Hosting Control Panel, tạo website Windows và ghi lại URL tạm.
+3. Tạo một SQL Server database, một database user riêng và copy connection string từ control panel. Không chụp/commit mật khẩu.
+4. Kiểm tra hosting plan đã bật ASP.NET Core 8. Nếu runtime không có, mở ticket support trước khi deploy.
+
+## 3. Cấu hình biến môi trường
+
+Trong SmarterASP Control Panel V10, mở **Advanced Tools → Pool Manager → Actions → Environment Variables**. Biến được đặt ở application-pool level; dùng tên duy nhất nếu pool chứa nhiều site.
+
+Thêm:
 
 ```text
 ASPNETCORE_ENVIRONMENT=Production
-OpenRouter__ApiKey=<secret>
+OpenRouter__ApiKey=<OPENROUTER_KEY_MỚI>
 OpenRouter__Model=qwen/qwen3-vl-8b-instruct
-ConnectionStrings__DefaultConnection=<Azure SQL connection string>
+ConnectionStrings__DefaultConnection=<SQL_SERVER_CONNECTION_STRING>
 Database__ApplyMigrationsOnStartup=true
-ReceiptStorage__Directory=/home/data/receipts
+ReceiptStorage__Directory=App_Data/receipts
 ReceiptStorage__MaxFileSizeMb=5
-WEBSITES_ENABLE_APP_SERVICE_STORAGE=true
 ```
 
-4. Nếu dùng container, đặt port ứng dụng là `8080`; health check path là `/healthz`.
-5. Deploy commit đã chốt từ nhánh `master`. Sau lần khởi động thành công đầu tiên, có thể giữ migration flag ở `true` cho demo một instance hoặc chuyển về `false` và chạy migration như một release step riêng.
-6. Mở `https://<app-name>.azurewebsites.net/healthz`; kỳ vọng JSON có `status: ok`.
-7. Upload một ảnh test, mở lại chứng từ, restart Web App và xác minh ảnh cùng audit vẫn còn.
+Sau migration đầu tiên chạy thành công, nên đổi `Database__ApplyMigrationsOnStartup=false` và recycle application pool. Không đặt key vào `appsettings.json`, publish profile hoặc ảnh/video.
 
-## 3. Render Free chỉ là phương án demo tạm
+## 4. Publish bằng Web Deploy
 
-Render có thể build Dockerfile khi đặt **Root Directory** là `AURA`, health path `/healthz` và các biến môi trường tương tự. Tuy nhiên filesystem của Web Service Free là tạm thời và không hỗ trợ persistent disk. Vì vậy không dùng Render Free làm URL nộp cuối nếu yêu cầu lưu chứng từ qua restart/redeploy chưa được giải quyết bằng object storage. Render paid + persistent disk có thể đặt `ReceiptStorage__Directory=/app/storage/receipts`.
+1. Trong SmarterASP control panel, mở thông tin **Web Deploy** và tải/copy profile.
+2. Visual Studio → **Publish → Import Profile**, chọn profile vừa tải.
+3. Chọn **Settings**:
+   - Configuration: `Release`;
+   - Target Framework: `net8.0`;
+   - Deployment mode: Framework-dependent;
+   - không xóa file trong `App_Data/receipts` khi publish lại.
+4. Bấm **Validate Connection**, sau đó **Publish**.
+5. Nếu dùng Folder publish thay vì Web Deploy, upload toàn bộ nội dung thư mục publish bằng File Manager/FTP vào web root, không upload source tree.
 
-## 4. Kiểm chứng offline trước khi tiêu OpenRouter credit
+## 5. Xác minh ngay sau deploy
 
-Thực hiện trước theo thứ tự:
+Thực hiện theo thứ tự để không tốn quota vô ích:
 
-1. `dotnet build --no-restore`.
-2. `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` — hiện có 51 test offline.
-3. Gọi `/healthz`, mở ba tab và kiểm tra responsive/audit.
-4. Kiểm tra upload file quá 5 MB bị chặn tại client; bước này không gửi ảnh tới OpenRouter/Alibaba.
-5. Chỉ sau khi deploy ổn định mới gọi một ảnh smoke test, rồi đúng một lượt Verify 5 ảnh.
+1. Mở `https://<live-url>/healthz`, kỳ vọng HTTP 200 và JSON `status: ok`.
+2. Mở trang chủ ở cửa sổ ẩn danh, kiểm CSS/JS/ba tab.
+3. Mở tab quản lý và lịch sử để xác nhận SQL Server/migration hoạt động.
+4. Upload một ảnh smoke tổng hợp; xác nhận preview, facts và bảng kết quả cập nhật không reload trang.
+5. Mở lại ảnh từ lịch sử, recycle app pool rồi mở lại lần nữa để xác minh file tồn tại.
+6. Chỉ khi 5 bước trên đạt, chạy đúng một lượt Verify Harness và ghi thời điểm, 5 expected/actual, tổng latency và OpenRouter cost.
+7. Đổi migration flag về `false`, recycle pool và kiểm `/healthz` lần cuối.
 
-Không chạy 30 ảnh Test Kit qua API trước demo. Theo dõi chi phí trong OpenRouter Activity và giữ ngân sách dự phòng cho video/BGK.
+## 6. Xử lý lỗi thường gặp
 
-## 5. Điều kiện hoàn tất deploy
+| Hiện tượng | Kiểm tra |
+|---|---|
+| 500.30/502.5 | Runtime .NET 8, startup log tạm thời, connection string và environment variables |
+| Database login failed | server/database/user/password, firewall/provider connection string |
+| `AI_NOT_CONFIGURED`/401 | `OpenRouter__ApiKey` ở đúng app pool, recycle sau khi sửa |
+| 404 ảnh sau recycle | quyền ghi `App_Data/receipts` và publish không xóa folder |
+| 429/hết credit | dừng Verify, kiểm OpenRouter Activity/Credits; không tạo key mới để né limit |
+| App chạy nhưng redirect HTTPS lỗi | giữ URL HTTPS do host cấp và kiểm proxy/header; không hard-code domain |
 
-- Live URL HTTPS truy cập được từ cửa sổ ẩn danh.
-- `/healthz` trả `200`.
-- Database migration hoàn tất và các tab đọc được dữ liệu.
-- Ảnh upload và audit còn tồn tại sau restart.
-- Không có secret trong log, Git, ảnh hoặc video.
-- Một ảnh smoke test thành công; Verify v2 đạt 5/5 dưới 90 giây hoặc ghi đúng lỗi/quota, không tạo PASS giả.
-- Live URL được điền đồng nhất vào README, slide, mô tả video và form nộp.
+Chỉ bật stdout startup log khi cần chẩn đoán, tải log về rồi tắt lại để tránh đầy storage hoặc lộ cấu hình.
+
+## 7. Vì sao không chọn Render Free cho bản nộp
+
+Render chạy được .NET qua Dockerfile và cấp URL `onrender.com`, nhưng Free Web Service:
+
+- spin down sau 15 phút không hoạt động và có thể mất khoảng một phút để wake;
+- dùng filesystem tạm, mất ảnh upload khi restart/redeploy/spin-down;
+- không gắn persistent disk ở gói Free;
+- Render Postgres không dùng trực tiếp với provider EF SQL Server hiện tại và free database hết hạn sau 30 ngày.
+
+Muốn dùng Render ổn định phải trả phí Web Service + persistent disk và dùng SQL Server bên ngoài, hoặc đổi code sang PostgreSQL/object storage. Đây là thay đổi kiến trúc không nên làm sát deadline. Tài liệu chính thức: `https://render.com/docs/free`, `https://render.com/docs/docker`, `https://render.com/docs/disks`.
+
+## 8. Điều kiện coi deploy hoàn tất
+
+- Live URL HTTPS mở được ở cửa sổ ẩn danh, không cần login.
+- `/healthz` trả 200.
+- SQL migration hoàn tất; ba tab đọc được dữ liệu.
+- Ảnh vẫn mở sau recycle/redeploy kiểm soát.
+- Không có secret trong Git, log, slide hoặc video.
+- Một ảnh smoke và đúng một lượt Verify hoạt động; lỗi provider phải fail-safe chứ không giả PASS.
+- URL được điền đồng nhất vào README, slide, video description và form nộp.

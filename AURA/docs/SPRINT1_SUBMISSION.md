@@ -1,18 +1,18 @@
 # Trạng thái chuẩn bị nộp Sprint 1
 
-Ngày cập nhật: 21/09/2026. Chuẩn đối chiếu: Track A trong `Challenge_Brief_OrganizationAI_VN.docx.pdf`.
+Ngày cập nhật: 22/09/2026. Chuẩn đối chiếu: Track A trong `Challenge_Brief_OrganizationAI_VN.docx.pdf`.
 
 ## Hạng mục kỹ thuật Track A
 
 | Yêu cầu | Trạng thái | Bằng chứng |
 |---|---|---|
 | Quy trình và policy rõ | Đạt cơ bản | `BUSINESS_RULES.md`, policy engine tất định |
-| Tối thiểu 15 tình huống | Đạt | 53 automated tests; `test_kit/judge-manifest.json` khóa đúng 15 ca/ground truth |
+| Tối thiểu 15 tình huống | Đạt | 54 automated tests; `test_kit/judge-manifest.json` khóa đúng 15 ca/ground truth |
 | Ba nhóm FACT/POLICY/AUTHORITY | Đạt | status và precedence trong `PolicyDecisionEngine` |
 | Câu hỏi chuyển tiếp cụ thể | Đạt | câu hỏi tiếng Việt có dữ kiện và lựa chọn CÓ/KHÔNG |
 | Không over-escalate | Đạt trên fixture nội bộ | 3/3 routine cases auto-approve |
 | Không khẳng định input nghi vấn | Đạt | FACT có ưu tiên cao nhất; lỗi AI -> SYSTEM_ERROR/manual |
-| Verify một nút 3 auto + 2 escalate | Code/fixture v2 đạt; chờ live benchmark | fixture v1 từng đạt 5/5 ngày 20/09/2026; v2 đa layout phải chạy đúng một lượt sau deploy |
+| Verify một nút 3 auto + 2 escalate | Đạt local; chờ smoke deploy | người dùng xác nhận fixture v2 đạt 5/5 local ngày 22/09/2026; phải chạy đúng một lượt sau deploy |
 | Input mới | Đạt local | upload JPG/PNG + claimed amount dùng cùng production path |
 | Audit, human override, undo | Đạt local | Chuyển từng/toàn bộ; quản lý Đồng ý/Từ chối; atomic DB audit và undo |
 | Lưu chứng từ để tra cứu | Đạt local | private storage + metadata + SHA-256 + route download |
@@ -24,8 +24,8 @@ Ngày cập nhật: 21/09/2026. Chuẩn đối chiếu: Track A trong `Challenge
 2. **Verify harness + bảng test + runbook:** 5 ca Verify chạy trực tiếp; gói BGK đúng 15 ca trong `test_kit/judge-manifest.json`; ngân hàng mở rộng 30 ca chỉ dùng nội bộ. Cần ghi lại một run v2 từ live URL.
 3. **Public repository:** `https://github.com/BondPhuPhamzZ/AURA`; phải push toàn bộ commit, không squash/force-push.
 4. **Video demo tối đa 3 phút:** kịch bản 2:45 đã chốt tại `docs/SPRINT1_SLIDES_AND_DEMO.md`; chưa quay. Phải thể hiện live URL, Verify 5 ca, upload mới, manager decision và audit/undo; giữ lại cả giới hạn thực tế.
-5. **Đúng 5 slide:** nội dung từng slide đã chốt tại `docs/SPRINT1_SLIDES_AND_DEMO.md`; chưa xuất artifact cuối. Phải điền Live URL và kết quả fixture v2 thật trước khi xuất.
-6. **Build log một trang:** đã có bản nháp `BUILD_LOG.md`; cần xác nhận thời gian thật và quyết định cắt giảm trước khi xuất bản.
+5. **Đúng 5 slide:** đã có `submission/AURA_5_SLIDES.pptx`; cần điền Live URL sau deploy nếu form/slide cuối yêu cầu.
+6. **Build log một trang:** đã có `submission/AURA_BUILD_LOG.docx`, đồng bộ với `BUILD_LOG.md`.
 
 ## Blocker trước khi bấm nộp
 

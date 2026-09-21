@@ -1,6 +1,6 @@
 # AURA Sprint 1 — Tài liệu giải thích toàn bộ phần mềm
 
-> Cập nhật: 21/09/2026  
+> Cập nhật: 22/09/2026
 > Phạm vi: mã nguồn sản phẩm tại `D:\aura\AURA\AURA`  
 > Mục tiêu: giúp thành viên nhóm, giám khảo và người tiếp quản hiểu sản phẩm đã làm gì, chạy ra sao, đã kiểm chứng đến đâu và còn thiếu gì.
 
@@ -17,7 +17,7 @@ AURA hiện là một **vertical slice chạy thật** cho Track A — The Escal
 6. Quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi cụ thể và có thể hoàn tác.
 7. Mọi bước quan trọng được ghi vào audit trail; ảnh gốc có thể mở lại.
 
-Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 53 automated test đạt (47 policy/workflow + 3 OpenRouter contract + 3 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5 với provider cũ, còn Qwen3-VL-8B-Instruct/OpenRouter cần một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
+Phần mềm **đủ để test local ngay**. Kết quả hiện có: build 0 warning/0 error, 54 automated test đạt (48 policy/workflow/audit + 3 OpenRouter contract + 3 Test Kit integrity); người dùng xác nhận Verify v2 đạt 5/5 local với Qwen3-VL-8B-Instruct/OpenRouter ngày 22/09/2026. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, smoke test môi trường deploy và video tối đa 3 phút.
 
 Đánh giá công tâm:
 
@@ -309,7 +309,7 @@ Năm fixture Verify v2 được chọn từ Test Kit 30 ca:
 
 Comparator chỉ PASS khi status đúng; expected `ESCALATE` tổng quát mới khớp mọi `ESCALATE_*`. `ESCALATE_SYSTEM_ERROR` không được hợp thức hóa thành PASS.
 
-Benchmark ngày 20/09/2026 với provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 được sinh offline ngày 21/09/2026 và chưa benchmark bằng Qwen3-VL-8B-Instruct trả phí; kết quả v1 không được gán cho v2. Trước video cần chạy đúng một lượt v2 trên live URL và lưu expected/actual/latency/cost.
+Benchmark ngày 20/09/2026 với provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 được sinh offline ngày 21/09/2026; người dùng xác nhận v2 đạt đúng 5/5 local bằng Qwen3-VL-8B-Instruct/OpenRouter ngày 22/09/2026. Trước video vẫn cần chạy đúng một lượt trên live URL và lưu expected/actual/latency/cost.
 
 ## 13. Giao diện
 
@@ -361,7 +361,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Mục tiêu: build sạch và 53/53 automated test.
+Mục tiêu: build sạch và 54/54 automated test.
 
 ### Tầng B — fixture chuẩn hóa
 

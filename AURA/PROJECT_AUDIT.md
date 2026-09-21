@@ -1,6 +1,6 @@
 # Báo cáo kiểm định hiện trạng AURA
 
-Ngày cập nhật: 21/09/2026
+Ngày cập nhật: 22/09/2026
 Phạm vi: `D:\aura\AURA\AURA`, Track A - The Escalation Referee, ưu tiên Sprint 1
 
 ## 1. Kết luận điều hành
@@ -16,22 +16,22 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 - Upload có claimed amount, kiểm extension + MIME + magic bytes + 5 MB, tên file ngẫu nhiên và private storage.
 - Hóa đơn, metadata, SHA-256, facts JSON, decision và audit được lưu để tra cứu.
 - Nhân viên chủ động chuyển một/toàn bộ ca `ESCALATE_*`; hàng đợi quản lý chỉ nhận hồ sơ đã chuyển và có Đồng ý/Từ chối/undo.
-- 53 automated tests đạt 53/53 (47 policy/workflow + 3 OpenRouter contract + 3 Test Kit integrity); build 0 warning/0 error.
-- Benchmark lịch sử fixture v1 đạt 5/5 trong khoảng 32 giây; fixture v2 đa layout đang chờ đúng một lượt benchmark live để bảo toàn quota.
+- 54 automated tests đạt 54/54 (48 policy/workflow/audit + 3 OpenRouter contract + 3 Test Kit integrity); build 0 warning/0 error.
+- Người dùng xác nhận fixture v2 đa layout đạt 5/5 local với Qwen/OpenRouter ngày 22/09/2026; vẫn cần một lượt smoke trên Live URL để xác nhận cấu hình deploy.
 
 ## 2. Bằng chứng kiểm thử
 
 | Kiểm thử | Kết quả |
 |---|---|
 | `dotnet build --no-restore` | Đạt, 0 warning, 0 error |
-| `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` | Đạt 50/50 |
+| `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` | Đạt 54/54 |
 | EF migration `PersistReceiptEvidence` | Áp dụng thành công vào LocalDB |
 | `GET /`, `/Home/Index`, `/Home/Privacy` | 200 |
 | `GET /Applicant`, `/Verify` | 302 về trang chủ |
 | `GET /Applicant/Receipt/not-found` | 404 |
 | `GET /BUSINESS_RULES.md` | 404 |
 | `POST /Verify/RunHarness` thiếu antiforgery | 400 |
-| Verify có antiforgery + Vision API thật | Fixture v1/provider cũ: 200, 5/5 PASS; Qwen + fixture v2: chưa benchmark live |
+| Verify có antiforgery + Vision API thật | Qwen + fixture v2: người dùng xác nhận 5/5 local ngày 22/09/2026; chờ smoke Live URL |
 | File upload được lưu và tải lại qua receipt route | 200, MIME `image/png` |
 | OpenRouter/Qwen transient failure | Không retry 429; retry tối đa một lần với 5xx + mã lỗi an toàn + safe fallback |
 
@@ -80,7 +80,7 @@ Route/action hiện khớp view và JavaScript. Không còn action `Applicant.In
 | Câu hỏi chuyển tiếp cụ thể | Đạt | Nêu amount/item/vấn đề và CÓ/KHÔNG |
 | Không over-escalate | Đạt trên internal fixtures | 3 routine cases auto |
 | Không khẳng định input nghi vấn | Đạt | FACT precedence; system failure không auto |
-| Verify 3 auto + 2 escalate, một nút | Code/fixture v2 đạt, chờ benchmark | Kết quả 5/5 hiện có chỉ thuộc fixture v1 |
+| Verify 3 auto + 2 escalate, một nút | Đạt local, chờ smoke deploy | Người dùng xác nhận fixture v2 đạt 5/5 ngày 22/09/2026 |
 | Expected/actual/pass/timestamp/question | Đạt | JSON + bảng UI |
 | Input mới | Đạt local | Upload dùng cùng extraction/policy path |
 | Audit input/action/time/reason | Đạt cơ bản | DB AuditLogs + receipt/facts/decision metadata |
@@ -161,7 +161,7 @@ Không thể đạt “minh bạch tuyệt đối” chỉ bằng prompt. Tính 
 - Không antivirus/decompression dimensions; magic bytes chỉ là lớp cơ bản.
 - LocalDB và Windows NanoServer Docker chưa phải cấu hình cloud được chứng minh.
 - Receipt file + DB không transactional; DB save lỗi có thể để orphan file.
-- Audit event chưa append-only/immutable bằng database permission hoặc hash chain.
+- Audit event được append-only ở tầng ứng dụng và UI gom một timeline/hồ sơ; chưa immutable bằng database permission hoặc hash chain.
 - Chưa có optimistic concurrency khi hai quản lý thao tác đồng thời.
 - Đã có health endpoint `/healthz`; chưa có telemetry/correlation ID và health check này chưa thăm dò database/OpenRouter.
 - Test hiện khóa policy; chưa có automated integration tests cho controller/DB/file/HTTP client.

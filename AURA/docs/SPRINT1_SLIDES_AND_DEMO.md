@@ -25,10 +25,10 @@ Nhấn mạnh e-commerce: mã vận chuyển là bằng chứng truy vết logis
 ## Slide 3 — Demo và phương pháp đo
 
 - Verify một nút: 5 ảnh đại diện, kỳ vọng 3 tự duyệt + 2 chuyển tiếp.
-- Test offline: 53/53 automated tests; 5 ca Verify chạy được và gói BGK đúng 15 ca, nằm trong ngân hàng mở rộng 30 ảnh tổng hợp đa layout.
+- Test offline: 54/54 automated tests; Verify v2 đã được người dùng xác nhận 5/5 local ngày 22/09/2026, gói BGK đúng 15 ca trong ngân hàng mở rộng 30 ảnh tổng hợp đa layout.
 - Chỉ số hiển thị: expected/actual, PASS/FAIL, latency và timestamp.
 - Kết quả lịch sử fixture v1: 5/5, khoảng 32 giây ngày 20/09/2026.
-- Kết quả fixture v2 trên Live URL: **[ĐIỀN SAU KHI CHẠY: __/5, __ giây, thời điểm __]**.
+- Kết quả fixture v2 trên Live URL: **[ĐIỀN SAU KHI CHẠY: __/5, __ giây, thời điểm __]**. Không dùng kết quả local thay cho smoke deploy.
 
 Không gọi 5/5 fixture tổng hợp là “độ chính xác thực tế”. Accuracy tổng quát cần tập ảnh độc lập lớn hơn.
 
@@ -46,7 +46,8 @@ Phần giả lập chỉ là 30 ảnh Test Kit tổng hợp. Không có quyết 
 
 - Hiện chỉ hỗ trợ một ảnh JPG/PNG; chưa có PDF/nhiều trang, antivirus, tax/e-invoice lookup và ngoại tệ.
 - Vision không chứng minh hóa đơn là thật; input mơ hồ luôn chuyển người.
-- Free-tier có thể `429/5xx`; hệ thống retry có giới hạn rồi chuyển `ESCALATE_SYSTEM_ERROR`.
+- OpenRouter/provider có thể `429/5xx`: ứng dụng không retry 429, retry tối đa một lần với 5xx rồi chuyển `ESCALATE_SYSTEM_ERROR`; Verify dừng các lượt còn lại khi gặp lỗi provider mang tính hệ thống.
+- Hiện chưa có circuit breaker tổng quát hoặc exponential backoff nhiều lần; đây là backlog, không phải tính năng đã triển khai.
 - Trước nộp: Live URL, một lượt Verify v2, video <3 phút và kiểm chứng lưu ảnh qua restart.
 - Sprint 2: authentication/role, blob storage, retention, integration test, tập dữ liệu độc lập và đo missed/over-escalation.
 

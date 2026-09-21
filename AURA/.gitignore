@@ -2,6 +2,17 @@
 App_Data/receipts/*
 !App_Data/receipts/.gitkeep
 
+# Build, IDE, publish and local runtime output.
+bin/
+obj/
+publish/
+.vs/
+.tmp/
+*.user
+*.suo
+*.log
+TestResults/
+
 # Legacy/runtime upload folders must never be published from wwwroot.
 wwwroot/uploads/
 wwwroot/temp_test/
@@ -9,3 +20,14 @@ wwwroot/temp_test/
 # Optional private evaluation photos: keep instructions, never commit the receipts themselves.
 test_kit/local_real/*
 !test_kit/local_real/README.md
+
+# Secrets and machine-specific production settings must never enter Git.
+appsettings.Secrets.json
+appsettings.Production.local.json
+*.publishsettings
+*.pubxml.user
+
+# Large demo recordings are hosted externally; only the script/link is versioned.
+submission/*.mp4
+submission/*.mov
+submission/*.mkv
