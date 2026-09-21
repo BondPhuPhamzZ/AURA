@@ -39,6 +39,16 @@ Mở URL được in trong terminal. Không truy cập `/Verify` để tìm tran
 
 Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_receipts.py`. Không thay fixture sau khi chốt bài mà không cập nhật manifest và commit.
 
+### Khi Gemini trả HTTP 429
+
+1. Mở **Google AI Studio → Dashboard → Usage & Billing** và xem chính xác giới hạn nào đã chạm: RPM (request/phút), TPM (token/phút) hay RPD (request/ngày). Quota được tính theo **project**, không theo từng API key.
+2. Nếu là RPM/TPM, dừng gọi API vài phút rồi thử lại đúng **một ảnh**. Không bấm Verify liên tục vì mỗi lần chạy tiêu thụ năm request tuần tự.
+3. Nếu là RPD, chờ quota ngày reset lúc nửa đêm theo múi giờ Pacific. Trong tháng 9, thời điểm này thường tương ứng khoảng 14:00 tại Việt Nam; đồng hồ/quota trong AI Studio là nguồn xác nhận cuối cùng.
+4. Không đổi model ngay trong lúc demo. Chỉ cấu hình model dự phòng sau khi chạy lại đủ ma trận 5 ca và kiểm tra JSON Schema, latency, câu hỏi chuyển tiếp.
+5. Nếu cần live demo ổn định hơn free tier, nâng project chính thức lên paid tier với ngân sách/cảnh báo chi tiêu nhỏ. Không tạo nhiều project chỉ để né rate limit.
+
+Phương án dự phòng miễn phí ưu tiên để benchmark là `gemini-3.5-flash-lite`; không tự động fallback sang model này trong production cho tới khi đạt lại 5/5 test và xác nhận cấu hình `thinkingConfig` tương thích. Khi API vẫn không khả dụng, AURA phải giữ `ESCALATE_SYSTEM_ERROR` và chuyển hồ sơ sang người quản lý, không dùng kết quả giả hoặc cache cũ như một lần gọi AI mới.
+
 ## 5. Cấu hình deploy
 
 Các biến môi trường bắt buộc:
