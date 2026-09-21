@@ -8,7 +8,7 @@
     }
     else
     {
-        var escalations = Model?.Where(m => m.Status.StartsWith("ESCALATE_", StringComparison.Ordinal)).ToList();
+        var escalations = Model?.ToList();
         if (escalations == null || escalations.Count == 0)
         {
             <div class="alert alert-info feature-card" style="padding: 16px;">Hiện không có ca nào cần duyệt.</div>
@@ -30,6 +30,7 @@
                 <tbody>
                     @foreach (var item in escalations)
                     {
+                        var choices = AURA.Services.EscalationWorkflow.ExplainChoices(item.Status);
                         <tr>
                             <td style="font-family: monospace;">@item.Id.Substring(0, 8)...</td>
                             <td style="font-weight: 500;">Đơn Ẩn Danh</td>
@@ -43,14 +44,16 @@
                             <td>
                                 <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline">
                                     <input type="hidden" name="id" value="@item.Id" />
-                                    <input type="hidden" name="decision" value="APPROVE" />
-                                    <button type="submit" class="button-ghost-sm success">Duyệt Bỏ Qua</button>
+                                    <input type="hidden" name="decision" value="YES" />
+                                    <button type="submit" class="button-ghost-sm success" title="@choices.Yes">Có</button>
                                 </form>
                                 <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline" style="margin-left: 8px;">
                                     <input type="hidden" name="id" value="@item.Id" />
-                                    <input type="hidden" name="decision" value="REJECT" />
-                                    <button type="submit" class="button-ghost-sm danger">Từ Chối</button>
+                                    <input type="hidden" name="decision" value="NO" />
+                                    <button type="submit" class="button-ghost-sm danger" title="@choices.No">Không</button>
                                 </form>
+                                <div><small><strong>Có:</strong> @choices.Yes[4..]</small></div>
+                                <div><small><strong>Không:</strong> @choices.No[7..]</small></div>
                             </td>
                         </tr>
                     }

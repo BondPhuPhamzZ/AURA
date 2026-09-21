@@ -56,6 +56,34 @@ public sealed class ApplicantController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForwardToManager(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { error = "Thiếu mã hồ sơ." });
+
+        var request = await _repository.GetRequestByIdAsync(id);
+        if (request is null) return NotFound(new { error = "Không tìm thấy hồ sơ." });
+        if (!PolicyDecisionEngine.IsEscalation(request.Status))
+            return Conflict(new { error = "Chỉ hồ sơ cần chuyển tiếp mới được gửi cho quản lý." });
+
+        if (!request.IsForwardedToManager)
+        {
+            request.IsForwardedToManager = true;
+            request.ForwardedAt = DateTime.UtcNow;
+            await _repository.UpdateRequestAsync(request);
+            await _audit.LogActionAsync(request.Id, "EMPLOYEE_FORWARDED_TO_MANAGER",
+                $"Question={request.ManagerQuestion}; Status={request.Status}");
+        }
+
+        TempData["Success"] = $"Đã chuyển hồ sơ {request.Id[..8]} đến cửa sổ quản lý.";
+        return Json(new
+        {
+            message = "Chuyển tiếp thành công. Quản lý có thể trả lời CÓ hoặc KHÔNG.",
+            redirectUrl = Url.Action("Index", "Home", new { tab = "reviewer" })
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> UploadReceipt(IFormFile? receiptFile, decimal claimedAmount,
         CancellationToken cancellationToken)
     {

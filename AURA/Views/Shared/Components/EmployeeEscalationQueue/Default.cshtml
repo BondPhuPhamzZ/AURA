@@ -1,0 +1,46 @@
+@model IEnumerable<AURA.Models.ReimbursementRequest>
+
+<section class="employee-forward-queue" aria-labelledby="employee-forward-title">
+    <h3 id="employee-forward-title" class="section-title">Hồ sơ đang chờ nhân viên chuyển tiếp</h3>
+    @if (ViewData["LoadError"] is string loadError)
+    {
+        <div class="alert alert-danger">@loadError</div>
+    }
+    else if (!Model.Any())
+    {
+        <p class="empty-state">Không có hồ sơ nào đang chờ chuyển cho quản lý.</p>
+    }
+    else
+    {
+        <div class="table-responsive-aura">
+            <table class="table-aura table-aura-compact">
+                <thead>
+                    <tr>
+                        <th>Mã hồ sơ</th>
+                        <th>Chứng từ</th>
+                        <th>Kết quả</th>
+                        <th>Câu hỏi chuyển tiếp</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td data-label="Mã hồ sơ" class="cell-code">@item.Id[..Math.Min(8, item.Id.Length)]</td>
+                        <td data-label="Chứng từ"><a href="@item.ImageUrl" target="_blank" rel="noopener">@item.OriginalFileName</a></td>
+                        <td data-label="Kết quả"><span class="badge bg-warning text-dark">@item.Status</span></td>
+                        <td data-label="Câu hỏi">@item.ManagerQuestion</td>
+                        <td data-label="Thao tác">
+                            <form asp-controller="Applicant" asp-action="ForwardToManager" method="post">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="button-primary button-compact">Chuyển tiếp</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

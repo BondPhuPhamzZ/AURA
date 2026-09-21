@@ -20,18 +20,18 @@ namespace AURA.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EscalateAction(string id, string decision)
         {
-            if (string.IsNullOrWhiteSpace(id) || decision is not ("APPROVE" or "REJECT" or "UNDO"))
+            if (string.IsNullOrWhiteSpace(id) || decision is not ("YES" or "NO" or "UNDO"))
                 return BadRequest();
 
             var req = await _repo.GetRequestByIdAsync(id);
             if (req == null) return NotFound();
 
-            if (decision != "UNDO" && !PolicyDecisionEngine.IsEscalation(req.Status))
+            if (decision != "UNDO" && (!PolicyDecisionEngine.IsEscalation(req.Status) || !req.IsForwardedToManager))
                 return Conflict("Hồ sơ này không còn ở trạng thái chờ quyết định của quản lý.");
 
             if (decision == "UNDO")
             {
-                if (req.Status is not ("APPROVED_BY_MANAGER" or "REJECTED_BY_MANAGER"))
+                if (!EscalationWorkflow.CanUndo(req.Status) || req.ManagerAnswer is null)
                     return Conflict("Chỉ có thể hoàn tác quyết định gần nhất của quản lý.");
 
                 var logs = await _audit.GetByRequestIdAsync(req.Id);
@@ -40,30 +40,26 @@ namespace AURA.Controllers
                 if (priorAiAction is null) return Conflict("Không tìm thấy trạng thái chuyển tiếp ban đầu để hoàn tác.");
 
                 req.Status = priorAiAction.Action[(priorAiAction.Action.IndexOf("ESCALATE_", StringComparison.Ordinal))..];
+                req.ManagerAnswer = null;
+                req.ManagerDecisionAt = null;
                 await _repo.UpdateRequestAsync(req);
                 await _audit.LogActionAsync(req.Id, "MANAGER_UNDO", $"Đã hoàn tác quyết định, khôi phục {req.Status}.");
                 TempData["Success"] = $"Đã hoàn tác quyết định cho hồ sơ {id}.";
                 return RedirectToAction("Index", "Home");
             }
 
-            if (decision == "APPROVE")
-            {
-                req.Status = "APPROVED_BY_MANAGER";
-            }
-            else if (decision == "REJECT")
-            {
-                req.Status = "REJECTED_BY_MANAGER";
-            }
-
+            var answer = decision == "YES";
+            var originalStatus = req.Status;
+            var outcome = EscalationWorkflow.Answer(originalStatus, answer);
+            req.Status = outcome.Status;
+            req.ManagerAnswer = answer;
+            req.ManagerDecisionAt = DateTime.UtcNow;
             await _repo.UpdateRequestAsync(req);
-            var auditAction = decision == "APPROVE" ? "MANAGER_APPROVE" : "MANAGER_REJECT";
-            var auditDetails = decision == "APPROVE"
-                ? "Quản lý đã duyệt ngoại lệ."
-                : "Quản lý đã từ chối hồ sơ.";
-            await _audit.LogActionAsync(req.Id, auditAction, auditDetails);
+            await _audit.LogActionAsync(req.Id, outcome.AuditAction,
+                $"Question={req.ManagerQuestion}; Answer={(answer ? "CÓ" : "KHÔNG")}; Outcome={outcome.Status}; {outcome.Message}");
             
-            TempData["Success"] = $"Đã xử lý hồ sơ {id} thành công!";
-            return RedirectToAction("Index", "Home");
+            TempData["Success"] = outcome.Message;
+            return RedirectToAction("Index", "Home", new { tab = "reviewer" });
         }
     }
 }

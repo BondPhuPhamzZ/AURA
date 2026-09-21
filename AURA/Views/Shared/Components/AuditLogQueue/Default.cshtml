@@ -40,8 +40,8 @@
                                 {
                                     var badgeClass = request.Status == "AUTO_APPROVE" ? "bg-success"
                                         : request.Status.StartsWith("ESCALATE_", StringComparison.Ordinal) ? "bg-warning text-dark"
-                                        : request.Status == "APPROVED_BY_MANAGER" ? "bg-success"
-                                        : request.Status == "REJECTED_BY_MANAGER" ? "bg-danger"
+                                        : request.ManagerAnswer == true ? "bg-success"
+                                        : request.ManagerAnswer == false ? "bg-danger"
                                         : "bg-secondary";
                                     <span class="badge @badgeClass">@request.Status</span>
                                 }
@@ -63,7 +63,8 @@
                             </td>
                             <td style="max-width: 420px; overflow-wrap: anywhere;">@entry.Log.Details</td>
                             <td>
-                                @if (request?.Status is "APPROVED_BY_MANAGER" or "REJECTED_BY_MANAGER")
+                                @if (request is not null && AURA.Services.EscalationWorkflow.CanUndo(request.Status)
+                                    && request.ManagerAnswer is not null)
                                 {
                                     <form asp-controller="Reviewer" asp-action="EscalateAction" method="post">
                                         <input type="hidden" name="id" value="@request.Id" />

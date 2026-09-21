@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AURA.Data;
 using AURA.Interfaces;
 using AURA.Models;
+using AURA.Services;
 
 namespace AURA.ViewComponents
 {
@@ -21,7 +22,8 @@ namespace AURA.ViewComponents
         {
             try
             {
-                var items = await _repo.GetAllRequestsAsync();
+                var items = (await _repo.GetAllRequestsAsync())
+                    .Where(x => x.IsForwardedToManager && PolicyDecisionEngine.IsEscalation(x.Status));
                 return View(items);
             }
             catch (Exception exception)

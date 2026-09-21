@@ -97,6 +97,20 @@ public sealed class PolicyDecisionEngineTests
         Assert.Equal("ESCALATE_FACT", Decide(facts, 2_000_000).Status);
     }
 
+    [Theory]
+    [InlineData("ESCALATE_FACT", true, "MANUAL_REVIEW_ACCEPTED")]
+    [InlineData("ESCALATE_FACT", false, "RETURNED_FOR_MORE_EVIDENCE")]
+    [InlineData("ESCALATE_POLICY", true, "APPROVED_POLICY_EXCEPTION")]
+    [InlineData("ESCALATE_POLICY", false, "REJECTED_POLICY_EXCEPTION")]
+    [InlineData("ESCALATE_AUTHORITY", true, "FORWARDED_TO_AUTHORITY")]
+    [InlineData("ESCALATE_AUTHORITY", false, "RETURNED_BY_MANAGER")]
+    [InlineData("ESCALATE_SYSTEM_ERROR", true, "MANUAL_REVIEW_ACCEPTED")]
+    [InlineData("ESCALATE_SYSTEM_ERROR", false, "RETURNED_FOR_RETRY")]
+    public void Manager_yes_no_has_explicit_outcome(string status, bool answer, string expected)
+    {
+        Assert.Equal(expected, EscalationWorkflow.Answer(status, answer).Status);
+    }
+
     private static (string Status, string Reason, string ManagerQuestion) Decide(
         ReceiptExtractionDto facts, decimal claimedAmount = 150_000) =>
         PolicyDecisionEngine.Evaluate(facts, claimedAmount, utcNow: Now);

@@ -34,6 +34,14 @@ namespace AURA.Models
         public string? AiReasoning { get; set; }
         
         public string? ManagerQuestion { get; set; }
+
+        public bool IsForwardedToManager { get; set; }
+
+        public DateTime? ForwardedAt { get; set; }
+
+        public bool? ManagerAnswer { get; set; }
+
+        public DateTime? ManagerDecisionAt { get; set; }
         
         public long ProcessingLatencyMs { get; set; }
         
