@@ -18,6 +18,9 @@ builder.Logging.AddDebug();
 
 // Đăng ký Services
 builder.Services.AddControllersWithViews();
+builder.Services.AddOptions<OpenRouterOptions>()
+    .Bind(builder.Configuration.GetSection(OpenRouterOptions.SectionName))
+    .ValidateDataAnnotations();
 builder.Services.AddOptions<GeminiOptions>()
     .Bind(builder.Configuration.GetSection(GeminiOptions.SectionName))
     .ValidateDataAnnotations();
@@ -40,9 +43,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Đăng ký Dependency Injection
 builder.Services.AddScoped<IReimbursementRepository, ReimbursementRepository>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
-builder.Services.AddHttpClient<IVisionExtractor, GeminiVisionExtractorService>((services, client) =>
+builder.Services.AddHttpClient<IVisionExtractor, OpenRouterVisionExtractorService>((services, client) =>
 {
-    var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<GeminiOptions>>().Value;
+    var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenRouterOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
     client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
 });
@@ -85,6 +88,7 @@ app.MapControllerRoute(
     ;
 
 app.Run();
+
 
 
 

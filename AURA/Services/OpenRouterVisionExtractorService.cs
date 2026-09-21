@@ -1,6 +1,8 @@
+﻿using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Net;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using AURA.Interfaces;
 using AURA.Models;
 using AURA.Options;
@@ -8,16 +10,16 @@ using Microsoft.Extensions.Options;
 
 namespace AURA.Services;
 
-public sealed class GeminiVisionExtractorService : IVisionExtractor
+public sealed class OpenRouterVisionExtractorService : IVisionExtractor
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
     private readonly HttpClient _httpClient;
-    private readonly GeminiOptions _options;
+    private readonly OpenRouterOptions _options;
     private readonly IWebHostEnvironment _environment;
-    private readonly ILogger<GeminiVisionExtractorService> _logger;
+    private readonly ILogger<OpenRouterVisionExtractorService> _logger;
 
-    public GeminiVisionExtractorService(HttpClient httpClient, IOptions<GeminiOptions> options,
-        IWebHostEnvironment environment, ILogger<GeminiVisionExtractorService> logger)
+    public OpenRouterVisionExtractorService(HttpClient httpClient, IOptions<OpenRouterOptions> options,
+        IWebHostEnvironment environment, ILogger<OpenRouterVisionExtractorService> logger)
     {
         _httpClient = httpClient;
         _options = options.Value;
@@ -30,45 +32,46 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
     {
         if (string.IsNullOrWhiteSpace(_options.ApiKey))
             throw new VisionExtractionException("AI_NOT_CONFIGURED",
-                "Gemini API chưa được cấu hình; hồ sơ cần được kiểm tra thủ công.");
+                "OpenRouter API chưa được cấu hình; hồ sơ cần được kiểm tra thủ công.");
 
         var fullImagePath = Path.GetFullPath(physicalImagePath);
         if (!File.Exists(fullImagePath))
             throw new VisionExtractionException("IMAGE_NOT_FOUND", "Không tìm thấy ảnh hóa đơn cần phân tích.");
 
         var contentRoot = Path.GetFullPath(_environment.ContentRootPath);
-        var policyPath = Path.GetFullPath(Path.Combine(contentRoot, _options.PolicyPath));
-        var contentRootPrefix = contentRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-            + Path.DirectorySeparatorChar;
-        if (!policyPath.StartsWith(contentRootPrefix, StringComparison.OrdinalIgnoreCase) || !File.Exists(policyPath))
-            throw new VisionExtractionException("POLICY_NOT_FOUND",
-                "Không tìm thấy tài liệu chính sách bắt buộc; không thể ra quyết định tự động.");
-
+        var policyPath = Path.GetFullPath(Path.Combine(contentRoot, "BUSINESS_RULES.md"));
+        
         var imageBytes = await File.ReadAllBytesAsync(fullImagePath, cancellationToken);
         var policy = await File.ReadAllTextAsync(policyPath, cancellationToken);
+        var mimeType = Path.GetExtension(fullImagePath).ToLowerInvariant() switch
+        {
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".webp" => "image/webp",
+            _ => throw new InvalidOperationException("Định dạng ảnh không được hỗ trợ.")
+        };
+        var base64Image = Convert.ToBase64String(imageBytes);
+
+        var schemaJson = JsonSerializer.Serialize(BuildResponseSchema(), JsonOptions);
+        var systemPrompt = $"You are an expert accountant system. Extract the facts from the image strictly following these business rules:\n{policy}\n\nReturn ONLY a valid JSON object matching exactly this schema:\n{schemaJson}";
+
         var payload = new
         {
-            systemInstruction = new { parts = new[] { new { text = policy } } },
-            contents = new[]
+            model = _options.Model,
+            messages = new object[]
             {
+                new { role = "system", content = systemPrompt },
                 new
                 {
                     role = "user",
-                    parts = new object[]
+                    content = new object[]
                     {
-                        new { text = "Trích xuất dữ kiện từ ảnh hóa đơn này. Không tự đưa ra quyết định duyệt hay chuyển tiếp." },
-                        new { inlineData = new { mimeType = GetMimeType(fullImagePath), data = Convert.ToBase64String(imageBytes) } }
+                        new { type = "image_url", image_url = new { url = $"data:{mimeType};base64,{base64Image}" } }
                     }
                 }
             },
-            generationConfig = new
-            {
-                temperature = 0,
-                maxOutputTokens = 4096,
-                responseMimeType = "application/json",
-                responseJsonSchema = BuildResponseSchema(),
-                thinkingConfig = new { thinkingLevel = "LOW" }
-            }
+            temperature = 0,
+            response_format = new { type = "json_object" }
         };
 
         (HttpStatusCode statusCode, string responseText) response;
@@ -79,67 +82,60 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
         catch (TaskCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
             throw new VisionExtractionException("AI_TIMEOUT",
-                $"Gemini không phản hồi trong {_options.TimeoutSeconds} giây. Đây là lỗi timeout mạng/dịch vụ hoặc model đang quá tải, không phải do nội dung 'kiểm thử' trong ảnh.", exception);
+                $"Qwen không phản hồi trong {_options.TimeoutSeconds} giây. Đây là lỗi timeout mạng/dịch vụ hoặc model đang quá tải, không phải do nội dung 'kiểm thử' trong ảnh.", exception);
         }
 
         var (statusCode, responseText) = response;
         if ((int)statusCode is < 200 or >= 300)
         {
-            _logger.LogWarning("Gemini returned HTTP {StatusCode} after retries.", (int)statusCode);
+            _logger.LogWarning("OpenRouter returned HTTP {StatusCode} after retries.", (int)statusCode);
             throw CreateHttpFailure(statusCode);
         }
 
         using var responseDocument = ParseResponseDocument(responseText);
         var root = responseDocument.RootElement;
-        if (root.TryGetProperty("promptFeedback", out var feedback) &&
-            feedback.TryGetProperty("blockReason", out var blockReason))
-            throw new VisionExtractionException("AI_INPUT_BLOCKED",
-                $"Gemini từ chối xử lý đầu vào ({blockReason.GetString() ?? "không rõ lý do"}); hồ sơ cần kiểm tra thủ công.");
 
-        if (!root.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
+        if (!root.TryGetProperty("choices", out var choices) || choices.GetArrayLength() == 0)
             throw new VisionExtractionException("AI_EMPTY_RESPONSE",
-                "Gemini không trả về kết quả trích xuất; hồ sơ cần kiểm tra thủ công.");
+                "Qwen không trả về kết quả trích xuất; hồ sơ cần kiểm tra thủ công.");
 
-        var candidate = candidates[0];
-        if (candidate.TryGetProperty("finishReason", out var finishReason) &&
-            finishReason.GetString() is not "STOP")
-            throw new VisionExtractionException("AI_ABNORMAL_FINISH",
-                $"Gemini dừng bất thường ({finishReason.GetString() ?? "không rõ"}); hồ sơ cần kiểm tra thủ công.");
-
-        if (!candidate.TryGetProperty("content", out var content) ||
-            !content.TryGetProperty("parts", out var parts) || parts.GetArrayLength() == 0 ||
-            !parts[0].TryGetProperty("text", out var textElement))
+        var message = choices[0].GetProperty("message");
+        if (!message.TryGetProperty("content", out var contentElement) || contentElement.ValueKind != JsonValueKind.String)
             throw new VisionExtractionException("AI_INVALID_RESPONSE",
-                "Gemini không trả về dữ liệu JSON hợp lệ; hồ sơ cần kiểm tra thủ công.");
+                "Qwen không trả về dữ liệu JSON hợp lệ; hồ sơ cần kiểm tra thủ công.");
+
+        var contentStr = contentElement.GetString() ?? string.Empty;
+        
+        // Strip markdown backticks if returned
+        var match = Regex.Match(contentStr, @"`(?:json)?\s*(.*?)\s*`", RegexOptions.Singleline);
+        if (match.Success) contentStr = match.Groups[1].Value;
 
         ReceiptExtractionDto facts;
         try
         {
-            facts = JsonSerializer.Deserialize<ReceiptExtractionDto>(textElement.GetString() ?? string.Empty, JsonOptions)
+            facts = JsonSerializer.Deserialize<ReceiptExtractionDto>(contentStr, JsonOptions)
                 ?? throw new JsonException("Empty extraction object.");
         }
         catch (JsonException exception)
         {
-            throw new VisionExtractionException("AI_INVALID_JSON",
-                "Gemini trả về JSON không đọc được; hồ sơ cần kiểm tra thủ công.", exception);
+            _logger.LogError(exception, "Failed to parse JSON from AI: {Content}", contentStr);
+            throw new VisionExtractionException("AI_SCHEMA_MISMATCH",
+                "Qwen trả về kết quả không đúng cấu trúc quy định; hồ sơ cần kiểm tra thủ công.", exception);
         }
-        facts.LineItems ??= [];
-        facts.MissingFields ??= [];
-        facts.Warnings ??= [];
-        facts.SuspiciousSignals ??= [];
-        facts.Confidence = Math.Clamp(facts.Confidence, 0, 1);
+
         return facts;
     }
 
     private async Task<(HttpStatusCode StatusCode, string Body)> SendWithRetryAsync(
         object payload, CancellationToken cancellationToken)
     {
-        const int maxAttempts = 3;
+        const int maxAttempts = 5;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post,
-                $"models/{Uri.EscapeDataString(_options.Model)}:generateContent");
-            request.Headers.Add("x-goog-api-key", _options.ApiKey);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "chat/completions");
+            request.Headers.Add("Authorization", $"Bearer {_options.ApiKey}");
+            request.Headers.Add("HTTP-Referer", "https://github.com/");
+            request.Headers.Add("X-Title", "AURA Escalation Referee");
             request.Content = JsonContent.Create(payload);
 
             using var response = await _httpClient.SendAsync(
@@ -148,30 +144,25 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
             if (response.IsSuccessStatusCode || !IsTransient(response.StatusCode) || attempt == maxAttempts)
                 return (response.StatusCode, body);
 
-            var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromMilliseconds(500 * (1 << (attempt - 1)));
-            _logger.LogWarning("Gemini returned transient HTTP {StatusCode}; retry {Attempt}/{MaxAttempts} after {DelayMs}ms.",
-                (int)response.StatusCode, attempt + 1, maxAttempts, retryAfter.TotalMilliseconds);
+            var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromMilliseconds(4000 * (1 << (attempt - 1)));
             await Task.Delay(retryAfter, cancellationToken);
         }
-
-        throw new InvalidOperationException("Gemini retry loop ended unexpectedly.");
+        throw new UnreachableException();
     }
 
-    // Do not retry 429 automatically: repeated quota requests make a demo slower and can exhaust
-    // the remaining request budget. Operators can retry deliberately after the provider reset.
     private static bool IsTransient(HttpStatusCode statusCode) => statusCode is
-        HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or
+        HttpStatusCode.TooManyRequests or HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or
         HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout;
 
     private static VisionExtractionException CreateHttpFailure(HttpStatusCode statusCode) => statusCode switch
     {
         HttpStatusCode.TooManyRequests => new VisionExtractionException("AI_RATE_LIMIT",
-            "Gemini đang giới hạn lượt gọi hoặc đã chạm quota (HTTP 429) sau 3 lần thử; hãy đợi rồi thử lại hoặc chuyển kiểm tra thủ công."),
+            "Qwen đang giới hạn lượt gọi hoặc đã chạm quota (HTTP 429) sau 5 lần thử; hãy đợi rồi thử lại hoặc chuyển kiểm tra thủ công."),
         HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or
             HttpStatusCode.GatewayTimeout => new VisionExtractionException("AI_TEMPORARILY_UNAVAILABLE",
-                $"Gemini đang tạm thời không khả dụng (HTTP {(int)statusCode}) sau 3 lần thử; hồ sơ cần kiểm tra thủ công."),
+                $"Qwen đang tạm thời không khả dụng (HTTP {(int)statusCode}) sau 5 lần thử; hồ sơ cần kiểm tra thủ công."),
         _ => new VisionExtractionException("AI_HTTP_ERROR",
-            $"Gemini từ chối yêu cầu (HTTP {(int)statusCode}); hồ sơ cần kiểm tra thủ công.")
+            $"Qwen từ chối yêu cầu (HTTP {(int)statusCode}); hồ sơ cần kiểm tra thủ công.")
     };
 
     private static JsonDocument ParseResponseDocument(string responseText)
@@ -183,16 +174,9 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
         catch (JsonException exception)
         {
             throw new VisionExtractionException("AI_INVALID_RESPONSE",
-                "Gemini trả về phản hồi không phải JSON hợp lệ; hồ sơ cần kiểm tra thủ công.", exception);
+                "Qwen trả về phản hồi không phải JSON hợp lệ; hồ sơ cần kiểm tra thủ công.", exception);
         }
     }
-
-    private static string GetMimeType(string filePath) => Path.GetExtension(filePath).ToLowerInvariant() switch
-    {
-        ".png" => "image/png",
-        ".jpg" or ".jpeg" => "image/jpeg",
-        _ => throw new InvalidOperationException("Định dạng ảnh không được hỗ trợ.")
-    };
 
     private static object BuildResponseSchema() => new
     {
@@ -229,3 +213,4 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
     private static object NullableNumber() => new { type = new[] { "number", "null" } };
     private static object StringArray() => new { type = "array", items = new { type = "string" } };
 }
+
