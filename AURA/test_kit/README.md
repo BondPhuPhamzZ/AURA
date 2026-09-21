@@ -1,5 +1,12 @@
 # AURA Test Kit v2
 
+## Hai gói bàn giao cho BGK
+
+- **5 ca chạy được bằng một nút:** `wwwroot/test_data/expected-results.json` và ảnh tại `wwwroot/test_data/images`. Verify Harness gọi đúng production path, gồm 3 ca tự duyệt và 2 ca chuyển tiếp.
+- **15 ca tham chiếu đã commit:** `judge-manifest.json` chọn đúng 15 ảnh trong `images`, cân bằng 5 routine, 4 FACT, 3 POLICY và 3 AUTHORITY. Gói này giúp BGK đọc expected result và tạo biến thể mà không tự động tiêu credit.
+
+`manifest.json` vẫn giữ ngân hàng mở rộng 30 ca để nhóm benchmark nội bộ; đây không phải yêu cầu bắt buộc phải chạy toàn bộ trong buổi chấm.
+
 Test Kit v2 gồm 30 ảnh tổng hợp có seed cố định và ground truth trong `manifest.json`. Bộ này được tạo offline, không chứa dữ liệu cá nhân thật và không gọi OpenRouter/Qwen.
 
 ## Phạm vi
@@ -11,7 +18,7 @@ Test Kit v2 gồm 30 ảnh tổng hợp có seed cố định và ground truth t
 - Nhiều layout: mobile e-commerce, giấy in nhiệt/POS, VAT, nhà hàng và ride-hailing.
 - Có tiếng Việt Unicode, góc xoay, nền camera, blur, crop, ngày cũ/tương lai/cuối tuần, amount mismatch, draft và returned/refunded.
 
-Năm ca `TK-01..TK-05` được sao chép thành fixture của Verify Harness tại `wwwroot/test_data/images`. 25 ca còn lại không tự động gọi API để bảo vệ quota.
+Năm ca `TK-01..TK-05` được sao chép thành fixture của Verify Harness tại `wwwroot/test_data/images`. Các ca còn lại không tự động gọi API để bảo vệ credit.
 
 ## Tái tạo
 

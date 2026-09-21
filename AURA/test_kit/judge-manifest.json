@@ -1,0 +1,23 @@
+{
+  "version": "judge-15-v1",
+  "description": "15 ca tham chiếu được tuyển chọn cho BGK; không tự động gọi API. Năm ca Verify chạy trực tiếp được khai báo riêng tại wwwroot/test_data/expected-results.json.",
+  "sourceManifest": "manifest.json",
+  "imageDirectory": "images",
+  "cases": [
+    { "id": "TK-01", "fileName": "TK-01-ecommerce.jpg", "expectedStatus": "AUTO_APPROVE", "claimedAmount": 295199, "category": "routine" },
+    { "id": "TK-02", "fileName": "TK-02-thermal.jpg", "expectedStatus": "AUTO_APPROVE", "claimedAmount": 88000, "category": "routine" },
+    { "id": "TK-03", "fileName": "TK-03-vat.jpg", "expectedStatus": "AUTO_APPROVE", "claimedAmount": 420000, "category": "routine" },
+    { "id": "TK-06", "fileName": "TK-06-routine.jpg", "expectedStatus": "AUTO_APPROVE", "claimedAmount": 262000, "category": "routine" },
+    { "id": "TK-10", "fileName": "TK-10-routine.jpg", "expectedStatus": "AUTO_APPROVE", "claimedAmount": 370000, "category": "routine" },
+    { "id": "TK-11", "fileName": "TK-11-missing-identifier.jpg", "expectedStatus": "ESCALATE_FACT", "claimedAmount": 323000, "category": "fact" },
+    { "id": "TK-12", "fileName": "TK-12-blurred-total.jpg", "expectedStatus": "ESCALATE_FACT", "claimedAmount": 336000, "category": "fact" },
+    { "id": "TK-15", "fileName": "TK-15-amount-mismatch.jpg", "expectedStatus": "ESCALATE_FACT", "claimedAmount": 395000, "category": "fact" },
+    { "id": "TK-17", "fileName": "TK-17-returned-order.jpg", "expectedStatus": "ESCALATE_FACT", "claimedAmount": 401000, "category": "fact" },
+    { "id": "TK-05", "fileName": "TK-05-policy-beer.jpg", "expectedStatus": "ESCALATE_POLICY", "claimedAmount": 780000, "category": "policy" },
+    { "id": "TK-21", "fileName": "TK-21-policy.jpg", "expectedStatus": "ESCALATE_POLICY", "claimedAmount": 400000, "category": "policy" },
+    { "id": "TK-22", "fileName": "TK-22-policy.jpg", "expectedStatus": "ESCALATE_POLICY", "claimedAmount": 450000, "category": "policy" },
+    { "id": "TK-26", "fileName": "TK-26-authority.jpg", "expectedStatus": "ESCALATE_AUTHORITY", "claimedAmount": 1050000, "category": "authority" },
+    { "id": "TK-28", "fileName": "TK-28-authority.jpg", "expectedStatus": "ESCALATE_AUTHORITY", "claimedAmount": 1700000, "category": "authority" },
+    { "id": "TK-30", "fileName": "TK-30-authority.jpg", "expectedStatus": "ESCALATE_AUTHORITY", "claimedAmount": 2350000, "category": "authority" }
+  ]
+}

@@ -46,6 +46,43 @@ public sealed class TestKitIntegrityTests
         });
     }
 
+    [Fact]
+    public void Judge_manifest_has_exactly_fifteen_curated_cases_with_images_and_source_entries()
+    {
+        using var judgeDocument = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(ProjectRoot, "test_kit", "judge-manifest.json")));
+        using var sourceDocument = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(ProjectRoot, "test_kit", "manifest.json")));
+
+        var judgeCases = judgeDocument.RootElement.GetProperty("cases").EnumerateArray().ToList();
+        var sourceCases = sourceDocument.RootElement.GetProperty("cases").EnumerateArray()
+            .ToDictionary(x => x.GetProperty("id").GetString()!, StringComparer.Ordinal);
+
+        Assert.Equal(15, judgeCases.Count);
+        Assert.Equal(15, judgeCases.Select(x => x.GetProperty("id").GetString()).Distinct().Count());
+        Assert.Equal(15, judgeCases.Select(x => x.GetProperty("fileName").GetString()).Distinct().Count());
+        Assert.Equal(5, judgeCases.Count(x => x.GetProperty("expectedStatus").GetString() == "AUTO_APPROVE"));
+        Assert.Equal(4, judgeCases.Count(x => x.GetProperty("expectedStatus").GetString() == "ESCALATE_FACT"));
+        Assert.Equal(3, judgeCases.Count(x => x.GetProperty("expectedStatus").GetString() == "ESCALATE_POLICY"));
+        Assert.Equal(3, judgeCases.Count(x => x.GetProperty("expectedStatus").GetString() == "ESCALATE_AUTHORITY"));
+
+        Assert.All(judgeCases, testCase =>
+        {
+            var id = testCase.GetProperty("id").GetString()!;
+            var fileName = testCase.GetProperty("fileName").GetString()!;
+            Assert.True(sourceCases.TryGetValue(id, out var sourceCase));
+            Assert.Equal(fileName, sourceCase.GetProperty("file_name").GetString());
+            Assert.Equal(testCase.GetProperty("expectedStatus").GetString(),
+                sourceCase.GetProperty("expected_status").GetString());
+            Assert.Equal(testCase.GetProperty("claimedAmount").GetInt32(),
+                sourceCase.GetProperty("claimed_amount").GetInt32());
+
+            var file = new FileInfo(Path.Combine(ProjectRoot, "test_kit", "images", fileName));
+            Assert.True(file.Exists);
+            Assert.InRange(file.Length, 1, 5 * 1024L * 1024L);
+        });
+    }
+
     private static string FindProjectRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

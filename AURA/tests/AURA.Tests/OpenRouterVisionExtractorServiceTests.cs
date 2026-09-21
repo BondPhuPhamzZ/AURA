@@ -35,7 +35,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
                 ApiKey = "test-key",
                 BaseUrl = "https://openrouter.ai/api/v1/",
                 ChatCompletionsPath = "chat/completions",
-                Model = "qwen/qwen3.8-flash",
+                Model = "qwen/qwen3-vl-8b-instruct",
                 PolicyPath = "BUSINESS_RULES.md",
                 TimeoutSeconds = 90,
                 MaxOutputTokens = 4096,
@@ -116,7 +116,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
             var options = Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions
             {
                 ApiKey = "test-key",
-                Model = "qwen/qwen3.8-flash",
+                Model = "qwen/qwen3-vl-8b-instruct",
                 PolicyPath = "BUSINESS_RULES.md"
             });
             var client = new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) };

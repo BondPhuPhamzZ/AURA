@@ -13,7 +13,7 @@ public sealed class OpenRouterOptions
     public string ChatCompletionsPath { get; set; } = "chat/completions";
 
     [Required]
-    public string Model { get; set; } = "qwen/qwen3.8-flash";
+    public string Model { get; set; } = "qwen/qwen3-vl-8b-instruct";
 
     [Required]
     public string PolicyPath { get; set; } = "BUSINESS_RULES.md";
