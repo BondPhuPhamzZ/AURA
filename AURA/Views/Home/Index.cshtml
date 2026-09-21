@@ -25,43 +25,45 @@
     </div>
 
     <!-- Upload Thủ Công (Middle Section) -->
-    <div style="margin-bottom: 32px;">
-        <h3 style="font-size: 1.1rem; margin-bottom: 16px;">Hoặc tải lên hóa đơn kiểm thử lẻ:</h3>
+    <section class="workflow-section upload-section" aria-labelledby="single-upload-title">
+        <h3 id="single-upload-title" style="font-size: 1.1rem; margin-bottom: 16px;">Hoặc tải lên hóa đơn kiểm thử lẻ:</h3>
         
         <form id="uploadForm" asp-controller="Applicant" asp-action="UploadReceipt" method="post" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
             
-            <div class="dropzone-area" id="dropzone" onclick="document.getElementById('receiptFile').click()">
-                <input type="file" id="receiptFile" name="receiptFile" accept=".jpg,.jpeg,.png" style="display: none;" onchange="handleFileSelect(this)">
-                
-                <div class="dropzone-icon">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                </div>
-                <div class="dropzone-text" id="dropzoneText">Kéo thả ảnh hóa đơn vào đây</div>
-                <div class="dropzone-subtext" style="color: var(--colors-ink-subtle); margin-top: 8px; font-size: 0.875rem;">Hỗ trợ JPG, PNG (Tối đa 5MB)</div>
-            </div>
+            <div class="upload-workspace">
+                <div class="dropzone-area" id="dropzone" onclick="document.getElementById('receiptFile').click()">
+                    <input type="file" id="receiptFile" name="receiptFile" accept=".jpg,.jpeg,.png" style="display: none;" onchange="handleFileSelect(this)">
 
-            <div class="amount-action-row mt-3">
-                <div class="amount-field">
-                    <label for="claimedAmountDisplay" class="form-label fw-semibold">Số tiền nhân viên đề nghị hoàn ứng (VND)</label>
-                    <input id="claimedAmountDisplay" type="text" inputmode="numeric" autocomplete="off" required
-                           class="form-control amount-input-aura" placeholder="Ví dụ: 150.000" aria-describedby="claimedAmountHelp" />
-                    <input id="claimedAmount" name="claimedAmount" type="hidden" />
-                    <div id="claimedAmountHelp" class="form-text">
-                        Đây là số tiền nhân viên thực sự yêu cầu, được giữ độc lập để phát hiện khai báo hoặc nhận dạng sai. Hệ thống tự thêm dấu chấm phân cách hàng nghìn.
+                    <div class="dropzone-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                     </div>
+                    <div class="dropzone-text" id="dropzoneText">Kéo thả ảnh hóa đơn vào đây</div>
+                    <div class="dropzone-subtext" style="color: var(--colors-ink-subtle); margin-top: 8px; font-size: 0.875rem;">Hỗ trợ JPG, PNG (Tối đa 5MB)</div>
                 </div>
-                <div class="amount-submit-wrap">
-                    <button type="button" id="submitBtn" class="button-primary" onclick="submitUpload()">
-                        <span id="btnText">AI tự động kiểm</span>
-                    </button>
+
+                <div class="amount-action-row">
+                    <div class="amount-field">
+                        <label for="claimedAmountDisplay" class="form-label fw-semibold">Số tiền nhân viên đề nghị hoàn ứng (VND)</label>
+                        <input id="claimedAmountDisplay" type="text" inputmode="numeric" autocomplete="off" required
+                               class="form-control amount-input-aura" placeholder="Ví dụ: 150.000" aria-describedby="claimedAmountHelp" />
+                        <input id="claimedAmount" name="claimedAmount" type="hidden" />
+                        <div id="claimedAmountHelp" class="form-text">
+                            Đây là số tiền nhân viên thực sự yêu cầu, được giữ độc lập để phát hiện khai báo hoặc nhận dạng sai. Hệ thống tự thêm dấu chấm phân cách hàng nghìn.
+                        </div>
+                    </div>
+                    <div class="amount-submit-wrap">
+                        <button type="button" id="submitBtn" class="button-primary" onclick="submitUpload()">
+                            <span id="btnText">AI tự động kiểm</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </form>
-    </div>
+    </section>
 
     <!-- Bảng Kết Quả Hợp Nhất (Bottom Section) -->
-    <div id="unifiedResultsSection" style="padding-top: 24px; border-top: 1px solid var(--colors-border);">
+    <section id="unifiedResultsSection" class="workflow-section results-section">
         <div class="section-heading-row compact">
             <h3 style="font-size: 1.25rem; margin: 0;">Bảng Kết Quả Thẩm Định</h3>
             <button type="button" class="button-ghost-sm" onclick="navigateToTab('audit')">
@@ -91,7 +93,7 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 
     <div class="subsection-divider">
         @await Component.InvokeAsync("EmployeeEscalationQueue")

@@ -52,6 +52,13 @@ html, body {
     color: var(--colors-ink);
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    min-width: 0;
+}
+
 .logo-icon {
     background: linear-gradient(135deg, #3B82F6, #8B5CF6);
     color: white;
@@ -178,8 +185,21 @@ main {
 }
 
 .subsection-divider {
-    margin-top: 28px;
-    padding-top: 24px;
+    margin-top: 44px;
+    padding-top: 32px;
+    border-top: 1px solid var(--colors-border);
+}
+
+.workflow-section {
+    margin-top: 40px;
+}
+
+.upload-section {
+    margin-bottom: 44px;
+}
+
+.results-section {
+    padding-top: 32px;
     border-top: 1px solid var(--colors-border);
 }
 
@@ -194,19 +214,25 @@ main {
 }
 
 .amount-field {
-    flex: 1 1 520px;
-    max-width: 720px;
+    width: 100%;
 }
 
 .amount-action-row {
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
     gap: 16px;
+    min-width: 0;
 }
 
 .amount-submit-wrap {
-    flex: 0 0 auto;
-    padding-bottom: 2px;
+    width: 100%;
+}
+
+.amount-submit-wrap .button-primary {
+    width: 100%;
+    min-height: 46px;
 }
 
 .amount-input-aura.form-control {
@@ -228,6 +254,13 @@ main {
 }
 
 /* Dropzone */
+.upload-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.75fr);
+    gap: 28px;
+    align-items: stretch;
+}
+
 .dropzone-area {
     border: 2px dashed var(--colors-border);
     border-radius: 16px;
@@ -235,7 +268,12 @@ main {
     background-color: var(--colors-canvas);
     transition: all 0.3s ease;
     cursor: pointer;
-    padding: 80px 20px;
+    min-height: 250px;
+    padding: 56px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .dropzone-area:hover, .dropzone-area.dragover {
@@ -390,6 +428,79 @@ main {
     width: 38%;
 }
 
+.audit-table {
+    min-width: 1220px;
+    table-layout: fixed;
+}
+
+.audit-col-time { width: 11%; }
+.audit-col-id { width: 8%; }
+.audit-col-action { width: 13%; }
+.audit-col-status { width: 17%; }
+.audit-col-input { width: 15%; }
+.audit-col-details { width: 28%; }
+.audit-col-intervention { width: 8%; }
+
+.audit-time-cell time,
+.audit-time-cell span,
+.audit-time-cell small {
+    display: block;
+    white-space: nowrap;
+}
+
+.audit-time-cell small {
+    margin-top: 3px;
+    color: var(--colors-ink-muted);
+}
+
+.audit-action-badge {
+    white-space: normal;
+    line-height: 1.35;
+    text-align: left;
+}
+
+.audit-details summary {
+    cursor: pointer;
+    color: var(--colors-ink);
+}
+
+.audit-details summary::marker {
+    color: var(--colors-primary);
+}
+
+.audit-details-preview {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+}
+
+.audit-details-toggle::after {
+    content: "Xem đầy đủ";
+    display: inline-block;
+    margin-top: 6px;
+    color: #8db8ff;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.audit-details[open] .audit-details-preview {
+    display: none;
+}
+
+.audit-details[open] .audit-details-toggle::after {
+    content: "Thu gọn";
+}
+
+.audit-details-full {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--colors-border);
+    overflow-wrap: anywhere;
+    color: var(--colors-ink-muted);
+}
+
 .cell-code {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     white-space: nowrap;
@@ -537,8 +648,10 @@ main {
     z-index: 1050;
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 10px 14px;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    padding: 0;
     border: 1px solid #3b82f6;
     border-radius: 999px;
     background: #172033;
@@ -582,6 +695,10 @@ main {
         overflow-x: auto;
     }
 
+    .header-actions {
+        width: 100%;
+    }
+
     .top-tabs .nav-link {
         flex: 0 0 auto;
         white-space: nowrap;
@@ -603,6 +720,11 @@ main {
 
     .dropzone-area {
         padding: 48px 16px;
+    }
+
+    .upload-workspace {
+        grid-template-columns: 1fr;
+        gap: 20px;
     }
 
     .amount-action-row,
@@ -638,12 +760,6 @@ main {
         bottom: 14px;
         width: 44px;
         height: 44px;
-        justify-content: center;
-        padding: 0;
-    }
-
-    .back-to-top span {
-        display: none;
     }
 
     .toast-container-aura {
