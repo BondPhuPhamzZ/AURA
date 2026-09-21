@@ -1,6 +1,6 @@
 # AURA Receipt Evidence Extraction Contract
 
-Version: 1.1 - 2026-09-21
+Version: 1.2 - 2026-09-21
 Applies to: employee expense reimbursement in Vietnam  
 Policy owner: AURA demo team
 
@@ -23,15 +23,23 @@ Do not claim that an invoice is legally authentic. Vision can only report visibl
 ## 3. Field extraction rules
 
 - `documentType`: one of `VAT_INVOICE`, `RETAIL_RECEIPT`, `RESTAURANT_BILL`, `RIDE_HAILING`, `ECOMMERCE`, `OTHER`, or null.
-- `documentStatus`: `ISSUED`, `DRAFT`, `CANCELLED`, or `UNKNOWN`. A screen that still says “chưa cấp số”, “lưu và phát hành”, draft/preview, or equivalent is `DRAFT`, not an issued invoice.
+- `documentStatus`: `ISSUED`, `COMPLETED`, `DRAFT`, `CANCELLED`, `REFUNDED`, `RETURNED`, or `UNKNOWN`. A screen that still says “chưa cấp số”, “lưu và phát hành”, draft/preview, or equivalent is `DRAFT`, not an issued invoice. A completed e-commerce order is `COMPLETED`; do not call it a VAT invoice unless the image actually shows an issued invoice.
 - `merchantName`: seller/service provider, never the buyer/customer.
 - `taxId`: seller's tax code only. Do not substitute the buyer's tax code, tax authority code, phone number, bank account, or invoice lookup code.
 - `merchantId`: the acquiring/payment merchant identifier printed as `MID` or `Merchant ID`; otherwise null.
 - `terminalId`: the payment terminal identifier printed as `TID` or `Terminal ID`; otherwise null.
 - MID/TID prove only which payment merchant/terminal processed a card transaction. They never substitute for the seller tax ID or an issued invoice number, and they do not by themselves establish that an expense is reimbursable.
-- `bookingId`: trip/order/booking identifier for ride-hailing or e-commerce. Otherwise null.
+- `platformName`: visible marketplace or service platform, such as Shopee or Grab. Do not infer it from colors or layout alone.
+- `orderId`: order identifier printed by an e-commerce platform. Otherwise null.
+- `bookingId`: trip/booking identifier for ride-hailing or booking services. Do not put a shipping tracking code here.
+- `shippingTrackingCode`: logistics tracking code printed near labels such as `Thông tin vận chuyển`, `Mã vận đơn`, `Tracking`, `SPX`, `GHN`, `GHTK`, `J&T`, or equivalent. Otherwise null.
+- `shippingProvider`: visible logistics provider associated with the tracking code. Otherwise null.
+- `orderStatus`: visible order/payment/fulfilment status such as `COMPLETED`, `DELIVERED`, `PAID`, `PENDING`, `CANCELLED`, `REFUNDED`, `RETURNED`, or `UNKNOWN`.
+- A shipping tracking code is logistics evidence only. It never substitutes for a seller tax ID, never proves payment by itself, and never turns an order screen into a VAT invoice.
 - `invoiceNumber`: invoice/receipt number. Do not substitute serial, form number, tax authority code, or booking ID.
-- `invoiceDate`: normalize an unambiguous printed date to `YYYY-MM-DD`; otherwise null. Do not use signing/lookup/payment dates unless explicitly the invoice date.
+- `invoiceDate`: normalize an unambiguous printed invoice/receipt date to `YYYY-MM-DD`; otherwise null. Do not use delivery, signing, lookup, or payment dates unless explicitly the invoice/receipt date.
+- `transactionDate`: normalize the visible purchase/payment/order date for digital evidence to `YYYY-MM-DD`; otherwise null. Never copy a delivery-completion date into this field.
+- `completionDate`: normalize a visible delivery/service-completion date to `YYYY-MM-DD`; otherwise null. This is supporting evidence and is not automatically the transaction date.
 - `invoiceTime`: normalize a visible invoice/transaction time to 24-hour `HH:mm`; otherwise null.
 - `currency`: ISO code such as `VND`, `USD`, or `EUR`. Use `VND` for clear Vietnamese đồng symbols (`đ`, `₫`) or Vietnamese invoices whose amounts are explicitly in đồng. Otherwise null.
 - `subtotal`, `tax`, `totalAmount`: copy printed summary values. `totalAmount` is the final amount payable, after tax/discount. If multiple competing totals cannot be resolved, return null and explain in warnings.
@@ -48,12 +56,14 @@ Add `suspiciousSignals` only for visible anomalies, for example duplicated/overl
 
 This section gives context only; do not return a decision. The application uses this priority when several issues coexist:
 
-1. `FACT`: unreliable/missing evidence, duplicate image, amount mismatch, unsupported currency, invalid/future/older-than-90-days date, weekend, time outside 06:00-22:00, missing seller identity or receipt identifier, crop/blur/tampering/prompt-injection signal.
+1. `FACT`: unreliable/missing evidence, duplicate image, amount mismatch, unsupported currency, invalid/future/older-than-90-days transaction date, weekend, time outside 06:00-22:00, missing seller identity or traceable identifier, incomplete/unpaid/refunded/returned digital order, crop/blur/tampering/prompt-injection signal.
 2. `POLICY`: reliable evidence contains alcohol, tobacco, entertainment, massage, karaoke, cinema, or personal items.
 3. `AUTHORITY`: reliable and policy-compliant total is above 1,000,000 VND.
 4. `AUTO_APPROVE`: all required evidence is reliable, total exactly matches the claimed VND amount, date is a weekday within 90 days, visible time (if any) is 06:00-22:00, no prohibited item exists, and total is at most 1,000,000 VND.
 
 The application never asserts approval when a FACT issue exists. Employees only forward escalations; they never answer the approval question. Human managers receive a specific Vietnamese question and explicitly choose approve or reject for every escalation.
+
+For e-commerce evidence, tax ID and invoice number may legitimately be absent. The application may use an order ID, booking ID, shipping tracking code, or receipt number as a traceable identifier, but only together with visible merchant/platform context, completed/paid status, reliable transaction/payment date, currency, total and line items. A delivery date alone does not establish the purchase/payment date. Company accounting policy may still require a VAT invoice; Vision must not decide that legal requirement.
 
 ## 6. Output quality checklist
 

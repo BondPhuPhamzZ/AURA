@@ -16,7 +16,7 @@ AURA hiện là một **vertical slice chạy thật** cho Track A — The Escal
 6. Quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi cụ thể và có thể hoàn tác.
 7. Mọi bước quan trọng được ghi vào audit trail; ảnh gốc có thể mở lại.
 
-Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 39 policy/workflow test đạt, Verify Vision 5/5 trên fixture tổng hợp và các route chính đã smoke-test. Tuy vậy, Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
+Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 44 policy/workflow test đạt, Verify Vision 5/5 trên fixture tổng hợp và các route chính đã smoke-test. Tuy vậy, Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
 
 Đánh giá công tâm:
 
@@ -195,7 +195,7 @@ File đã rõ ở các điểm:
 - Ranh giới AI chỉ extraction, không approve.
 - Cấm làm theo prompt injection trong ảnh.
 - Không được đoán; thiếu/mờ phải `null` + `missingFields`.
-- Phân biệt seller/buyer, tax ID/invoice number/booking ID.
+- Phân biệt seller/buyer, tax ID/invoice number/order ID/booking ID/shipping tracking code.
 - Phân biệt MID/TID của thiết bị thanh toán với seller tax ID và invoice number.
 - Nhận diện trạng thái `ISSUED/DRAFT/CANCELLED/UNKNOWN`; bản nháp hoặc “chưa cấp số” không được auto-approve.
 - Chuẩn hóa date/time/currency/amount.
@@ -203,7 +203,7 @@ File đã rõ ở các điểm:
 - Không cáo buộc fraud; chỉ báo visible anomaly.
 - Nêu precedence `FACT > POLICY > AUTHORITY > AUTO_APPROVE`.
 
-Nhưng chưa “bao phủ tuyệt đối”. Version 1.1 đã bổ sung MID/TID và chứng từ nháp/hủy; những khoảng trống production còn lại:
+Nhưng chưa “bao phủ tuyệt đối”. Version 1.2 đã bổ sung MID/TID, chứng từ nháp/hủy và bằng chứng e-commerce/mã vận chuyển; những khoảng trống production còn lại:
 
 - Chưa mô tả đầy đủ hóa đơn điều chỉnh/thay thế, credit note, refund hoặc total âm.
 - Chưa định nghĩa rounding/tolerance khi VAT tạo số lẻ.
@@ -221,8 +221,8 @@ Với Sprint 1, contract hiện tại đủ rõ cho scope một ảnh JPG/PNG. V
 
 `ReceiptExtractionDto` nhận:
 
-- Loại tài liệu, merchant, seller tax ID, booking ID, invoice number.
-- Ngày/giờ hóa đơn và currency.
+- Loại tài liệu, merchant/platform, seller tax ID, order/booking ID, shipping tracking code/provider và invoice number.
+- Trạng thái đơn, ngày hóa đơn, ngày giao dịch, ngày hoàn tất, giờ và currency.
 - Subtotal, tax, total.
 - Danh sách line item gồm description, quantity, unit price, amount.
 - Missing fields, warnings, suspicious signals.
@@ -251,9 +251,10 @@ Khi có nhiều vấn đề: `FACT` thắng `POLICY`, `POLICY` thắng `AUTHORIT
 - Chứng từ `DRAFT`, `CANCELLED`, “chưa cấp số/chưa phát hành”.
 - Byte-identical duplicate.
 - Total thiếu/không dương; claimed amount không hợp lệ; amount lệch sau round VND.
-- Thiếu merchant hoặc invoice number.
-- Hóa đơn giấy thiếu seller tax ID.
-- Tài liệu số thiếu cả booking ID và tax ID.
+- Thiếu merchant hoặc định danh phù hợp loại chứng từ.
+- Hóa đơn giấy thiếu invoice number hoặc seller tax ID.
+- Ride-hailing thiếu booking/receipt ID; e-commerce thiếu cả order/booking/tracking/receipt ID.
+- E-commerce thiếu trạng thái hoàn tất hoặc ngày giao dịch/thanh toán; ngày giao hàng không tự thay ngày giao dịch.
 - Currency không phải VND.
 - Ngày không đúng `YYYY-MM-DD`, tương lai, quá 90 ngày hoặc cuối tuần.
 - Giờ có in nhưng sai `HH:mm` hoặc ngoài 06:00–22:00.
@@ -327,7 +328,7 @@ Hai ViewComponent bắt lỗi DB và hiển thị thông báo thay vì làm hỏ
 
 ### 14.1 Automated policy tests
 
-39 xUnit cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, tax ID, currency, date, future/stale/weekend, late time, blur, duplicate, chứng từ nháp/hủy, bốn nhóm item cấm, authority, precedence, tám nhánh quyết định và ranh giới vai trò nhân viên/quản lý.
+44 xUnit cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, tax ID, currency, date, future/stale/weekend, late time, blur, duplicate, chứng từ nháp/hủy, e-commerce/mã vận chuyển, bốn nhóm item cấm, authority, precedence, tám nhánh quyết định và ranh giới vai trò nhân viên/quản lý.
 
 ### 14.2 Smoke tests đã thực hiện
 
@@ -359,7 +360,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Mục tiêu: build sạch và 39/39 test policy/workflow.
+Mục tiêu: build sạch và 44/44 test policy/workflow.
 
 ### Tầng B — fixture chuẩn hóa
 

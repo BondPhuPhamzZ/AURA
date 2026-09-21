@@ -7,7 +7,7 @@ Ngày cập nhật: 21/09/2026. Chuẩn đối chiếu: Track A trong `Challenge
 | Yêu cầu | Trạng thái | Bằng chứng |
 |---|---|---|
 | Quy trình và policy rõ | Đạt cơ bản | `BUSINESS_RULES.md`, policy engine tất định |
-| Tối thiểu 15 tình huống | Đạt | 39 automated policy/workflow tests; ma trận mở rộng trong `TEST_CASES.md` |
+| Tối thiểu 15 tình huống | Đạt | 44 automated policy/workflow tests; ma trận mở rộng trong `TEST_CASES.md` |
 | Ba nhóm FACT/POLICY/AUTHORITY | Đạt | status và precedence trong `PolicyDecisionEngine` |
 | Câu hỏi chuyển tiếp cụ thể | Đạt | câu hỏi tiếng Việt có dữ kiện và lựa chọn CÓ/KHÔNG |
 | Không over-escalate | Đạt trên fixture nội bộ | 3/3 routine cases auto-approve |

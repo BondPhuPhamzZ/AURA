@@ -76,6 +76,52 @@ public sealed class PolicyDecisionEngineTests
         Assert.Equal("ESCALATE_FACT", Decide(facts).Status);
     }
 
+    [Fact]
+    public void Completed_ecommerce_order_can_use_order_id_without_tax_or_invoice_number()
+    {
+        var facts = ValidEcommerceFacts();
+        facts.OrderId = "SHOPEE-260918-001";
+
+        Assert.Equal("AUTO_APPROVE", Decide(facts, 295_199).Status);
+    }
+
+    [Fact]
+    public void Completed_ecommerce_order_can_use_shipping_tracking_code_as_traceable_identifier()
+    {
+        var facts = ValidEcommerceFacts();
+        facts.ShippingTrackingCode = "VN2693231211394";
+        facts.ShippingProvider = "SPX Instant";
+
+        Assert.Equal("AUTO_APPROVE", Decide(facts, 295_199).Status);
+    }
+
+    [Fact]
+    public void Ecommerce_order_without_any_traceable_identifier_is_fact_escalation()
+    {
+        Assert.Equal("ESCALATE_FACT", Decide(ValidEcommerceFacts(), 295_199).Status);
+    }
+
+    [Fact]
+    public void Delivery_date_does_not_replace_missing_ecommerce_transaction_date()
+    {
+        var facts = ValidEcommerceFacts();
+        facts.ShippingTrackingCode = "VN2693231211394";
+        facts.TransactionDate = null;
+        facts.CompletionDate = "2026-09-18";
+
+        Assert.Equal("ESCALATE_FACT", Decide(facts, 295_199).Status);
+    }
+
+    [Fact]
+    public void Refunded_ecommerce_order_is_fact_escalation_even_with_shipping_code()
+    {
+        var facts = ValidEcommerceFacts();
+        facts.ShippingTrackingCode = "VN2693231211394";
+        facts.OrderStatus = "COMPLETED - REFUNDED";
+
+        Assert.Equal("ESCALATE_FACT", Decide(facts, 295_199).Status);
+    }
+
     [Theory]
     [InlineData("Tiger Beer")]
     [InlineData("Thuốc lá")]
@@ -177,5 +223,20 @@ public sealed class PolicyDecisionEngineTests
         TotalAmount = 150_000,
         Confidence = 0.98,
         LineItems = [new ReceiptLineItem { Description = "Business taxi trip", Amount = 150_000 }]
+    };
+
+    private static ReceiptExtractionDto ValidEcommerceFacts() => new()
+    {
+        DocumentType = "ECOMMERCE",
+        DocumentStatus = "COMPLETED",
+        PlatformName = "Shopee",
+        MerchantName = "Double Fish Việt Nam",
+        OrderStatus = "Đơn hàng đã hoàn thành",
+        TransactionDate = "2026-09-18",
+        CompletionDate = "2026-09-18",
+        Currency = "VND",
+        TotalAmount = 295_199,
+        Confidence = 0.98,
+        LineItems = [new ReceiptLineItem { Description = "Vợt bóng bàn", Quantity = 1, Amount = 295_199 }]
     };
 }

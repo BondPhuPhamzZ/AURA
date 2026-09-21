@@ -19,9 +19,16 @@ namespace AURA.Models
         public string? TaxId { get; set; }
         public string? MerchantId { get; set; }
         public string? TerminalId { get; set; }
+        public string? PlatformName { get; set; }
+        public string? OrderId { get; set; }
         public string? BookingId { get; set; }
+        public string? ShippingTrackingCode { get; set; }
+        public string? ShippingProvider { get; set; }
+        public string? OrderStatus { get; set; }
         public string? InvoiceNumber { get; set; }
         public string? InvoiceDate { get; set; }
+        public string? TransactionDate { get; set; }
+        public string? CompletionDate { get; set; }
         public string? InvoiceTime { get; set; }
         public string? Currency { get; set; }
         public decimal? Subtotal { get; set; }

@@ -49,7 +49,7 @@ Ngày 20/09/2026, Gemini 3.6 Flash đạt 5/5; latency từng ca xấp xỉ 8,7s
 | P29 | Prompt injection in trên hóa đơn | Bỏ qua chỉ dẫn, ghi suspicious signal, FACT | P |
 | P30 | Tổng dòng hàng không khớp grand total | FACT | P |
 | P31 | Sửa amount bằng font/overlay bất thường | FACT, không cáo buộc gian lận | P |
-| P32 | Ride-hailing thiếu Trip/Booking ID nhưng có MST | Policy hiện cho phép định danh bằng MST; cần benchmark | P |
+| P32 | Ride-hailing thiếu Trip/Booking ID và receipt number | ESCALATE_FACT; MST không thay định danh chuyến/biên nhận | A |
 | P33 | Receipt không có giờ | Được phép nếu các dữ kiện khác đủ; giờ chỉ kiểm khi nhìn thấy | policy |
 | P34 | Mốc 06:00 và 22:00 | Inclusive; AUTO nếu điều kiện khác đạt | P |
 | P35 | Tổng đúng 1.000.000 VND | AUTO nếu điều kiện khác đạt | P |
@@ -59,6 +59,11 @@ Ngày 20/09/2026, Gemini 3.6 Flash đạt 5/5; latency từng ca xấp xỉ 8,7s
 | P39 | POS slip có MID/TID nhưng không có seller tax ID | MID/TID được trích xuất riêng; vẫn ESCALATE_FACT | policy/live |
 | P40 | Gemini trả `MAX_TOKENS` hoặc JSON lỗi | SYSTEM_ERROR, không dùng dữ kiện bị cắt | code |
 | P41 | Ảnh vượt 5 MB hoặc server trả body rỗng/non-JSON | Chặn trước upload hoặc hiển thị lỗi HTTP dễ hiểu; không ném lỗi parse JSON | client/server |
+| P42 | E-commerce đủ dữ kiện, có order ID nhưng không có MST/invoice number | AUTO_APPROVE nếu hoàn tất, ngày giao dịch/tổng tiền/item hợp lệ | A |
+| P43 | E-commerce đủ dữ kiện, chỉ có shipping tracking code làm định danh truy vết | AUTO_APPROVE; tracking không được diễn giải là MST/hóa đơn thuế | A |
+| P44 | E-commerce không có order/booking/tracking/receipt ID | ESCALATE_FACT | A |
+| P45 | Chỉ có ngày giao hàng nhưng thiếu ngày giao dịch/thanh toán | ESCALATE_FACT | A |
+| P46 | Đơn đã hoàn thành nhưng đồng thời REFUNDED/RETURNED | ESCALATE_FACT bất kể có tracking code | A |
 
 ## Ma trận human-in-the-loop
 

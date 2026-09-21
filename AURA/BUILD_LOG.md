@@ -9,7 +9,7 @@
 
 - Tách extraction khỏi deterministic policy giúp kết quả giải thích và unit-test được.
 - Benchmark 5 fixture tổng hợp đạt 5/5 trong khoảng 32 giây tổng vào 20/09/2026.
-- 39 policy/workflow tests chạy dưới một giây và khóa precedence `FACT -> POLICY -> AUTHORITY`, chứng từ nháp, tám nhánh quyết định và ranh giới vai trò nhân viên/quản lý.
+- 44 policy/workflow tests chạy dưới một giây và khóa precedence `FACT -> POLICY -> AUTHORITY`, chứng từ nháp, e-commerce/mã vận chuyển, tám nhánh quyết định và ranh giới vai trò nhân viên/quản lý.
 - Structured Output giảm parsing lỗi so với JSON tự do.
 
 ## Chi phí/thời gian và sự cố thực tế

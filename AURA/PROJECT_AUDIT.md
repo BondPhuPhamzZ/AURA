@@ -16,7 +16,7 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 - Upload có claimed amount, kiểm extension + MIME + magic bytes + 5 MB, tên file ngẫu nhiên và private storage.
 - Hóa đơn, metadata, SHA-256, facts JSON, decision và audit được lưu để tra cứu.
 - Nhân viên chủ động chuyển một/toàn bộ ca `ESCALATE_*`; hàng đợi quản lý chỉ nhận hồ sơ đã chuyển và có Đồng ý/Từ chối/undo.
-- 39 policy/workflow tests đạt 39/39; build 0 warning/0 error.
+- 44 policy/workflow tests đạt 44/44; build 0 warning/0 error.
 - Benchmark Gemini thật đạt 5/5 trong khoảng 32 giây tổng.
 
 ## 2. Bằng chứng kiểm thử
@@ -24,7 +24,7 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 | Kiểm thử | Kết quả |
 |---|---|
 | `dotnet build --no-restore` | Đạt, 0 warning, 0 error |
-| `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` | Đạt 39/39 |
+| `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` | Đạt 44/44 |
 | EF migration `PersistReceiptEvidence` | Áp dụng thành công vào LocalDB |
 | `GET /`, `/Home/Index`, `/Home/Privacy` | 200 |
 | `GET /Applicant`, `/Verify` | 302 về trang chủ |
@@ -114,7 +114,7 @@ Kết luận: **Gemini 3.6 Flash là lựa chọn khả thi nhất để kịp S
 
 - Tách vai trò “extractor” khỏi “approver”; AI không được trả quyết định.
 - Chống prompt injection trong ảnh và cấm suy đoán dữ kiện không đọc được.
-- Phân biệt seller/buyer tax ID, invoice number, trip/booking ID.
+- Phân biệt seller/buyer tax ID, invoice number, order/booking ID và shipping tracking code; tracking chỉ là bằng chứng logistics.
 - Chuẩn hóa ngày, giờ, currency, tổng tiền và line items.
 - Nêu giới hạn pháp lý: identifier nhìn thấy không đồng nghĩa invoice thật/hợp pháp.
 - Schema bắt buộc được định nghĩa trong code bằng `responseJsonSchema`.

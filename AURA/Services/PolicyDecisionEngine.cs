@@ -28,7 +28,7 @@ public static class PolicyDecisionEngine
         var factProblems = new List<string>();
         if (facts.Confidence < MinimumConfidence)
             factProblems.Add($"độ tin cậy trích xuất chỉ {facts.Confidence:P0}");
-        if (ContainsAny(facts.DocumentStatus, "draft", "nháp", "unissued", "chưa phát hành", "cancelled", "canceled", "đã hủy"))
+        if (ContainsAny(facts.DocumentStatus, "draft", "nháp", "unissued", "chưa phát hành", "cancelled", "canceled", "đã hủy", "refunded", "hoàn tiền", "returned", "trả hàng"))
             factProblems.Add($"chứng từ ở trạng thái {facts.DocumentStatus}, chưa phải hóa đơn đã phát hành hợp lệ");
         if (isDuplicate)
             factProblems.Add("ảnh hóa đơn trùng với hồ sơ đã lưu");
@@ -41,12 +41,43 @@ public static class PolicyDecisionEngine
 
         if (string.IsNullOrWhiteSpace(facts.MerchantName))
             factProblems.Add("thiếu tên đơn vị bán hàng");
-        if (string.IsNullOrWhiteSpace(facts.InvoiceNumber))
+
+        var isEcommerce = ContainsAny(facts.DocumentType, "ecommerce", "e-commerce", "online order");
+        var isRideHailing = ContainsAny(facts.DocumentType, "ride_hailing", "ride-hailing", "ride hailing");
+        var isDigital = isEcommerce || isRideHailing ||
+            ContainsAny(facts.DocumentType, "digital", "electronic", "e-invoice");
+
+        if (!isDigital && string.IsNullOrWhiteSpace(facts.InvoiceNumber))
             factProblems.Add("thiếu số hóa đơn/biên nhận");
 
-        var isDigital = ContainsAny(facts.DocumentType, "digital", "electronic", "e-invoice", "ride", "ecommerce");
-        if (isDigital && string.IsNullOrWhiteSpace(facts.BookingId) && string.IsNullOrWhiteSpace(facts.TaxId))
-            factProblems.Add("thiếu mã đặt chuyến/đơn hàng hoặc mã số thuế để đối chiếu");
+        if (isEcommerce)
+        {
+            var hasTraceableIdentifier = !string.IsNullOrWhiteSpace(facts.InvoiceNumber) ||
+                !string.IsNullOrWhiteSpace(facts.OrderId) ||
+                !string.IsNullOrWhiteSpace(facts.BookingId) ||
+                !string.IsNullOrWhiteSpace(facts.ShippingTrackingCode);
+            if (!hasTraceableIdentifier)
+                factProblems.Add("thiếu mã đơn hàng, mã đặt chỗ, mã vận chuyển hoặc số biên nhận để đối chiếu");
+
+            if (string.IsNullOrWhiteSpace(facts.OrderStatus))
+            {
+                factProblems.Add("thiếu trạng thái hoàn tất/thanh toán của đơn hàng trực tuyến");
+            }
+            else if (ContainsAny(facts.OrderStatus, "cancelled", "canceled", "đã hủy", "refunded", "hoàn tiền", "returned", "trả hàng"))
+            {
+                factProblems.Add($"đơn hàng trực tuyến có trạng thái không đủ điều kiện ({facts.OrderStatus})");
+            }
+            else if (!ContainsAny(facts.OrderStatus, "completed", "delivered", "paid", "hoàn thành", "giao hàng thành công", "đã thanh toán"))
+            {
+                factProblems.Add($"đơn hàng trực tuyến chưa có trạng thái hoàn tất đáng tin cậy ({facts.OrderStatus})");
+            }
+        }
+        else if (isRideHailing && string.IsNullOrWhiteSpace(facts.BookingId) &&
+                 string.IsNullOrWhiteSpace(facts.InvoiceNumber))
+        {
+            factProblems.Add("thiếu mã chuyến đi/đặt chỗ hoặc số biên nhận để đối chiếu");
+        }
+
         if (!isDigital && string.IsNullOrWhiteSpace(facts.TaxId))
             factProblems.Add("thiếu mã số thuế của đơn vị bán hàng");
 
@@ -55,8 +86,12 @@ public static class PolicyDecisionEngine
                 ? "không xác định được tiền tệ"
                 : $"tiền tệ {facts.Currency} chưa có tỷ giá/quy tắc quy đổi");
 
-        if (!TryParseInvoiceDate(facts.InvoiceDate, out var invoiceDate))
-            factProblems.Add("thiếu hoặc không đọc được ngày hóa đơn theo định dạng YYYY-MM-DD");
+        var evidenceDate = isDigital && !string.IsNullOrWhiteSpace(facts.TransactionDate)
+            ? facts.TransactionDate
+            : facts.InvoiceDate;
+        var evidenceDateLabel = isDigital ? "ngày giao dịch/thanh toán" : "ngày hóa đơn";
+        if (!TryParseInvoiceDate(evidenceDate, out var invoiceDate))
+            factProblems.Add($"thiếu hoặc không đọc được {evidenceDateLabel} theo định dạng YYYY-MM-DD");
         else
         {
             var today = (utcNow ?? DateTime.UtcNow).Date;
