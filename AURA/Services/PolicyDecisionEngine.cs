@@ -23,7 +23,7 @@ public static class PolicyDecisionEngine
     {
         if (facts is null)
             return Fact("Không nhận được dữ liệu trích xuất.",
-                "Hệ thống không đọc được hóa đơn. Anh/chị có đồng ý chuyển hồ sơ sang kiểm tra thủ công không? [CÓ/KHÔNG]");
+                "Hệ thống không đọc được hóa đơn. Quản lý có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]");
 
         var factProblems = new List<string>();
         if (facts.Confidence < MinimumConfidence)
@@ -86,7 +86,7 @@ public static class PolicyDecisionEngine
         {
             var summary = string.Join("; ", factProblems);
             return Fact("Không đủ dữ kiện đáng tin cậy: " + summary + ".",
-                $"Hồ sơ có vấn đề dữ kiện: {summary}. Anh/chị có xác nhận xử lý thủ công hồ sơ này không? [CÓ/KHÔNG]");
+                $"Hồ sơ có vấn đề dữ kiện: {summary}. Quản lý có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]");
         }
 
         var prohibitedItems = facts.LineItems
@@ -99,14 +99,14 @@ public static class PolicyDecisionEngine
             var items = string.Join(", ", prohibitedItems);
             return ("ESCALATE_POLICY",
                 $"Phát hiện hạng mục ngoài chính sách: {items}.",
-                $"Hóa đơn có hạng mục ngoài chính sách ({items}). Anh/chị có phê duyệt ngoại lệ khoản chi này không? [CÓ/KHÔNG]");
+                $"Hóa đơn có hạng mục ngoài chính sách ({items}). Quản lý có đồng ý duyệt ngoại lệ khoản chi này không? [CÓ/KHÔNG]");
         }
 
         if (facts.TotalAmount!.Value > AutoApprovalLimitVnd)
         {
             return ("ESCALATE_AUTHORITY",
                 $"Tổng tiền {facts.TotalAmount.Value:N0} VND vượt hạn mức tự động {AutoApprovalLimitVnd:N0} VND.",
-                $"Khoản chi {facts.TotalAmount.Value:N0} VND vượt hạn mức tự động {AutoApprovalLimitVnd:N0} VND. Anh/chị có đồng ý chuyển cấp có thẩm quyền phê duyệt không? [CÓ/KHÔNG]");
+                $"Khoản chi {facts.TotalAmount.Value:N0} VND vượt hạn mức tự động {AutoApprovalLimitVnd:N0} VND. Quản lý có đồng ý chuyển hồ sơ lên cấp có thẩm quyền không? [CÓ/KHÔNG]");
         }
 
         return ("AUTO_APPROVE",

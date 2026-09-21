@@ -69,7 +69,7 @@ public sealed class VerifyController : Controller
             {
                 actualStatus = "ESCALATE_SYSTEM_ERROR";
                 reason = "Thiếu ảnh kiểm thử trong manifest.";
-                question = "Ảnh kiểm thử bị thiếu. Anh/chị có muốn kiểm tra cấu hình thủ công không? [CÓ/KHÔNG]";
+                question = "Ảnh kiểm thử bị thiếu. Quản lý có đồng ý tiếp nhận để kiểm tra cấu hình thủ công không? [CÓ/KHÔNG]";
             }
             else
             {
@@ -87,7 +87,7 @@ public sealed class VerifyController : Controller
                     _logger.LogWarning(exception, "Verify case {CaseId} stopped with {ErrorCode}.", testCase.Id, exception.Code);
                     actualStatus = "ESCALATE_SYSTEM_ERROR";
                     reason = $"{exception.UserMessage} Mã lỗi: {exception.Code}.";
-                    question = "AI chưa xử lý được ảnh. Anh/chị có đồng ý kiểm tra thủ công không? [CÓ/KHÔNG]";
+                    question = "AI chưa xử lý được ảnh. Quản lý có đồng ý tiếp nhận để kiểm tra thủ công không? [CÓ/KHÔNG]";
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
@@ -98,7 +98,7 @@ public sealed class VerifyController : Controller
                     _logger.LogError(exception, "Verify case {CaseId} failed.", testCase.Id);
                     actualStatus = "ESCALATE_SYSTEM_ERROR";
                     reason = "AI không xử lý được ca kiểm thử do lỗi kỹ thuật.";
-                    question = "AI không xử lý được ảnh. Anh/chị có đồng ý kiểm tra thủ công không? [CÓ/KHÔNG]";
+                    question = "AI không xử lý được ảnh. Quản lý có đồng ý tiếp nhận để kiểm tra thủ công không? [CÓ/KHÔNG]";
                 }
             }
 
@@ -138,7 +138,12 @@ public sealed class VerifyController : Controller
                 reason,
                 question,
                 latencyMs = stopwatch.ElapsedMilliseconds,
-                timestamp = DateTime.UtcNow
+                timestamp = DateTime.UtcNow,
+                receiptUrl = request.ImageUrl,
+                canForward = PolicyDecisionEngine.IsEscalation(actualStatus),
+                handoffPrompt = PolicyDecisionEngine.IsEscalation(actualStatus)
+                    ? EscalationWorkflow.EmployeeHandoffPrompt
+                    : null
             });
         }
 

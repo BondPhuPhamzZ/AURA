@@ -42,8 +42,8 @@ namespace AURA.Controllers
                 req.Status = priorAiAction.Action[(priorAiAction.Action.IndexOf("ESCALATE_", StringComparison.Ordinal))..];
                 req.ManagerAnswer = null;
                 req.ManagerDecisionAt = null;
-                await _repo.UpdateRequestAsync(req);
-                await _audit.LogActionAsync(req.Id, "MANAGER_UNDO", $"Đã hoàn tác quyết định, khôi phục {req.Status}.");
+                await _repo.UpdateRequestWithAuditAsync(req, "MANAGER_UNDO",
+                    $"Đã hoàn tác quyết định, khôi phục {req.Status}.");
                 TempData["Success"] = $"Đã hoàn tác quyết định cho hồ sơ {id}.";
                 return RedirectToAction("Index", "Home", new { tab = "audit" });
             }
@@ -54,9 +54,8 @@ namespace AURA.Controllers
             req.Status = outcome.Status;
             req.ManagerAnswer = answer;
             req.ManagerDecisionAt = DateTime.UtcNow;
-            await _repo.UpdateRequestAsync(req);
-            await _audit.LogActionAsync(req.Id, outcome.AuditAction,
-                $"Question={req.ManagerQuestion}; Answer={(answer ? "CÓ" : "KHÔNG")}; Outcome={outcome.Status}; {outcome.Message}");
+            await _repo.UpdateRequestWithAuditAsync(req, outcome.AuditAction,
+                $"Question={req.ManagerQuestion}; Answer={(answer ? "ĐỒNG Ý DUYỆT" : "TỪ CHỐI DUYỆT")}; Outcome={outcome.Status}; {outcome.Message}");
             
             TempData["Success"] = outcome.Message;
             return RedirectToAction("Index", "Home", new { tab = "reviewer" });

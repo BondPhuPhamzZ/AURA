@@ -69,9 +69,8 @@ public sealed class ApplicantController : Controller
         {
             request.IsForwardedToManager = true;
             request.ForwardedAt = DateTime.UtcNow;
-            await _repository.UpdateRequestAsync(request);
-            await _audit.LogActionAsync(request.Id, "EMPLOYEE_FORWARDED_TO_MANAGER",
-                $"Question={request.ManagerQuestion}; Status={request.Status}");
+            await _repository.UpdateRequestWithAuditAsync(request, "EMPLOYEE_FORWARDED_TO_MANAGER",
+                $"Mode=SINGLE; Question={request.ManagerQuestion}; Status={request.Status}");
         }
 
         TempData["Success"] = $"Đã chuyển hồ sơ {request.Id[..8]} đến cửa sổ quản lý.";
@@ -81,9 +80,32 @@ public sealed class ApplicantController : Controller
 
         return Json(new
         {
-            message = "Chuyển tiếp thành công. Quản lý có thể trả lời CÓ hoặc KHÔNG.",
+            message = "Chuyển tiếp thành công. Quản lý có thể đồng ý duyệt hoặc từ chối duyệt.",
             redirectUrl
         });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForwardAllToManager()
+    {
+        var pending = (await _repository.GetAllRequestsAsync())
+            .Where(x => !x.IsForwardedToManager && PolicyDecisionEngine.IsEscalation(x.Status))
+            .ToList();
+
+        var forwardedAt = DateTime.UtcNow;
+        foreach (var request in pending)
+        {
+            request.IsForwardedToManager = true;
+            request.ForwardedAt = forwardedAt;
+            await _repository.UpdateRequestWithAuditAsync(request, "EMPLOYEE_FORWARDED_TO_MANAGER",
+                $"Mode=BULK; Question={request.ManagerQuestion}; Status={request.Status}");
+        }
+
+        TempData["Success"] = pending.Count == 0
+            ? "Không có hồ sơ mới cần chuyển tiếp."
+            : $"Đã chuyển tiếp {pending.Count} hồ sơ đến cửa sổ quản lý.";
+        return RedirectToAction("Index", "Home", new { tab = pending.Count == 0 ? "applicant" : "reviewer" });
     }
 
     [HttpPost]
@@ -143,7 +165,7 @@ public sealed class ApplicantController : Controller
                 exception.Code, request.Id);
             request.Status = "ESCALATE_SYSTEM_ERROR";
             request.AiReasoning = $"{exception.UserMessage} Mã lỗi: {exception.Code}. Không có quyết định tự động nào được đưa ra.";
-            request.ManagerQuestion = "AI chưa xử lý được ảnh. Anh/chị có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]";
+            request.ManagerQuestion = "AI chưa xử lý được ảnh. Quản lý có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]";
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -154,7 +176,7 @@ public sealed class ApplicantController : Controller
             _logger.LogError(exception, "Vision extraction failed for request {RequestId}.", request.Id);
             request.Status = "ESCALATE_SYSTEM_ERROR";
             request.AiReasoning = "AI không thể trích xuất hóa đơn do lỗi kỹ thuật; không có quyết định tự động nào được đưa ra.";
-            request.ManagerQuestion = "AI không xử lý được ảnh. Anh/chị có đồng ý chuyển hồ sơ sang kiểm tra thủ công không? [CÓ/KHÔNG]";
+            request.ManagerQuestion = "AI không xử lý được ảnh. Quản lý có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]";
         }
         finally
         {
@@ -178,7 +200,10 @@ public sealed class ApplicantController : Controller
             latencyMs = request.ProcessingLatencyMs,
             timestamp = request.CreatedAt,
             receiptUrl = request.ImageUrl,
-            canForward = PolicyDecisionEngine.IsEscalation(request.Status)
+            canForward = PolicyDecisionEngine.IsEscalation(request.Status),
+            handoffPrompt = PolicyDecisionEngine.IsEscalation(request.Status)
+                ? EscalationWorkflow.EmployeeHandoffPrompt
+                : null
         });
     }
 

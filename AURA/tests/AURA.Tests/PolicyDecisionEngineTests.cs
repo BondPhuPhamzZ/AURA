@@ -123,6 +123,36 @@ public sealed class PolicyDecisionEngineTests
         Assert.Equal(expected, EscalationWorkflow.Answer(status, answer).Status);
     }
 
+    [Fact]
+    public void Employee_handoff_only_confirms_transfer_not_the_manager_decision()
+    {
+        Assert.Contains("chuyển tiếp", EscalationWorkflow.EmployeeHandoffPrompt, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("[CÓ", EscalationWorkflow.EmployeeHandoffPrompt, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("ESCALATE_FACT")]
+    [InlineData("ESCALATE_POLICY")]
+    [InlineData("ESCALATE_AUTHORITY")]
+    [InlineData("ESCALATE_SYSTEM_ERROR")]
+    public void Manager_choices_use_explicit_approve_and_reject_labels(string status)
+    {
+        var choices = EscalationWorkflow.ExplainChoices(status);
+
+        Assert.StartsWith("Đồng ý", choices.Yes, StringComparison.Ordinal);
+        Assert.StartsWith("Từ chối", choices.No, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Escalation_question_is_addressed_to_manager()
+    {
+        var facts = ValidFacts();
+        facts.Confidence = 0.4;
+        var decision = Decide(facts);
+
+        Assert.Contains("Quản lý", decision.ManagerQuestion, StringComparison.Ordinal);
+    }
+
     private static (string Status, string Reason, string ManagerQuestion) Decide(
         ReceiptExtractionDto facts, decimal claimedAmount = 150_000) =>
         PolicyDecisionEngine.Evaluate(facts, claimedAmount, utcNow: Now);
