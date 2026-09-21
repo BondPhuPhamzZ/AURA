@@ -6,8 +6,8 @@
 <div class="tab-content-pane feature-card active" id="pane-applicant" style="padding: 24px;">
     
     <!-- Hướng dẫn & Verify Harness (Top Section) -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--colors-border);">
-        <div style="max-width: 60%;">
+    <div class="section-heading-row">
+        <div>
             <h2 class="hero-title" style="font-size: 1.5rem; margin-bottom: 8px;">Kiểm Thử Tự Động (Verify Harness)</h2>
             <p class="hero-sub" style="color: var(--colors-ink-subtle); margin: 0; font-size: 0.95rem;">
                 Nhấn nút bên phải để AI tự động chạy kiểm thử trên bộ 5 hóa đơn chuẩn hóa. Bạn cũng có thể tải lên 1 hóa đơn thủ công ở khung bên dưới.
@@ -41,11 +41,14 @@
                 <div class="dropzone-subtext" style="color: var(--colors-ink-subtle); margin-top: 8px; font-size: 0.875rem;">Hỗ trợ JPG, PNG (Tối đa 5MB)</div>
             </div>
 
-            <div class="mt-3">
-                <label for="claimedAmount" class="form-label fw-semibold">Số tiền đề nghị hoàn ứng (VND)</label>
-                <input id="claimedAmount" name="claimedAmount" type="number" min="1" step="1" required
-                       class="form-control" placeholder="Ví dụ: 150000" />
-                <div class="form-text">Số tiền này được đối chiếu trực tiếp với tổng tiền AI đọc từ hóa đơn.</div>
+            <div class="mt-3 amount-field">
+                <label for="claimedAmountDisplay" class="form-label fw-semibold">Số tiền nhân viên đề nghị hoàn ứng (VND)</label>
+                <input id="claimedAmountDisplay" type="text" inputmode="numeric" autocomplete="off" required
+                       class="form-control" placeholder="Ví dụ: 150.000" aria-describedby="claimedAmountHelp" />
+                <input id="claimedAmount" name="claimedAmount" type="hidden" />
+                <div id="claimedAmountHelp" class="form-text">
+                    Đây là số tiền nhân viên thực sự yêu cầu, được giữ độc lập để phát hiện khai báo hoặc nhận dạng sai. Hệ thống tự thêm dấu chấm phân cách hàng nghìn.
+                </div>
             </div>
 
             <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
@@ -58,31 +61,39 @@
 
     <!-- Bảng Kết Quả Hợp Nhất (Bottom Section) -->
     <div id="unifiedResultsSection" style="padding-top: 24px; border-top: 1px solid var(--colors-border);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div class="section-heading-row compact">
             <h3 style="font-size: 1.25rem; margin: 0;">Bảng Kết Quả Thẩm Định</h3>
-            <button type="button" class="button-ghost-sm" onclick="switchTabToAudit()">
+            <button type="button" class="button-ghost-sm" onclick="navigateToTab('audit')">
                 Xem Lịch Sử
             </button>
         </div>
         
-        <div style="overflow-x: auto;">
-            <table class="table-aura">
+        <p class="table-caption">
+            <strong>Kỳ vọng/Đối chiếu</strong> chỉ dùng cho Verify có nhãn sẵn. Ảnh nhân viên tải mới không có đáp án chuẩn nên hiển thị “Không áp dụng”, không tự nhận là PASS.
+        </p>
+        <div class="table-responsive-aura">
+            <table class="table-aura results-table">
                 <thead>
                     <tr>
-                        <th>Case ID</th>
-                        <th>Image</th>
-                        <th>Expected</th>
-                        <th>Actual</th>
-                        <th>PASS/FAIL</th>
-                        <th>Reasoning & Query</th>
-                        <th>Latency</th>
+                        <th>Mã hồ sơ</th>
+                        <th>Ảnh</th>
+                        <th title="Kết quả chuẩn chỉ tồn tại ở bộ Verify">Kỳ vọng kiểm thử</th>
+                        <th>Kết quả hệ thống</th>
+                        <th title="So sánh Actual với Expected trong Verify">Đối chiếu</th>
+                        <th>Lý do và câu hỏi</th>
+                        <th>Độ trễ</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody id="resultsBody">
-                    <tr><td colspan="7" class="text-center" style="color: var(--colors-ink-subtle);">Chưa có dữ liệu. Vui lòng nộp đơn hoặc chạy Verify Harness.</td></tr>
+                    <tr><td colspan="8" class="text-center empty-state">Chưa có dữ liệu. Vui lòng nộp đơn hoặc chạy Verify Harness.</td></tr>
                 </tbody>
             </table>
         </div>
+    </div>
+
+    <div class="subsection-divider">
+        @await Component.InvokeAsync("EmployeeEscalationQueue")
     </div>
 </div>
 
@@ -125,21 +136,22 @@
 </style>
 
 <script>
-    function switchTabToAudit() {
-        if(typeof switchTab === 'function') {
-            switchTab('audit');
-        } else {
-            // fallback if layout script doesn't exist
-            document.querySelectorAll('.tab-content-pane').forEach(p => p.style.display = 'none');
-            document.getElementById('pane-audit').style.display = 'block';
-        }
-    }
-
     // Drag & Drop logic for upload
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('receiptFile');
     const dropzoneText = document.getElementById('dropzoneText');
     const dropzoneSubtext = document.querySelector('.dropzone-subtext');
+    const amountDisplayInput = document.getElementById('claimedAmountDisplay');
+    const amountRawInput = document.getElementById('claimedAmount');
+
+    function syncClaimedAmount() {
+        const digits = amountDisplayInput.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+        amountRawInput.value = digits;
+        amountDisplayInput.value = digits ? new Intl.NumberFormat('vi-VN').format(Number(digits)) : '';
+        return digits;
+    }
+
+    amountDisplayInput.addEventListener('input', syncClaimedAmount);
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropzone.addEventListener(eventName, preventDefaults, false);
@@ -199,12 +211,17 @@
             '<td><div class="skeleton-text" style="width: 50px;"></div></td>' +
             '<td><div class="skeleton-text" style="width: 100%;"></div><div class="skeleton-text" style="width: 60%; margin-top: 4px;"></div></td>' +
             '<td><div class="skeleton-text" style="width: 60px;"></div></td>' +
+            '<td><div class="skeleton-text" style="width: 80px;"></div></td>' +
             '</tr>';
     }
 
     function renderResultRow(item) {
-        const passBadge = item.pass ? '<span class="badge bg-success">PASS</span>' : '<span class="badge bg-danger">FAIL</span>';
-        let expectedBadge = '<span class="badge bg-secondary">' + item.expected + '</span>';
+        const passBadge = item.pass == null
+            ? '<span class="badge bg-secondary">KHÔNG ÁP DỤNG</span>'
+            : item.pass ? '<span class="badge bg-success">PASS</span>' : '<span class="badge bg-danger">FAIL</span>';
+        let expectedBadge = item.expected
+            ? '<span class="badge bg-secondary">' + escapeHtml(item.expected) + '</span>'
+            : '<span class="text-muted">Không áp dụng</span>';
         if(item.expected === 'AUTO_APPROVE') expectedBadge = '<span class="badge bg-success">APPROVE</span>';
         if(item.expected && item.expected.startsWith('ESCALATE')) expectedBadge = '<span class="badge bg-warning text-dark">' + escapeHtml(item.expected) + '</span>';
         
@@ -213,14 +230,19 @@
         if(item.actual && item.actual.startsWith('ESCALATE_')) actualBadge = '<span class="badge bg-warning text-dark">' + escapeHtml(item.actual) + '</span>';
         if(item.actual === 'ESCALATE_SYSTEM_ERROR') actualBadge = '<span class="badge bg-danger">SYSTEM_ERROR</span>';
         
+        const action = item.canForward
+            ? '<button type="button" class="button-primary button-compact" onclick="forwardToManager(\'' + escapeJsString(item.caseId) + '\', this)">Chuyển tiếp</button>'
+            : '<span class="text-muted">Không cần</span>';
+
         return '<tr>' +
-            '<td style="font-family: monospace;">' + (item.caseId ? item.caseId.substring(0,6) : '') + '</td>' +
-            '<td>' + escapeHtml(item.image) + '</td>' +
-            '<td>' + expectedBadge + '</td>' +
-            '<td>' + actualBadge + '</td>' +
-            '<td>' + passBadge + '</td>' +
-            '<td><strong style="color: var(--colors-ink);">' + escapeHtml(item.reason) + '</strong><br/><small style="color: var(--colors-ink-subtle);"><i>' + escapeHtml(item.question || '') + '</i></small></td>' +
-            '<td style="font-family: monospace; color: var(--colors-ink-subtle);">' + item.latencyMs + ' ms</td>' +
+            '<td data-label="Mã hồ sơ" class="cell-code">' + escapeHtml(item.caseId ? item.caseId.substring(0,8) : '') + '</td>' +
+            '<td data-label="Ảnh">' + escapeHtml(item.image) + '</td>' +
+            '<td data-label="Kỳ vọng">' + expectedBadge + '</td>' +
+            '<td data-label="Kết quả">' + actualBadge + '</td>' +
+            '<td data-label="Đối chiếu">' + passBadge + '</td>' +
+            '<td data-label="Lý do và câu hỏi" class="cell-reason"><strong>' + escapeHtml(item.reason) + '</strong><small>' + escapeHtml(item.question || '') + '</small></td>' +
+            '<td data-label="Độ trễ" class="cell-number">' + escapeHtml(item.latencyMs) + ' ms</td>' +
+            '<td data-label="Thao tác" class="cell-actions">' + action + '</td>' +
         '</tr>';
     }
 
@@ -228,6 +250,35 @@
         const element = document.createElement('div');
         element.textContent = value == null ? '' : String(value);
         return element.innerHTML;
+    }
+
+    function escapeJsString(value) {
+        return String(value == null ? '' : value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    async function forwardToManager(caseId, button) {
+        button.disabled = true;
+        const originalText = button.innerText;
+        button.innerText = 'Đang chuyển...';
+        const formData = new FormData();
+        formData.append('id', caseId);
+        formData.append('__RequestVerificationToken', document.querySelector('#uploadForm input[name="__RequestVerificationToken"]').value);
+
+        try {
+            const response = await fetch('@Url.Action("ForwardToManager", "Applicant")', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || ('HTTP ' + response.status));
+            showToast(data.message, 'success');
+            window.setTimeout(() => window.location.assign(data.redirectUrl), 600);
+        } catch (error) {
+            showToast('Không thể chuyển tiếp: ' + error.message, 'danger');
+            button.disabled = false;
+            button.innerText = originalText;
+        }
     }
 
     function scrollToResults() {
@@ -238,6 +289,12 @@
     async function submitUpload() {
         if (!fileInput.files || fileInput.files.length === 0) {
             alert("Vui lòng tải lên ảnh hóa đơn!");
+            return;
+        }
+        const rawAmount = syncClaimedAmount();
+        if (!rawAmount || Number(rawAmount) <= 0) {
+            showToast('Vui lòng nhập số tiền đề nghị hoàn ứng hợp lệ.', 'danger');
+            amountDisplayInput.focus();
             return;
         }
 
@@ -254,6 +311,7 @@
 
         const form = document.getElementById('uploadForm');
         const formData = new FormData(form);
+        formData.set('claimedAmount', rawAmount);
 
         try {
             const response = await fetch(form.action, {
@@ -264,12 +322,12 @@
             const data = await response.json();
             
             if (data.error) {
-                document.getElementById('resultsBody').innerHTML = '<tr><td colspan="7" class="text-danger text-center">Lỗi: ' + escapeHtml(data.error) + '</td></tr>';
+                document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Lỗi: ' + escapeHtml(data.error) + '</td></tr>';
             } else {
                 document.getElementById('resultsBody').innerHTML = renderResultRow(data);
             }
         } catch(e) {
-            document.getElementById('resultsBody').innerHTML = '<tr><td colspan="7" class="text-danger text-center">Có lỗi hệ thống: ' + escapeHtml(e.message) + '</td></tr>';
+            document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Có lỗi hệ thống: ' + escapeHtml(e.message) + '</td></tr>';
         } finally {
             btn.disabled = false;
             btnText.innerText = originalText;
@@ -309,7 +367,7 @@
             const data = await response.json();
             
             if (data.error) {
-                document.getElementById('resultsBody').innerHTML = '<tr><td colspan="7" class="text-danger text-center">Lỗi: ' + escapeHtml(data.error) + '</td></tr>';
+                document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Lỗi: ' + escapeHtml(data.error) + '</td></tr>';
                 return;
             }
 
@@ -319,7 +377,7 @@
             });
             document.getElementById('resultsBody').innerHTML = html;
         } catch(e) {
-            document.getElementById('resultsBody').innerHTML = '<tr><td colspan="7" class="text-danger text-center">Có lỗi xảy ra: ' + escapeHtml(e.message) + '</td></tr>';
+            document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Có lỗi xảy ra: ' + escapeHtml(e.message) + '</td></tr>';
         } finally {
             btn.disabled = false;
             btnText.innerText = originalText;

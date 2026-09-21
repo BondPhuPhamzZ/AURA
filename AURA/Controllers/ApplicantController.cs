@@ -75,10 +75,14 @@ public sealed class ApplicantController : Controller
         }
 
         TempData["Success"] = $"Đã chuyển hồ sơ {request.Id[..8]} đến cửa sổ quản lý.";
+        var redirectUrl = Url.Action("Index", "Home", new { tab = "reviewer" }) ?? "/?tab=reviewer";
+        if (!string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase))
+            return Redirect(redirectUrl);
+
         return Json(new
         {
             message = "Chuyển tiếp thành công. Quản lý có thể trả lời CÓ hoặc KHÔNG.",
-            redirectUrl = Url.Action("Index", "Home", new { tab = "reviewer" })
+            redirectUrl
         });
     }
 
@@ -158,14 +162,15 @@ public sealed class ApplicantController : Controller
         {
             caseId = request.Id,
             image = request.OriginalFileName,
-            expected = "N/A",
+            expected = (string?)null,
             actual = request.Status,
-            pass = request.Status != "ESCALATE_SYSTEM_ERROR",
+            pass = (bool?)null,
             reason = request.AiReasoning,
             question = request.ManagerQuestion,
             latencyMs = request.ProcessingLatencyMs,
             timestamp = request.CreatedAt,
-            receiptUrl = request.ImageUrl
+            receiptUrl = request.ImageUrl,
+            canForward = PolicyDecisionEngine.IsEscalation(request.Status)
         });
     }
 

@@ -18,9 +18,9 @@
         <div style="display: flex; gap: 24px; align-items: center;">
             <!-- ZERO LOGIN TABS -->
             <div class="top-tabs">
-                <button class="nav-link active" onclick="switchTab('applicant')" id="btn-tab-applicant">Cửa Sổ Nhân Viên</button>
-                <button class="nav-link" onclick="switchTab('reviewer')" id="btn-tab-reviewer">Cửa Sổ Quản Lý</button>
-                <button class="nav-link" onclick="switchTab('audit')" id="btn-tab-audit">Lịch Sử Của Hệ Thống</button>
+                <button class="nav-link active" onclick="navigateToTab('applicant')" id="btn-tab-applicant">Cửa Sổ Nhân Viên</button>
+                <button class="nav-link" onclick="navigateToTab('reviewer')" id="btn-tab-reviewer">Cửa Sổ Quản Lý</button>
+                <button class="nav-link" onclick="navigateToTab('audit')" id="btn-tab-audit">Lịch Sử Của Hệ Thống</button>
             </div>
             
             
@@ -28,8 +28,14 @@
     </header>
 
     <main role="main" style="padding-top: 32px;">
+        @if (TempData["Success"] is string successMessage)
+        {
+            <div class="page-notice alert alert-success" role="status">@successMessage</div>
+        }
         @RenderBody()
     </main>
+
+    <div class="toast-container-aura" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -54,6 +60,30 @@
                 targetPane.style.display = 'block';
             }
         }
+
+        function navigateToTab(tabId) {
+            const url = new URL(window.location.href);
+            if (tabId === 'applicant') url.searchParams.delete('tab');
+            else url.searchParams.set('tab', tabId);
+            window.location.assign(url.pathname + url.search);
+        }
+
+        function showToast(message, type) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'aura-toast ' + (type === 'danger' ? 'danger' : 'success');
+            toast.setAttribute('role', type === 'danger' ? 'alert' : 'status');
+            toast.textContent = message;
+            container.appendChild(toast);
+            window.setTimeout(() => toast.classList.add('visible'), 10);
+            window.setTimeout(() => {
+                toast.classList.remove('visible');
+                window.setTimeout(() => toast.remove(), 250);
+            }, 4000);
+        }
+
+        const initialTab = new URLSearchParams(window.location.search).get('tab');
+        if (initialTab === 'reviewer' || initialTab === 'audit') switchTab(initialTab);
         
     </script>
 </body>

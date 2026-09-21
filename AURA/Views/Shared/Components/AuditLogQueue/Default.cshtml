@@ -63,8 +63,8 @@
                             </td>
                             <td style="max-width: 420px; overflow-wrap: anywhere;">@entry.Log.Details</td>
                             <td>
-                                @if (request is not null && AURA.Services.EscalationWorkflow.CanUndo(request.Status)
-                                    && request.ManagerAnswer is not null)
+                                @if (request is not null && entry.Log.Action is "MANAGER_YES" or "MANAGER_NO"
+                                    && AURA.Services.EscalationWorkflow.CanUndo(request.Status) && request.ManagerAnswer is not null)
                                 {
                                     <form asp-controller="Reviewer" asp-action="EscalateAction" method="post">
                                         <input type="hidden" name="id" value="@request.Id" />

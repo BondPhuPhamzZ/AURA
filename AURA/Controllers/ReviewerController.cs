@@ -45,7 +45,7 @@ namespace AURA.Controllers
                 await _repo.UpdateRequestAsync(req);
                 await _audit.LogActionAsync(req.Id, "MANAGER_UNDO", $"Đã hoàn tác quyết định, khôi phục {req.Status}.");
                 TempData["Success"] = $"Đã hoàn tác quyết định cho hồ sơ {id}.";
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Home", new { tab = "audit" });
             }
 
             var answer = decision == "YES";
