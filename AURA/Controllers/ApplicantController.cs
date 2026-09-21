@@ -19,16 +19,18 @@ public sealed class ApplicantController : Controller
     private readonly IReimbursementRepository _repository;
     private readonly IVisionExtractor _vision;
     private readonly ReceiptStorageOptions _storageOptions;
+    private readonly DecisionPolicyOptions _decisionPolicyOptions;
     private readonly ILogger<ApplicantController> _logger;
 
     public ApplicantController(IWebHostEnvironment environment, IReimbursementRepository repository,
         IVisionExtractor vision, IOptions<ReceiptStorageOptions> storageOptions,
-        ILogger<ApplicantController> logger)
+        IOptions<DecisionPolicyOptions> decisionPolicyOptions, ILogger<ApplicantController> logger)
     {
         _environment = environment;
         _repository = repository;
         _vision = vision;
         _storageOptions = storageOptions.Value;
+        _decisionPolicyOptions = decisionPolicyOptions.Value;
         _logger = logger;
     }
 
@@ -163,7 +165,8 @@ public sealed class ApplicantController : Controller
         {
             extractedFacts = await _vision.ExtractFactsAsync(physicalPath, cancellationToken);
             request.ExtractedFactsJson = JsonSerializer.Serialize(extractedFacts);
-            var decision = PolicyDecisionEngine.Evaluate(extractedFacts, request.ClaimedAmount, duplicate);
+            var enforceDuplicatePolicy = duplicate && _decisionPolicyOptions.EscalateDuplicateReceipts;
+            var decision = PolicyDecisionEngine.Evaluate(extractedFacts, request.ClaimedAmount, enforceDuplicatePolicy);
             request.Status = decision.Status;
             request.AiReasoning = decision.Reason;
             request.ManagerQuestion = decision.ManagerQuestion;
@@ -194,7 +197,7 @@ public sealed class ApplicantController : Controller
         }
 
         await _repository.AddRequestWithAuditAsync(request, $"AI_PROCESSED_{request.Status}",
-            $"File={request.OriginalFileName}; SHA256={request.FileSha256}; Reason={request.AiReasoning}; Latency={request.ProcessingLatencyMs}ms");
+            $"File={request.OriginalFileName}; SHA256={request.FileSha256}; DuplicateDetected={duplicate}; DuplicatePolicyEnabled={_decisionPolicyOptions.EscalateDuplicateReceipts}; Reason={request.AiReasoning}; Latency={request.ProcessingLatencyMs}ms");
 
         return Json(new
         {
@@ -212,6 +215,8 @@ public sealed class ApplicantController : Controller
             handoffPrompt = PolicyDecisionEngine.IsEscalation(request.Status)
                 ? EscalationWorkflow.EmployeeHandoffPrompt
                 : null,
+            duplicateDetected = duplicate,
+            duplicatePolicyEnabled = _decisionPolicyOptions.EscalateDuplicateReceipts,
             facts = extractedFacts
         });
     }

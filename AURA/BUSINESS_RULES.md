@@ -1,6 +1,6 @@
 # AURA Receipt Evidence Extraction Contract
 
-Version: 1.3 - 2026-09-21
+Version: 1.4 - 2026-09-21
 Applies to: employee expense reimbursement in Vietnam  
 Policy owner: AURA demo team
 
@@ -19,6 +19,8 @@ Do not claim that an invoice is legally authentic. Vision can only report visibl
 - If the document states `Trang 1/2`, is visibly cropped, omits the total section, or otherwise appears incomplete, add a precise warning. Do not reconstruct missing pages.
 - If a field is absent, obscured, ambiguous, or unreadable, return `null` and add its JSON field name to `missingFields`. Never guess.
 - Preserve monetary values as numbers without thousands separators. Parentheses or a leading minus mean a negative number.
+- Interpret Vietnamese numeric punctuation from context: `.` or `,` may be a thousands separator, while a quantity may use a decimal comma. Validate every readable line using quantity × unit price = line amount. If an abnormal value such as `1,0000`, `1.0000`, or a separator interpretation makes that arithmetic impossible, do not silently repair, normalize away, or ignore the conflict. Preserve only values supported by the image, add `impossible arithmetic` to `suspiciousSignals`, and explain the conflicting printed values in `warnings`.
+- Separate original document content from later annotations or overlays. A user-added red box, decorative QR code, validation watermark, or stamp such as `Signature Valid` is not a merchant, identifier, line item, amount, date, or status. Do not copy it into data fields. If an overlay obscures or changes the underlying evidence, add a precise warning or suspicious signal.
 
 ## 3. Field extraction rules
 
@@ -43,8 +45,9 @@ Do not claim that an invoice is legally authentic. Vision can only report visibl
 - `completionDate`: normalize a visible delivery/service-completion date to `YYYY-MM-DD`; otherwise null. This is supporting evidence and is not automatically the transaction date.
 - `invoiceTime`: normalize a visible invoice/transaction time to 24-hour `HH:mm`; otherwise null.
 - `currency`: ISO code such as `VND`, `USD`, or `EUR`. Use `VND` for clear Vietnamese đồng symbols (`đ`, `₫`) or Vietnamese invoices whose amounts are explicitly in đồng. Otherwise null.
-- `subtotal`, `tax`, `totalAmount`: copy printed summary values. `totalAmount` is the final amount payable, after tax/discount. If multiple competing totals cannot be resolved, return null and explain in warnings.
-- `lineItems`: include every visible purchased item/service. Do not include headings, totals, buyer/seller names, tax rows, discounts, or payment methods as items.
+- `subtotal`, `tax`, `totalAmount`: copy printed summary values. `totalAmount` is the final amount the buyer actually paid after discounts and including separately charged fees. When an order shows a struck-through original price, a sale price, and a labelled final `Thành tiền`/`Total` after voucher, insurance, delivery or service fees, use the unambiguous final payable value. Record the other visible candidate amounts and why they were not selected in `warnings`; do not return null merely because those clearly labelled intermediate values also exist. Return null only when the final payable value itself cannot be resolved.
+- `lineItems`: include every visible purchased item/service and separately charged insurance, delivery, platform or service surcharge as a line item when it contributes to the payable transaction. Do not include headings, summary totals, buyer/seller names, tax rows, discounts/vouchers, struck-through prices, or payment methods as items.
+- Dates are evidence, not policy decisions. Extract an unambiguous `invoiceDate`, `transactionDate`, and/or `completionDate` into the correct field even when it is old. Do not add “older than 90 days” to `warnings` or decide reimbursement eligibility; the application's deterministic policy computes age from the appropriate evidence date.
 - `confidence`: evidence quality for the whole extraction, from 0 to 1. Use below 0.70 if any critical field (merchant, date, identifier, currency, total, or item descriptions) is not reliably readable.
 
 ## 4. Required warnings and suspicious signals

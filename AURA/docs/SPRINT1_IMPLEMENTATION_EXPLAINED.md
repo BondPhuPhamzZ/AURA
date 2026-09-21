@@ -17,7 +17,7 @@ AURA hiện là một **vertical slice chạy thật** cho Track A — The Escal
 6. Quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi cụ thể và có thể hoàn tác.
 7. Mọi bước quan trọng được ghi vào audit trail; ảnh gốc có thể mở lại.
 
-Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 48 automated test đạt (46 policy/workflow + 2 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5, còn fixture v2 đa layout đang chờ một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
+Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 49 automated test đạt (47 policy/workflow + 2 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5, còn fixture v2 đa layout đang chờ một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
 
 Đánh giá công tâm:
 
@@ -329,7 +329,7 @@ Hai ViewComponent bắt lỗi DB và hiển thị thông báo thay vì làm hỏ
 
 ### 14.1 Automated policy tests
 
-46 xUnit policy/workflow cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, phạm vi tax ID theo loại chứng từ, currency, date, future/stale/weekend, late time, blur, duplicate, chứng từ nháp/hủy, e-commerce/mã vận chuyển, bốn nhóm item cấm, authority, precedence, tám nhánh quyết định và ranh giới vai trò nhân viên/quản lý. Hai test bổ sung khóa đúng 5 fixture Verify, phân bố 3 auto + 2 escalate, 30 case benchmark, file tồn tại/duy nhất và không vượt 5 MB.
+47 xUnit policy/workflow cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, phạm vi tax ID theo loại chứng từ, currency, date, future/stale/weekend, late time, blur, duplicate, phép tính dòng hàng bất khả thi, chứng từ nháp/hủy, e-commerce/mã vận chuyển, bốn nhóm item cấm, authority, precedence, tám nhánh quyết định và ranh giới vai trò nhân viên/quản lý. Hai test bổ sung khóa đúng 5 fixture Verify, phân bố 3 auto + 2 escalate, 30 case benchmark, file tồn tại/duy nhất và không vượt 5 MB.
 
 ### 14.2 Smoke tests đã thực hiện
 
@@ -361,7 +361,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Mục tiêu: build sạch và 48/48 automated test.
+Mục tiêu: build sạch và 49/49 automated test.
 
 ### Tầng B — fixture chuẩn hóa
 

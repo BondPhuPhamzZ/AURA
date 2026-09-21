@@ -112,7 +112,7 @@ public static class PolicyDecisionEngine
 
         var criticalWarnings = facts.Warnings
             .Concat(facts.SuspiciousSignals)
-            .Where(x => ContainsAny(x, "blurry", "mờ", "cropped", "cắt", "unreadable", "tamper", "sửa", "partial", "thiếu trang", "prompt injection"))
+            .Where(x => ContainsAny(x, "blurry", "mờ", "cropped", "cắt", "unreadable", "tamper", "sửa", "partial", "thiếu trang", "prompt injection", "impossible arithmetic", "sai số học"))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
         if (criticalWarnings.Count > 0)

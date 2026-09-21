@@ -36,6 +36,7 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P14 | Ngoài 06:00-22:00 | ESCALATE_FACT | A |
 | P15 | Warning blur/crop critical | ESCALATE_FACT | A |
 | P16 | SHA-256 trùng hồ sơ trước | ESCALATE_FACT | A |
+| P16b | Vision báo `impossible arithmetic` do số lượng × đơn giá sai | ESCALATE_FACT | A |
 | P17 | Beer/alcohol | ESCALATE_POLICY | A |
 | P18 | Tobacco | ESCALATE_POLICY | A |
 | P19 | Karaoke/entertainment | ESCALATE_POLICY | A |

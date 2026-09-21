@@ -64,6 +64,18 @@ public sealed class PolicyDecisionEngineTests
         Assert.Equal("ESCALATE_FACT", PolicyDecisionEngine.Evaluate(ValidFacts(), 150_000, true, Now).Status);
     }
 
+    [Fact]
+    public void Impossible_arithmetic_signal_is_fact_escalation()
+    {
+        var facts = ValidFacts();
+        facts.SuspiciousSignals.Add("impossible arithmetic");
+
+        var result = PolicyDecisionEngine.Evaluate(facts, 150_000m, utcNow: Now);
+
+        Assert.Equal("ESCALATE_FACT", result.Status);
+        Assert.Contains("impossible arithmetic", result.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Theory]
     [InlineData("DRAFT")]
     [InlineData("CANCELLED")]
