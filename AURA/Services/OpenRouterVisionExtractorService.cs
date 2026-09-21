@@ -39,7 +39,12 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             throw new VisionExtractionException("IMAGE_NOT_FOUND", "Không tìm thấy ảnh hóa đơn cần phân tích.");
 
         var contentRoot = Path.GetFullPath(_environment.ContentRootPath);
-        var policyPath = Path.GetFullPath(Path.Combine(contentRoot, "BUSINESS_RULES.md"));
+        var policyPath = Path.GetFullPath(Path.Combine(contentRoot, _options.PolicyPath));
+        var contentRootPrefix = contentRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
+        if (!policyPath.StartsWith(contentRootPrefix, StringComparison.OrdinalIgnoreCase) || !File.Exists(policyPath))
+            throw new VisionExtractionException("POLICY_NOT_FOUND",
+                "Không tìm thấy tài liệu chính sách bắt buộc; không thể trích xuất dữ kiện an toàn.");
         
         var imageBytes = await File.ReadAllBytesAsync(fullImagePath, cancellationToken);
         var policy = await File.ReadAllTextAsync(policyPath, cancellationToken);
@@ -66,6 +71,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
                     role = "user",
                     content = new object[]
                     {
+                        new { type = "text", text = "Trích xuất dữ kiện từ ảnh chứng từ này và chỉ trả về JSON đúng schema." },
                         new { type = "image_url", image_url = new { url = $"data:{mimeType};base64,{base64Image}" } }
                     }
                 }
@@ -89,7 +95,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         if ((int)statusCode is < 200 or >= 300)
         {
             _logger.LogWarning("OpenRouter returned HTTP {StatusCode} after retries.", (int)statusCode);
-            throw CreateHttpFailure(statusCode);
+            throw CreateHttpFailure(statusCode, responseText, _options.Model);
         }
 
         using var responseDocument = ParseResponseDocument(responseText);
@@ -123,13 +129,18 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
                 "Qwen trả về kết quả không đúng cấu trúc quy định; hồ sơ cần kiểm tra thủ công.", exception);
         }
 
+        facts.LineItems ??= [];
+        facts.MissingFields ??= [];
+        facts.Warnings ??= [];
+        facts.SuspiciousSignals ??= [];
+        facts.Confidence = Math.Clamp(facts.Confidence, 0, 1);
         return facts;
     }
 
     private async Task<(HttpStatusCode StatusCode, string Body)> SendWithRetryAsync(
         object payload, CancellationToken cancellationToken)
     {
-        const int maxAttempts = 5;
+        const int maxAttempts = 2;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, "chat/completions");
@@ -144,26 +155,55 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             if (response.IsSuccessStatusCode || !IsTransient(response.StatusCode) || attempt == maxAttempts)
                 return (response.StatusCode, body);
 
-            var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromMilliseconds(4000 * (1 << (attempt - 1)));
+            var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromMilliseconds(750 * attempt);
             await Task.Delay(retryAfter, cancellationToken);
         }
         throw new UnreachableException();
     }
 
     private static bool IsTransient(HttpStatusCode statusCode) => statusCode is
-        HttpStatusCode.TooManyRequests or HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or
+        HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or
         HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout;
 
-    private static VisionExtractionException CreateHttpFailure(HttpStatusCode statusCode) => statusCode switch
+    private static VisionExtractionException CreateHttpFailure(HttpStatusCode statusCode, string responseBody, string model)
     {
-        HttpStatusCode.TooManyRequests => new VisionExtractionException("AI_RATE_LIMIT",
-            "Qwen đang giới hạn lượt gọi hoặc đã chạm quota (HTTP 429) sau 5 lần thử; hãy đợi rồi thử lại hoặc chuyển kiểm tra thủ công."),
-        HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or
-            HttpStatusCode.GatewayTimeout => new VisionExtractionException("AI_TEMPORARILY_UNAVAILABLE",
-                $"Qwen đang tạm thời không khả dụng (HTTP {(int)statusCode}) sau 5 lần thử; hồ sơ cần kiểm tra thủ công."),
-        _ => new VisionExtractionException("AI_HTTP_ERROR",
-            $"Qwen từ chối yêu cầu (HTTP {(int)statusCode}); hồ sơ cần kiểm tra thủ công.")
-    };
+        var providerMessage = ReadProviderError(responseBody);
+        return statusCode switch
+        {
+            HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => new VisionExtractionException("AI_AUTH_ERROR",
+                "OpenRouter từ chối API key hoặc quyền truy cập model. Hãy kiểm tra OpenRouter:ApiKey và quyền của key."),
+            HttpStatusCode.PaymentRequired => new VisionExtractionException("AI_CREDITS_REQUIRED",
+                "OpenRouter yêu cầu credit hoặc model này không còn lượt miễn phí cho tài khoản hiện tại."),
+            HttpStatusCode.NotFound => new VisionExtractionException("AI_MODEL_UNAVAILABLE",
+                $"OpenRouter không tìm thấy model '{model}' hoặc model đã bị gỡ khỏi catalog (HTTP 404). {providerMessage}".Trim()),
+            HttpStatusCode.TooManyRequests => new VisionExtractionException("AI_RATE_LIMIT",
+                "OpenRouter đang giới hạn lượt gọi hoặc quota miễn phí (HTTP 429). Hệ thống không tự retry để bảo vệ quota."),
+            HttpStatusCode.BadRequest => new VisionExtractionException("AI_REQUEST_INVALID",
+                $"OpenRouter không chấp nhận payload ảnh/JSON hiện tại (HTTP 400). {providerMessage}".Trim()),
+            HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or
+                HttpStatusCode.GatewayTimeout => new VisionExtractionException("AI_TEMPORARILY_UNAVAILABLE",
+                    $"OpenRouter hoặc nhà cung cấp Qwen đang tạm thời không khả dụng (HTTP {(int)statusCode}) sau 2 lần thử."),
+            _ => new VisionExtractionException("AI_HTTP_ERROR",
+                $"OpenRouter từ chối yêu cầu (HTTP {(int)statusCode}). {providerMessage}".Trim())
+        };
+    }
+
+    private static string ReadProviderError(string responseBody)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(responseBody);
+            if (document.RootElement.TryGetProperty("error", out var error) &&
+                error.TryGetProperty("message", out var message))
+                return message.GetString() ?? string.Empty;
+        }
+        catch (JsonException)
+        {
+            // Keep the status-specific message; never echo an unknown raw response body.
+        }
+
+        return string.Empty;
+    }
 
     private static JsonDocument ParseResponseDocument(string responseText)
     {

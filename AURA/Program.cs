@@ -20,7 +20,10 @@ builder.Logging.AddDebug();
 builder.Services.AddControllersWithViews();
 builder.Services.AddOptions<OpenRouterOptions>()
     .Bind(builder.Configuration.GetSection(OpenRouterOptions.SectionName))
-    .ValidateDataAnnotations();
+    .ValidateDataAnnotations()
+    .Validate(options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri)
+        && uri.Scheme == Uri.UriSchemeHttps, "OpenRouter:BaseUrl phải là HTTPS URL hợp lệ.")
+    .ValidateOnStart();
 builder.Services.AddOptions<ReceiptStorageOptions>()
     .Bind(builder.Configuration.GetSection(ReceiptStorageOptions.SectionName))
     .ValidateDataAnnotations()
