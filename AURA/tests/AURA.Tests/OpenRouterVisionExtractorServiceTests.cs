@@ -136,6 +136,55 @@ public sealed class OpenRouterVisionExtractorServiceTests
         }
     }
 
+    [Fact]
+    public async Task Tolerates_qwen_wrapper_numeric_strings_and_provider_metadata_without_external_api()
+    {
+        var root = CreateFixtureRoot();
+        try
+        {
+            const string factsJson = """
+                Analysis complete.
+                ```json
+                {
+                  "documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Cửa hàng thử nghiệm",
+                  "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
+                  "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":"PAID",
+                  "invoiceNumber":"HD-002","invoiceDate":"2026-09-22","transactionDate":null,
+                  "completionDate":null,"invoiceTime":"10:30","currency":"VND","subtotal":"88000",
+                  "tax":"0","totalAmount":"88000","lineItems":[{"description":"Phở bò","quantity":"1",
+                  "unitPrice":"88000","amount":"88000"}],"missingFields":[],"warnings":[],
+                  "suspiciousSignals":[],"confidence":"0.91","providerNote":"ignored safely"
+                }
+                ```
+                """;
+            var responseJson = JsonSerializer.Serialize(new
+            {
+                choices = new[] { new { finish_reason = "stop", message = new { content = factsJson } } }
+            });
+            var handler = new StubHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(responseJson, Encoding.UTF8, "application/json")
+            }));
+            var options = Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions
+            {
+                ApiKey = "test-key", Model = "qwen/qwen3-vl-8b-instruct", PolicyPath = "BUSINESS_RULES.md"
+            });
+            var service = new OpenRouterVisionExtractorService(
+                new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) }, options,
+                new TestEnvironment(root), NullLogger<OpenRouterVisionExtractorService>.Instance);
+
+            var result = await service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg"));
+
+            Assert.Equal(88000m, result.TotalAmount);
+            Assert.Equal(0.91, result.Confidence, 3);
+            Assert.Single(result.LineItems);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     private static string CreateFixtureRoot()
     {
         var root = Path.Combine(Path.GetTempPath(), "aura-openrouter-tests", Guid.NewGuid().ToString("N"));

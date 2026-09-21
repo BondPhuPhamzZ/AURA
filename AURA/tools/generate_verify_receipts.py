@@ -182,7 +182,7 @@ def draw_receipt(case: Case) -> Image.Image:
     draw.line((margin, total_y - 25, width - margin, total_y - 25), fill="#555", width=2)
     draw.text((margin, total_y), "TỔNG THANH TOÁN", font=font(29, True), fill="#111")
     draw.text((width - margin, total_y), money(case.total), font=font(31, True), fill="#aaa" if case.issue == "blurred-total" else "#111", anchor="ra")
-    draw.text((margin, height - 80), "Dữ liệu tổng hợp phục vụ kiểm thử AURA", font=font(17), fill="#666")
+    draw.text((margin, height - 80), "Cảm ơn quý khách!", font=font(17), fill="#666")
     if case.issue == "cropped":
         image = image.crop((0, 0, width, height - 120)).resize((width, height))
     if case.issue == "blurred-total":
@@ -219,7 +219,7 @@ def draw_mobile(case: Case) -> Image.Image:
     draw.line((45, 950, width - 45, 950), fill="#d1d5db", width=2)
     draw.text((45, 985), "Thành tiền", font=font(26, True), fill="#111")
     draw.text((width - 45, 985), money(case.total), font=font(30, True), fill="#111", anchor="ra")
-    draw.text((35, 1340), "Ảnh mô phỏng - không chứa dữ liệu cá nhân thật", font=font(17), fill="#555")
+    draw.text((35, 1340), "Cảm ơn bạn đã mua sắm!", font=font(17), fill="#555")
     return image
 
 

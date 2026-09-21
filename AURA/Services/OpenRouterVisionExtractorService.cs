@@ -16,7 +16,10 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow
+        // The upstream schema remains strict. Tolerate harmless provider-added metadata and
+        // numeric JSON strings so a valid extraction is not discarded solely by serialization quirks.
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
     private readonly HttpClient _httpClient;
     private readonly OpenRouterOptions _options;
@@ -139,7 +142,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             throw new VisionExtractionException("AI_INVALID_RESPONSE",
                 "Qwen không trả về dữ liệu JSON hợp lệ; hồ sơ cần kiểm tra thủ công.");
 
-        var contentStr = TrimCodeFence(contentElement.GetString() ?? string.Empty);
+        var contentStr = ExtractJsonObject(contentElement.GetString() ?? string.Empty);
 
         ReceiptExtractionDto facts;
         try
@@ -149,8 +152,9 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         }
         catch (JsonException exception)
         {
-            _logger.LogError(exception, "Failed to parse Qwen JSON response ({ContentLength} characters).",
-                contentStr.Length);
+            _logger.LogError(exception,
+                "Failed to parse Qwen JSON response ({ContentLength} characters) at JSON path {JsonPath}.",
+                contentStr.Length, exception.Path ?? "<unknown>");
             throw new VisionExtractionException("AI_SCHEMA_MISMATCH",
                 "Qwen trả về kết quả không đúng cấu trúc quy định; hồ sơ cần kiểm tra thủ công.", exception);
         }
@@ -254,6 +258,14 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         var firstNewLine = trimmed.IndexOf('\n');
         if (firstNewLine < 0) return trimmed;
         return trimmed[(firstNewLine + 1)..^3].Trim();
+    }
+
+    private static string ExtractJsonObject(string content)
+    {
+        var trimmed = TrimCodeFence(content);
+        var start = trimmed.IndexOf('{');
+        var end = trimmed.LastIndexOf('}');
+        return start >= 0 && end >= start ? trimmed[start..(end + 1)] : trimmed;
     }
 
     private static object BuildResponseSchema() => new
