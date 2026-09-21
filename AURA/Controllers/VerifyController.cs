@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json;
 using AURA.Interfaces;
@@ -33,7 +33,7 @@ public sealed class VerifyController : Controller
     {
         var manifestPath = Path.Combine(_environment.WebRootPath, "test_data", "expected-results.json");
         if (!System.IO.File.Exists(manifestPath))
-            return NotFound(new { error = "Không tìm thấy manifest kiểm thử." });
+            return NotFound(new { error = "KhÃ´ng tÃ¬m tháº¥y manifest kiá»ƒm thá»­." });
 
         List<ExpectedResult>? testCases;
         try
@@ -45,11 +45,11 @@ public sealed class VerifyController : Controller
         catch (JsonException exception)
         {
             _logger.LogError(exception, "Invalid Verify manifest.");
-            return StatusCode(500, new { error = "Manifest kiểm thử không hợp lệ." });
+            return StatusCode(500, new { error = "Manifest kiá»ƒm thá»­ khÃ´ng há»£p lá»‡." });
         }
 
         if (testCases is null || testCases.Count != 5)
-            return StatusCode(500, new { error = "Verify Harness phải có đúng 5 ca (3 thường quy, 2 chuyển tiếp)." });
+            return StatusCode(500, new { error = "Verify Harness pháº£i cÃ³ Ä‘Ãºng 5 ca (3 thÆ°á»ng quy, 2 chuyá»ƒn tiáº¿p)." });
 
         var results = new List<object>(testCases.Count);
         VisionExtractionException? blockingProviderFailure = null;
@@ -68,19 +68,20 @@ public sealed class VerifyController : Controller
             if (blockingProviderFailure is not null)
             {
                 actualStatus = "ESCALATE_SYSTEM_ERROR";
-                reason = $"Đã bỏ qua lời gọi AI để bảo vệ quota sau lỗi {blockingProviderFailure.Code}: {blockingProviderFailure.UserMessage}";
-                question = "AI đang không khả dụng. Quản lý có đồng ý tiếp nhận để kiểm tra thủ công không? [CÓ/KHÔNG]";
+                reason = $"ÄÃ£ bá» qua lá»i gá»i AI Ä‘á»ƒ báº£o vá»‡ quota sau lá»—i {blockingProviderFailure.Code}: {blockingProviderFailure.UserMessage}";
+                question = "AI Ä‘ang khÃ´ng kháº£ dá»¥ng. Quáº£n lÃ½ cÃ³ Ä‘á»“ng Ã½ tiáº¿p nháº­n Ä‘á»ƒ kiá»ƒm tra thá»§ cÃ´ng khÃ´ng? [CÃ“/KHÃ”NG]";
             }
             else if (!imagePath.StartsWith(imageRoot, StringComparison.OrdinalIgnoreCase) || !System.IO.File.Exists(imagePath))
             {
                 actualStatus = "ESCALATE_SYSTEM_ERROR";
-                reason = "Thiếu ảnh kiểm thử trong manifest.";
-                question = "Ảnh kiểm thử bị thiếu. Quản lý có đồng ý tiếp nhận để kiểm tra cấu hình thủ công không? [CÓ/KHÔNG]";
+                reason = "Thiáº¿u áº£nh kiá»ƒm thá»­ trong manifest.";
+                question = "áº¢nh kiá»ƒm thá»­ bá»‹ thiáº¿u. Quáº£n lÃ½ cÃ³ Ä‘á»“ng Ã½ tiáº¿p nháº­n Ä‘á»ƒ kiá»ƒm tra cáº¥u hÃ¬nh thá»§ cÃ´ng khÃ´ng? [CÃ“/KHÃ”NG]";
             }
             else
             {
                 try
                 {
+                    if (results.Count > 0) await Task.Delay(4000, cancellationToken);
                     extractedFacts = await _vision.ExtractFactsAsync(imagePath, cancellationToken);
                     extractedFactsJson = JsonSerializer.Serialize(extractedFacts);
                     var decision = PolicyDecisionEngine.Evaluate(extractedFacts, testCase.ClaimedAmount);
@@ -92,8 +93,8 @@ public sealed class VerifyController : Controller
                 {
                     _logger.LogWarning(exception, "Verify case {CaseId} stopped with {ErrorCode}.", testCase.Id, exception.Code);
                     actualStatus = "ESCALATE_SYSTEM_ERROR";
-                    reason = $"{exception.UserMessage} Mã lỗi: {exception.Code}.";
-                    question = "AI chưa xử lý được ảnh. Quản lý có đồng ý tiếp nhận để kiểm tra thủ công không? [CÓ/KHÔNG]";
+                    reason = $"{exception.UserMessage} MÃ£ lá»—i: {exception.Code}.";
+                    question = "AI chÆ°a xá»­ lÃ½ Ä‘Æ°á»£c áº£nh. Quáº£n lÃ½ cÃ³ Ä‘á»“ng Ã½ tiáº¿p nháº­n Ä‘á»ƒ kiá»ƒm tra thá»§ cÃ´ng khÃ´ng? [CÃ“/KHÃ”NG]";
                     if (IsBlockingProviderFailure(exception.Code))
                         blockingProviderFailure = exception;
                 }
@@ -105,8 +106,8 @@ public sealed class VerifyController : Controller
                 {
                     _logger.LogError(exception, "Verify case {CaseId} failed.", testCase.Id);
                     actualStatus = "ESCALATE_SYSTEM_ERROR";
-                    reason = "AI không xử lý được ca kiểm thử do lỗi kỹ thuật.";
-                    question = "AI không xử lý được ảnh. Quản lý có đồng ý tiếp nhận để kiểm tra thủ công không? [CÓ/KHÔNG]";
+                    reason = "AI khÃ´ng xá»­ lÃ½ Ä‘Æ°á»£c ca kiá»ƒm thá»­ do lá»—i ká»¹ thuáº­t.";
+                    question = "AI khÃ´ng xá»­ lÃ½ Ä‘Æ°á»£c áº£nh. Quáº£n lÃ½ cÃ³ Ä‘á»“ng Ã½ tiáº¿p nháº­n Ä‘á»ƒ kiá»ƒm tra thá»§ cÃ´ng khÃ´ng? [CÃ“/KHÃ”NG]";
                 }
             }
 
@@ -165,3 +166,4 @@ public sealed class VerifyController : Controller
     private static bool IsBlockingProviderFailure(string code) => code is
         "AI_TIMEOUT" or "AI_RATE_LIMIT" or "AI_NOT_CONFIGURED" or "AI_TEMPORARILY_UNAVAILABLE";
 }
+

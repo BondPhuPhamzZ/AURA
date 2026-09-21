@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Net;
 using System.Text.Json;
 using AURA.Interfaces;
@@ -30,11 +30,11 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
     {
         if (string.IsNullOrWhiteSpace(_options.ApiKey))
             throw new VisionExtractionException("AI_NOT_CONFIGURED",
-                "Gemini API chưa được cấu hình; hồ sơ cần được kiểm tra thủ công.");
+                "Gemini API chÆ°a Ä‘Æ°á»£c cáº¥u hÃ¬nh; há»“ sÆ¡ cáº§n Ä‘Æ°á»£c kiá»ƒm tra thá»§ cÃ´ng.");
 
         var fullImagePath = Path.GetFullPath(physicalImagePath);
         if (!File.Exists(fullImagePath))
-            throw new VisionExtractionException("IMAGE_NOT_FOUND", "Không tìm thấy ảnh hóa đơn cần phân tích.");
+            throw new VisionExtractionException("IMAGE_NOT_FOUND", "KhÃ´ng tÃ¬m tháº¥y áº£nh hÃ³a Ä‘Æ¡n cáº§n phÃ¢n tÃ­ch.");
 
         var contentRoot = Path.GetFullPath(_environment.ContentRootPath);
         var policyPath = Path.GetFullPath(Path.Combine(contentRoot, _options.PolicyPath));
@@ -42,7 +42,7 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
             + Path.DirectorySeparatorChar;
         if (!policyPath.StartsWith(contentRootPrefix, StringComparison.OrdinalIgnoreCase) || !File.Exists(policyPath))
             throw new VisionExtractionException("POLICY_NOT_FOUND",
-                "Không tìm thấy tài liệu chính sách bắt buộc; không thể ra quyết định tự động.");
+                "KhÃ´ng tÃ¬m tháº¥y tÃ i liá»‡u chÃ­nh sÃ¡ch báº¯t buá»™c; khÃ´ng thá»ƒ ra quyáº¿t Ä‘á»‹nh tá»± Ä‘á»™ng.");
 
         var imageBytes = await File.ReadAllBytesAsync(fullImagePath, cancellationToken);
         var policy = await File.ReadAllTextAsync(policyPath, cancellationToken);
@@ -56,7 +56,7 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
                     role = "user",
                     parts = new object[]
                     {
-                        new { text = "Trích xuất dữ kiện từ ảnh hóa đơn này. Không tự đưa ra quyết định duyệt hay chuyển tiếp." },
+                        new { text = "TrÃ­ch xuáº¥t dá»¯ kiá»‡n tá»« áº£nh hÃ³a Ä‘Æ¡n nÃ y. KhÃ´ng tá»± Ä‘Æ°a ra quyáº¿t Ä‘á»‹nh duyá»‡t hay chuyá»ƒn tiáº¿p." },
                         new { inlineData = new { mimeType = GetMimeType(fullImagePath), data = Convert.ToBase64String(imageBytes) } }
                     }
                 }
@@ -79,7 +79,7 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
         catch (TaskCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
             throw new VisionExtractionException("AI_TIMEOUT",
-                $"Gemini không phản hồi trong {_options.TimeoutSeconds} giây. Đây là lỗi timeout mạng/dịch vụ hoặc model đang quá tải, không phải do nội dung 'kiểm thử' trong ảnh.", exception);
+                $"Gemini khÃ´ng pháº£n há»“i trong {_options.TimeoutSeconds} giÃ¢y. ÄÃ¢y lÃ  lá»—i timeout máº¡ng/dá»‹ch vá»¥ hoáº·c model Ä‘ang quÃ¡ táº£i, khÃ´ng pháº£i do ná»™i dung 'kiá»ƒm thá»­' trong áº£nh.", exception);
         }
 
         var (statusCode, responseText) = response;
@@ -94,23 +94,23 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
         if (root.TryGetProperty("promptFeedback", out var feedback) &&
             feedback.TryGetProperty("blockReason", out var blockReason))
             throw new VisionExtractionException("AI_INPUT_BLOCKED",
-                $"Gemini từ chối xử lý đầu vào ({blockReason.GetString() ?? "không rõ lý do"}); hồ sơ cần kiểm tra thủ công.");
+                $"Gemini tá»« chá»‘i xá»­ lÃ½ Ä‘áº§u vÃ o ({blockReason.GetString() ?? "khÃ´ng rÃµ lÃ½ do"}); há»“ sÆ¡ cáº§n kiá»ƒm tra thá»§ cÃ´ng.");
 
         if (!root.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
             throw new VisionExtractionException("AI_EMPTY_RESPONSE",
-                "Gemini không trả về kết quả trích xuất; hồ sơ cần kiểm tra thủ công.");
+                "Gemini khÃ´ng tráº£ vá» káº¿t quáº£ trÃ­ch xuáº¥t; há»“ sÆ¡ cáº§n kiá»ƒm tra thá»§ cÃ´ng.");
 
         var candidate = candidates[0];
         if (candidate.TryGetProperty("finishReason", out var finishReason) &&
             finishReason.GetString() is not "STOP")
             throw new VisionExtractionException("AI_ABNORMAL_FINISH",
-                $"Gemini dừng bất thường ({finishReason.GetString() ?? "không rõ"}); hồ sơ cần kiểm tra thủ công.");
+                $"Gemini dá»«ng báº¥t thÆ°á»ng ({finishReason.GetString() ?? "khÃ´ng rÃµ"}); há»“ sÆ¡ cáº§n kiá»ƒm tra thá»§ cÃ´ng.");
 
         if (!candidate.TryGetProperty("content", out var content) ||
             !content.TryGetProperty("parts", out var parts) || parts.GetArrayLength() == 0 ||
             !parts[0].TryGetProperty("text", out var textElement))
             throw new VisionExtractionException("AI_INVALID_RESPONSE",
-                "Gemini không trả về dữ liệu JSON hợp lệ; hồ sơ cần kiểm tra thủ công.");
+                "Gemini khÃ´ng tráº£ vá» dá»¯ liá»‡u JSON há»£p lá»‡; há»“ sÆ¡ cáº§n kiá»ƒm tra thá»§ cÃ´ng.");
 
         ReceiptExtractionDto facts;
         try
@@ -121,7 +121,7 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
         catch (JsonException exception)
         {
             throw new VisionExtractionException("AI_INVALID_JSON",
-                "Gemini trả về JSON không đọc được; hồ sơ cần kiểm tra thủ công.", exception);
+                "Gemini tráº£ vá» JSON khÃ´ng Ä‘á»c Ä‘Æ°á»£c; há»“ sÆ¡ cáº§n kiá»ƒm tra thá»§ cÃ´ng.", exception);
         }
         facts.LineItems ??= [];
         facts.MissingFields ??= [];
@@ -134,7 +134,7 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
     private async Task<(HttpStatusCode StatusCode, string Body)> SendWithRetryAsync(
         object payload, CancellationToken cancellationToken)
     {
-        const int maxAttempts = 3;
+        const int maxAttempts = 5;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             using var request = new HttpRequestMessage(HttpMethod.Post,
@@ -148,7 +148,7 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
             if (response.IsSuccessStatusCode || !IsTransient(response.StatusCode) || attempt == maxAttempts)
                 return (response.StatusCode, body);
 
-            var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromMilliseconds(500 * (1 << (attempt - 1)));
+            var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromMilliseconds(4000 * (1 << (attempt - 1)));
             _logger.LogWarning("Gemini returned transient HTTP {StatusCode}; retry {Attempt}/{MaxAttempts} after {DelayMs}ms.",
                 (int)response.StatusCode, attempt + 1, maxAttempts, retryAfter.TotalMilliseconds);
             await Task.Delay(retryAfter, cancellationToken);
@@ -160,18 +160,18 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
     // Do not retry 429 automatically: repeated quota requests make a demo slower and can exhaust
     // the remaining request budget. Operators can retry deliberately after the provider reset.
     private static bool IsTransient(HttpStatusCode statusCode) => statusCode is
-        HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or
+        HttpStatusCode.TooManyRequests or HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or
         HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout;
 
     private static VisionExtractionException CreateHttpFailure(HttpStatusCode statusCode) => statusCode switch
     {
         HttpStatusCode.TooManyRequests => new VisionExtractionException("AI_RATE_LIMIT",
-            "Gemini đang giới hạn lượt gọi hoặc đã chạm quota (HTTP 429) sau 3 lần thử; hãy đợi rồi thử lại hoặc chuyển kiểm tra thủ công."),
+            "Gemini Ä‘ang giá»›i háº¡n lÆ°á»£t gá»i hoáº·c Ä‘Ã£ cháº¡m quota (HTTP 429) sau 3 láº§n thá»­; hÃ£y Ä‘á»£i rá»“i thá»­ láº¡i hoáº·c chuyá»ƒn kiá»ƒm tra thá»§ cÃ´ng."),
         HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or
             HttpStatusCode.GatewayTimeout => new VisionExtractionException("AI_TEMPORARILY_UNAVAILABLE",
-                $"Gemini đang tạm thời không khả dụng (HTTP {(int)statusCode}) sau 3 lần thử; hồ sơ cần kiểm tra thủ công."),
+                $"Gemini Ä‘ang táº¡m thá»i khÃ´ng kháº£ dá»¥ng (HTTP {(int)statusCode}) sau 3 láº§n thá»­; há»“ sÆ¡ cáº§n kiá»ƒm tra thá»§ cÃ´ng."),
         _ => new VisionExtractionException("AI_HTTP_ERROR",
-            $"Gemini từ chối yêu cầu (HTTP {(int)statusCode}); hồ sơ cần kiểm tra thủ công.")
+            $"Gemini tá»« chá»‘i yÃªu cáº§u (HTTP {(int)statusCode}); há»“ sÆ¡ cáº§n kiá»ƒm tra thá»§ cÃ´ng.")
     };
 
     private static JsonDocument ParseResponseDocument(string responseText)
@@ -183,7 +183,7 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
         catch (JsonException exception)
         {
             throw new VisionExtractionException("AI_INVALID_RESPONSE",
-                "Gemini trả về phản hồi không phải JSON hợp lệ; hồ sơ cần kiểm tra thủ công.", exception);
+                "Gemini tráº£ vá» pháº£n há»“i khÃ´ng pháº£i JSON há»£p lá»‡; há»“ sÆ¡ cáº§n kiá»ƒm tra thá»§ cÃ´ng.", exception);
         }
     }
 
@@ -191,7 +191,7 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
     {
         ".png" => "image/png",
         ".jpg" or ".jpeg" => "image/jpeg",
-        _ => throw new InvalidOperationException("Định dạng ảnh không được hỗ trợ.")
+        _ => throw new InvalidOperationException("Äá»‹nh dáº¡ng áº£nh khÃ´ng Ä‘Æ°á»£c há»— trá»£.")
     };
 
     private static object BuildResponseSchema() => new
@@ -229,3 +229,6 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
     private static object NullableNumber() => new { type = new[] { "number", "null" } };
     private static object StringArray() => new { type = "array", items = new { type = "string" } };
 }
+
+
+
