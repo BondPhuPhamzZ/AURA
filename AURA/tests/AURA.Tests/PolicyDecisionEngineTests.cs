@@ -134,13 +134,21 @@ public sealed class PolicyDecisionEngineTests
     [InlineData("ESCALATE_FACT")]
     [InlineData("ESCALATE_POLICY")]
     [InlineData("ESCALATE_AUTHORITY")]
-    [InlineData("ESCALATE_SYSTEM_ERROR")]
     public void Manager_choices_use_explicit_approve_and_reject_labels(string status)
     {
         var choices = EscalationWorkflow.ExplainChoices(status);
 
         Assert.StartsWith("Đồng ý", choices.Yes, StringComparison.Ordinal);
         Assert.StartsWith("Từ chối", choices.No, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void System_error_choices_do_not_claim_the_receipt_was_verified()
+    {
+        var choices = EscalationWorkflow.ExplainChoices("ESCALATE_SYSTEM_ERROR");
+
+        Assert.Equal("Đủ tiêu chuẩn", choices.Yes);
+        Assert.Equal("Không đủ tiêu chuẩn", choices.No);
     }
 
     [Fact]

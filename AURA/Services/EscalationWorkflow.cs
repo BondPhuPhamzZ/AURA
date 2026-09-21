@@ -52,7 +52,7 @@ public static class EscalationWorkflow
     {
         "ESCALATE_POLICY" => ("Đồng ý duyệt ngoại lệ chính sách", "Từ chối khoản chi ngoài chính sách"),
         "ESCALATE_AUTHORITY" => ("Đồng ý chuyển cấp có thẩm quyền", "Từ chối và trả lại hồ sơ"),
-        "ESCALATE_SYSTEM_ERROR" => ("Đồng ý tiếp nhận kiểm tra thủ công", "Từ chối và trả lại để thử sau"),
+        "ESCALATE_SYSTEM_ERROR" => ("Đủ tiêu chuẩn", "Không đủ tiêu chuẩn"),
         _ => ("Đồng ý tiếp nhận kiểm tra thủ công", "Từ chối và yêu cầu bổ sung chứng từ")
     };
 }

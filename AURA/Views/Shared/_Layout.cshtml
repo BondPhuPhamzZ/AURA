@@ -36,6 +36,12 @@
     </main>
 
     <div class="toast-container-aura" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+    <button type="button" id="backToTop" class="back-to-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <path d="M18 15l-6-6-6 6" />
+        </svg>
+        <span>Lên đầu</span>
+    </button>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -84,6 +90,16 @@
 
         const initialTab = new URLSearchParams(window.location.search).get('tab');
         if (initialTab === 'reviewer' || initialTab === 'audit') switchTab(initialTab);
+
+        const backToTopButton = document.getElementById('backToTop');
+        function updateBackToTopVisibility() {
+            backToTopButton.classList.toggle('visible', window.scrollY > 360);
+        }
+        window.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
+        backToTopButton.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        updateBackToTopVisibility();
         
     </script>
 </body>
