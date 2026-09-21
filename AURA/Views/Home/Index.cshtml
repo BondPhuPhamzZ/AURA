@@ -29,7 +29,7 @@
 
     <!-- Upload Thủ Công (Middle Section) -->
     <section class="workflow-section upload-section" aria-labelledby="single-upload-title">
-        <h3 id="single-upload-title" style="font-size: 1.1rem; margin-bottom: 16px;">Hoặc tải lên hóa đơn kiểm thử lẻ:</h3>
+        <h3 id="single-upload-title" class="workflow-subtitle">Hoặc tải lên hóa đơn kiểm thử lẻ:</h3>
         
         <form id="uploadForm" asp-controller="Applicant" asp-action="UploadReceipt" method="post" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
@@ -65,15 +65,17 @@
                     </div>
                 </div>
 
-                <section class="extracted-facts-panel" aria-labelledby="extracted-facts-title" aria-live="polite">
-                    <div class="extracted-facts-heading">
-                        <h4 id="extracted-facts-title">Nội dung AI đọc được</h4>
-                        <span id="extractedFactsConfidence" class="badge bg-secondary">Chưa quét</span>
-                    </div>
-                    <div id="extractedFactsBody" class="extracted-facts-empty">
-                        Kết quả trích xuất sẽ xuất hiện tại đây sau khi AI xử lý ảnh. Giá trị không đọc chắc chắn được hiển thị là “Không đọc được”, không tự suy đoán.
-                    </div>
-                </section>
+                <div class="extracted-facts-column">
+                    <h3 id="extracted-facts-title" class="workflow-subtitle extracted-facts-title">Nội dung AI đọc được</h3>
+                    <section class="extracted-facts-panel" aria-labelledby="extracted-facts-title" aria-live="polite">
+                        <div class="extracted-facts-toolbar">
+                            <span id="extractedFactsConfidence" class="badge facts-confidence-badge bg-secondary">Chưa quét</span>
+                        </div>
+                        <div id="extractedFactsBody" class="extracted-facts-empty">
+                            Kết quả trích xuất sẽ xuất hiện tại đây sau khi AI xử lý ảnh. Giá trị không đọc chắc chắn được hiển thị là “Không đọc được”, không tự suy đoán.
+                        </div>
+                    </section>
+                </div>
             </div>
         </form>
     </section>
@@ -84,7 +86,7 @@
             <div>
                 <h3 style="font-size: 1.25rem; margin: 0;">Bảng Kết Quả Thẩm Định</h3>
                 <div id="analysisSummary" class="analysis-summary" role="status" aria-live="polite">
-                    Chưa có lượt phân tích mới.
+                    <span class="summary-placeholder">Chưa có lượt phân tích mới.</span>
                 </div>
             </div>
             <div class="results-heading-actions">
@@ -271,7 +273,7 @@
         const body = document.getElementById('extractedFactsBody');
         const confidence = document.getElementById('extractedFactsConfidence');
         if (!facts) {
-            confidence.className = 'badge bg-secondary';
+            confidence.className = 'badge facts-confidence-badge bg-secondary';
             confidence.textContent = 'Chưa quét';
             body.className = 'extracted-facts-empty';
             body.textContent = 'Kết quả trích xuất sẽ xuất hiện tại đây sau khi AI xử lý ảnh. Giá trị không đọc chắc chắn được hiển thị là “Không đọc được”, không tự suy đoán.';
@@ -279,7 +281,7 @@
         }
 
         const confidencePercent = Math.round(Number(facts.confidence || 0) * 100);
-        confidence.className = 'badge ' + (confidencePercent >= 70 ? 'bg-success' : 'bg-warning text-dark');
+        confidence.className = 'badge facts-confidence-badge ' + (confidencePercent >= 70 ? 'bg-success' : 'bg-warning text-dark');
         confidence.textContent = `Tin cậy ${confidencePercent}%`;
         const identifier = facts.invoiceNumber || facts.orderId || facts.bookingId || facts.shippingTrackingCode;
         const evidenceDate = facts.invoiceDate || facts.transactionDate || facts.completionDate;
@@ -308,7 +310,7 @@
     function renderExtractedFactsLoading(message) {
         const body = document.getElementById('extractedFactsBody');
         const confidence = document.getElementById('extractedFactsConfidence');
-        confidence.className = 'badge bg-primary';
+        confidence.className = 'badge facts-confidence-badge bg-primary';
         confidence.textContent = 'Đang xử lý';
         body.className = 'extracted-facts-loading';
         body.innerHTML =
@@ -321,7 +323,7 @@
     function renderExtractedFactsUnavailable(message) {
         const body = document.getElementById('extractedFactsBody');
         const confidence = document.getElementById('extractedFactsConfidence');
-        confidence.className = 'badge bg-warning text-dark';
+        confidence.className = 'badge facts-confidence-badge bg-warning text-dark';
         confidence.textContent = 'Chưa có dữ liệu';
         body.className = 'extracted-facts-empty extracted-facts-unavailable';
         body.textContent = message;
