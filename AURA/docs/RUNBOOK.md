@@ -39,7 +39,7 @@ Mở URL được in trong terminal. Không truy cập `/Verify` để tìm tran
 
 Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_receipts.py --as-of-date 2026-09-21`. Script đồng thời sinh Test Kit v2 gồm 30 ca nhưng chỉ 5 ca đại diện được Verify gọi. Không đổi `as-of-date`, fixture hoặc expected sau khi chốt mà không cập nhật manifest, tài liệu và commit.
 
-Để bảo toàn quota: build + 46 automated test trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 30 ảnh trên free tier.
+Để bảo toàn quota: build + 48 automated test trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 30 ảnh trên free tier.
 
 ### Khi Gemini trả HTTP 429
 
@@ -86,7 +86,7 @@ dotnet ef database update --connection "<DEPLOYMENT_CONNECTION>"
 - Nhân viên có thể chuyển từng hồ sơ hoặc **Chuyển tiếp tất cả**; mỗi hồ sơ phải có audit `EMPLOYEE_FORWARDED_TO_MANAGER`.
 - Quản lý bấm **Đồng ý duyệt** hoặc **Từ chối duyệt**; kiểm tra toast và audit `MANAGER_YES`/`MANAGER_NO` chứa câu hỏi, câu trả lời và outcome.
 - Trạng thái quyết định và audit được lưu cùng một lần EF Core `SaveChanges`, tránh trạng thái đổi nhưng thiếu nhật ký.
-- Ảnh POS có MID/TID không được dùng thay seller tax ID; ảnh hóa đơn nháp/chưa phát hành phải chuyển FACT.
+- Ảnh POS có MID/TID không được dùng thay số hóa đơn/biên nhận. Chỉ `VAT_INVOICE` bắt buộc seller tax ID; retail/restaurant/POS receipt có số biên nhận hợp lệ có thể không có MST. Ảnh hóa đơn nháp/chưa phát hành phải chuyển FACT.
 - Ảnh e-commerce được phép thiếu MST/invoice number nếu có order/booking/tracking/receipt ID cùng trạng thái hoàn tất, ngày giao dịch/thanh toán, merchant, total, currency và line items đáng tin cậy. Ngày giao hàng không tự thay ngày giao dịch; mã vận chuyển không được gọi là MST hay hóa đơn thuế.
 - Live URL đã điền trong README, slide và form nộp.
 - API key/connection string không xuất hiện trong Git hoặc video.

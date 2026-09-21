@@ -85,6 +85,18 @@ public sealed class PolicyDecisionEngineTests
         Assert.Equal("AUTO_APPROVE", Decide(facts, 295_199).Status);
     }
 
+    [Theory]
+    [InlineData("RETAIL_RECEIPT")]
+    [InlineData("RESTAURANT_BILL")]
+    public void Numbered_non_vat_receipt_does_not_require_seller_tax_id(string documentType)
+    {
+        var facts = ValidFacts();
+        facts.DocumentType = documentType;
+        facts.TaxId = null;
+
+        Assert.Equal("AUTO_APPROVE", Decide(facts).Status);
+    }
+
     [Fact]
     public void Completed_ecommerce_order_can_use_shipping_tracking_code_as_traceable_identifier()
     {

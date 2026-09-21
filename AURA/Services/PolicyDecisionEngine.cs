@@ -44,6 +44,7 @@ public static class PolicyDecisionEngine
 
         var isEcommerce = ContainsAny(facts.DocumentType, "ecommerce", "e-commerce", "online order");
         var isRideHailing = ContainsAny(facts.DocumentType, "ride_hailing", "ride-hailing", "ride hailing");
+        var isVatInvoice = ContainsAny(facts.DocumentType, "vat_invoice", "vat invoice", "hóa đơn giá trị gia tăng");
         var isDigital = isEcommerce || isRideHailing ||
             ContainsAny(facts.DocumentType, "digital", "electronic", "e-invoice");
 
@@ -78,8 +79,8 @@ public static class PolicyDecisionEngine
             factProblems.Add("thiếu mã chuyến đi/đặt chỗ hoặc số biên nhận để đối chiếu");
         }
 
-        if (!isDigital && string.IsNullOrWhiteSpace(facts.TaxId))
-            factProblems.Add("thiếu mã số thuế của đơn vị bán hàng");
+        if (isVatInvoice && string.IsNullOrWhiteSpace(facts.TaxId))
+            factProblems.Add("hóa đơn GTGT thiếu mã số thuế của đơn vị bán hàng");
 
         if (!string.Equals(facts.Currency, "VND", StringComparison.OrdinalIgnoreCase))
             factProblems.Add(string.IsNullOrWhiteSpace(facts.Currency)

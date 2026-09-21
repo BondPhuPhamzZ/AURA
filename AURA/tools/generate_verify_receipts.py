@@ -95,8 +95,8 @@ def build_cases(as_of: date) -> list[Case]:
              [("Phở bò tái", 75_000), ("Trà đá", 13_000)], "HD-260921-002", "0319132712", tags=["thermal", "restaurant", "camera"]),
         Case("TK-03", "TK-03-vat.jpg", "AUTO_APPROVE", 420_000, "vat", "Công ty Văn phòng phẩm Minh Anh", 420_000, second_date,
              [("Giấy in A4", 300_000), ("Bút bi xanh", 120_000)], "AA/26E-000103", "0314567890", tags=["vat", "unicode"]),
-        Case("TK-04", "TK-04-missing-tax.jpg", "ESCALATE_FACT", 210_000, "thermal", "Quán Hải Sản Ven Sông", 210_000, normal_date,
-             [("Bữa ăn công tác", 210_000)], "PT-104", None, issue="missing-tax-id", tags=["missing-field", "thermal"]),
+        Case("TK-04", "TK-04-missing-identifier.jpg", "ESCALATE_FACT", 210_000, "thermal", "Quán Hải Sản Ven Sông", 210_000, normal_date,
+             [("Bữa ăn công tác", 210_000)], None, "0319876501", issue="missing-identifier", tags=["missing-field", "thermal"]),
         Case("TK-05", "TK-05-policy-beer.jpg", "ESCALATE_POLICY", 780_000, "restaurant", "Nhà hàng Sài Gòn Xưa", 780_000, normal_date,
              [("Món ăn", 480_000), ("Bia Tiger x 6", 300_000)], "NH-260921-105", "0319876543", tags=["policy", "alcohol"]),
     ]
@@ -268,6 +268,8 @@ def main() -> None:
     args = parser.parse_args()
     KIT_IMAGES.mkdir(parents=True, exist_ok=True)
     VERIFY_IMAGES.mkdir(parents=True, exist_ok=True)
+    for old_image in KIT_IMAGES.glob("*.jpg"):
+        old_image.unlink()
     rng = random.Random(SEED)
     cases = build_cases(args.as_of_date)
     for case in cases:

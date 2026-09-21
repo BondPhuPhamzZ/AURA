@@ -25,7 +25,7 @@ Ngày 20/09/2026, Gemini 3.6 Flash đạt 5/5 trên fixture v1. Fixture v2 đa l
 | P05 | Claimed amount lệch total | ESCALATE_FACT | A |
 | P06 | Thiếu merchant | ESCALATE_FACT | A |
 | P07 | Thiếu invoice number | ESCALATE_FACT | A |
-| P08 | Hóa đơn giấy thiếu seller tax ID | ESCALATE_FACT | A |
+| P08 | Hóa đơn GTGT thiếu seller tax ID | ESCALATE_FACT | A |
 | P09 | Ngoại tệ chưa có tỷ giá | ESCALATE_FACT | A |
 | P10 | Ngày không đúng ISO/không chắc chắn | ESCALATE_FACT | A |
 | P11 | Ngày tương lai | ESCALATE_FACT | A |
@@ -56,7 +56,7 @@ Ngày 20/09/2026, Gemini 3.6 Flash đạt 5/5 trên fixture v1. Fixture v2 đa l
 | P36 | Claim bằng 0/âm | HTTP 400, không gọi AI | P |
 | P37 | Ảnh màn hình hóa đơn còn “chưa cấp số/lưu và phát hành” | ESCALATE_FACT vì DRAFT | A |
 | P38 | Chứng từ CANCELLED/đã hủy | ESCALATE_FACT | A |
-| P39 | POS slip có MID/TID nhưng không có seller tax ID | MID/TID được trích xuất riêng; vẫn ESCALATE_FACT | policy/live |
+| P39 | POS/retail receipt có số biên nhận và MID/TID nhưng không có seller tax ID | MID/TID được trích xuất riêng; không thay số biên nhận; không bắt buộc MST nếu không phải VAT_INVOICE | policy/live |
 | P40 | Gemini trả `MAX_TOKENS` hoặc JSON lỗi | SYSTEM_ERROR, không dùng dữ kiện bị cắt | code |
 | P41 | Ảnh vượt 5 MB hoặc server trả body rỗng/non-JSON | Chặn trước upload hoặc hiển thị lỗi HTTP dễ hiểu; không ném lỗi parse JSON | client/server |
 | P42 | E-commerce đủ dữ kiện, có order ID nhưng không có MST/invoice number | AUTO_APPROVE nếu hoàn tất, ngày giao dịch/tổng tiền/item hợp lệ | A |

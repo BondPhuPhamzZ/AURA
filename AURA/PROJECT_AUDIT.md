@@ -16,7 +16,7 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 - Upload có claimed amount, kiểm extension + MIME + magic bytes + 5 MB, tên file ngẫu nhiên và private storage.
 - Hóa đơn, metadata, SHA-256, facts JSON, decision và audit được lưu để tra cứu.
 - Nhân viên chủ động chuyển một/toàn bộ ca `ESCALATE_*`; hàng đợi quản lý chỉ nhận hồ sơ đã chuyển và có Đồng ý/Từ chối/undo.
-- 46 automated tests đạt 46/46 (44 policy/workflow + 2 Test Kit integrity); build 0 warning/0 error.
+- 48 automated tests đạt 48/48 (46 policy/workflow + 2 Test Kit integrity); build 0 warning/0 error.
 - Benchmark lịch sử fixture v1 đạt 5/5 trong khoảng 32 giây; fixture v2 đa layout đang chờ đúng một lượt benchmark live để bảo toàn quota.
 
 ## 2. Bằng chứng kiểm thử
@@ -24,7 +24,7 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 | Kiểm thử | Kết quả |
 |---|---|
 | `dotnet build --no-restore` | Đạt, 0 warning, 0 error |
-| `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` | Đạt 46/46 |
+| `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` | Đạt 48/48 |
 | EF migration `PersistReceiptEvidence` | Áp dụng thành công vào LocalDB |
 | `GET /`, `/Home/Index`, `/Home/Privacy` | 200 |
 | `GET /Applicant`, `/Verify` | 302 về trang chủ |

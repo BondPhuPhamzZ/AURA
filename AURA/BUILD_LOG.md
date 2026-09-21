@@ -9,7 +9,7 @@
 
 - Tách extraction khỏi deterministic policy giúp kết quả giải thích và unit-test được.
 - Benchmark fixture v1 đạt 5/5 trong khoảng 32 giây tổng vào 20/09/2026. Test Kit v2 gồm 30 ảnh đa layout được sinh offline; 5 ảnh đại diện chưa gọi API để giữ quota cho live benchmark/video.
-- 46 automated tests gồm 44 policy/workflow test khóa precedence, e-commerce/mã vận chuyển, tám nhánh quyết định và 2 test toàn vẹn Test Kit/manifest.
+- 48 automated tests gồm 46 policy/workflow test khóa precedence, e-commerce/mã vận chuyển, phạm vi MST theo loại chứng từ, tám nhánh quyết định và 2 test toàn vẹn Test Kit/manifest.
 - Structured Output giảm parsing lỗi so với JSON tự do.
 
 ## Chi phí/thời gian và sự cố thực tế

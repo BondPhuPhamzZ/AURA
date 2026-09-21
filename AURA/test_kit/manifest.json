@@ -118,7 +118,7 @@
     },
     {
       "id": "TK-04",
-      "file_name": "TK-04-missing-tax.jpg",
+      "file_name": "TK-04-missing-identifier.jpg",
       "expected_status": "ESCALATE_FACT",
       "claimed_amount": 210000,
       "template": "thermal",
@@ -131,10 +131,10 @@
           210000
         ]
       ],
-      "identifier": "PT-104",
-      "tax_id": null,
+      "identifier": null,
+      "tax_id": "0319876501",
       "order_status": null,
-      "issue": "missing-tax-id",
+      "issue": "missing-identifier",
       "tags": [
         "missing-field",
         "thermal"
@@ -144,7 +144,7 @@
         "merchantName": "Quán Hải Sản Ven Sông",
         "totalAmount": 210000,
         "invoiceDate": "2026-09-18",
-        "invoiceNumber": "PT-104"
+        "invoiceNumber": null
       }
     },
     {

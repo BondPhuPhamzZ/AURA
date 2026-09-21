@@ -5,7 +5,7 @@ AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứn
 ## Trạng thái Sprint 1
 
 - Build sạch: 0 warning, 0 error.
-- 46 kiểm thử tự động: 44 test chính sách/workflow (gồm e-commerce/mã vận chuyển) và 2 test toàn vẹn manifest/ảnh Test Kit.
+- 48 kiểm thử tự động: 46 test chính sách/workflow (gồm e-commerce/mã vận chuyển và phạm vi MST theo loại chứng từ) cùng 2 test toàn vẹn manifest/ảnh Test Kit.
 - Verify Vision v2: 5 ảnh tổng hợp đa layout gồm 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`; đang chờ đúng một lượt benchmark sau deploy để bảo toàn quota. Kết quả 5/5 ngày 20/09/2026 thuộc fixture v1 và chỉ là lịch sử.
 - Route upload, Verify, audit, quản lý, CSRF và tra cứu chứng từ đã smoke-test local.
 - Live URL: **chưa điền**. Mã nguồn đã có Linux container, health endpoint và cấu hình storage/migration cho cloud; việc tạo tài nguyên bằng tài khoản của nhóm vẫn là blocker cuối trước khi nộp Sprint 1.

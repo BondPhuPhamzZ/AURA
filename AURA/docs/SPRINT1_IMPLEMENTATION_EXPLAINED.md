@@ -16,7 +16,7 @@ AURA hiện là một **vertical slice chạy thật** cho Track A — The Escal
 6. Quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi cụ thể và có thể hoàn tác.
 7. Mọi bước quan trọng được ghi vào audit trail; ảnh gốc có thể mở lại.
 
-Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 46 automated test đạt (44 policy/workflow + 2 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5, còn fixture v2 đa layout đang chờ một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
+Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 48 automated test đạt (46 policy/workflow + 2 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5, còn fixture v2 đa layout đang chờ một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
 
 Đánh giá công tâm:
 
@@ -252,7 +252,7 @@ Khi có nhiều vấn đề: `FACT` thắng `POLICY`, `POLICY` thắng `AUTHORIT
 - Byte-identical duplicate.
 - Total thiếu/không dương; claimed amount không hợp lệ; amount lệch sau round VND.
 - Thiếu merchant hoặc định danh phù hợp loại chứng từ.
-- Hóa đơn giấy thiếu invoice number hoặc seller tax ID.
+- Chứng từ giấy thiếu invoice/receipt number; riêng `VAT_INVOICE` còn bắt buộc seller tax ID.
 - Ride-hailing thiếu booking/receipt ID; e-commerce thiếu cả order/booking/tracking/receipt ID.
 - E-commerce thiếu trạng thái hoàn tất hoặc ngày giao dịch/thanh toán; ngày giao hàng không tự thay ngày giao dịch.
 - Currency không phải VND.
@@ -328,7 +328,7 @@ Hai ViewComponent bắt lỗi DB và hiển thị thông báo thay vì làm hỏ
 
 ### 14.1 Automated policy tests
 
-44 xUnit policy/workflow cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, tax ID, currency, date, future/stale/weekend, late time, blur, duplicate, chứng từ nháp/hủy, e-commerce/mã vận chuyển, bốn nhóm item cấm, authority, precedence, tám nhánh quyết định và ranh giới vai trò nhân viên/quản lý. Hai test bổ sung khóa đúng 5 fixture Verify, phân bố 3 auto + 2 escalate, 30 case benchmark, file tồn tại/duy nhất và không vượt 5 MB.
+46 xUnit policy/workflow cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, phạm vi tax ID theo loại chứng từ, currency, date, future/stale/weekend, late time, blur, duplicate, chứng từ nháp/hủy, e-commerce/mã vận chuyển, bốn nhóm item cấm, authority, precedence, tám nhánh quyết định và ranh giới vai trò nhân viên/quản lý. Hai test bổ sung khóa đúng 5 fixture Verify, phân bố 3 auto + 2 escalate, 30 case benchmark, file tồn tại/duy nhất và không vượt 5 MB.
 
 ### 14.2 Smoke tests đã thực hiện
 
@@ -360,7 +360,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Mục tiêu: build sạch và 46/46 automated test.
+Mục tiêu: build sạch và 48/48 automated test.
 
 ### Tầng B — fixture chuẩn hóa
 
