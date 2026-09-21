@@ -12,7 +12,7 @@
     <header class="aura-header">
         <a asp-controller="Home" asp-action="Index" class="aura-logo">
             <div class="logo-icon">A</div>
-            AURA <span style="font-weight:400; color:var(--colors-ink-subtle); font-size:14px; border-left:1px solid var(--colors-border); padding-left:12px; margin-left:12px;">Gemini Vision + Deterministic Policy</span>
+            AURA <span class="project-track-label">VNG - Track A: <strong>The Escalation Referee</strong></span>
         </a>
         
         <div class="header-actions">
@@ -30,7 +30,7 @@
     <main role="main" style="padding-top: 32px;">
         @if (TempData["Success"] is string successMessage)
         {
-            <div class="page-notice alert alert-success" role="status">@successMessage</div>
+            <div id="flashSuccessMessage" data-message="@successMessage" hidden></div>
         }
         @RenderBody()
     </main>
@@ -85,6 +85,11 @@
                 toast.classList.remove('visible');
                 window.setTimeout(() => toast.remove(), 250);
             }, 4000);
+        }
+
+        const flashSuccessMessage = document.getElementById('flashSuccessMessage');
+        if (flashSuccessMessage?.dataset.message) {
+            showToast(flashSuccessMessage.dataset.message, 'success');
         }
 
         const initialTab = new URLSearchParams(window.location.search).get('tab');

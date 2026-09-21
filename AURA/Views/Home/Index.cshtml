@@ -6,14 +6,14 @@
 <div class="tab-content-pane feature-card active" id="pane-applicant" style="padding: 24px;">
     
     <!-- Hướng dẫn & Verify Harness (Top Section) -->
-    <div class="section-heading-row">
-        <div>
+    <div class="section-heading-row verify-heading-row">
+        <div class="verify-copy">
             <h2 class="hero-title" style="font-size: 1.5rem; margin-bottom: 8px;">Kiểm Thử Tự Động (Verify Harness)</h2>
             <p class="hero-sub" style="color: var(--colors-ink-subtle); margin: 0; font-size: 0.95rem;">
                 Nhấn nút bên phải để AI tự động chạy kiểm thử trên bộ 5 hóa đơn chuẩn hóa. Bạn cũng có thể tải lên 1 hóa đơn thủ công ở khung bên dưới.
             </p>
         </div>
-        <div>
+        <div class="verify-action">
             <button type="button" class="button-primary" style="display: flex; align-items: center; gap: 8px; font-weight: 600; padding: 12px 24px;" onclick="startVerifyHarness()">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
                 <span id="btnVerifyText">Chạy Verify Harness (90s)</span>
@@ -66,7 +66,7 @@
     <section id="unifiedResultsSection" class="workflow-section results-section">
         <div class="section-heading-row compact">
             <h3 style="font-size: 1.25rem; margin: 0;">Bảng Kết Quả Thẩm Định</h3>
-            <button type="button" class="button-ghost-sm" onclick="navigateToTab('audit')">
+            <button type="button" class="button-ghost-sm history-button" onclick="navigateToTab('audit')">
                 Xem Lịch Sử
             </button>
         </div>

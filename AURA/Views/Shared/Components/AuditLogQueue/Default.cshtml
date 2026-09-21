@@ -4,6 +4,19 @@
     <h4 class="mb-2 form-header">Nhật Ký Kiểm Toán</h4>
     <p class="text-muted mb-4">Mỗi dòng ghi rõ thao tác, thời gian, hồ sơ đầu vào và lý do. Quyết định của quản lý có thể được hoàn tác.</p>
 
+    <div class="audit-filter" role="search" aria-label="Lọc lịch sử theo ngày">
+        <div class="audit-filter-field">
+            <label for="auditDateFrom">Từ ngày</label>
+            <input id="auditDateFrom" class="audit-date-input" type="date" />
+        </div>
+        <div class="audit-filter-field">
+            <label for="auditDateTo">Đến ngày</label>
+            <input id="auditDateTo" class="audit-date-input" type="date" />
+        </div>
+        <button type="button" id="auditFilterReset" class="button-ghost-sm audit-filter-reset">Xóa bộ lọc</button>
+        <span id="auditFilterResult" class="audit-filter-result" role="status" aria-live="polite"></span>
+    </div>
+
     @if (ViewData["LoadError"] is string loadError)
     {
         <div class="alert alert-danger feature-card" style="padding: 16px;">@loadError</div>
@@ -54,11 +67,12 @@
                             _ when entry.Log.Action.StartsWith("VERIFY_", StringComparison.Ordinal) => "Verify Harness",
                             _ => entry.Log.Action.Replace('_', ' ')
                         };
-                        <tr>
+                        var localTimestamp = entry.Log.Timestamp.ToLocalTime();
+                        <tr class="audit-data-row" data-audit-date="@localTimestamp.ToString("yyyy-MM-dd")">
                             <td class="audit-time-cell">
                                 <time datetime="@entry.Log.Timestamp.ToString("O")">
-                                    <span>@entry.Log.Timestamp.ToLocalTime().ToString("dd/MM/yyyy")</span>
-                                    <small>@entry.Log.Timestamp.ToLocalTime().ToString("HH:mm:ss")</small>
+                                    <span>@localTimestamp.ToString("dd/MM/yyyy")</span>
+                                    <small>@localTimestamp.ToString("HH:mm:ss")</small>
                                 </time>
                             </td>
                             <td class="cell-code">@entry.Log.RequestId[..Math.Min(8, entry.Log.RequestId.Length)]</td>
@@ -93,7 +107,7 @@
                                 <details class="audit-details">
                                     <summary>
                                         <span class="audit-details-preview">@entry.Log.Details</span>
-                                        <span class="audit-details-toggle" aria-hidden="true"></span>
+                                        <span class="audit-details-toggle"></span>
                                     </summary>
                                     <div class="audit-details-full">@entry.Log.Details</div>
                                 </details>
@@ -115,8 +129,52 @@
                             </td>
                         </tr>
                     }
+                    <tr id="auditNoFilterResults" hidden>
+                        <td colspan="7" class="text-center empty-state">Không có bản ghi trong khoảng thời gian đã chọn.</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
     }
 </div>
+
+<script>
+    (() => {
+        const fromInput = document.getElementById('auditDateFrom');
+        const toInput = document.getElementById('auditDateTo');
+        const resetButton = document.getElementById('auditFilterReset');
+        const resultText = document.getElementById('auditFilterResult');
+        const emptyRow = document.getElementById('auditNoFilterResults');
+        const rows = Array.from(document.querySelectorAll('.audit-data-row'));
+
+        if (!fromInput || !toInput || !resetButton || !resultText || !emptyRow) return;
+
+        function applyAuditDateFilter() {
+            const from = fromInput.value;
+            const to = toInput.value;
+            let visibleCount = 0;
+
+            toInput.min = from;
+            fromInput.max = to;
+
+            rows.forEach(row => {
+                const date = row.dataset.auditDate || '';
+                const isVisible = (!from || date >= from) && (!to || date <= to);
+                row.hidden = !isVisible;
+                if (isVisible) visibleCount++;
+            });
+
+            emptyRow.hidden = visibleCount !== 0;
+            resultText.textContent = `${visibleCount}/${rows.length} bản ghi`;
+        }
+
+        fromInput.addEventListener('change', applyAuditDateFilter);
+        toInput.addEventListener('change', applyAuditDateFilter);
+        resetButton.addEventListener('click', () => {
+            fromInput.value = '';
+            toInput.value = '';
+            applyAuditDateFilter();
+        });
+        applyAuditDateFilter();
+    })();
+</script>
