@@ -24,9 +24,16 @@ namespace AURA.Services
                 .ToListAsync();
         }
 
-        public async Task AddRequestAsync(ReimbursementRequest request)
+        public async Task AddRequestWithAuditAsync(ReimbursementRequest request, string action, string details)
         {
             await _context.ReimbursementRequests.AddAsync(request);
+            await _context.AuditLogs.AddAsync(new AuditLog
+            {
+                RequestId = request.Id,
+                Action = action,
+                Details = details,
+                Timestamp = DateTime.UtcNow
+            });
             await _context.SaveChangesAsync();
         }
 

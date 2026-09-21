@@ -17,18 +17,16 @@ public sealed class ApplicantController : Controller
 
     private readonly IWebHostEnvironment _environment;
     private readonly IReimbursementRepository _repository;
-    private readonly IAuditLogger _audit;
     private readonly IVisionExtractor _vision;
     private readonly ReceiptStorageOptions _storageOptions;
     private readonly ILogger<ApplicantController> _logger;
 
     public ApplicantController(IWebHostEnvironment environment, IReimbursementRepository repository,
-        IAuditLogger audit, IVisionExtractor vision, IOptions<ReceiptStorageOptions> storageOptions,
+        IVisionExtractor vision, IOptions<ReceiptStorageOptions> storageOptions,
         ILogger<ApplicantController> logger)
     {
         _environment = environment;
         _repository = repository;
-        _audit = audit;
         _vision = vision;
         _storageOptions = storageOptions.Value;
         _logger = logger;
@@ -105,6 +103,16 @@ public sealed class ApplicantController : Controller
         TempData["Success"] = pending.Count == 0
             ? "Không có hồ sơ mới cần chuyển tiếp."
             : $"Đã chuyển tiếp {pending.Count} hồ sơ đến cửa sổ quản lý.";
+        if (string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase))
+        {
+            return Json(new
+            {
+                message = pending.Count == 0
+                    ? "Không có hồ sơ mới cần chuyển tiếp."
+                    : $"Đã chuyển tiếp {pending.Count} hồ sơ đến cửa sổ quản lý.",
+                forwardedCount = pending.Count
+            });
+        }
         return RedirectToAction("Index", "Home", new { tab = pending.Count == 0 ? "applicant" : "reviewer" });
     }
 
@@ -185,8 +193,7 @@ public sealed class ApplicantController : Controller
             request.ProcessingLatencyMs = stopwatch.ElapsedMilliseconds;
         }
 
-        await _repository.AddRequestAsync(request);
-        await _audit.LogActionAsync(request.Id, $"AI_PROCESSED_{request.Status}",
+        await _repository.AddRequestWithAuditAsync(request, $"AI_PROCESSED_{request.Status}",
             $"File={request.OriginalFileName}; SHA256={request.FileSha256}; Reason={request.AiReasoning}; Latency={request.ProcessingLatencyMs}ms");
 
         return Json(new

@@ -1,66 +1,37 @@
 @model IEnumerable<AURA.Models.ReimbursementRequest>
 
-<section class="employee-forward-queue" aria-labelledby="employee-forward-title">
-    <div class="queue-heading-row">
-        <div>
-            <h3 id="employee-forward-title" class="section-title">Hồ sơ đang chờ nhân viên chuyển tiếp</h3>
-            <p class="table-caption">Nhân viên chỉ xác nhận chuyển hồ sơ; quyết định duyệt hoặc từ chối thuộc quản lý.</p>
-        </div>
-        @if (Model.Any())
-        {
-            <form asp-controller="Applicant" asp-action="ForwardAllToManager" method="post"
-                  onsubmit="return confirm('Chuyển toàn bộ hồ sơ đang chờ đến quản lý?');">
-                <button type="submit" class="button-primary button-compact">Chuyển tiếp tất cả</button>
-            </form>
-        }
-    </div>
-    @if (ViewData["LoadError"] is string loadError)
+@if (ViewData["LoadError"] is string loadError)
+{
+    <tr><td colspan="8" class="text-danger text-center">@loadError</td></tr>
+}
+else if (!Model.Any())
+{
+    <tr><td colspan="8" class="text-center empty-state">Không có hồ sơ nào đang chờ chuyển tiếp. Ca tự động duyệt đã được ghi thẳng vào lịch sử.</td></tr>
+}
+else
+{
+    @foreach (var item in Model)
     {
-        <div class="alert alert-danger">@loadError</div>
+        <tr data-case-id="@item.Id">
+            <td data-label="Mã hồ sơ" class="cell-code">@item.Id[..Math.Min(8, item.Id.Length)]</td>
+            <td data-label="Ảnh">
+                <a class="receipt-preview-link" href="@item.ImageUrl" target="_blank" rel="noopener">
+                    <img class="receipt-thumbnail" src="@item.ImageUrl" alt="Ảnh chứng từ @item.OriginalFileName" loading="lazy" />
+                    <span>@item.OriginalFileName</span>
+                </a>
+            </td>
+            <td data-label="Kỳ vọng"><span class="text-muted">Không áp dụng</span></td>
+            <td data-label="Kết quả"><span class="badge bg-warning text-dark">@item.Status</span></td>
+            <td data-label="Đối chiếu"><span class="badge bg-secondary">KHÔNG ÁP DỤNG</span></td>
+            <td data-label="Lý do và câu hỏi" class="cell-reason">
+                <strong>@item.AiReasoning</strong>
+                <small>@AURA.Services.EscalationWorkflow.EmployeeHandoffPrompt</small>
+            </td>
+            <td data-label="Độ trễ" class="cell-number">@item.ProcessingLatencyMs ms</td>
+            <td data-label="Thao tác" class="cell-actions">
+                <button type="button" class="button-primary button-compact"
+                        onclick="forwardToManager('@item.Id', this)">Chuyển tiếp</button>
+            </td>
+        </tr>
     }
-    else if (!Model.Any())
-    {
-        <p class="empty-state">Không có hồ sơ nào đang chờ chuyển cho quản lý.</p>
-    }
-    else
-    {
-        <div class="table-responsive-aura table-scroll-area">
-            <table class="table-aura table-aura-compact">
-                <thead>
-                    <tr>
-                        <th>Mã hồ sơ</th>
-                        <th>Chứng từ</th>
-                        <th>Kết quả</th>
-                        <th>Lý do và xác nhận chuyển tiếp</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td data-label="Mã hồ sơ" class="cell-code">@item.Id[..Math.Min(8, item.Id.Length)]</td>
-                        <td data-label="Chứng từ">
-                            <a class="receipt-preview-link" href="@item.ImageUrl" target="_blank" rel="noopener">
-                                <img class="receipt-thumbnail" src="@item.ImageUrl" alt="Ảnh chứng từ @item.OriginalFileName" loading="lazy" />
-                                <span>@item.OriginalFileName</span>
-                            </a>
-                        </td>
-                        <td data-label="Kết quả"><span class="badge bg-warning text-dark">@item.Status</span></td>
-                        <td data-label="Chuyển tiếp" class="cell-reason">
-                            <strong>@item.AiReasoning</strong>
-                            <small>@AURA.Services.EscalationWorkflow.EmployeeHandoffPrompt</small>
-                        </td>
-                        <td data-label="Thao tác">
-                            <form asp-controller="Applicant" asp-action="ForwardToManager" method="post">
-                                <input type="hidden" name="id" value="@item.Id" />
-                                <button type="submit" class="button-primary button-compact">Chuyển tiếp</button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-    }
-</section>
+}

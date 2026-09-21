@@ -45,6 +45,8 @@ namespace AURA.Controllers
                 await _repo.UpdateRequestWithAuditAsync(req, "MANAGER_UNDO",
                     $"Đã hoàn tác quyết định, khôi phục {req.Status}.");
                 TempData["Success"] = $"Đã hoàn tác quyết định cho hồ sơ {id}.";
+                if (IsAjaxRequest())
+                    return Json(new { message = TempData["Success"]?.ToString(), status = req.Status });
                 return RedirectToAction("Index", "Home", new { tab = "audit" });
             }
 
@@ -58,8 +60,13 @@ namespace AURA.Controllers
                 $"Question={req.ManagerQuestion}; Answer={(answer ? "ĐỒNG Ý DUYỆT" : "TỪ CHỐI DUYỆT")}; Outcome={outcome.Status}; {outcome.Message}");
             
             TempData["Success"] = outcome.Message;
+            if (IsAjaxRequest())
+                return Json(new { message = outcome.Message, status = outcome.Status });
             return RedirectToAction("Index", "Home", new { tab = "reviewer" });
         }
+
+        private bool IsAjaxRequest() =>
+            string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
     }
 }
 

@@ -78,14 +78,20 @@
     <!-- Bảng Kết Quả Hợp Nhất (Bottom Section) -->
     <section id="unifiedResultsSection" class="workflow-section results-section">
         <div class="section-heading-row compact">
-            <h3 style="font-size: 1.25rem; margin: 0;">Bảng Kết Quả Thẩm Định</h3>
-            <button type="button" class="button-ghost-sm history-button" onclick="navigateToTab('audit')">
-                Xem Lịch Sử
-            </button>
+            <div>
+                <h3 style="font-size: 1.25rem; margin: 0;">Bảng Kết Quả Thẩm Định</h3>
+                <div id="analysisSummary" class="analysis-summary" role="status" aria-live="polite">
+                    Chưa có lượt phân tích mới.
+                </div>
+            </div>
+            <div class="results-heading-actions">
+                <button type="button" class="button-primary button-compact" onclick="forwardAllToManager(this)">Chuyển tiếp tất cả</button>
+                <button type="button" class="button-ghost-sm history-button" onclick="navigateToTab('audit')">Xem Lịch Sử</button>
+            </div>
         </div>
         
         <p class="table-caption">
-            <strong>Kỳ vọng/Đối chiếu</strong> chỉ dùng cho Verify có nhãn sẵn. Ảnh nhân viên tải mới không có đáp án chuẩn nên hiển thị “Không áp dụng”, không tự nhận là PASS.
+            Ca tự động duyệt được ghi thẳng vào lịch sử. Ca cần xử lý được giữ tại đây cho tới khi nhân viên chuyển tiếp. <strong>Kỳ vọng/Đối chiếu</strong> chỉ dùng trong lượt Verify có nhãn sẵn.
         </p>
         <div class="table-responsive-aura table-scroll-area">
             <table class="table-aura results-table">
@@ -102,25 +108,21 @@
                     </tr>
                 </thead>
                 <tbody id="resultsBody">
-                    <tr><td colspan="8" class="text-center empty-state">Chưa có dữ liệu. Vui lòng nộp đơn hoặc chạy Verify Harness.</td></tr>
+                    @await Component.InvokeAsync("EmployeeEscalationQueue")
                 </tbody>
             </table>
         </div>
     </section>
-
-    <div class="subsection-divider">
-        @await Component.InvokeAsync("EmployeeEscalationQueue")
-    </div>
 </div>
 
 <!-- Tab Reviewer -->
 <div class="tab-content-pane feature-card" id="pane-reviewer" style="display: none;">
-    @await Component.InvokeAsync("EscalationQueue")
+    <div id="reviewerQueueHost">@await Component.InvokeAsync("EscalationQueue")</div>
 </div>
 
 <!-- Tab Audit Log -->
 <div class="tab-content-pane feature-card" id="pane-audit" style="display: none;">
-    @await Component.InvokeAsync("AuditLogQueue")
+    <div id="auditTrailHost">@await Component.InvokeAsync("AuditLogQueue")</div>
 </div>
 
 <style>
@@ -161,6 +163,7 @@
     const amountRawInput = document.getElementById('claimedAmount');
     const maxUploadBytes = @((long)ReceiptStorage.Value.MaxFileSizeMb * 1024L * 1024L);
     const maxUploadMegabytes = @ReceiptStorage.Value.MaxFileSizeMb;
+    let preserveVerifyResults = false;
 
     function syncClaimedAmount() {
         const digits = amountDisplayInput.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
@@ -345,6 +348,41 @@
         return String(value == null ? '' : value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
 
+    function updateAnalysisSummary(items) {
+        const rows = Array.isArray(items) ? items : [items];
+        const approved = rows.filter(item => item?.actual === 'AUTO_APPROVE').length;
+        const escalated = rows.filter(item => item?.actual?.startsWith('ESCALATE_')).length;
+        const summary = document.getElementById('analysisSummary');
+        summary.innerHTML = '<span class="summary-approved">' + approved + ' tự động duyệt</span>' +
+            '<span class="summary-escalated">' + escalated + ' cần chuyển tiếp</span>';
+        showToast(`Đã phân tích ${rows.length} hồ sơ: ${approved} tự động duyệt, ${escalated} cần chuyển tiếp.`,
+            escalated > 0 ? 'warning' : 'success');
+    }
+
+    async function refreshFragment(url, hostId, context) {
+        const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, cache: 'no-store' });
+        if (!response.ok) throw new Error(`${context} thất bại (HTTP ${response.status}).`);
+        document.getElementById(hostId).innerHTML = await response.text();
+    }
+
+    async function refreshPendingEscalations() {
+        const response = await fetch('@Url.Action("EmployeeEscalations", "Home")', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }, cache: 'no-store'
+        });
+        if (!response.ok) throw new Error(`Cập nhật bảng kết quả thất bại (HTTP ${response.status}).`);
+        document.getElementById('resultsBody').innerHTML = await response.text();
+    }
+
+    async function refreshWorkflowViews(includeResults = true) {
+        const tasks = [
+            refreshFragment('@Url.Action("ReviewerQueue", "Home")', 'reviewerQueueHost', 'Cập nhật hàng đợi quản lý'),
+            refreshFragment('@Url.Action("AuditTrail", "Home")', 'auditTrailHost', 'Cập nhật lịch sử')
+        ];
+        if (includeResults) tasks.push(refreshPendingEscalations());
+        await Promise.all(tasks);
+        window.initializeAuditFilter?.();
+    }
+
     async function readJsonResponse(response, context) {
         const rawBody = await response.text();
         let payload = null;
@@ -375,6 +413,7 @@
     }
 
     async function forwardToManager(caseId, button) {
+        preserveVerifyResults = false;
         button.disabled = true;
         const originalText = button.innerText;
         button.innerText = 'Đang chuyển...';
@@ -390,9 +429,32 @@
             });
             const data = await readJsonResponse(response, 'Chuyển tiếp hồ sơ');
             showToast(data.message, 'success');
-            window.setTimeout(() => window.location.assign(data.redirectUrl), 600);
+            await refreshWorkflowViews(true);
         } catch (error) {
             showToast('Không thể chuyển tiếp: ' + error.message, 'danger');
+            button.disabled = false;
+            button.innerText = originalText;
+        }
+    }
+
+    async function forwardAllToManager(button) {
+        preserveVerifyResults = false;
+        if (!confirm('Chuyển toàn bộ hồ sơ đang chờ đến quản lý?')) return;
+        button.disabled = true;
+        const originalText = button.innerText;
+        button.innerText = 'Đang chuyển...';
+        const formData = new FormData();
+        formData.append('__RequestVerificationToken', document.querySelector('#uploadForm input[name="__RequestVerificationToken"]').value);
+        try {
+            const response = await fetch('@Url.Action("ForwardAllToManager", "Applicant")', {
+                method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: formData
+            });
+            const data = await readJsonResponse(response, 'Chuyển tiếp tất cả');
+            showToast(data.message, 'success');
+            await refreshWorkflowViews(true);
+        } catch (error) {
+            showToast('Không thể chuyển tiếp: ' + error.message, 'danger');
+        } finally {
             button.disabled = false;
             button.innerText = originalText;
         }
@@ -404,6 +466,7 @@
 
     // AJAX Upload Single File
     async function submitUpload() {
+        preserveVerifyResults = false;
         if (!fileInput.files || fileInput.files.length === 0) {
             showToast('Vui lòng tải lên ảnh hóa đơn.', 'danger');
             return;
@@ -444,6 +507,8 @@
                 document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Lỗi: ' + escapeHtml(data.error) + '</td></tr>';
             } else {
                 document.getElementById('resultsBody').innerHTML = renderResultRow(data);
+                updateAnalysisSummary(data);
+                await refreshWorkflowViews(true);
             }
         } catch(e) {
             document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Có lỗi hệ thống: ' + escapeHtml(e.message) + '</td></tr>';
@@ -455,6 +520,7 @@
     
     // Verify Harness logic (AJAX)
     async function startVerifyHarness() {
+        preserveVerifyResults = true;
         const btn = document.querySelector('.button-primary[onclick="startVerifyHarness()"]');
         const btnText = document.getElementById('btnVerifyText');
         const originalText = btnText.innerText;
@@ -492,6 +558,8 @@
             });
             document.getElementById('resultsBody').innerHTML = html;
             renderExtractedFacts(data[0]?.facts || null);
+            updateAnalysisSummary(data);
+            await refreshWorkflowViews(false);
         } catch(e) {
             document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Có lỗi xảy ra: ' + escapeHtml(e.message) + '</td></tr>';
         } finally {
@@ -499,4 +567,28 @@
             btnText.innerText = originalText;
         }
     }
+
+    document.addEventListener('submit', async event => {
+        const form = event.target.closest('.js-workflow-form');
+        if (!form) return;
+        event.preventDefault();
+        const submitButton = event.submitter || form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: new FormData(form)
+            });
+            const data = await readJsonResponse(response, 'Cập nhật quyết định');
+            showToast(data.message || 'Đã cập nhật thành công.', 'success');
+            await refreshWorkflowViews(true);
+        } catch (error) {
+            showToast(error.message, 'danger');
+            if (submitButton) submitButton.disabled = false;
+        }
+    });
+
+    window.setInterval(() => {
+        if (document.visibilityState !== 'visible') return;
+        refreshWorkflowViews(!preserveVerifyResults).catch(() => { /* polling must not interrupt the operator */ });
+    }, 15000);
 </script>

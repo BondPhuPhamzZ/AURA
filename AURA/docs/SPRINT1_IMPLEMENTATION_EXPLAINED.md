@@ -11,6 +11,7 @@ AURA hiện là một **vertical slice chạy thật** cho Track A — The Escal
 1. Nhân viên tải một ảnh hóa đơn JPG/PNG và nhập số tiền đề nghị.
 2. Server kiểm tra file, lưu bản gốc vào vùng không public và tạo SHA-256.
 3. Gemini 3.6 Flash chỉ trích xuất dữ kiện theo JSON Schema.
+4. Giao diện hiển thị chính xác facts đã trích xuất cạnh ảnh và số tiền; không chỉ hiển thị quyết định cuối.
 4. Bộ luật C# tất định quyết định `AUTO_APPROVE` hoặc một trong ba loại chuyển tiếp.
 5. Ca chuyển tiếp xuất hiện ở cửa sổ nhân viên; nhân viên bấm **Chuyển tiếp** để giao đúng trách nhiệm.
 6. Quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi cụ thể và có thể hoàn tác.

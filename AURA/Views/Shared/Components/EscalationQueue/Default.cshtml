@@ -47,12 +47,12 @@
                                 </a>
                             </td>
                             <td class="manager-action-column">
-                                <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline">
+                                <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline js-workflow-form">
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="decision" value="YES" />
                                     <button type="submit" class="button-ghost-sm success" title="@choices.Yes">Đồng ý duyệt</button>
                                 </form>
-                                <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline" style="margin-left: 8px;">
+                                <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline js-workflow-form" style="margin-left: 8px;">
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="decision" value="NO" />
                                     <button type="submit" class="button-ghost-sm danger" title="@choices.No">Từ chối duyệt</button>

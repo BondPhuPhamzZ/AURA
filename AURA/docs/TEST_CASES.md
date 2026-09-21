@@ -14,6 +14,8 @@ Mốc cập nhật: 21/09/2026. Ký hiệu: `A` đã tự động hóa bằng xU
 
 Ngày 20/09/2026, Gemini 3.6 Flash đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026 và chưa gọi API để bảo toàn quota; phải benchmark đúng một lượt sau deploy trước khi quay video. Kết quả cũ không được gán cho ảnh v2.
 
+Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số `AUTO_APPROVE`/`ESCALATE_*`; facts trích xuất hiển thị cạnh upload; auto approve xuất hiện ngay trong Audit; escalation còn trong bảng kết quả cho tới khi chuyển quản lý; các thao tác không yêu cầu reload toàn trang.
+
 ## Ma trận policy mở rộng
 
 | ID | Tình huống | Kỳ vọng | Phủ |

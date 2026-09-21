@@ -8,6 +8,8 @@ AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứn
 - 48 kiểm thử tự động: 46 test chính sách/workflow (gồm e-commerce/mã vận chuyển và phạm vi MST theo loại chứng từ) cùng 2 test toàn vẹn manifest/ảnh Test Kit.
 - Verify Vision v2: 5 ảnh tổng hợp đa layout gồm 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`; đang chờ đúng một lượt benchmark sau deploy để bảo toàn quota. Kết quả 5/5 ngày 20/09/2026 thuộc fixture v1 và chỉ là lịch sử.
 - Route upload, Verify, audit, quản lý, CSRF và tra cứu chứng từ đã smoke-test local.
+- Giao diện upload ba cột hiển thị trực tiếp facts AI đã đọc. Kết quả cho biết số ca tự động duyệt/chuyển tiếp; ca tự duyệt vào lịch sử, ca chuyển tiếp được giữ trong bảng kết quả ngay cả sau reload.
+- Hàng đợi nhân viên, quản lý và audit cập nhật ngay sau thao tác bằng fragment AJAX, đồng thời polling nhẹ mỗi 15 giây để đồng bộ các tab đang mở.
 - Live URL: **chưa điền**. Mã nguồn đã có Linux container, health endpoint và cấu hình storage/migration cho cloud; việc tạo tài nguyên bằng tài khoản của nhóm vẫn là blocker cuối trước khi nộp Sprint 1.
 
 ## Demo 90 giây
@@ -20,7 +22,7 @@ AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứn
 
 ## Kiến trúc quyết định
 
-`Upload -> kiểm MIME/magic bytes/size -> lưu chứng từ riêng tư -> Gemini Structured Output -> C# policy engine -> AUTO_APPROVE hoặc ESCALATE_* -> nhân viên chuyển tiếp -> quản lý Đồng ý/Từ chối -> audit trail`
+`Upload -> kiểm MIME/magic bytes/size -> lưu chứng từ riêng tư -> Gemini Structured Output -> hiển thị facts -> C# policy engine -> AUTO_APPROVE hoặc ESCALATE_* -> nhân viên chuyển tiếp -> quản lý Đồng ý/Từ chối -> audit trail`
 
 Với e-commerce, schema tách riêng mã đơn hàng, mã vận chuyển, đơn vị vận chuyển, trạng thái đơn, ngày giao dịch và ngày hoàn tất. Mã vận chuyển chỉ là bằng chứng truy vết logistics; nó không thay MST và không tự chứng minh đã thanh toán.
 

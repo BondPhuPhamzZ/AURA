@@ -13,16 +13,14 @@ public sealed class VerifyController : Controller
     private readonly IVisionExtractor _vision;
     private readonly IWebHostEnvironment _environment;
     private readonly IReimbursementRepository _repository;
-    private readonly IAuditLogger _audit;
     private readonly ILogger<VerifyController> _logger;
 
     public VerifyController(IVisionExtractor vision, IWebHostEnvironment environment,
-        IReimbursementRepository repository, IAuditLogger audit, ILogger<VerifyController> logger)
+        IReimbursementRepository repository, ILogger<VerifyController> logger)
     {
         _vision = vision;
         _environment = environment;
         _repository = repository;
-        _audit = audit;
         _logger = logger;
     }
 
@@ -125,8 +123,7 @@ public sealed class VerifyController : Controller
                 ManagerQuestion = question,
                 ProcessingLatencyMs = stopwatch.ElapsedMilliseconds
             };
-            await _repository.AddRequestAsync(request);
-            await _audit.LogActionAsync(request.Id, $"VERIFY_{actualStatus}",
+            await _repository.AddRequestWithAuditAsync(request, $"VERIFY_{actualStatus}",
                 $"Case={testCase.Id}; Expected={testCase.ExpectedStatus}; Reason={reason}; Latency={stopwatch.ElapsedMilliseconds}ms");
 
             results.Add(new

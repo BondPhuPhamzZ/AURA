@@ -24,6 +24,18 @@ public class HomeController : Controller
         return View();
     }
 
+    [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public IActionResult EmployeeEscalations() => ViewComponent("EmployeeEscalationQueue");
+
+    [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public IActionResult ReviewerQueue() => ViewComponent("EscalationQueue");
+
+    [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public IActionResult AuditTrail() => ViewComponent("AuditLogQueue");
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

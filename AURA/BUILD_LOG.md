@@ -11,6 +11,8 @@
 - Benchmark fixture v1 đạt 5/5 trong khoảng 32 giây tổng vào 20/09/2026. Test Kit v2 gồm 30 ảnh đa layout được sinh offline; 5 ảnh đại diện chưa gọi API để giữ quota cho live benchmark/video.
 - 48 automated tests gồm 46 policy/workflow test khóa precedence, e-commerce/mã vận chuyển, phạm vi MST theo loại chứng từ, tám nhánh quyết định và 2 test toàn vẹn Test Kit/manifest.
 - Structured Output giảm parsing lỗi so với JSON tự do.
+- UI hiển thị facts AI theo ba cột; bảng chuyển tiếp riêng được hợp nhất vào bảng kết quả để tránh trùng nhưng vẫn phục hồi escalation sau reload.
+- Hồ sơ và audit AI được ghi trong cùng một `SaveChanges`; các fragment kết quả/quản lý/lịch sử cập nhật sau thao tác mà không reload toàn trang.
 
 ## Chi phí/thời gian và sự cố thực tế
 

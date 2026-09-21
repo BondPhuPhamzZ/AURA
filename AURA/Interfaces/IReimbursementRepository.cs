@@ -7,7 +7,7 @@ namespace AURA.Interfaces
     public interface IReimbursementRepository
     {
         Task<List<ReimbursementRequest>> GetAllRequestsAsync();
-        Task AddRequestAsync(ReimbursementRequest request);
+        Task AddRequestWithAuditAsync(ReimbursementRequest request, string action, string details);
         Task<ReimbursementRequest?> GetRequestByIdAsync(string id);
         Task UpdateRequestAsync(ReimbursementRequest request);
         Task UpdateRequestWithAuditAsync(ReimbursementRequest request, string action, string details);

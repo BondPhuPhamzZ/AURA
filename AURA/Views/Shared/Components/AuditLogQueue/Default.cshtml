@@ -116,7 +116,7 @@
                                 @if (request is not null && entry.Log.Action is "MANAGER_YES" or "MANAGER_NO"
                                     && AURA.Services.EscalationWorkflow.CanUndo(request.Status) && request.ManagerAnswer is not null)
                                 {
-                                    <form asp-controller="Reviewer" asp-action="EscalateAction" method="post">
+                                    <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="js-workflow-form">
                                         <input type="hidden" name="id" value="@request.Id" />
                                         <input type="hidden" name="decision" value="UNDO" />
                                         <button type="submit" class="button-ghost-sm">Hoàn tác</button>
@@ -139,7 +139,7 @@
 </div>
 
 <script>
-    (() => {
+    window.initializeAuditFilter = () => {
         const fromInput = document.getElementById('auditDateFrom');
         const toInput = document.getElementById('auditDateTo');
         const resetButton = document.getElementById('auditFilterReset');
@@ -176,5 +176,6 @@
             applyAuditDateFilter();
         });
         applyAuditDateFilter();
-    })();
+    };
+    window.initializeAuditFilter();
 </script>
