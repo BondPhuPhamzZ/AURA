@@ -1,6 +1,9 @@
 ﻿@{
     ViewData["Title"] = "Dashboard";
 }
+@using AURA.Options
+@using Microsoft.Extensions.Options
+@inject IOptions<ReceiptStorageOptions> ReceiptStorage
 
 <!-- Tab Applicant / Tester -->
 <div class="tab-content-pane feature-card active" id="pane-applicant" style="padding: 24px;">
@@ -39,7 +42,7 @@
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                     </div>
                     <div class="dropzone-text" id="dropzoneText">Kéo thả ảnh hóa đơn vào đây</div>
-                    <div class="dropzone-subtext" style="color: var(--colors-ink-subtle); margin-top: 8px; font-size: 0.875rem;">Hỗ trợ JPG, PNG (Tối đa 5MB)</div>
+                    <div class="dropzone-subtext" style="color: var(--colors-ink-subtle); margin-top: 8px; font-size: 0.875rem;">Hỗ trợ JPG, PNG (Tối đa @ReceiptStorage.Value.MaxFileSizeMb MB)</div>
                 </div>
 
                 <div class="amount-action-row">
@@ -146,6 +149,8 @@
     const dropzoneSubtext = document.querySelector('.dropzone-subtext');
     const amountDisplayInput = document.getElementById('claimedAmountDisplay');
     const amountRawInput = document.getElementById('claimedAmount');
+    const maxUploadBytes = @((long)ReceiptStorage.Value.MaxFileSizeMb * 1024L * 1024L);
+    const maxUploadMegabytes = @ReceiptStorage.Value.MaxFileSizeMb;
 
     function syncClaimedAmount() {
         const digits = amountDisplayInput.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
@@ -187,7 +192,7 @@
     function handleDrop(e) {
         const dt = e.dataTransfer;
         const files = dt.files;
-        if (files.length > 0) {
+        if (files.length > 0 && validateSelectedFile(files[0])) {
             fileInput.files = files;
             updateDropzoneUI(files[0].name);
         }
@@ -195,8 +200,26 @@
 
     function handleFileSelect(input) {
         if (input.files && input.files.length > 0) {
-            updateDropzoneUI(input.files[0].name);
+            if (validateSelectedFile(input.files[0])) {
+                updateDropzoneUI(input.files[0].name);
+            } else {
+                input.value = '';
+            }
         }
+    }
+
+    function validateSelectedFile(file) {
+        if (!file) return false;
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        if (!['jpg', 'jpeg', 'png'].includes(extension)) {
+            showToast('Chỉ chấp nhận ảnh JPG hoặc PNG.', 'danger');
+            return false;
+        }
+        if (file.size > maxUploadBytes) {
+            showToast(`Ảnh vượt quá giới hạn ${maxUploadMegabytes} MB. Vui lòng nén ảnh hoặc chọn ảnh nhỏ hơn.`, 'danger');
+            return false;
+        }
+        return true;
     }
 
     function updateDropzoneUI(fileName) {
@@ -265,6 +288,35 @@
         return String(value == null ? '' : value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
 
+    async function readJsonResponse(response, context) {
+        const rawBody = await response.text();
+        let payload = null;
+
+        if (rawBody.trim()) {
+            try {
+                payload = JSON.parse(rawBody);
+            } catch {
+                if (!response.ok) {
+                    throw new Error(`${context} thất bại (HTTP ${response.status}); máy chủ trả về phản hồi không đúng định dạng.`);
+                }
+                throw new Error(`${context} nhận được phản hồi JSON không hợp lệ từ máy chủ.`);
+            }
+        }
+
+        if (!response.ok) {
+            if (response.status === 413) {
+                throw new Error(`Ảnh vượt quá giới hạn ${maxUploadMegabytes} MB.`);
+            }
+            throw new Error(payload?.error || `${context} thất bại (HTTP ${response.status}).`);
+        }
+
+        if (payload === null) {
+            throw new Error(`${context} không nhận được dữ liệu phản hồi từ máy chủ.`);
+        }
+
+        return payload;
+    }
+
     async function forwardToManager(caseId, button) {
         button.disabled = true;
         const originalText = button.innerText;
@@ -279,8 +331,7 @@
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 body: formData
             });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || ('HTTP ' + response.status));
+            const data = await readJsonResponse(response, 'Chuyển tiếp hồ sơ');
             showToast(data.message, 'success');
             window.setTimeout(() => window.location.assign(data.redirectUrl), 600);
         } catch (error) {
@@ -297,9 +348,10 @@
     // AJAX Upload Single File
     async function submitUpload() {
         if (!fileInput.files || fileInput.files.length === 0) {
-            alert("Vui lòng tải lên ảnh hóa đơn!");
+            showToast('Vui lòng tải lên ảnh hóa đơn.', 'danger');
             return;
         }
+        if (!validateSelectedFile(fileInput.files[0])) return;
         const rawAmount = syncClaimedAmount();
         if (!rawAmount || Number(rawAmount) <= 0) {
             showToast('Vui lòng nhập số tiền đề nghị hoàn ứng hợp lệ.', 'danger');
@@ -328,7 +380,7 @@
                 body: formData
             });
 
-            const data = await response.json();
+            const data = await readJsonResponse(response, 'Tải lên hóa đơn');
             
             if (data.error) {
                 document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Lỗi: ' + escapeHtml(data.error) + '</td></tr>';
@@ -369,11 +421,7 @@
                 body: formData
             });
 
-            if (!response.ok) {
-                throw new Error("Lỗi kết nối. HTTP " + response.status);
-            }
-
-            const data = await response.json();
+            const data = await readJsonResponse(response, 'Verify Harness');
             
             if (data.error) {
                 document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Lỗi: ' + escapeHtml(data.error) + '</td></tr>';

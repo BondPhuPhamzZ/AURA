@@ -52,7 +52,7 @@ Không đặt API key trong `appsettings*.json`, Git, ảnh chụp hoặc log. K
 
 ## Giới hạn công bố
 
-- Chỉ nhận một ảnh JPG/PNG tối đa 5 MB; chưa hỗ trợ PDF hoặc hóa đơn nhiều trang.
+- Chỉ nhận một ảnh JPG/PNG tối đa 5 MB; trình duyệt chặn file quá giới hạn trước khi gửi và server vẫn kiểm tra lại MIME, magic bytes và kích thước. Chưa hỗ trợ PDF hoặc hóa đơn nhiều trang.
 - Vision không thể xác nhận tính hợp pháp/chính hãng chỉ từ pixel; AURA chỉ ghi nhận identifier và dấu hiệu nhìn thấy.
 - Chưa tích hợp tra cứu mã số thuế/e-invoice bên ngoài, tỷ giá ngoại tệ hoặc antivirus.
 - Kết quả 5/5 trên fixture tổng hợp không chứng minh độ chính xác trên dữ liệu độc lập.

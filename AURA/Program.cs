@@ -27,7 +27,9 @@ builder.Services.AddOptions<ReceiptStorageOptions>()
     .ValidateOnStart();
 
 var maxUploadBytes = builder.Configuration.GetValue<int>("ReceiptStorage:MaxFileSizeMb", 5) * 1024L * 1024L;
-builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = maxUploadBytes);
+// Multipart contains the file plus antiforgery fields, boundaries and headers. Keep transport
+// headroom here; ApplicantController remains the authority for the actual file-size limit.
+builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = maxUploadBytes + 1024L * 1024L);
 
 // Cấu hình Database
 builder.Services.AddDbContext<AppDbContext>(options =>

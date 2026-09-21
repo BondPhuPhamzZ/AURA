@@ -76,6 +76,7 @@ dotnet ef database update --connection "<DEPLOYMENT_CONNECTION>"
 - POST Verify thiếu CSRF trả `400`; nút UI có token và chạy được.
 - `/BUSINESS_RULES.md` trả `404` vì policy không được public từ static root.
 - Upload giả MIME bị từ chối; JPG/PNG hợp lệ được lưu và mở lại qua route chứng từ.
+- Ảnh lớn hơn 5 MB bị chặn với thông báo dễ hiểu, không xuất hiện lỗi `Unexpected end of JSON input`. Giới hạn multipart có phần đệm cho antiforgery/boundary nhưng controller vẫn khóa riêng file ở 5 MB.
 - Verify đạt 5/5 trong dưới 90 giây.
 - Audit hiển thị input, action, timestamp, reason; chuyển tiếp/Đồng ý/Từ chối/undo hoạt động.
 - Ca `ESCALATE_*` xuất hiện ở cửa sổ nhân viên trước; bấm **Chuyển tiếp** rồi mới xuất hiện ở cửa sổ quản lý.

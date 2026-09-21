@@ -58,6 +58,7 @@ Ngày 20/09/2026, Gemini 3.6 Flash đạt 5/5; latency từng ca xấp xỉ 8,7s
 | P38 | Chứng từ CANCELLED/đã hủy | ESCALATE_FACT | A |
 | P39 | POS slip có MID/TID nhưng không có seller tax ID | MID/TID được trích xuất riêng; vẫn ESCALATE_FACT | policy/live |
 | P40 | Gemini trả `MAX_TOKENS` hoặc JSON lỗi | SYSTEM_ERROR, không dùng dữ kiện bị cắt | code |
+| P41 | Ảnh vượt 5 MB hoặc server trả body rỗng/non-JSON | Chặn trước upload hoặc hiển thị lỗi HTTP dễ hiểu; không ném lỗi parse JSON | client/server |
 
 ## Ma trận human-in-the-loop
 
