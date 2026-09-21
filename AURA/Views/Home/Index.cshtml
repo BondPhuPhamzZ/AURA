@@ -305,6 +305,28 @@
             (warnings.length ? '<div class="extracted-warning"><strong>Cần lưu ý:</strong> ' + escapeHtml(warnings.join('; ')) + '</div>' : '');
     }
 
+    function renderExtractedFactsLoading(message) {
+        const body = document.getElementById('extractedFactsBody');
+        const confidence = document.getElementById('extractedFactsConfidence');
+        confidence.className = 'badge bg-primary';
+        confidence.textContent = 'Đang xử lý';
+        body.className = 'extracted-facts-loading';
+        body.innerHTML =
+            '<div class="facts-loading-message"><span class="facts-loading-spinner" aria-hidden="true"></span>' + escapeHtml(message) + '</div>' +
+            '<div class="facts-loading-grid" aria-hidden="true">' +
+                '<span></span><span></span><span></span><span></span><span></span><span></span>' +
+            '</div>';
+    }
+
+    function renderExtractedFactsUnavailable(message) {
+        const body = document.getElementById('extractedFactsBody');
+        const confidence = document.getElementById('extractedFactsConfidence');
+        confidence.className = 'badge bg-warning text-dark';
+        confidence.textContent = 'Chưa có dữ liệu';
+        body.className = 'extracted-facts-empty extracted-facts-unavailable';
+        body.textContent = message;
+    }
+
     function getSkeletonRow() {
         return '<tr class="skeleton-row">' +
             '<td><div class="skeleton-text" style="width: 40px;"></div></td>' +
@@ -502,6 +524,7 @@
         
         btn.disabled = true;
         btnText.innerText = 'Đang xử lý...';
+        renderExtractedFactsLoading('AI đang đọc và đối chiếu nội dung hóa đơn…');
         
         // Keep the operator at the upload workspace; update only the dependent fragments.
         document.getElementById('resultsBody').innerHTML = getSkeletonRow();
@@ -518,7 +541,11 @@
             });
 
             const data = await readJsonResponse(response, 'Tải lên hóa đơn');
-            renderExtractedFacts(data.facts);
+            if (data.facts) {
+                renderExtractedFacts(data.facts);
+            } else {
+                renderExtractedFactsUnavailable('AI chưa trả về dữ liệu trích xuất cho ảnh này. Hồ sơ đã được chuyển sang trạng thái cần kiểm tra thủ công.');
+            }
             if (data.duplicateDetected && !data.duplicatePolicyEnabled) {
                 showToast('Ảnh này đã từng được dùng; hệ thống vẫn xử lý vì đang bật chế độ kiểm thử.', 'warning');
             }
@@ -532,6 +559,7 @@
             }
         } catch(e) {
             document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Có lỗi hệ thống: ' + escapeHtml(e.message) + '</td></tr>';
+            renderExtractedFactsUnavailable('Không nhận được nội dung từ AI: ' + e.message);
         } finally {
             btn.disabled = false;
             btnText.innerText = originalText;
@@ -547,6 +575,7 @@
         
         btn.disabled = true;
         btnText.innerText = 'Đang chạy 5 hóa đơn...';
+        renderExtractedFactsLoading('AI đang lần lượt xử lý 5 ca Verify Harness…');
         
         // Show 5 skeleton rows
         let skeletonHtml = '';
@@ -554,7 +583,6 @@
             skeletonHtml += getSkeletonRow();
         }
         document.getElementById('resultsBody').innerHTML = skeletonHtml;
-        scrollToResults();
         
         const dummyForm = document.getElementById('verifyFormDummy');
         const formData = new FormData(dummyForm);
@@ -577,11 +605,20 @@
                 html += renderResultRow(item);
             });
             document.getElementById('resultsBody').innerHTML = html;
-            renderExtractedFacts(data[0]?.facts || null);
+            const firstExtractedResult = data.find(item => item?.facts);
+            if (firstExtractedResult) {
+                renderExtractedFacts(firstExtractedResult.facts);
+            } else {
+                renderExtractedFactsUnavailable('Verify Harness đã hoàn tất nhưng AI không trả về dữ liệu trích xuất cho bất kỳ ca nào. Hãy kiểm tra thông báo lỗi, quota hoặc cấu hình model.');
+                showToast('Không có nội dung AI nào được trả về trong lượt Verify này.', 'warning');
+            }
             updateAnalysisSummary(data);
             await refreshWorkflowViews(false);
+            scrollToResults();
         } catch(e) {
             document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Có lỗi xảy ra: ' + escapeHtml(e.message) + '</td></tr>';
+            renderExtractedFactsUnavailable('Verify Harness không nhận được nội dung từ AI: ' + e.message);
+            scrollToResults();
         } finally {
             btn.disabled = false;
             btnText.innerText = originalText;
