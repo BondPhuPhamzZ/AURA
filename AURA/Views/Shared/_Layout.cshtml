@@ -70,13 +70,15 @@
             const url = new URL(window.location.href);
             if (tabId === 'applicant') url.searchParams.delete('tab');
             else url.searchParams.set('tab', tabId);
-            window.location.assign(url.pathname + url.search);
+            window.history.replaceState({ tab: tabId }, '', url.pathname + url.search);
+            switchTab(tabId);
         }
 
         function showToast(message, type) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            toast.className = 'aura-toast ' + (type === 'danger' ? 'danger' : 'success');
+            const toastType = type === 'danger' || type === 'warning' ? type : 'success';
+            toast.className = 'aura-toast ' + toastType;
             toast.setAttribute('role', type === 'danger' ? 'alert' : 'status');
             toast.textContent = message;
             container.appendChild(toast);

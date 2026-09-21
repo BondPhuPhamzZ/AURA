@@ -5,11 +5,11 @@ AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứn
 ## Trạng thái Sprint 1
 
 - Build sạch: 0 warning, 0 error.
-- 48 kiểm thử tự động: 46 test chính sách/workflow (gồm e-commerce/mã vận chuyển và phạm vi MST theo loại chứng từ) cùng 2 test toàn vẹn manifest/ảnh Test Kit.
+- 49 kiểm thử tự động: 47 test chính sách/workflow (gồm e-commerce/mã vận chuyển, phạm vi MST theo loại chứng từ và phép tính dòng hàng bất khả thi) cùng 2 test toàn vẹn manifest/ảnh Test Kit.
 - Verify Vision v2: 5 ảnh tổng hợp đa layout gồm 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`; đang chờ đúng một lượt benchmark sau deploy để bảo toàn quota. Kết quả 5/5 ngày 20/09/2026 thuộc fixture v1 và chỉ là lịch sử.
 - Route upload, Verify, audit, quản lý, CSRF và tra cứu chứng từ đã smoke-test local.
 - Giao diện upload ba cột hiển thị trực tiếp facts AI đã đọc. Kết quả cho biết số ca tự động duyệt/chuyển tiếp; ca tự duyệt vào lịch sử, ca chuyển tiếp được giữ trong bảng kết quả ngay cả sau reload.
-- Hàng đợi nhân viên, quản lý và audit cập nhật ngay sau thao tác bằng fragment AJAX, đồng thời polling nhẹ mỗi 15 giây để đồng bộ các tab đang mở.
+- Hàng đợi nhân viên, quản lý và audit cập nhật ngay sau thao tác bằng fragment AJAX, đồng thời polling nhẹ mỗi 10 giây để đồng bộ các tab đang mở.
 - Live URL: **chưa điền**. Mã nguồn đã có Linux container, health endpoint và cấu hình storage/migration cho cloud; việc tạo tài nguyên bằng tài khoản của nhóm vẫn là blocker cuối trước khi nộp Sprint 1.
 
 ## Demo 90 giây
@@ -18,6 +18,10 @@ AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứn
 2. Bấm **Chạy Verify Harness (90s)**. Một lần bấm chạy đủ 5 ca và hiển thị expected/actual, PASS/FAIL, câu hỏi, latency và timestamp.
 3. Tải một JPG/PNG mới, nhập số tiền đề nghị và bấm **AI tự động kiểm**.
 4. Với ca chuyển tiếp, nhân viên bấm **Chuyển tiếp** hoặc **Chuyển tiếp tất cả**; quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi và hệ thống hiển thị thông báo kết quả.
+
+Dashboard dùng `fetch` cho upload và mọi quyết định nên không tải lại toàn trang. Ảnh được xem trước ngay khi chọn; nội dung AI, bảng nhân viên, hàng đợi quản lý và lịch sử được cập nhật theo từng fragment. Các cửa sổ đang mở đồng bộ lại mỗi 10 giây.
+
+`DecisionPolicy:EscalateDuplicateReceipts` mặc định là `false` cho buổi demo để BGK có thể dùng lại cùng fixture. Hệ thống vẫn phát hiện và ghi `DuplicateDetected` vào audit. Khi vận hành thật, đặt giá trị này thành `true` để ảnh trùng byte trở thành `ESCALATE_FACT`.
 5. Mở **Lịch Sử Của Hệ Thống** để xem lần quét, lần chuyển tiếp, câu trả lời, kết quả, thời gian và hoàn tác quyết định quản lý.
 
 ## Kiến trúc quyết định

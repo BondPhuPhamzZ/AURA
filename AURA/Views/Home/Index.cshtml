@@ -17,7 +17,7 @@
             </p>
         </div>
         <div class="verify-action">
-            <button type="button" class="button-primary" style="display: flex; align-items: center; gap: 8px; font-weight: 600; padding: 12px 24px;" onclick="startVerifyHarness()">
+            <button type="button" id="verifyHarnessButton" class="button-primary verify-primary-button" onclick="startVerifyHarness()">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
                 <span id="btnVerifyText">Chạy Verify Harness (90s)</span>
             </button>
@@ -35,14 +35,34 @@
             @Html.AntiForgeryToken()
             
             <div class="upload-workspace">
-                <div class="dropzone-area" id="dropzone" onclick="document.getElementById('receiptFile').click()">
-                    <input type="file" id="receiptFile" name="receiptFile" accept=".jpg,.jpeg,.png" style="display: none;" onchange="handleFileSelect(this)">
-
-                    <div class="dropzone-icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <div class="upload-input-column">
+                    <div class="dropzone-area" id="dropzone" onclick="document.getElementById('receiptFile').click()">
+                        <input type="file" id="receiptFile" name="receiptFile" accept=".jpg,.jpeg,.png" style="display: none;" onchange="handleFileSelect(this)">
+                        <img id="receiptLocalPreview" class="receipt-local-preview" alt="Xem trước hóa đơn đã chọn" hidden />
+                        <div class="dropzone-placeholder" id="dropzonePlaceholder">
+                            <div class="dropzone-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            </div>
+                            <div class="dropzone-text" id="dropzoneText">Kéo thả ảnh hóa đơn vào đây</div>
+                            <div class="dropzone-subtext">Hỗ trợ JPG, PNG (Tối đa @ReceiptStorage.Value.MaxFileSizeMb MB)</div>
+                        </div>
                     </div>
-                    <div class="dropzone-text" id="dropzoneText">Kéo thả ảnh hóa đơn vào đây</div>
-                    <div class="dropzone-subtext" style="color: var(--colors-ink-subtle); margin-top: 8px; font-size: 0.875rem;">Hỗ trợ JPG, PNG (Tối đa @ReceiptStorage.Value.MaxFileSizeMb MB)</div>
+                    <div class="amount-action-row">
+                        <div class="amount-field">
+                            <label for="claimedAmountDisplay" class="form-label fw-semibold">Số tiền nhân viên đề nghị hoàn ứng (VND)</label>
+                            <input id="claimedAmountDisplay" type="text" inputmode="numeric" autocomplete="off" required
+                                   class="form-control amount-input-aura" placeholder="Ví dụ: 150.000" aria-describedby="claimedAmountHelp" />
+                            <input id="claimedAmount" name="claimedAmount" type="hidden" />
+                            <div id="claimedAmountHelp" class="form-text">
+                                Nhập số tiền thực tế nhân viên yêu cầu. Hệ thống tự thêm dấu chấm phân cách hàng nghìn.
+                            </div>
+                        </div>
+                        <div class="amount-submit-wrap">
+                            <button type="submit" id="submitBtn" class="button-primary">
+                                <span id="btnText">AI tự động kiểm</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <section class="extracted-facts-panel" aria-labelledby="extracted-facts-title" aria-live="polite">
@@ -54,23 +74,6 @@
                         Kết quả trích xuất sẽ xuất hiện tại đây sau khi AI xử lý ảnh. Giá trị không đọc chắc chắn được hiển thị là “Không đọc được”, không tự suy đoán.
                     </div>
                 </section>
-
-                <div class="amount-action-row">
-                    <div class="amount-field">
-                        <label for="claimedAmountDisplay" class="form-label fw-semibold">Số tiền nhân viên đề nghị hoàn ứng (VND)</label>
-                        <input id="claimedAmountDisplay" type="text" inputmode="numeric" autocomplete="off" required
-                               class="form-control amount-input-aura" placeholder="Ví dụ: 150.000" aria-describedby="claimedAmountHelp" />
-                        <input id="claimedAmount" name="claimedAmount" type="hidden" />
-                        <div id="claimedAmountHelp" class="form-text">
-                            Đây là số tiền nhân viên thực sự yêu cầu, được giữ độc lập để phát hiện khai báo hoặc nhận dạng sai. Hệ thống tự thêm dấu chấm phân cách hàng nghìn.
-                        </div>
-                    </div>
-                    <div class="amount-submit-wrap">
-                        <button type="button" id="submitBtn" class="button-primary" onclick="submitUpload()">
-                            <span id="btnText">AI tự động kiểm</span>
-                        </button>
-                    </div>
-                </div>
             </div>
         </form>
     </section>
@@ -159,11 +162,15 @@
     const fileInput = document.getElementById('receiptFile');
     const dropzoneText = document.getElementById('dropzoneText');
     const dropzoneSubtext = document.querySelector('.dropzone-subtext');
+    const receiptLocalPreview = document.getElementById('receiptLocalPreview');
+    const dropzonePlaceholder = document.getElementById('dropzonePlaceholder');
+    const uploadForm = document.getElementById('uploadForm');
     const amountDisplayInput = document.getElementById('claimedAmountDisplay');
     const amountRawInput = document.getElementById('claimedAmount');
     const maxUploadBytes = @((long)ReceiptStorage.Value.MaxFileSizeMb * 1024L * 1024L);
     const maxUploadMegabytes = @ReceiptStorage.Value.MaxFileSizeMb;
     let preserveVerifyResults = false;
+    let localPreviewUrl = null;
 
     function syncClaimedAmount() {
         const digits = amountDisplayInput.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
@@ -207,14 +214,14 @@
         const files = dt.files;
         if (files.length > 0 && validateSelectedFile(files[0])) {
             fileInput.files = files;
-            updateDropzoneUI(files[0].name);
+            updateDropzoneUI(files[0]);
         }
     }
 
     function handleFileSelect(input) {
         if (input.files && input.files.length > 0) {
             if (validateSelectedFile(input.files[0])) {
-                updateDropzoneUI(input.files[0].name);
+                updateDropzoneUI(input.files[0]);
             } else {
                 input.value = '';
             }
@@ -235,12 +242,22 @@
         return true;
     }
 
-    function updateDropzoneUI(fileName) {
-        dropzoneText.innerHTML = '<div style="color: var(--colors-primary); font-weight: 600;">' + fileName + '</div>';
+    function updateDropzoneUI(file) {
+        if (localPreviewUrl) URL.revokeObjectURL(localPreviewUrl);
+        localPreviewUrl = URL.createObjectURL(file);
+        receiptLocalPreview.src = localPreviewUrl;
+        receiptLocalPreview.hidden = false;
+        dropzonePlaceholder.classList.add('with-preview');
+        dropzone.classList.add('has-preview');
+        dropzoneText.textContent = file.name;
         dropzoneSubtext.innerText = 'Click hoặc kéo thả ảnh khác để thay đổi';
-        document.querySelector('.dropzone-icon').innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--colors-primary)" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>';
         renderExtractedFacts(null);
     }
+
+    uploadForm.addEventListener('submit', event => {
+        event.preventDefault();
+        submitUpload();
+    });
 
     function displayFact(value) {
         return value == null || String(value).trim() === '' ? 'Không đọc được' : String(value);
@@ -486,9 +503,8 @@
         btn.disabled = true;
         btnText.innerText = 'Đang xử lý...';
         
-        // Show 1 skeleton row
+        // Keep the operator at the upload workspace; update only the dependent fragments.
         document.getElementById('resultsBody').innerHTML = getSkeletonRow();
-        scrollToResults();
 
         const form = document.getElementById('uploadForm');
         const formData = new FormData(form);
@@ -497,11 +513,15 @@
         try {
             const response = await fetch(form.action, {
                 method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 body: formData
             });
 
             const data = await readJsonResponse(response, 'Tải lên hóa đơn');
             renderExtractedFacts(data.facts);
+            if (data.duplicateDetected && !data.duplicatePolicyEnabled) {
+                showToast('Ảnh này đã từng được dùng; hệ thống vẫn xử lý vì đang bật chế độ kiểm thử.', 'warning');
+            }
             
             if (data.error) {
                 document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Lỗi: ' + escapeHtml(data.error) + '</td></tr>';
@@ -521,7 +541,7 @@
     // Verify Harness logic (AJAX)
     async function startVerifyHarness() {
         preserveVerifyResults = true;
-        const btn = document.querySelector('.button-primary[onclick="startVerifyHarness()"]');
+        const btn = document.getElementById('verifyHarnessButton');
         const btnText = document.getElementById('btnVerifyText');
         const originalText = btnText.innerText;
         
@@ -590,5 +610,5 @@
     window.setInterval(() => {
         if (document.visibilityState !== 'visible') return;
         refreshWorkflowViews(!preserveVerifyResults).catch(() => { /* polling must not interrupt the operator */ });
-    }, 15000);
+    }, 10000);
 </script>
