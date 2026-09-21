@@ -5,8 +5,8 @@ AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứn
 ## Trạng thái Sprint 1
 
 - Build sạch: 0 warning, 0 error.
-- 44 kiểm thử chính sách và workflow tự động: đạt 44/44, gồm các nhánh e-commerce dùng mã đơn/mã vận chuyển mà không đánh đồng với MST.
-- Verify Vision: 5 ảnh tổng hợp, đạt 5/5 với Gemini 3.6 Flash ngày 20/09/2026; gồm 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`.
+- 46 kiểm thử tự động: 44 test chính sách/workflow (gồm e-commerce/mã vận chuyển) và 2 test toàn vẹn manifest/ảnh Test Kit.
+- Verify Vision v2: 5 ảnh tổng hợp đa layout gồm 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`; đang chờ đúng một lượt benchmark sau deploy để bảo toàn quota. Kết quả 5/5 ngày 20/09/2026 thuộc fixture v1 và chỉ là lịch sử.
 - Route upload, Verify, audit, quản lý, CSRF và tra cứu chứng từ đã smoke-test local.
 - Live URL: **chưa điền**. Đây là blocker cuối trước khi nộp Sprint 1.
 
@@ -47,7 +47,7 @@ Không đặt API key trong `appsettings*.json`, Git, ảnh chụp hoặc log. K
 
 ## Dữ liệu và quyền riêng tư
 
-- Năm ảnh trong `wwwroot/test_data/images` là dữ liệu tổng hợp, được tạo bởi `tools/generate_verify_receipts.py`; không phải hóa đơn của cá nhân thật.
+- Năm ảnh trong `wwwroot/test_data/images` là tập đại diện lấy từ Test Kit v2 gồm 30 ảnh tại `test_kit`; được tạo offline với seed cố định bởi `tools/generate_verify_receipts.py`, không phải hóa đơn cá nhân thật.
 - Ảnh người dùng tải lên được lưu ngoài `wwwroot` tại `App_Data/receipts`, với tên ngẫu nhiên, SHA-256 và metadata để tra cứu/audit.
 - Ảnh được gửi đến Gemini API để trích xuất. Sản phẩm **không** phải zero-cloud/on-premise.
 - Khi deploy dạng container, `ReceiptStorage__Directory` phải trỏ tới persistent volume; nếu không, file có thể mất khi container được tạo lại.

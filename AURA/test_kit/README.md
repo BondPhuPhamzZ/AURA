@@ -1,0 +1,33 @@
+# AURA Test Kit v2
+
+Test Kit v2 gồm 30 ảnh tổng hợp có seed cố định và ground truth trong `manifest.json`. Bộ này được tạo offline, không chứa dữ liệu cá nhân thật và không gọi Gemini.
+
+## Phạm vi
+
+- 8 ca thường quy dự kiến `AUTO_APPROVE`.
+- 11 ca thiếu/sai/không đáng tin cậy dự kiến `ESCALATE_FACT`.
+- 6 ca có hạng mục ngoài chính sách dự kiến `ESCALATE_POLICY`.
+- 5 ca vượt hạn mức dự kiến `ESCALATE_AUTHORITY`.
+- Nhiều layout: mobile e-commerce, giấy in nhiệt/POS, VAT, nhà hàng và ride-hailing.
+- Có tiếng Việt Unicode, góc xoay, nền camera, blur, crop, ngày cũ/tương lai/cuối tuần, amount mismatch, draft và returned/refunded.
+
+Năm ca `TK-01..TK-05` được sao chép thành fixture của Verify Harness tại `wwwroot/test_data/images`. 25 ca còn lại không tự động gọi API để bảo vệ quota.
+
+## Tái tạo
+
+```powershell
+<python-with-pillow> tools/generate_verify_receipts.py --as-of-date 2026-09-21
+```
+
+Phải dùng cùng `--as-of-date` và seed trong manifest để tái tạo byte/layout ổn định. Khi thay ngày, fixture và SHA-256 sẽ thay đổi; phải commit manifest cùng ảnh.
+
+## Quy tắc benchmark
+
+1. Unit test policy trước; không cần API.
+2. Chạy đúng một ảnh smoke test sau khi deploy.
+3. Nếu ổn và quota còn đủ, chạy một lượt Verify 5 ảnh.
+4. Chỉ chạy 30 ảnh khi có ngân sách benchmark riêng; ghi model, thời điểm, expected/actual, latency và lỗi.
+5. Không sửa expected để hợp thức hóa output của model.
+6. Kết quả trên dữ liệu tổng hợp không được công bố là accuracy trên hóa đơn thực tế.
+
+Ảnh bên ngoài dùng làm cảm hứng bố cục không được sao chép vào repository nếu có dữ liệu cá nhân, watermark hoặc chưa rõ quyền sử dụng.

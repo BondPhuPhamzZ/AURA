@@ -1,32 +1,32 @@
-﻿[
+[
   {
     "id": "TC-01",
     "expectedStatus": "AUTO_APPROVE",
-    "imageName": "HoaDon1.png",
-    "claimedAmount": 150000
+    "imageName": "HoaDon1.jpg",
+    "claimedAmount": 295199
   },
   {
     "id": "TC-02",
     "expectedStatus": "AUTO_APPROVE",
     "imageName": "HoaDon2.jpg",
-    "claimedAmount": 80000
+    "claimedAmount": 88000
   },
   {
     "id": "TC-03",
     "expectedStatus": "AUTO_APPROVE",
-    "imageName": "HoaDon3.png",
-    "claimedAmount": 350000
+    "imageName": "HoaDon3.jpg",
+    "claimedAmount": 420000
   },
   {
     "id": "TC-04",
     "expectedStatus": "ESCALATE_FACT",
     "imageName": "HoaDon4.jpg",
-    "claimedAmount": 200000
+    "claimedAmount": 210000
   },
   {
     "id": "TC-05",
     "expectedStatus": "ESCALATE_POLICY",
     "imageName": "HoaDon5.jpg",
-    "claimedAmount": 850000
+    "claimedAmount": 780000
   }
 ]

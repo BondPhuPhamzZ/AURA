@@ -1,0 +1,991 @@
+{
+  "version": "2.0",
+  "source": "synthetic-deterministic",
+  "seed": 260921,
+  "asOfDate": "2026-09-21",
+  "notes": [
+    "Không chứa dữ liệu cá nhân thật.",
+    "Review ground truth trước khi công bố accuracy.",
+    "Không tự động chạy toàn bộ 30 ca trên free-tier API."
+  ],
+  "cases": [
+    {
+      "id": "TK-01",
+      "file_name": "TK-01-ecommerce.jpg",
+      "expected_status": "AUTO_APPROVE",
+      "claimed_amount": 295199,
+      "template": "mobile",
+      "merchant": "Double Fish Việt Nam",
+      "total": 295199,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Vợt bóng bàn Double Fish 4A+",
+          292199
+        ],
+        [
+          "Bảo hiểm người tiêu dùng",
+          3000
+        ]
+      ],
+      "identifier": "SPX-VN2693231211394",
+      "tax_id": null,
+      "order_status": "Đơn hàng đã hoàn thành",
+      "issue": null,
+      "tags": [
+        "ecommerce",
+        "shipping-code",
+        "unicode"
+      ],
+      "expected_facts": {
+        "documentType": "ECOMMERCE",
+        "merchantName": "Double Fish Việt Nam",
+        "totalAmount": 295199,
+        "transactionDate": "2026-09-18",
+        "shippingTrackingCode": "SPX-VN2693231211394"
+      }
+    },
+    {
+      "id": "TK-02",
+      "file_name": "TK-02-thermal.jpg",
+      "expected_status": "AUTO_APPROVE",
+      "claimed_amount": 88000,
+      "template": "thermal",
+      "merchant": "Phở Hai Thiền",
+      "total": 88000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Phở bò tái",
+          75000
+        ],
+        [
+          "Trà đá",
+          13000
+        ]
+      ],
+      "identifier": "HD-260921-002",
+      "tax_id": "0319132712",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "thermal",
+        "restaurant",
+        "camera"
+      ],
+      "expected_facts": {
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "Phở Hai Thiền",
+        "totalAmount": 88000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "HD-260921-002"
+      }
+    },
+    {
+      "id": "TK-03",
+      "file_name": "TK-03-vat.jpg",
+      "expected_status": "AUTO_APPROVE",
+      "claimed_amount": 420000,
+      "template": "vat",
+      "merchant": "Công ty Văn phòng phẩm Minh Anh",
+      "total": 420000,
+      "transaction_date": "2026-09-16",
+      "items": [
+        [
+          "Giấy in A4",
+          300000
+        ],
+        [
+          "Bút bi xanh",
+          120000
+        ]
+      ],
+      "identifier": "AA/26E-000103",
+      "tax_id": "0314567890",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "vat",
+        "unicode"
+      ],
+      "expected_facts": {
+        "documentType": "VAT_INVOICE",
+        "merchantName": "Công ty Văn phòng phẩm Minh Anh",
+        "totalAmount": 420000,
+        "invoiceDate": "2026-09-16",
+        "invoiceNumber": "AA/26E-000103"
+      }
+    },
+    {
+      "id": "TK-04",
+      "file_name": "TK-04-missing-tax.jpg",
+      "expected_status": "ESCALATE_FACT",
+      "claimed_amount": 210000,
+      "template": "thermal",
+      "merchant": "Quán Hải Sản Ven Sông",
+      "total": 210000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Bữa ăn công tác",
+          210000
+        ]
+      ],
+      "identifier": "PT-104",
+      "tax_id": null,
+      "order_status": null,
+      "issue": "missing-tax-id",
+      "tags": [
+        "missing-field",
+        "thermal"
+      ],
+      "expected_facts": {
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "Quán Hải Sản Ven Sông",
+        "totalAmount": 210000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "PT-104"
+      }
+    },
+    {
+      "id": "TK-05",
+      "file_name": "TK-05-policy-beer.jpg",
+      "expected_status": "ESCALATE_POLICY",
+      "claimed_amount": 780000,
+      "template": "restaurant",
+      "merchant": "Nhà hàng Sài Gòn Xưa",
+      "total": 780000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Món ăn",
+          480000
+        ],
+        [
+          "Bia Tiger x 6",
+          300000
+        ]
+      ],
+      "identifier": "NH-260921-105",
+      "tax_id": "0319876543",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "policy",
+        "alcohol"
+      ],
+      "expected_facts": {
+        "documentType": "RESTAURANT_BILL",
+        "merchantName": "Nhà hàng Sài Gòn Xưa",
+        "totalAmount": 780000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "NH-260921-105"
+      }
+    },
+    {
+      "id": "TK-06",
+      "file_name": "TK-06-routine.jpg",
+      "expected_status": "AUTO_APPROVE",
+      "claimed_amount": 262000,
+      "template": "pos",
+      "merchant": "Đơn vị dịch vụ An Tâm 6",
+      "total": 262000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí công việc",
+          262000
+        ]
+      ],
+      "identifier": "RC-2609-006",
+      "tax_id": "0312345600",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "routine",
+        "pos"
+      ],
+      "expected_facts": {
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "Đơn vị dịch vụ An Tâm 6",
+        "totalAmount": 262000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "RC-2609-006"
+      }
+    },
+    {
+      "id": "TK-07",
+      "file_name": "TK-07-routine.jpg",
+      "expected_status": "AUTO_APPROVE",
+      "claimed_amount": 289000,
+      "template": "ride",
+      "merchant": "Đơn vị dịch vụ An Tâm 7",
+      "total": 289000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí công việc",
+          289000
+        ]
+      ],
+      "identifier": "RC-2609-007",
+      "tax_id": "0312345600",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "routine",
+        "ride"
+      ],
+      "expected_facts": {
+        "documentType": "RIDE_HAILING",
+        "merchantName": "Đơn vị dịch vụ An Tâm 7",
+        "totalAmount": 289000,
+        "transactionDate": "2026-09-18",
+        "bookingId": "RC-2609-007"
+      }
+    },
+    {
+      "id": "TK-08",
+      "file_name": "TK-08-routine.jpg",
+      "expected_status": "AUTO_APPROVE",
+      "claimed_amount": 316000,
+      "template": "vat",
+      "merchant": "Đơn vị dịch vụ An Tâm 8",
+      "total": 316000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí công việc",
+          316000
+        ]
+      ],
+      "identifier": "RC-2609-008",
+      "tax_id": "0312345600",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "routine",
+        "vat"
+      ],
+      "expected_facts": {
+        "documentType": "VAT_INVOICE",
+        "merchantName": "Đơn vị dịch vụ An Tâm 8",
+        "totalAmount": 316000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "RC-2609-008"
+      }
+    },
+    {
+      "id": "TK-09",
+      "file_name": "TK-09-routine.jpg",
+      "expected_status": "AUTO_APPROVE",
+      "claimed_amount": 343000,
+      "template": "restaurant",
+      "merchant": "Đơn vị dịch vụ An Tâm 9",
+      "total": 343000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí công việc",
+          343000
+        ]
+      ],
+      "identifier": "RC-2609-009",
+      "tax_id": "0312345600",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "routine",
+        "restaurant"
+      ],
+      "expected_facts": {
+        "documentType": "RESTAURANT_BILL",
+        "merchantName": "Đơn vị dịch vụ An Tâm 9",
+        "totalAmount": 343000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "RC-2609-009"
+      }
+    },
+    {
+      "id": "TK-10",
+      "file_name": "TK-10-routine.jpg",
+      "expected_status": "AUTO_APPROVE",
+      "claimed_amount": 370000,
+      "template": "mobile",
+      "merchant": "Đơn vị dịch vụ An Tâm 10",
+      "total": 370000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí công việc",
+          370000
+        ]
+      ],
+      "identifier": "RC-2609-010",
+      "tax_id": "0312345600",
+      "order_status": "Đã thanh toán",
+      "issue": null,
+      "tags": [
+        "routine",
+        "mobile"
+      ],
+      "expected_facts": {
+        "documentType": "ECOMMERCE",
+        "merchantName": "Đơn vị dịch vụ An Tâm 10",
+        "totalAmount": 370000,
+        "transactionDate": "2026-09-18",
+        "shippingTrackingCode": "RC-2609-010"
+      }
+    },
+    {
+      "id": "TK-11",
+      "file_name": "TK-11-missing-identifier.jpg",
+      "expected_status": "ESCALATE_FACT",
+      "claimed_amount": 323000,
+      "template": "vat",
+      "merchant": "Cửa hàng Kiểm Chứng 11",
+      "total": 323000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí cần xác minh",
+          323000
+        ]
+      ],
+      "identifier": null,
+      "tax_id": "0312345699",
+      "order_status": null,
+      "issue": "missing-identifier",
+      "tags": [
+        "fact",
+        "missing-identifier",
+        "vat"
+      ],
+      "expected_facts": {
+        "documentType": "VAT_INVOICE",
+        "merchantName": "Cửa hàng Kiểm Chứng 11",
+        "totalAmount": 323000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": null
+      }
+    },
+    {
+      "id": "TK-12",
+      "file_name": "TK-12-blurred-total.jpg",
+      "expected_status": "ESCALATE_FACT",
+      "claimed_amount": 336000,
+      "template": "thermal",
+      "merchant": "Cửa hàng Kiểm Chứng 12",
+      "total": 336000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí cần xác minh",
+          336000
+        ]
+      ],
+      "identifier": "FACT-2609-012",
+      "tax_id": "0312345699",
+      "order_status": null,
+      "issue": "blurred-total",
+      "tags": [
+        "fact",
+        "blurred-total",
+        "thermal"
+      ],
+      "expected_facts": {
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "Cửa hàng Kiểm Chứng 12",
+        "totalAmount": 336000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "FACT-2609-012"
+      }
+    },
+    {
+      "id": "TK-13",
+      "file_name": "TK-13-stale-date.jpg",
+      "expected_status": "ESCALATE_FACT",
+      "claimed_amount": 349000,
+      "template": "vat",
+      "merchant": "Cửa hàng Kiểm Chứng 13",
+      "total": 349000,
+      "transaction_date": "2026-05-24",
+      "items": [
+        [
+          "Chi phí cần xác minh",
+          349000
+        ]
+      ],
+      "identifier": "FACT-2609-013",
+      "tax_id": "0312345699",
+      "order_status": null,
+      "issue": "stale-date",
+      "tags": [
+        "fact",
+        "stale-date",
+        "vat"
+      ],
+      "expected_facts": {
+        "documentType": "VAT_INVOICE",
+        "merchantName": "Cửa hàng Kiểm Chứng 13",
+        "totalAmount": 349000,
+        "invoiceDate": "2026-05-24",
+        "invoiceNumber": "FACT-2609-013"
+      }
+    },
+    {
+      "id": "TK-14",
+      "file_name": "TK-14-weekend.jpg",
+      "expected_status": "ESCALATE_FACT",
+      "claimed_amount": 362000,
+      "template": "restaurant",
+      "merchant": "Cửa hàng Kiểm Chứng 14",
+      "total": 362000,
+      "transaction_date": "2026-09-19",
+      "items": [
+        [
+          "Chi phí cần xác minh",
+          362000
+        ]
+      ],
+      "identifier": "FACT-2609-014",
+      "tax_id": "0312345699",
+      "order_status": null,
+      "issue": "weekend",
+      "tags": [
+        "fact",
+        "weekend",
+        "restaurant"
+      ],
+      "expected_facts": {
+        "documentType": "RESTAURANT_BILL",
+        "merchantName": "Cửa hàng Kiểm Chứng 14",
+        "totalAmount": 362000,
+        "invoiceDate": "2026-09-19",
+        "invoiceNumber": "FACT-2609-014"
+      }
+    },
+    {
+      "id": "TK-15",
+      "file_name": "TK-15-amount-mismatch.jpg",
+      "expected_status": "ESCALATE_FACT",
+      "claimed_amount": 395000,
+      "template": "pos",
+      "merchant": "Cửa hàng Kiểm Chứng 15",
+      "total": 375000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí cần xác minh",
+          375000
+        ]
+      ],
+      "identifier": "FACT-2609-015",
+      "tax_id": "0312345699",
+      "order_status": null,
+      "issue": "amount-mismatch",
+      "tags": [
+        "fact",
+        "amount-mismatch",
+        "pos"
+      ],
+      "expected_facts": {
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "Cửa hàng Kiểm Chứng 15",
+        "totalAmount": 375000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "FACT-2609-015"
+      }
+    },
+    {
+      "id": "TK-16",
+      "file_name": "TK-16-draft.jpg",
+      "expected_status": "ESCALATE_FACT",
+      "claimed_amount": 388000,
+      "template": "vat",
+      "merchant": "Cửa hàng Kiểm Chứng 16",
+      "total": 388000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí cần xác minh",
+          388000
+        ]
+      ],
+      "identifier": "FACT-2609-016",
+      "tax_id": "0312345699",
+      "order_status": "Bản nháp - chưa phát hành",
+      "issue": "draft",
+      "tags": [
+        "fact",
+        "draft",
+        "vat"
+      ],
+      "expected_facts": {
+        "documentType": "VAT_INVOICE",
+        "merchantName": "Cửa hàng Kiểm Chứng 16",
+        "totalAmount": 388000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "FACT-2609-016"
+      }
+    },
+    {
+      "id": "TK-17",
+      "file_name": "TK-17-returned-order.jpg",
+      "expected_status": "ESCALATE_FACT",
+      "claimed_amount": 401000,
+      "template": "mobile",
+      "merchant": "Cửa hàng Kiểm Chứng 17",
+      "total": 401000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí cần xác minh",
+          401000
+        ]
+      ],
+      "identifier": "FACT-2609-017",
+      "tax_id": null,
+      "order_status": "Đã trả hàng/hoàn tiền",
+      "issue": "returned-order",
+      "tags": [
+        "fact",
+        "returned-order",
+        "mobile"
+      ],
+      "expected_facts": {
+        "documentType": "ECOMMERCE",
+        "merchantName": "Cửa hàng Kiểm Chứng 17",
+        "totalAmount": 401000,
+        "transactionDate": "2026-09-18",
+        "shippingTrackingCode": "FACT-2609-017"
+      }
+    },
+    {
+      "id": "TK-18",
+      "file_name": "TK-18-delivery-date-only.jpg",
+      "expected_status": "ESCALATE_FACT",
+      "claimed_amount": 414000,
+      "template": "mobile",
+      "merchant": "Cửa hàng Kiểm Chứng 18",
+      "total": 414000,
+      "transaction_date": "",
+      "items": [
+        [
+          "Chi phí cần xác minh",
+          414000
+        ]
+      ],
+      "identifier": "FACT-2609-018",
+      "tax_id": null,
+      "order_status": null,
+      "issue": "delivery-date-only",
+      "tags": [
+        "fact",
+        "delivery-date-only",
+        "mobile"
+      ],
+      "expected_facts": {
+        "documentType": "ECOMMERCE",
+        "merchantName": "Cửa hàng Kiểm Chứng 18",
+        "totalAmount": 414000,
+        "transactionDate": null,
+        "shippingTrackingCode": "FACT-2609-018"
+      }
+    },
+    {
+      "id": "TK-19",
+      "file_name": "TK-19-cropped.jpg",
+      "expected_status": "ESCALATE_FACT",
+      "claimed_amount": 427000,
+      "template": "thermal",
+      "merchant": "Cửa hàng Kiểm Chứng 19",
+      "total": 427000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí cần xác minh",
+          427000
+        ]
+      ],
+      "identifier": "FACT-2609-019",
+      "tax_id": "0312345699",
+      "order_status": null,
+      "issue": "cropped",
+      "tags": [
+        "fact",
+        "cropped",
+        "thermal"
+      ],
+      "expected_facts": {
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "Cửa hàng Kiểm Chứng 19",
+        "totalAmount": 427000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "FACT-2609-019"
+      }
+    },
+    {
+      "id": "TK-20",
+      "file_name": "TK-20-future-date.jpg",
+      "expected_status": "ESCALATE_FACT",
+      "claimed_amount": 440000,
+      "template": "ride",
+      "merchant": "Cửa hàng Kiểm Chứng 20",
+      "total": 440000,
+      "transaction_date": "2026-09-23",
+      "items": [
+        [
+          "Chi phí cần xác minh",
+          440000
+        ]
+      ],
+      "identifier": "FACT-2609-020",
+      "tax_id": "0312345699",
+      "order_status": null,
+      "issue": "future-date",
+      "tags": [
+        "fact",
+        "future-date",
+        "ride"
+      ],
+      "expected_facts": {
+        "documentType": "RIDE_HAILING",
+        "merchantName": "Cửa hàng Kiểm Chứng 20",
+        "totalAmount": 440000,
+        "transactionDate": "2026-09-23",
+        "bookingId": "FACT-2609-020"
+      }
+    },
+    {
+      "id": "TK-21",
+      "file_name": "TK-21-policy.jpg",
+      "expected_status": "ESCALATE_POLICY",
+      "claimed_amount": 400000,
+      "template": "restaurant",
+      "merchant": "Dịch vụ Cuối Tuần 21",
+      "total": 400000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí công việc",
+          300000
+        ],
+        [
+          "Thuốc lá",
+          100000
+        ]
+      ],
+      "identifier": "PL-2609-021",
+      "tax_id": "0314455667",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "policy",
+        "thuốc lá"
+      ],
+      "expected_facts": {
+        "documentType": "RESTAURANT_BILL",
+        "merchantName": "Dịch vụ Cuối Tuần 21",
+        "totalAmount": 400000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "PL-2609-021"
+      }
+    },
+    {
+      "id": "TK-22",
+      "file_name": "TK-22-policy.jpg",
+      "expected_status": "ESCALATE_POLICY",
+      "claimed_amount": 450000,
+      "template": "restaurant",
+      "merchant": "Dịch vụ Cuối Tuần 22",
+      "total": 450000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí công việc",
+          350000
+        ],
+        [
+          "Vé karaoke",
+          100000
+        ]
+      ],
+      "identifier": "PL-2609-022",
+      "tax_id": "0314455667",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "policy",
+        "vé karaoke"
+      ],
+      "expected_facts": {
+        "documentType": "RESTAURANT_BILL",
+        "merchantName": "Dịch vụ Cuối Tuần 22",
+        "totalAmount": 450000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "PL-2609-022"
+      }
+    },
+    {
+      "id": "TK-23",
+      "file_name": "TK-23-policy.jpg",
+      "expected_status": "ESCALATE_POLICY",
+      "claimed_amount": 500000,
+      "template": "restaurant",
+      "merchant": "Dịch vụ Cuối Tuần 23",
+      "total": 500000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí công việc",
+          400000
+        ],
+        [
+          "Vé xem phim",
+          100000
+        ]
+      ],
+      "identifier": "PL-2609-023",
+      "tax_id": "0314455667",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "policy",
+        "vé xem phim"
+      ],
+      "expected_facts": {
+        "documentType": "RESTAURANT_BILL",
+        "merchantName": "Dịch vụ Cuối Tuần 23",
+        "totalAmount": 500000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "PL-2609-023"
+      }
+    },
+    {
+      "id": "TK-24",
+      "file_name": "TK-24-policy.jpg",
+      "expected_status": "ESCALATE_POLICY",
+      "claimed_amount": 550000,
+      "template": "restaurant",
+      "merchant": "Dịch vụ Cuối Tuần 24",
+      "total": 550000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí công việc",
+          450000
+        ],
+        [
+          "Dịch vụ massage",
+          100000
+        ]
+      ],
+      "identifier": "PL-2609-024",
+      "tax_id": "0314455667",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "policy",
+        "dịch vụ massage"
+      ],
+      "expected_facts": {
+        "documentType": "RESTAURANT_BILL",
+        "merchantName": "Dịch vụ Cuối Tuần 24",
+        "totalAmount": 550000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "PL-2609-024"
+      }
+    },
+    {
+      "id": "TK-25",
+      "file_name": "TK-25-policy.jpg",
+      "expected_status": "ESCALATE_POLICY",
+      "claimed_amount": 600000,
+      "template": "restaurant",
+      "merchant": "Dịch vụ Cuối Tuần 25",
+      "total": 600000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Chi phí công việc",
+          500000
+        ],
+        [
+          "Đồ dùng cá nhân",
+          100000
+        ]
+      ],
+      "identifier": "PL-2609-025",
+      "tax_id": "0314455667",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "policy",
+        "đồ dùng cá nhân"
+      ],
+      "expected_facts": {
+        "documentType": "RESTAURANT_BILL",
+        "merchantName": "Dịch vụ Cuối Tuần 25",
+        "totalAmount": 600000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "PL-2609-025"
+      }
+    },
+    {
+      "id": "TK-26",
+      "file_name": "TK-26-authority.jpg",
+      "expected_status": "ESCALATE_AUTHORITY",
+      "claimed_amount": 1050000,
+      "template": "vat",
+      "merchant": "Công ty Thiết bị Dự án 26",
+      "total": 1050000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Thiết bị phục vụ dự án",
+          1050000
+        ]
+      ],
+      "identifier": "AUTH-2609-026",
+      "tax_id": "0317788990",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "authority",
+        "over-limit"
+      ],
+      "expected_facts": {
+        "documentType": "VAT_INVOICE",
+        "merchantName": "Công ty Thiết bị Dự án 26",
+        "totalAmount": 1050000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "AUTH-2609-026"
+      }
+    },
+    {
+      "id": "TK-27",
+      "file_name": "TK-27-authority.jpg",
+      "expected_status": "ESCALATE_AUTHORITY",
+      "claimed_amount": 1375000,
+      "template": "vat",
+      "merchant": "Công ty Thiết bị Dự án 27",
+      "total": 1375000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Thiết bị phục vụ dự án",
+          1375000
+        ]
+      ],
+      "identifier": "AUTH-2609-027",
+      "tax_id": "0317788990",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "authority",
+        "over-limit"
+      ],
+      "expected_facts": {
+        "documentType": "VAT_INVOICE",
+        "merchantName": "Công ty Thiết bị Dự án 27",
+        "totalAmount": 1375000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "AUTH-2609-027"
+      }
+    },
+    {
+      "id": "TK-28",
+      "file_name": "TK-28-authority.jpg",
+      "expected_status": "ESCALATE_AUTHORITY",
+      "claimed_amount": 1700000,
+      "template": "vat",
+      "merchant": "Công ty Thiết bị Dự án 28",
+      "total": 1700000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Thiết bị phục vụ dự án",
+          1700000
+        ]
+      ],
+      "identifier": "AUTH-2609-028",
+      "tax_id": "0317788990",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "authority",
+        "over-limit"
+      ],
+      "expected_facts": {
+        "documentType": "VAT_INVOICE",
+        "merchantName": "Công ty Thiết bị Dự án 28",
+        "totalAmount": 1700000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "AUTH-2609-028"
+      }
+    },
+    {
+      "id": "TK-29",
+      "file_name": "TK-29-authority.jpg",
+      "expected_status": "ESCALATE_AUTHORITY",
+      "claimed_amount": 2025000,
+      "template": "vat",
+      "merchant": "Công ty Thiết bị Dự án 29",
+      "total": 2025000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Thiết bị phục vụ dự án",
+          2025000
+        ]
+      ],
+      "identifier": "AUTH-2609-029",
+      "tax_id": "0317788990",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "authority",
+        "over-limit"
+      ],
+      "expected_facts": {
+        "documentType": "VAT_INVOICE",
+        "merchantName": "Công ty Thiết bị Dự án 29",
+        "totalAmount": 2025000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "AUTH-2609-029"
+      }
+    },
+    {
+      "id": "TK-30",
+      "file_name": "TK-30-authority.jpg",
+      "expected_status": "ESCALATE_AUTHORITY",
+      "claimed_amount": 2350000,
+      "template": "vat",
+      "merchant": "Công ty Thiết bị Dự án 30",
+      "total": 2350000,
+      "transaction_date": "2026-09-18",
+      "items": [
+        [
+          "Thiết bị phục vụ dự án",
+          2350000
+        ]
+      ],
+      "identifier": "AUTH-2609-030",
+      "tax_id": "0317788990",
+      "order_status": null,
+      "issue": null,
+      "tags": [
+        "authority",
+        "over-limit"
+      ],
+      "expected_facts": {
+        "documentType": "VAT_INVOICE",
+        "merchantName": "Công ty Thiết bị Dự án 30",
+        "totalAmount": 2350000,
+        "invoiceDate": "2026-09-18",
+        "invoiceNumber": "AUTH-2609-030"
+      }
+    }
+  ]
+}

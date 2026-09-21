@@ -16,26 +16,26 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 - Upload có claimed amount, kiểm extension + MIME + magic bytes + 5 MB, tên file ngẫu nhiên và private storage.
 - Hóa đơn, metadata, SHA-256, facts JSON, decision và audit được lưu để tra cứu.
 - Nhân viên chủ động chuyển một/toàn bộ ca `ESCALATE_*`; hàng đợi quản lý chỉ nhận hồ sơ đã chuyển và có Đồng ý/Từ chối/undo.
-- 44 policy/workflow tests đạt 44/44; build 0 warning/0 error.
-- Benchmark Gemini thật đạt 5/5 trong khoảng 32 giây tổng.
+- 46 automated tests đạt 46/46 (44 policy/workflow + 2 Test Kit integrity); build 0 warning/0 error.
+- Benchmark lịch sử fixture v1 đạt 5/5 trong khoảng 32 giây; fixture v2 đa layout đang chờ đúng một lượt benchmark live để bảo toàn quota.
 
 ## 2. Bằng chứng kiểm thử
 
 | Kiểm thử | Kết quả |
 |---|---|
 | `dotnet build --no-restore` | Đạt, 0 warning, 0 error |
-| `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` | Đạt 44/44 |
+| `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` | Đạt 46/46 |
 | EF migration `PersistReceiptEvidence` | Áp dụng thành công vào LocalDB |
 | `GET /`, `/Home/Index`, `/Home/Privacy` | 200 |
 | `GET /Applicant`, `/Verify` | 302 về trang chủ |
 | `GET /Applicant/Receipt/not-found` | 404 |
 | `GET /BUSINESS_RULES.md` | 404 |
 | `POST /Verify/RunHarness` thiếu antiforgery | 400 |
-| Verify có antiforgery + Gemini thật | 200, 5/5 PASS |
+| Verify có antiforgery + Gemini thật | Fixture v1: 200, 5/5 PASS; fixture v2: chưa chạy API |
 | File upload được lưu và tải lại qua receipt route | 200, MIME `image/png` |
 | Gemini transient failure | Đã quan sát HTTP 429/503; retry 3 lần + mã lỗi an toàn + safe fallback |
 
-Benchmark 20/09/2026:
+Benchmark lịch sử fixture v1 ngày 20/09/2026:
 
 | Case | Expected | Actual | Latency |
 |---|---|---|---:|
@@ -45,7 +45,7 @@ Benchmark 20/09/2026:
 | TC-04 | ESCALATE_FACT | ESCALATE_FACT | 5.697 ms |
 | TC-05 | ESCALATE_POLICY | ESCALATE_POLICY | 4.057 ms |
 
-Đây là fixture tổng hợp sạch. Kết quả không được diễn giải là accuracy 100% trên hóa đơn đời thực.
+Ảnh v1 đã được thay bằng Test Kit v2 đa layout. Bảng trên chỉ là bằng chứng lịch sử, không phải kết quả của v2 và không được diễn giải là accuracy 100% trên hóa đơn đời thực.
 
 ## 3. Nguyên nhân lỗi Verify Harness
 
@@ -80,7 +80,7 @@ Route/action hiện khớp view và JavaScript. Không còn action `Applicant.In
 | Câu hỏi chuyển tiếp cụ thể | Đạt | Nêu amount/item/vấn đề và CÓ/KHÔNG |
 | Không over-escalate | Đạt trên internal fixtures | 3 routine cases auto |
 | Không khẳng định input nghi vấn | Đạt | FACT precedence; system failure không auto |
-| Verify 3 auto + 2 escalate, một nút | Đạt local | 5/5 Gemini benchmark |
+| Verify 3 auto + 2 escalate, một nút | Code/fixture v2 đạt, chờ benchmark | Kết quả 5/5 hiện có chỉ thuộc fixture v1 |
 | Expected/actual/pass/timestamp/question | Đạt | JSON + bảng UI |
 | Input mới | Đạt local | Upload dùng cùng extraction/policy path |
 | Audit input/action/time/reason | Đạt cơ bản | DB AuditLogs + receipt/facts/decision metadata |
@@ -96,7 +96,7 @@ Route/action hiện khớp view và JavaScript. Không còn action `Applicant.In
 
 - Nhận ảnh và xuất text/JSON; Structured Output ép schema giúp giảm output sai định dạng.
 - Latency quan sát 4-9 giây/ảnh, đủ ngân sách 90 giây cho năm ca tuần tự.
-- 5/5 fixture cho thấy model đủ dùng cho demo được kiểm soát.
+- Kết quả 5/5 trên fixture v1 cho thấy model từng đủ dùng cho demo được kiểm soát; fixture v2 phải được xác minh lại đúng một lượt.
 - Free Tier phù hợp prototype nếu quota dự án còn đủ.
 
 ### Không thể xem là “đủ tuyệt đối”
@@ -182,7 +182,7 @@ Yêu cầu tra cứu đã được đáp ứng local bằng:
 
 1. Deploy với SQL Server và persistent storage; cấu hình secret không commit.
 2. Chạy migration và smoke-test live URL từ cửa sổ ẩn danh.
-3. Chạy Verify live ít nhất hai lần, ghi nhận 5/5 và thời gian dưới 90 giây.
+3. Chạy một ảnh smoke test rồi đúng một lượt Verify v2 trên live URL; ghi nhận expected/actual và thời gian dưới 90 giây, tránh tiêu hao quota bằng các lượt lặp không cần thiết.
 4. Điền Live URL vào README, slide, video và form nộp.
 5. Push toàn bộ commit lên public GitHub, xác minh không có secret.
 6. Hoàn thiện đúng 5 slide và video tối đa 3 phút.

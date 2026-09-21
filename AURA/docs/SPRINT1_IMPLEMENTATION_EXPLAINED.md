@@ -16,7 +16,7 @@ AURA hiện là một **vertical slice chạy thật** cho Track A — The Escal
 6. Quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi cụ thể và có thể hoàn tác.
 7. Mọi bước quan trọng được ghi vào audit trail; ảnh gốc có thể mở lại.
 
-Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 44 policy/workflow test đạt, Verify Vision 5/5 trên fixture tổng hợp và các route chính đã smoke-test. Tuy vậy, Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
+Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 46 automated test đạt (44 policy/workflow + 2 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5, còn fixture v2 đa layout đang chờ một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
 
 Đánh giá công tâm:
 
@@ -296,19 +296,19 @@ Lưu auto-increment ID, request ID, action, details và UTC timestamp. Repositor
 
 Nút Verify gọi `POST /Verify/RunHarness` kèm antiforgery token. Server yêu cầu manifest có **đúng 5 ca**, kiểm path từng image, chạy cùng `IVisionExtractor` và policy engine như upload thật, lưu request/audit rồi trả expected/actual/pass/reason/question/latency/timestamp.
 
-Năm fixture:
+Năm fixture Verify v2 được chọn từ Test Kit 30 ca:
 
 | Case | Nội dung | Claimed | Kỳ vọng |
 |---|---|---:|---|
-| TC-01 | Grab e-receipt đủ ID | 150.000 | AUTO_APPROVE |
-| TC-02 | Phở + nước, đủ MST | 80.000 | AUTO_APPROVE |
-| TC-03 | Văn phòng phẩm, đủ MST | 350.000 | AUTO_APPROVE |
-| TC-04 | Phiếu ghi thiếu MST | 200.000 | ESCALATE_FACT |
-| TC-05 | Nhà hàng có Tiger Beer | 850.000 | ESCALATE_POLICY |
+| TC-01 | Mobile e-commerce có mã SPX, trạng thái và ngày thanh toán | 295.199 | AUTO_APPROVE |
+| TC-02 | Phiếu in nhiệt tiếng Việt có dấu | 88.000 | AUTO_APPROVE |
+| TC-03 | VAT văn phòng phẩm layout ngang | 420.000 | AUTO_APPROVE |
+| TC-04 | Phiếu in nhiệt để trống MST | 210.000 | ESCALATE_FACT |
+| TC-05 | Nhà hàng có Bia Tiger x 6 | 780.000 | ESCALATE_POLICY |
 
 Comparator chỉ PASS khi status đúng; expected `ESCALATE` tổng quát mới khớp mọi `ESCALATE_*`. `ESCALATE_SYSTEM_ERROR` không được hợp thức hóa thành PASS.
 
-Benchmark thật ngày 20/09/2026 với Gemini 3.6 Flash đạt 5/5, tổng khoảng 31,5 giây. Đây là sanity check nội bộ, không phải benchmark độc lập.
+Benchmark ngày 20/09/2026 với Gemini 3.6 Flash đạt 5/5 trên fixture v1. Fixture v2 được sinh offline ngày 21/09/2026 và cố ý chưa gọi API để giữ quota; kết quả v1 không được gán cho v2. Trước video cần chạy đúng một lượt v2 trên live URL và lưu expected/actual/latency.
 
 ## 13. Giao diện
 
@@ -328,7 +328,7 @@ Hai ViewComponent bắt lỗi DB và hiển thị thông báo thay vì làm hỏ
 
 ### 14.1 Automated policy tests
 
-44 xUnit cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, tax ID, currency, date, future/stale/weekend, late time, blur, duplicate, chứng từ nháp/hủy, e-commerce/mã vận chuyển, bốn nhóm item cấm, authority, precedence, tám nhánh quyết định và ranh giới vai trò nhân viên/quản lý.
+44 xUnit policy/workflow cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, tax ID, currency, date, future/stale/weekend, late time, blur, duplicate, chứng từ nháp/hủy, e-commerce/mã vận chuyển, bốn nhóm item cấm, authority, precedence, tám nhánh quyết định và ranh giới vai trò nhân viên/quản lý. Hai test bổ sung khóa đúng 5 fixture Verify, phân bố 3 auto + 2 escalate, 30 case benchmark, file tồn tại/duy nhất và không vượt 5 MB.
 
 ### 14.2 Smoke tests đã thực hiện
 
@@ -360,7 +360,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Mục tiêu: build sạch và 44/44 test policy/workflow.
+Mục tiêu: build sạch và 46/46 automated test.
 
 ### Tầng B — fixture chuẩn hóa
 
@@ -417,7 +417,7 @@ Mỗi case lưu: ID, nguồn/license/consent, ground truth fields, claimed amoun
 | ≥15 tình huống | Đạt | 39 automated, matrix 40 |
 | FACT/POLICY/AUTHORITY | Đạt | Có precedence tất định |
 | Câu hỏi chuyển tiếp cụ thể | Đạt | Tiếng Việt, dữ kiện cụ thể, CÓ/KHÔNG |
-| 3 ca tự xử lý + 2 chuyển tiếp một nút | Đạt local | Live benchmark 5/5 |
+| 3 ca tự xử lý + 2 chuyển tiếp một nút | Code/fixture v2 đạt | Chờ live benchmark một lượt |
 | Input mới | Đạt local | Cùng extraction/policy path |
 | Audit trail, timestamp, latency | Đạt local | Có DB audit và UI |
 | Stop/override/undo | Đạt local | Chuyển từng/toàn bộ; quản lý Đồng ý/Từ chối/undo |

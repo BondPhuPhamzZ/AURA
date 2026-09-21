@@ -20,3 +20,11 @@ Tỷ lệ hóa đơn hoàn toàn hợp lệ nhưng bị hệ thống ném vào h
 - Tỷ lệ người dùng chấp nhận output mà không kiểm tra (automation bias).
 - Chi phí thời gian sửa dữ liệu OCR sai và xử lý lỗi quota/API.
 - Khảo sát 3 người dùng thực tế trước/sau, ghi chức danh và phản hồi nguyên văn khi có đồng thuận.
+
+## 6. Ngân sách benchmark và quota
+
+- Test Kit v2 có 30 ca nhưng Verify demo chỉ gọi 5 ca đại diện.
+- Build và 46 automated test (policy/workflow + Test Kit integrity) không gọi Gemini.
+- Sau deploy: 1 request smoke test; nếu pass mới chạy 1 lượt Verify = 5 request. Giữ tối thiểu 10 request dự phòng cho BGK/video.
+- Không retry thủ công liên tục khi 429. Ghi lỗi và chờ đúng cửa sổ reset trong AI Studio.
+- Benchmark 30 ca chỉ chạy trong một phiên đo riêng khi đã xác nhận quota/billing; không dùng trong luồng demo.

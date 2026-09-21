@@ -34,10 +34,12 @@ Mở URL được in trong terminal. Không truy cập `/Verify` để tìm tran
 1. Bấm **Chạy Verify Harness (90s)** một lần.
 2. Chờ năm request Gemini chạy tuần tự.
 3. Xác nhận đúng 5 dòng, có timestamp và latency.
-4. Kỳ vọng: TC-01..03 `AUTO_APPROVE`, TC-04 `ESCALATE_FACT`, TC-05 `ESCALATE_POLICY`.
+4. Kỳ vọng fixture v2: TC-01..03 `AUTO_APPROVE`, TC-04 `ESCALATE_FACT`, TC-05 `ESCALATE_POLICY`.
 5. Nếu `429/5xx`, chờ retry. Nếu vẫn lỗi, kết quả phải là `ESCALATE_SYSTEM_ERROR`, tuyệt đối không PASS giả.
 
-Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_receipts.py`. Không thay fixture sau khi chốt bài mà không cập nhật manifest và commit.
+Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_receipts.py --as-of-date 2026-09-21`. Script đồng thời sinh Test Kit v2 gồm 30 ca nhưng chỉ 5 ca đại diện được Verify gọi. Không đổi `as-of-date`, fixture hoặc expected sau khi chốt mà không cập nhật manifest, tài liệu và commit.
+
+Để bảo toàn quota: build + 46 automated test trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 30 ảnh trên free tier.
 
 ### Khi Gemini trả HTTP 429
 

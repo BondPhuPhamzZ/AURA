@@ -6,13 +6,13 @@ Mốc cập nhật: 21/09/2026. Ký hiệu: `A` đã tự động hóa bằng xU
 
 | ID | Fixture tổng hợp | Claimed | Kỳ vọng | Phủ |
 |---|---|---:|---|---|
-| TC-01 | Grab e-receipt, đủ Trip ID/MST, weekday | 150.000 | AUTO_APPROVE | V |
-| TC-02 | Phở + nước, đủ MST, weekday | 80.000 | AUTO_APPROVE | V |
-| TC-03 | Văn phòng phẩm, đủ MST, weekday | 350.000 | AUTO_APPROVE | V |
-| TC-04 | Phiếu viết tay ghi không có MST | 200.000 | ESCALATE_FACT | V |
-| TC-05 | Nhà hàng có Tiger Beer | 850.000 | ESCALATE_POLICY | V |
+| TC-01 | Mobile e-commerce hoàn tất, có mã SPX và ngày thanh toán | 295.199 | AUTO_APPROVE | V2, chờ benchmark |
+| TC-02 | Phiếu in nhiệt tiếng Việt có dấu, đủ MST/biên nhận | 88.000 | AUTO_APPROVE | V2, chờ benchmark |
+| TC-03 | Hóa đơn VAT văn phòng phẩm, layout ngang | 420.000 | AUTO_APPROVE | V2, chờ benchmark |
+| TC-04 | Phiếu in nhiệt để trống MST thật sự | 210.000 | ESCALATE_FACT | V2, chờ benchmark |
+| TC-05 | Nhà hàng có Bia Tiger x 6 | 780.000 | ESCALATE_POLICY | V2, chờ benchmark |
 
-Ngày 20/09/2026, Gemini 3.6 Flash đạt 5/5; latency từng ca xấp xỉ 8,7s, 9,1s, 3,9s, 5,7s và 4,1s. Đây là benchmark fixture nội bộ, không phải accuracy độc lập.
+Ngày 20/09/2026, Gemini 3.6 Flash đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026 và chưa gọi API để bảo toàn quota; phải benchmark đúng một lượt sau deploy trước khi quay video. Kết quả cũ không được gán cho ảnh v2.
 
 ## Ma trận policy mở rộng
 
