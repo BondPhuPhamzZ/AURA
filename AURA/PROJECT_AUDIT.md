@@ -16,7 +16,7 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 - Upload có claimed amount, kiểm extension + MIME + magic bytes + 5 MB, tên file ngẫu nhiên và private storage.
 - Hóa đơn, metadata, SHA-256, facts JSON, decision và audit được lưu để tra cứu.
 - Nhân viên chủ động chuyển một/toàn bộ ca `ESCALATE_*`; hàng đợi quản lý chỉ nhận hồ sơ đã chuyển và có Đồng ý/Từ chối/undo.
-- 50 automated tests đạt 50/50 (47 policy/workflow + 1 OpenRouter contract + 2 Test Kit integrity); build 0 warning/0 error.
+- 51 automated tests đạt 51/51 (47 policy/workflow + 2 OpenRouter contract + 2 Test Kit integrity); build 0 warning/0 error.
 - Benchmark lịch sử fixture v1 đạt 5/5 trong khoảng 32 giây; fixture v2 đa layout đang chờ đúng một lượt benchmark live để bảo toàn quota.
 
 ## 2. Bằng chứng kiểm thử
@@ -31,9 +31,9 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 | `GET /Applicant/Receipt/not-found` | 404 |
 | `GET /BUSINESS_RULES.md` | 404 |
 | `POST /Verify/RunHarness` thiếu antiforgery | 400 |
-| Verify có antiforgery + Gemini thật | Fixture v1: 200, 5/5 PASS; fixture v2: chưa chạy API |
+| Verify có antiforgery + Vision API thật | Fixture v1/provider cũ: 200, 5/5 PASS; Qwen + fixture v2: chưa benchmark live |
 | File upload được lưu và tải lại qua receipt route | 200, MIME `image/png` |
-| Gemini transient failure | Đã quan sát HTTP 429/503; retry 3 lần + mã lỗi an toàn + safe fallback |
+| OpenRouter/Qwen transient failure | Không retry 429; retry tối đa một lần với 5xx + mã lỗi an toàn + safe fallback |
 
 Benchmark lịch sử fixture v1 ngày 20/09/2026:
 
@@ -59,7 +59,7 @@ Benchmark lịch sử fixture v1 ngày 20/09/2026:
 |---|---|---|---|
 | GET | `/` hoặc `/Home/Index` | Dashboard và thao tác chính | Public Sprint 1 |
 | GET | `/Applicant` | Redirect về dashboard | Không có view bị thiếu |
-| POST | `/Applicant/UploadReceipt` | Upload + Gemini + quyết định + lưu | Antiforgery, size/MIME/signature |
+| POST | `/Applicant/UploadReceipt` | Upload + Qwen/OpenRouter + quyết định + lưu | Antiforgery, size/MIME/signature |
 | GET | `/Applicant/Receipt/{id}` | Tra cứu chứng từ đã lưu | No-store; production cần authorization |
 | GET | `/Verify` | Redirect về dashboard | Tránh route tài liệu sai |
 | POST | `/Verify/RunHarness` | Chạy 5 ca tuần tự | Antiforgery |
@@ -97,16 +97,16 @@ Route/action hiện khớp view và JavaScript. Không còn action `Applicant.In
 - Nhận ảnh và xuất text/JSON; Structured Output ép schema giúp giảm output sai định dạng.
 - Latency quan sát 4-9 giây/ảnh, đủ ngân sách 90 giây cho năm ca tuần tự.
 - Kết quả 5/5 trên fixture v1 cho thấy model từng đủ dùng cho demo được kiểm soát; fixture v2 phải được xác minh lại đúng một lượt.
-- Free Tier phù hợp prototype nếu quota dự án còn đủ.
+- Qwen3.8 Flash trả phí phù hợp demo vì hỗ trợ ảnh và JSON Schema; vẫn phải kiểm soát credit/key limit.
 
 ### Không thể xem là “đủ tuyệt đối”
 
 - Hóa đơn mờ, viết tay, đa trang, nhiều loại tiền, locale số/ngày, ảnh chụp nghiêng và chỉnh sửa tinh vi chưa benchmark độc lập.
 - Vision không xác minh tính hợp pháp của MST/chữ ký số chỉ từ pixel.
-- Free Tier có thể rate-limit; đã quan sát HTTP 429 và 503 trong kiểm thử thật.
+- OpenRouter/provider vẫn có thể rate-limit hoặc lỗi tạm thời; ứng dụng fail-safe sang kiểm tra thủ công.
 - Ảnh gửi tới dịch vụ cloud; phải công bố và không dùng dữ liệu cá nhân thật khi chưa có đồng thuận.
 
-Kết luận hiện tại: AURA dùng **Qwen vision qua OpenRouter** để tránh phụ thuộc quota Gemini. `IVisionExtractor` giữ policy engine độc lập; model được đổi qua `OpenRouter:Model`. Free route phù hợp demo nhưng không có SLA, vì vậy cần kiểm tra availability trước khi quay video.
+Kết luận hiện tại: AURA dùng **Qwen3.8 Flash trả phí qua OpenRouter/Alibaba Cloud**. `IVisionExtractor` giữ policy engine độc lập; model được đổi qua `OpenRouter:Model`. Cần kiểm tra credit, key limit, Activity và availability trước khi quay video.
 
 ## 7. Đánh giá BUSINESS_RULES.md
 
@@ -117,7 +117,7 @@ Kết luận hiện tại: AURA dùng **Qwen vision qua OpenRouter** để trán
 - Phân biệt seller/buyer tax ID, invoice number, order/booking ID và shipping tracking code; tracking chỉ là bằng chứng logistics.
 - Chuẩn hóa ngày, giờ, currency, tổng tiền và line items.
 - Nêu giới hạn pháp lý: identifier nhìn thấy không đồng nghĩa invoice thật/hợp pháp.
-- Schema bắt buộc được định nghĩa trong code bằng `responseJsonSchema`.
+- Schema bắt buộc được định nghĩa trong code và gửi qua OpenRouter `response_format=json_schema` với `strict=true`.
 - Precedence nhiều lỗi là FACT -> POLICY -> AUTHORITY.
 - Policy version/date và checklist output đã có.
 
@@ -163,7 +163,7 @@ Không thể đạt “minh bạch tuyệt đối” chỉ bằng prompt. Tính 
 - Receipt file + DB không transactional; DB save lỗi có thể để orphan file.
 - Audit event chưa append-only/immutable bằng database permission hoặc hash chain.
 - Chưa có optimistic concurrency khi hai quản lý thao tác đồng thời.
-- Đã có health endpoint `/healthz`; chưa có telemetry/correlation ID và health check này chưa thăm dò database/Gemini.
+- Đã có health endpoint `/healthz`; chưa có telemetry/correlation ID và health check này chưa thăm dò database/OpenRouter.
 - Test hiện khóa policy; chưa có automated integration tests cho controller/DB/file/HTTP client.
 
 ## 9. Lưu trữ hóa đơn
@@ -194,7 +194,7 @@ Yêu cầu tra cứu đã được đáp ứng local bằng:
 
 - Authentication/roles; secure receipt access.
 - Blob storage, retention, encryption và deletion workflow.
-- Integration tests với fake Gemini handler + temporary database/storage.
+- Integration tests với fake OpenRouter handler + temporary database/storage.
 - Policy/model/prompt hash trong audit; immutable event design.
 - PDF/multi-image, foreign currency, tax lookup, arithmetic reconciliation.
 - Benchmark ít nhất 30-100 ảnh độc lập và confusion matrix missed/over-escalation.

@@ -16,7 +16,7 @@ Hình minh họa: một luồng ngắn `Hóa đơn → Trích xuất → Policy 
 
 - Input: JPG/PNG tối đa 5 MB + số tiền nhân viên đề nghị.
 - Kiểm đầu vào: extension, MIME, magic bytes, kích thước và SHA-256 phát hiện trùng.
-- Gemini Structured Output trả dữ kiện; không trả quyền quyết định cuối.
+- Qwen3.8 Flash qua OpenRouter trả dữ kiện theo JSON Schema; không trả quyền quyết định cuối.
 - Policy ưu tiên `FACT → POLICY → AUTHORITY`.
 - Output: `AUTO_APPROVE` hoặc câu hỏi chuyển tiếp cụ thể; nhân viên chuyển hồ sơ, quản lý chọn đồng ý/từ chối duyệt; mọi bước vào audit và có hoàn tác.
 
@@ -25,7 +25,7 @@ Nhấn mạnh e-commerce: mã vận chuyển là bằng chứng truy vết logis
 ## Slide 3 — Demo và phương pháp đo
 
 - Verify một nút: 5 ảnh đại diện, kỳ vọng 3 tự duyệt + 2 chuyển tiếp.
-- Test offline: 50/50 automated tests; Test Kit v2 có 30 ảnh tổng hợp đa layout.
+- Test offline: 51/51 automated tests; Test Kit v2 có 30 ảnh tổng hợp đa layout.
 - Chỉ số hiển thị: expected/actual, PASS/FAIL, latency và timestamp.
 - Kết quả lịch sử fixture v1: 5/5, khoảng 32 giây ngày 20/09/2026.
 - Kết quả fixture v2 trên Live URL: **[ĐIỀN SAU KHI CHẠY: __/5, __ giây, thời điểm __]**.
@@ -40,7 +40,7 @@ Không gọi 5/5 fixture tổng hợp là “độ chính xác thực tế”. A
 - Linux container, `/healthz`, migration opt-in và persistent storage path cấu hình bằng environment.
 - Live URL: **[ĐIỀN HTTPS URL]**; repository: `https://github.com/BondPhuPhamzZ/AURA`.
 
-Phần giả lập chỉ là 30 ảnh Test Kit tổng hợp. Không có quyết định hoặc PASS giả khi Gemini lỗi/quota.
+Phần giả lập chỉ là 30 ảnh Test Kit tổng hợp. Không có quyết định hoặc PASS giả khi OpenRouter/Qwen lỗi, thiếu credit hoặc rate-limit.
 
 ## Slide 5 — Giới hạn, an toàn và bước tiếp theo
 
@@ -70,7 +70,7 @@ Mở lịch sử, lọc ngày hiện tại, mở chi tiết, cho thấy AI proce
 
 ### 02:10–02:35 — Kiến trúc và tính minh bạch
 
-Hiển thị slide 4: Gemini chỉ extraction, policy C# quyết định; ảnh, metadata và audit được lưu. Nêu rõ Test Kit là tổng hợp và Live URL/model là thật.
+Hiển thị slide 4: Qwen chỉ extraction, policy C# quyết định; ảnh, metadata và audit được lưu. Nêu rõ Test Kit là tổng hợp và Live URL/model là thật.
 
 ### 02:35–02:45 — Kết
 
@@ -82,5 +82,5 @@ Hiển thị slide 5, nêu một giới hạn quan trọng và bước Sprint 2.
 - Mở sẵn ba tab: nhân viên, quản lý, lịch sử; đóng dashboard API/billing.
 - Chuẩn bị một ảnh smoke và số tiền chính xác; tên file không chứa dữ liệu cá nhân.
 - Bật quay ở 1080p, zoom trình duyệt dễ đọc, tắt thông báo hệ điều hành.
-- Xác nhận còn tối thiểu 10 request Gemini; không chạy 30 ca Test Kit.
+- Xác nhận OpenRouter còn credit, key chưa chạm giới hạn và Activity không có lỗi; không chạy 30 ca Test Kit.
 - Nếu web service có cold start, mở URL và `/healthz` trước khi bắt đầu quay.

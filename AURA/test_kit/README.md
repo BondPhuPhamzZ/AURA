@@ -1,6 +1,6 @@
 # AURA Test Kit v2
 
-Test Kit v2 gồm 30 ảnh tổng hợp có seed cố định và ground truth trong `manifest.json`. Bộ này được tạo offline, không chứa dữ liệu cá nhân thật và không gọi Gemini.
+Test Kit v2 gồm 30 ảnh tổng hợp có seed cố định và ground truth trong `manifest.json`. Bộ này được tạo offline, không chứa dữ liệu cá nhân thật và không gọi OpenRouter/Qwen.
 
 ## Phạm vi
 

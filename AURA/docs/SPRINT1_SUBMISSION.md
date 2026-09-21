@@ -7,7 +7,7 @@ Ngày cập nhật: 21/09/2026. Chuẩn đối chiếu: Track A trong `Challenge
 | Yêu cầu | Trạng thái | Bằng chứng |
 |---|---|---|
 | Quy trình và policy rõ | Đạt cơ bản | `BUSINESS_RULES.md`, policy engine tất định |
-| Tối thiểu 15 tình huống | Đạt | 50 automated tests và Test Kit v2 gồm 30 ảnh/ground truth |
+| Tối thiểu 15 tình huống | Đạt | 51 automated tests và Test Kit v2 gồm 30 ảnh/ground truth |
 | Ba nhóm FACT/POLICY/AUTHORITY | Đạt | status và precedence trong `PolicyDecisionEngine` |
 | Câu hỏi chuyển tiếp cụ thể | Đạt | câu hỏi tiếng Việt có dữ kiện và lựa chọn CÓ/KHÔNG |
 | Không over-escalate | Đạt trên fixture nội bộ | 3/3 routine cases auto-approve |
@@ -29,7 +29,7 @@ Ngày cập nhật: 21/09/2026. Chuẩn đối chiếu: Track A trong `Challenge
 
 ## Blocker trước khi bấm nộp
 
-- Mã nguồn đã sẵn sàng Linux container; nhóm phải tạo Azure App Service/Azure SQL và bật `/home` persistent storage theo `docs/DEPLOYMENT.md`, sau đó cấu hình secret Gemini.
+- Mã nguồn đã sẵn sàng Linux container; nhóm phải tạo Azure App Service/Azure SQL và bật `/home` persistent storage theo `docs/DEPLOYMENT.md`, sau đó cấu hình secret OpenRouter của tài khoản đã nạp credit.
 - Chạy migration trên database deploy.
 - Xác minh fixture v2 đạt 5/5 trên live URL dưới 90 giây bằng đúng một lượt chạy và không chạm rate limit.
 - Điền live URL vào README, slide, video description và form nộp.

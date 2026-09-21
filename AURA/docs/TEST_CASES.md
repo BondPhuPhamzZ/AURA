@@ -12,7 +12,7 @@ Mốc cập nhật: 21/09/2026. Ký hiệu: `A` đã tự động hóa bằng xU
 | TC-04 | Phiếu in nhiệt để trống MST thật sự | 210.000 | ESCALATE_FACT | V2, chờ benchmark |
 | TC-05 | Nhà hàng có Bia Tiger x 6 | 780.000 | ESCALATE_POLICY | V2, chờ benchmark |
 
-Ngày 20/09/2026, Gemini 3.6 Flash đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026 và chưa gọi API để bảo toàn quota; phải benchmark đúng một lượt sau deploy trước khi quay video. Kết quả cũ không được gán cho ảnh v2.
+Ngày 20/09/2026, provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026 và chưa benchmark bằng cấu hình Qwen3.8 Flash/OpenRouter hiện tại; phải chạy đúng một lượt sau deploy trước khi quay video. Kết quả cũ không được gán cho ảnh v2.
 
 Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số `AUTO_APPROVE`/`ESCALATE_*`; facts trích xuất hiển thị cạnh upload; auto approve xuất hiện ngay trong Audit; escalation còn trong bảng kết quả cho tới khi chuyển quản lý; các thao tác không yêu cầu reload toàn trang.
 
@@ -46,7 +46,7 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P23 | JPG extension nhưng magic bytes sai | HTTP 400, không gọi AI | smoke |
 | P24 | POST Verify không CSRF | HTTP 400 | smoke |
 | P25 | BUSINESS_RULES qua static URL | HTTP 404 | smoke |
-| P26 | API Gemini 429/503 | retry tối đa 3, sau đó SYSTEM_ERROR | code/live observed |
+| P26 | OpenRouter/Qwen 429/503 | không retry 429; retry tối đa một lần với 5xx rồi SYSTEM_ERROR | code |
 | P27 | Hai hóa đơn trong một ảnh | FACT hoặc tách document theo policy tương lai | P |
 | P28 | PDF/nhiều trang | Từ chối có giải thích ở Sprint 1 | P |
 | P29 | Prompt injection in trên hóa đơn | Bỏ qua chỉ dẫn, ghi suspicious signal, FACT | P |
@@ -60,7 +60,7 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P37 | Ảnh màn hình hóa đơn còn “chưa cấp số/lưu và phát hành” | ESCALATE_FACT vì DRAFT | A |
 | P38 | Chứng từ CANCELLED/đã hủy | ESCALATE_FACT | A |
 | P39 | POS/retail receipt có số biên nhận và MID/TID nhưng không có seller tax ID | MID/TID được trích xuất riêng; không thay số biên nhận; không bắt buộc MST nếu không phải VAT_INVOICE | policy/live |
-| P40 | Gemini trả `MAX_TOKENS` hoặc JSON lỗi | SYSTEM_ERROR, không dùng dữ kiện bị cắt | code |
+| P40 | Qwen trả `finish_reason=length` hoặc JSON lỗi | SYSTEM_ERROR, không dùng dữ kiện bị cắt | code |
 | P41 | Ảnh vượt 5 MB hoặc server trả body rỗng/non-JSON | Chặn trước upload hoặc hiển thị lỗi HTTP dễ hiểu; không ném lỗi parse JSON | client/server |
 | P42 | E-commerce đủ dữ kiện, có order ID nhưng không có MST/invoice number | AUTO_APPROVE nếu hoàn tất, ngày giao dịch/tổng tiền/item hợp lệ | A |
 | P43 | E-commerce đủ dữ kiện, chỉ có shipping tracking code làm định danh truy vết | AUTO_APPROVE; tracking không được diễn giải là MST/hóa đơn thuế | A |

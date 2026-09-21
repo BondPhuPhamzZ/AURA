@@ -14,6 +14,7 @@ git clone https://github.com/BondPhuPhamzZ/AURA.git
 cd AURA/AURA
 dotnet restore
 dotnet user-secrets set "OpenRouter:ApiKey" "YOUR_OPENROUTER_KEY"
+dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3.8-flash"
 dotnet ef database update
 ```
 
@@ -32,39 +33,36 @@ Mở URL được in trong terminal. Không truy cập `/Verify` để tìm tran
 ## 4. Tái lập Verify
 
 1. Bấm **Chạy Verify Harness (90s)** một lần.
-2. Chờ năm request Gemini chạy tuần tự.
+2. Chờ tối đa năm request Qwen chạy tuần tự qua OpenRouter.
 3. Xác nhận đúng 5 dòng, có timestamp và latency.
 4. Kỳ vọng fixture v2: TC-01..03 `AUTO_APPROVE`, TC-04 `ESCALATE_FACT`, TC-05 `ESCALATE_POLICY`.
 5. Nếu `429/5xx`, chờ retry. Nếu vẫn lỗi, kết quả phải là `ESCALATE_SYSTEM_ERROR`, tuyệt đối không PASS giả.
 
 Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_receipts.py --as-of-date 2026-09-21`. Script đồng thời sinh Test Kit v2 gồm 30 ca nhưng chỉ 5 ca đại diện được Verify gọi. Không đổi `as-of-date`, fixture hoặc expected sau khi chốt mà không cập nhật manifest, tài liệu và commit.
 
-Để bảo toàn quota: build + 50 automated test trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 30 ảnh trên free tier.
+Để bảo toàn credit: build + 51 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 30 ảnh qua API.
 
 Trong demo, `DecisionPolicy:EscalateDuplicateReceipts=false` cho phép chạy lại cùng ảnh nhưng vẫn ghi nhận trùng trong audit. Trước production, đổi thành `true`. Thay đổi cấu hình này không cần sửa code.
 
-Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó là `AI_TIMEOUT`, không phải model “học kém đi”. Harness dừng gọi AI cho các ca còn lại sau timeout, rate limit, lỗi xác thực, thiếu credit hoặc model không tồn tại để bảo vệ quota. HTTP 429 không được tự động retry.
+Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó là `AI_TIMEOUT`, không phải model “học kém đi”. Harness dừng gọi AI cho các ca còn lại sau timeout, rate limit, lỗi xác thực/credit/model hoặc lỗi contract JSON mang tính hệ thống để bảo vệ chi phí. HTTP 429 không được tự động retry.
 
 ### Model OpenRouter cho demo
 
-- Mặc định demo: `qwen/qwen3.8-27b:free`, model vision-language đang tồn tại trên OpenRouter.
+- Mặc định demo: `qwen/qwen3.8-flash`, model vision-language trả phí có hỗ trợ structured output bằng JSON Schema.
 - HTTP 404 / `AI_MODEL_UNAVAILABLE`: slug model sai, đã bị gỡ hoặc hiện không có endpoint; đây không phải quota.
 - HTTP 401/403 / `AI_AUTH_ERROR`: key sai hoặc thiếu quyền.
-- HTTP 402 / `AI_CREDITS_REQUIRED`: cần credit hoặc không còn tuyến miễn phí.
-- HTTP 429 / `AI_RATE_LIMIT`: rate limit của OpenRouter/free provider; ứng dụng không tự retry.
+- HTTP 402 / `AI_CREDITS_REQUIRED`: tài khoản không đủ credit hoặc key không được phép dùng model.
+- HTTP 429 / `AI_RATE_LIMIT`: rate limit của OpenRouter/provider; ứng dụng không tự retry để tránh phát sinh thêm chi phí.
 - Đổi model bằng `OpenRouter:Model`; luôn xác nhận model nhận input ảnh trên catalog trước khi đổi.
 
-RPD reset lúc nửa đêm theo Pacific Time. Vào giai đoạn Pacific Daylight Time, thời điểm này tương ứng khoảng 14:00 tại Việt Nam; khi Pacific Standard Time có thể là khoảng 15:00. RPM/TPM hoặc giới hạn chi tiêu có cửa sổ ngắn hơn, vì vậy luôn lấy thời điểm và bucket cụ thể đang hiển thị trong AI Studio làm nguồn chính xác.
+### Khi OpenRouter/Qwen trả lỗi
 
-### Khi Gemini trả HTTP 429
-
-1. Mở **Google AI Studio → Dashboard → Usage & Billing** và xem chính xác giới hạn nào đã chạm: RPM (request/phút), TPM (token/phút) hay RPD (request/ngày). Quota được tính theo **project**, không theo từng API key.
-2. Nếu là RPM/TPM, dừng gọi API vài phút rồi thử lại đúng **một ảnh**. Không bấm Verify liên tục vì mỗi lần chạy tiêu thụ năm request tuần tự.
-3. Nếu là RPD, chờ quota ngày reset lúc nửa đêm theo múi giờ Pacific. Trong tháng 9, thời điểm này thường tương ứng khoảng 14:00 tại Việt Nam; đồng hồ/quota trong AI Studio là nguồn xác nhận cuối cùng.
-4. Không đổi model ngay trong lúc demo. Chỉ cấu hình model dự phòng sau khi chạy lại đủ ma trận 5 ca và kiểm tra JSON Schema, latency, câu hỏi chuyển tiếp.
-5. Nếu cần live demo ổn định hơn free tier, nâng project chính thức lên paid tier với ngân sách/cảnh báo chi tiêu nhỏ. Không tạo nhiều project chỉ để né rate limit.
-
-Phương án dự phòng miễn phí ưu tiên để benchmark là `gemini-3.5-flash-lite`; không tự động fallback sang model này trong production cho tới khi đạt lại 5/5 test và xác nhận cấu hình `thinkingConfig` tương thích. Khi API vẫn không khả dụng, AURA phải giữ `ESCALATE_SYSTEM_ERROR` và chuyển hồ sơ sang người quản lý, không dùng kết quả giả hoặc cache cũ như một lần gọi AI mới.
+1. Mở **OpenRouter → Activity/Logs** và đối chiếu HTTP status, model, provider, token và chi phí.
+2. Với `401/403`, xác nhận secret thuộc đúng tài khoản đã nạp credit và key chưa bị thu hồi/giới hạn bởi guardrail.
+3. Với `402`, kiểm tra số dư và giới hạn chi tiêu riêng của API key. `Key limit` là trần chi tiêu, không phải số dư.
+4. Với `429`, dừng vài phút rồi thử đúng **một ảnh**; không bấm Verify liên tục.
+5. Với `5xx/timeout`, kiểm tra trang trạng thái OpenRouter/provider. Hệ thống phải giữ `ESCALATE_SYSTEM_ERROR`, không dùng kết quả giả hoặc cache cũ như một lần gọi AI mới.
+6. Chỉ đổi model sau khi chạy lại ma trận 5 ca và xác nhận input ảnh, JSON Schema, latency và câu hỏi chuyển tiếp.
 
 ## 5. Cấu hình deploy
 
@@ -72,7 +70,7 @@ Các biến môi trường bắt buộc:
 
 ```text
 OpenRouter__ApiKey=<secret>
-OpenRouter__Model=qwen/qwen3.8-27b:free
+OpenRouter__Model=qwen/qwen3.8-flash
 ConnectionStrings__DefaultConnection=<SQL Server connection string>
 ReceiptStorage__Directory=<persistent volume path>
 Database__ApplyMigrationsOnStartup=true
@@ -95,7 +93,7 @@ dotnet ef database update --connection "<DEPLOYMENT_CONNECTION>"
 - `/BUSINESS_RULES.md` trả `404` vì policy không được public từ static root.
 - Upload giả MIME bị từ chối; JPG/PNG hợp lệ được lưu và mở lại qua route chứng từ.
 - Ảnh lớn hơn 5 MB bị chặn với thông báo dễ hiểu, không xuất hiện lỗi `Unexpected end of JSON input`. Giới hạn multipart có phần đệm cho antiforgery/boundary nhưng controller vẫn khóa riêng file ở 5 MB.
-- Verify đạt 5/5 trong dưới 90 giây.
+- Verify đạt 5/5 trong thời gian demo cho phép; từng request có timeout 90 giây.
 - Audit hiển thị input, action, timestamp, reason; chuyển tiếp/Đồng ý/Từ chối/undo hoạt động.
 - Ca `ESCALATE_*` xuất hiện ở cửa sổ nhân viên trước; bấm **Chuyển tiếp** rồi mới xuất hiện ở cửa sổ quản lý.
 - Nhân viên có thể chuyển từng hồ sơ hoặc **Chuyển tiếp tất cả**; mỗi hồ sơ phải có audit `EMPLOYEE_FORWARDED_TO_MANAGER`.

@@ -17,7 +17,7 @@ AURA hiện là một **vertical slice chạy thật** cho Track A — The Escal
 6. Quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi cụ thể và có thể hoàn tác.
 7. Mọi bước quan trọng được ghi vào audit trail; ảnh gốc có thể mở lại.
 
-Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 50 automated test đạt (47 policy/workflow + 1 OpenRouter contract + 2 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5 với provider cũ, còn Qwen/OpenRouter cần một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
+Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 51 automated test đạt (47 policy/workflow + 2 OpenRouter contract + 2 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5 với provider cũ, còn Qwen3.8 Flash/OpenRouter cần một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
 
 Đánh giá công tâm:
 
@@ -32,7 +32,7 @@ Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện c�
 
 Nghiệp vụ cần giảm số hồ sơ thường quy mà quản lý phải đọc thủ công, nhưng không được để AI tự tin duyệt một hồ sơ thiếu chứng cứ. AURA chia bài toán thành hai phần:
 
-- **Nhìn và đọc:** Gemini đọc pixel và trả dữ kiện.
+- **Nhìn và đọc:** Qwen3.8 Flash qua OpenRouter/Alibaba Cloud đọc pixel và trả dữ kiện.
 - **Ra quyết định:** C# kiểm tra dữ kiện bằng luật rõ ràng, có thể test và tái lập.
 
 Sự tách biệt này quan trọng hơn việc dùng một prompt “thông minh” để AI tự quyết định. Cùng một JSON dữ kiện và cùng tham số đầu vào, `PolicyDecisionEngine` luôn trả cùng kết quả.
@@ -43,7 +43,7 @@ Sự tách biệt này quan trọng hơn việc dùng một prompt “thông min
 - Không gọi cơ quan thuế để xác thực mã số thuế/mã hóa đơn.
 - Không tự quy đổi ngoại tệ.
 - Không hỗ trợ PDF, nhiều trang hoặc nhiều hóa đơn trong một ảnh ở Sprint 1.
-- Không phải hệ thống on-premise/zero-cloud: ảnh được gửi đến Gemini API.
+- Không phải hệ thống on-premise/zero-cloud: ảnh được gửi qua OpenRouter tới provider Alibaba Cloud.
 - Không dùng kết quả 5/5 nội bộ để tuyên bố accuracy trên thị trường.
 
 ## 3. Kiến trúc tổng thể
@@ -73,10 +73,10 @@ Các lớp được ghép bằng Dependency Injection:
 | Vị trí | Trách nhiệm |
 |---|---|
 | `Controllers/` | Route HTTP, điều phối upload, Verify và quyết định quản lý |
-| `Services/` | Gọi Gemini, luật quyết định, repository và audit persistence |
+| `Services/` | Gọi OpenRouter/Qwen, luật quyết định, repository và audit persistence |
 | `Interfaces/` | Hợp đồng DI giúp tách controller khỏi implementation |
 | `Models/` | Entity DB, DTO trích xuất, manifest Verify và error model |
-| `Options/` | Cấu hình có kiểu cho Gemini và kho chứng từ |
+| `Options/` | Cấu hình có kiểu cho OpenRouter và kho chứng từ |
 | `Data/` | `AppDbContext`, index và precision |
 | `Migrations/` | Lịch sử schema SQL Server |
 | `ViewComponents/` | Tải queue quản lý và audit độc lập |
@@ -113,17 +113,17 @@ Các thư mục `bin/`, `obj/`, `publish/` và `wwwroot/lib/` là output build h
 - Static file, routing và conventional route đều được bật.
 - Route mặc định: `{controller=Home}/{action=Index}/{id?}`.
 
-Điểm cần hiểu: `GeminiOptions` không `ValidateOnStart` để trang demo vẫn có thể mở khi API key chưa được inject. Upload/Verify sẽ fail-safe thành lỗi hệ thống, không tự duyệt.
+Điểm cần hiểu: `OpenRouterOptions` được `ValidateOnStart` cho các giá trị không bí mật. API key vẫn được kiểm tra lúc gọi để trang demo có thể mở khi secret chưa được inject; Upload/Verify sẽ fail-safe thành lỗi hệ thống, không tự duyệt.
 
 ### 5.3 Cấu hình
 
 `appsettings.json` chứa:
 
 - LocalDB connection string phục vụ Windows local.
-- Model mặc định `qwen/qwen3.8-27b:free`.
-- Gemini API base URL.
+- Model mặc định `qwen/qwen3.8-flash`.
+- OpenRouter API base URL và route tương đối `chat/completions`.
 - `PolicyPath = BUSINESS_RULES.md`.
-- Timeout 60 giây.
+- Timeout 90 giây và tối đa 4096 output token.
 - Kho ảnh `App_Data/receipts`, tối đa 5 MB.
 
 API key không nằm trong file config. Local dùng user secrets; deploy dùng `OpenRouter__ApiKey`. Connection string deploy phải override `ConnectionStrings__DefaultConnection`.
@@ -157,7 +157,7 @@ Vì Verify Harness là một phần của dashboard nên `/Verify` không phải
 7. Bảo đảm thư mục cấu hình nằm dưới content root.
 8. Lưu file ngoài `wwwroot`.
 9. Tính SHA-256 và hỏi DB xem ảnh đã xuất hiện chưa.
-10. Gọi Gemini để trích xuất facts.
+10. Gọi Qwen3.8 Flash qua OpenRouter để trích xuất facts.
 11. Serialize facts để giữ bằng chứng máy đã đọc gì.
 12. Gọi policy engine với facts, claimed amount và duplicate flag.
 13. Nếu AI/API lỗi, chuyển `ESCALATE_SYSTEM_ERROR` với mã an toàn như `AI_RATE_LIMIT`; không giả kết quả nghiệp vụ.
@@ -166,24 +166,24 @@ Vì Verify Harness là một phần của dashboard nên `/Verify` không phải
 
 Lưu ý kỹ thuật còn tồn tại: file được ghi trước DB. Nếu DB save thất bại, file có thể thành orphan. Sprint 2 nên có cleanup/transactional workflow hoặc object storage có trạng thái staging.
 
-## 8. Gemini Vision và `BUSINESS_RULES.md`
+## 8. Qwen Vision/OpenRouter và `BUSINESS_RULES.md`
 
-### 8.1 Gemini làm gì
+### 8.1 Qwen/OpenRouter làm gì
 
 `OpenRouterVisionExtractorService`:
 
 - Từ chối chạy nếu thiếu API key, ảnh hoặc policy file.
 - Chỉ cho phép policy path nằm trong application root.
-- Đọc toàn bộ `BUSINESS_RULES.md` mỗi request làm `systemInstruction`.
+- Đọc toàn bộ `BUSINESS_RULES.md` mỗi request làm system message.
 - Gửi ảnh inline Base64 với đúng MIME.
-- Yêu cầu `application/json` và khai báo response JSON Schema.
-- Dùng temperature 0, thinking LOW, tối đa 4096 output token.
-- Retry tối đa ba lần với 429/500/502/503/504 và backoff/Retry-After.
-- Kiểm HTTP status, prompt block, candidate, finish reason và text part.
+- Yêu cầu strict `response_format=json_schema` và cấm thuộc tính ngoài contract.
+- Dùng temperature 0 và tối đa 4096 output token.
+- Không retry 429; retry tối đa một lần với 500/502/503/504 và tôn trọng Retry-After.
+- Kiểm HTTP status, choices/message/content và `finish_reason=length`.
 - Deserialize có kiểu; chuẩn hóa array null thành rỗng và clamp confidence 0..1.
 - Coi `MAX_TOKENS`, JSON ngoài/JSON extraction lỗi là thất bại; không sử dụng phản hồi bị cắt.
 
-OpenRouter nhận ảnh base64 qua `/api/v1/chat/completions` và chuyển đến model Qwen vision được cấu hình. JSON mode giúp ổn định hình dạng phản hồi nhưng **không bảo đảm giá trị đúng về ngữ nghĩa**, vì vậy validation C# vẫn bắt buộc.
+OpenRouter nhận ảnh base64 qua `/api/v1/chat/completions` và chuyển đến model Qwen vision được cấu hình. JSON Schema giúp ổn định hình dạng phản hồi nhưng **không bảo đảm giá trị đúng về ngữ nghĩa**, vì vậy validation C# và deterministic policy vẫn bắt buộc.
 
 ### 8.2 AI có đọc được `BUSINESS_RULES.md` không?
 
@@ -309,7 +309,7 @@ Năm fixture Verify v2 được chọn từ Test Kit 30 ca:
 
 Comparator chỉ PASS khi status đúng; expected `ESCALATE` tổng quát mới khớp mọi `ESCALATE_*`. `ESCALATE_SYSTEM_ERROR` không được hợp thức hóa thành PASS.
 
-Benchmark ngày 20/09/2026 với Gemini 3.6 Flash đạt 5/5 trên fixture v1. Fixture v2 được sinh offline ngày 21/09/2026 và cố ý chưa gọi API để giữ quota; kết quả v1 không được gán cho v2. Trước video cần chạy đúng một lượt v2 trên live URL và lưu expected/actual/latency.
+Benchmark ngày 20/09/2026 với provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 được sinh offline ngày 21/09/2026 và chưa benchmark bằng Qwen3.8 Flash trả phí; kết quả v1 không được gán cho v2. Trước video cần chạy đúng một lượt v2 trên live URL và lưu expected/actual/latency/cost.
 
 ## 13. Giao diện
 
@@ -361,7 +361,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Mục tiêu: build sạch và 50/50 automated test.
+Mục tiêu: build sạch và 51/51 automated test.
 
 ### Tầng B — fixture chuẩn hóa
 
@@ -463,7 +463,7 @@ Mỗi case lưu: ID, nguồn/license/consent, ground truth fields, claimed amoun
 - LocalDB không chạy như production cloud DB; phải override connection string.
 - Dockerfile dùng Windows NanoServer 1809 và build context `AURA/AURA.csproj`; nhiều host rẻ chỉ hỗ trợ Linux container. Chưa được coi là deploy-ready cho tới khi build trên target host thành công.
 - Filesystem container mặc định là tạm thời; cần volume hoặc object storage.
-- Free tier/rate limit không có SLA; Verify gọi năm request tuần tự.
+- Provider/rate limit không có SLA tuyệt đối; Verify gọi tối đa năm request tuần tự và phát sinh chi phí.
 - Chưa có account/role nên không được dùng hóa đơn thật trên public URL.
 
 ## 21. Các tệp đáng chú ý, theo từng file
@@ -536,10 +536,10 @@ Mỗi case lưu: ID, nguồn/license/consent, ground truth fields, claimed amoun
 
 ## 24. Nguồn tham khảo kiểm thử và model
 
-- Gemini models: `https://ai.google.dev/gemini-api/docs/models`
-- Gemini 3.6 Flash: `https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash`
-- Gemini Structured Outputs: `https://ai.google.dev/gemini-api/docs/structured-output`
-- Gemini image understanding: `https://ai.google.dev/gemini-api/docs/image-understanding`
+- OpenRouter Qwen3.8 Flash: `https://openrouter.ai/qwen/qwen3.8-flash`
+- OpenRouter API quickstart: `https://openrouter.ai/docs/quickstart`
+- OpenRouter structured outputs: `https://openrouter.ai/docs/features/structured-outputs`
+- OpenRouter multimodal images: `https://openrouter.ai/docs/features/multimodal/images`
 - CORD official repository: `https://github.com/clovaai/cord`
 - SROIE official challenge: `https://rrc.cvc.uab.es/?ch=13&com=tasks`
 - MMOCR/WildReceipt: `https://github.com/open-mmlab/mmocr`

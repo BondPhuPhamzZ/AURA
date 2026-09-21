@@ -5,7 +5,7 @@ AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứn
 ## Trạng thái Sprint 1
 
 - Build sạch: 0 warning, 0 error.
-- 50 kiểm thử tự động: 47 test chính sách/workflow, 1 test hợp đồng OpenRouter/Qwen offline và 2 test toàn vẹn manifest/ảnh Test Kit.
+- 51 kiểm thử tự động: 47 test chính sách/workflow, 2 test hợp đồng OpenRouter/Qwen offline và 2 test toàn vẹn manifest/ảnh Test Kit.
 - Verify Vision v2: 5 ảnh tổng hợp đa layout gồm 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`; đang chờ đúng một lượt benchmark sau deploy để bảo toàn quota. Kết quả 5/5 ngày 20/09/2026 thuộc fixture v1 và chỉ là lịch sử.
 - Route upload, Verify, audit, quản lý, CSRF và tra cứu chứng từ đã smoke-test local.
 - Giao diện upload ba cột hiển thị trực tiếp facts AI đã đọc. Kết quả cho biết số ca tự động duyệt/chuyển tiếp; ca tự duyệt vào lịch sử, ca chuyển tiếp được giữ trong bảng kết quả ngay cả sau reload.
@@ -26,7 +26,7 @@ Dashboard dùng `fetch` cho upload và mọi quyết định nên không tải l
 
 ## Kiến trúc quyết định
 
-`Upload -> kiểm MIME/magic bytes/size -> lưu chứng từ riêng tư -> Gemini Structured Output -> hiển thị facts -> C# policy engine -> AUTO_APPROVE hoặc ESCALATE_* -> nhân viên chuyển tiếp -> quản lý Đồng ý/Từ chối -> audit trail`
+`Upload -> kiểm MIME/magic bytes/size -> lưu chứng từ riêng tư -> Qwen3.8 Flash qua OpenRouter + JSON Schema -> hiển thị facts -> C# policy engine -> AUTO_APPROVE hoặc ESCALATE_* -> nhân viên chuyển tiếp -> quản lý Đồng ý/Từ chối -> audit trail`
 
 Với e-commerce, schema tách riêng mã đơn hàng, mã vận chuyển, đơn vị vận chuyển, trạng thái đơn, ngày giao dịch và ngày hoàn tất. Mã vận chuyển chỉ là bằng chứng truy vết logistics; nó không thay MST và không tự chứng minh đã thanh toán.
 
@@ -38,6 +38,7 @@ Yêu cầu: .NET 8 SDK, SQL Server LocalDB/SQL Server, EF CLI.
 
 ```powershell
 dotnet user-secrets set "OpenRouter:ApiKey" "YOUR_OPENROUTER_KEY"
+dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3.8-flash"
 dotnet ef database update
 dotnet run
 ```
@@ -55,7 +56,7 @@ Không đặt API key trong `appsettings*.json`, Git, ảnh chụp hoặc log. K
 
 - Năm ảnh trong `wwwroot/test_data/images` là tập đại diện lấy từ Test Kit v2 gồm 30 ảnh tại `test_kit`; được tạo offline với seed cố định bởi `tools/generate_verify_receipts.py`, không phải hóa đơn cá nhân thật.
 - Ảnh người dùng tải lên được lưu ngoài `wwwroot` tại `App_Data/receipts`, với tên ngẫu nhiên, SHA-256 và metadata để tra cứu/audit.
-- Ảnh được gửi đến Gemini API để trích xuất. Sản phẩm **không** phải zero-cloud/on-premise.
+- Ảnh được gửi qua OpenRouter tới provider Alibaba Cloud để Qwen trích xuất. Sản phẩm **không** phải zero-cloud/on-premise.
 - Khi deploy dạng container, `ReceiptStorage__Directory` phải trỏ tới persistent volume; nếu không, file có thể mất khi container được tạo lại.
 
 ## Giới hạn công bố
@@ -64,7 +65,7 @@ Không đặt API key trong `appsettings*.json`, Git, ảnh chụp hoặc log. K
 - Vision không thể xác nhận tính hợp pháp/chính hãng chỉ từ pixel; AURA chỉ ghi nhận identifier và dấu hiệu nhìn thấy.
 - Chưa tích hợp tra cứu mã số thuế/e-invoice bên ngoài, tỷ giá ngoại tệ hoặc antivirus.
 - Kết quả 5/5 trên fixture tổng hợp không chứng minh độ chính xác trên dữ liệu độc lập.
-- Free tier Gemini có rate limit và có thể trả `429/5xx`; ứng dụng retry lỗi tạm thời ba lần nhưng vẫn chuyển thủ công nếu thất bại.
-- Khi gặp `429`, xem **AI Studio → Dashboard → Usage & Billing** để phân biệt RPM/TPM với RPD. RPM/TPM thường chỉ cần tạm dừng vài phút; RPD reset lúc nửa đêm Pacific. Không chạy Verify lặp lại vì mỗi lượt dùng năm request; xem quy trình và phương án model dự phòng trong [runbook](docs/RUNBOOK.md).
+- OpenRouter/provider có thể trả `429/5xx`; ứng dụng không retry `429`, chỉ retry tối đa một lần với lỗi `5xx`, và luôn chuyển thủ công nếu trích xuất thất bại.
+- Theo dõi request, token và chi phí tại **OpenRouter → Activity**. Không chạy Verify lặp lại vì mỗi lượt dùng tối đa năm request trả phí; xem quy trình trong [runbook](docs/RUNBOOK.md).
 
 Xem [hướng dẫn deploy](docs/DEPLOYMENT.md), [nội dung 5 slide và kịch bản video](docs/SPRINT1_SLIDES_AND_DEMO.md), [runbook](docs/RUNBOOK.md), [test matrix](docs/TEST_CASES.md), [trạng thái Sprint 1](docs/SPRINT1_SUBMISSION.md) và [báo cáo kiểm định](PROJECT_AUDIT.md).
