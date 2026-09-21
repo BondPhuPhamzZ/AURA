@@ -1,8 +1,9 @@
 ﻿using System.Diagnostics;
-using System.Net.Http.Json;
 using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
-using System.Text.RegularExpressions;
+using System.Text.Json.Serialization;
 using AURA.Interfaces;
 using AURA.Models;
 using AURA.Options;
@@ -12,7 +13,11 @@ namespace AURA.Services;
 
 public sealed class OpenRouterVisionExtractorService : IVisionExtractor
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow
+    };
     private readonly HttpClient _httpClient;
     private readonly OpenRouterOptions _options;
     private readonly IWebHostEnvironment _environment;
@@ -57,8 +62,13 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         };
         var base64Image = Convert.ToBase64String(imageBytes);
 
-        var schemaJson = JsonSerializer.Serialize(BuildResponseSchema(), JsonOptions);
-        var systemPrompt = $"You are an expert accountant system. Extract the facts from the image strictly following these business rules:\n{policy}\n\nReturn ONLY a valid JSON object matching exactly this schema:\n{schemaJson}";
+        var responseSchema = BuildResponseSchema();
+        var systemPrompt = $"""
+            You are AURA's receipt-evidence extraction component. Follow the contract below exactly.
+            The API response format enforces the JSON schema. Return only the schema instance; never add Markdown or prose.
+
+            {policy}
+            """;
 
         var payload = new
         {
@@ -77,7 +87,17 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
                 }
             },
             temperature = 0,
-            response_format = new { type = "json_object" }
+            max_tokens = _options.MaxOutputTokens,
+            response_format = new
+            {
+                type = "json_schema",
+                json_schema = new
+                {
+                    name = "aura_receipt_extraction",
+                    strict = true,
+                    schema = responseSchema
+                }
+            }
         };
 
         (HttpStatusCode statusCode, string responseText) response;
@@ -105,16 +125,21 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             throw new VisionExtractionException("AI_EMPTY_RESPONSE",
                 "Qwen không trả về kết quả trích xuất; hồ sơ cần kiểm tra thủ công.");
 
-        var message = choices[0].GetProperty("message");
+        var choice = choices[0];
+        if (choice.TryGetProperty("finish_reason", out var finishReasonElement) &&
+            string.Equals(finishReasonElement.GetString(), "length", StringComparison.OrdinalIgnoreCase))
+            throw new VisionExtractionException("AI_RESPONSE_TRUNCATED",
+                "Qwen đã dừng vì đạt giới hạn output trước khi hoàn tất JSON; hồ sơ cần kiểm tra thủ công.");
+
+        if (!choice.TryGetProperty("message", out var message))
+            throw new VisionExtractionException("AI_INVALID_RESPONSE",
+                "Qwen không trả về message hợp lệ; hồ sơ cần kiểm tra thủ công.");
+
         if (!message.TryGetProperty("content", out var contentElement) || contentElement.ValueKind != JsonValueKind.String)
             throw new VisionExtractionException("AI_INVALID_RESPONSE",
                 "Qwen không trả về dữ liệu JSON hợp lệ; hồ sơ cần kiểm tra thủ công.");
 
-        var contentStr = contentElement.GetString() ?? string.Empty;
-        
-        // Strip markdown backticks if returned
-        var match = Regex.Match(contentStr, @"`(?:json)?\s*(.*?)\s*`", RegexOptions.Singleline);
-        if (match.Success) contentStr = match.Groups[1].Value;
+        var contentStr = TrimCodeFence(contentElement.GetString() ?? string.Empty);
 
         ReceiptExtractionDto facts;
         try
@@ -124,7 +149,8 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         }
         catch (JsonException exception)
         {
-            _logger.LogError(exception, "Failed to parse JSON from AI: {Content}", contentStr);
+            _logger.LogError(exception, "Failed to parse Qwen JSON response ({ContentLength} characters).",
+                contentStr.Length);
             throw new VisionExtractionException("AI_SCHEMA_MISMATCH",
                 "Qwen trả về kết quả không đúng cấu trúc quy định; hồ sơ cần kiểm tra thủ công.", exception);
         }
@@ -143,10 +169,10 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         const int maxAttempts = 2;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post, "chat/completions");
-            request.Headers.Add("Authorization", $"Bearer {_options.ApiKey}");
-            request.Headers.Add("HTTP-Referer", "https://github.com/");
-            request.Headers.Add("X-Title", "AURA Escalation Referee");
+            using var request = new HttpRequestMessage(HttpMethod.Post, _options.ChatCompletionsPath);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
+            request.Headers.TryAddWithoutValidation("HTTP-Referer", _options.HttpReferer);
+            request.Headers.TryAddWithoutValidation("X-Title", _options.AppTitle);
             request.Content = JsonContent.Create(payload);
 
             using var response = await _httpClient.SendAsync(
@@ -173,11 +199,11 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => new VisionExtractionException("AI_AUTH_ERROR",
                 "OpenRouter từ chối API key hoặc quyền truy cập model. Hãy kiểm tra OpenRouter:ApiKey và quyền của key."),
             HttpStatusCode.PaymentRequired => new VisionExtractionException("AI_CREDITS_REQUIRED",
-                "OpenRouter yêu cầu credit hoặc model này không còn lượt miễn phí cho tài khoản hiện tại."),
+                "Tài khoản OpenRouter không đủ credit hoặc key không được phép sử dụng model đã chọn."),
             HttpStatusCode.NotFound => new VisionExtractionException("AI_MODEL_UNAVAILABLE",
                 $"OpenRouter không tìm thấy model '{model}' hoặc model đã bị gỡ khỏi catalog (HTTP 404). {providerMessage}".Trim()),
             HttpStatusCode.TooManyRequests => new VisionExtractionException("AI_RATE_LIMIT",
-                "OpenRouter đang giới hạn lượt gọi hoặc quota miễn phí (HTTP 429). Hệ thống không tự retry để bảo vệ quota."),
+                "OpenRouter hoặc Alibaba đang giới hạn tần suất gọi (HTTP 429). Hệ thống không tự retry để tránh phát sinh thêm chi phí."),
             HttpStatusCode.BadRequest => new VisionExtractionException("AI_REQUEST_INVALID",
                 $"OpenRouter không chấp nhận payload ảnh/JSON hiện tại (HTTP 400). {providerMessage}".Trim()),
             HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or
@@ -216,6 +242,18 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             throw new VisionExtractionException("AI_INVALID_RESPONSE",
                 "Qwen trả về phản hồi không phải JSON hợp lệ; hồ sơ cần kiểm tra thủ công.", exception);
         }
+    }
+
+    private static string TrimCodeFence(string content)
+    {
+        var trimmed = content.Trim();
+        if (!trimmed.StartsWith("```", StringComparison.Ordinal) ||
+            !trimmed.EndsWith("```", StringComparison.Ordinal))
+            return trimmed;
+
+        var firstNewLine = trimmed.IndexOf('\n');
+        if (firstNewLine < 0) return trimmed;
+        return trimmed[(firstNewLine + 1)..^3].Trim();
     }
 
     private static object BuildResponseSchema() => new

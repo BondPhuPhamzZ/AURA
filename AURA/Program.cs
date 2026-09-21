@@ -23,6 +23,13 @@ builder.Services.AddOptions<OpenRouterOptions>()
     .ValidateDataAnnotations()
     .Validate(options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri)
         && uri.Scheme == Uri.UriSchemeHttps, "OpenRouter:BaseUrl phải là HTTPS URL hợp lệ.")
+    .Validate(options => Uri.TryCreate(options.HttpReferer, UriKind.Absolute, out var uri)
+        && uri.Scheme == Uri.UriSchemeHttps, "OpenRouter:HttpReferer phải là HTTPS URL hợp lệ.")
+    .Validate(options => !Uri.TryCreate(options.ChatCompletionsPath, UriKind.Absolute, out _)
+        && !options.ChatCompletionsPath.StartsWith('/'),
+        "OpenRouter:ChatCompletionsPath phải là đường dẫn tương đối, ví dụ chat/completions.")
+    .Validate(options => options.Model.StartsWith("qwen/", StringComparison.OrdinalIgnoreCase),
+        "OpenRouter:Model phải là model Qwen trên OpenRouter.")
     .ValidateOnStart();
 builder.Services.AddOptions<ReceiptStorageOptions>()
     .Bind(builder.Configuration.GetSection(ReceiptStorageOptions.SectionName))

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using AURA.Options;
 using AURA.Services;
 using Microsoft.AspNetCore.Hosting;
@@ -33,9 +34,13 @@ public sealed class OpenRouterVisionExtractorServiceTests
             {
                 ApiKey = "test-key",
                 BaseUrl = "https://openrouter.ai/api/v1/",
-                Model = "qwen/qwen3.8-27b:free",
+                ChatCompletionsPath = "chat/completions",
+                Model = "qwen/qwen3.8-flash",
                 PolicyPath = "BUSINESS_RULES.md",
-                TimeoutSeconds = 90
+                TimeoutSeconds = 90,
+                MaxOutputTokens = 4096,
+                HttpReferer = "https://github.com/BondPhuPhamzZ/AURA",
+                AppTitle = "AURA - The Escalation Referee"
             });
             var client = new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) };
             var service = new OpenRouterVisionExtractorService(client, options,
@@ -50,6 +55,80 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.Contains($"\"model\":\"{options.Value.Model}\"", requestJson);
             Assert.Contains("\"type\":\"text\"", requestJson);
             Assert.Contains("\"type\":\"image_url\"", requestJson);
+            using var payload = JsonDocument.Parse(requestJson!);
+            var rootElement = payload.RootElement;
+            Assert.Equal(4096, rootElement.GetProperty("max_tokens").GetInt32());
+            var responseFormat = rootElement.GetProperty("response_format");
+            Assert.Equal("json_schema", responseFormat.GetProperty("type").GetString());
+            var jsonSchema = responseFormat.GetProperty("json_schema");
+            Assert.True(jsonSchema.GetProperty("strict").GetBoolean());
+            Assert.False(jsonSchema.GetProperty("schema").GetProperty("additionalProperties").GetBoolean());
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Parses_strict_qwen_json_response_without_calling_external_api()
+    {
+        var root = CreateFixtureRoot();
+        try
+        {
+            var factsJson = JsonSerializer.Serialize(new
+            {
+                documentType = "RETAIL_RECEIPT",
+                documentStatus = "ISSUED",
+                merchantName = "Cửa hàng thử nghiệm",
+                taxId = (string?)null,
+                merchantId = (string?)null,
+                terminalId = (string?)null,
+                platformName = (string?)null,
+                orderId = (string?)null,
+                bookingId = (string?)null,
+                shippingTrackingCode = (string?)null,
+                shippingProvider = (string?)null,
+                orderStatus = "PAID",
+                invoiceNumber = "HD-001",
+                invoiceDate = "2026-09-22",
+                transactionDate = (string?)null,
+                completionDate = (string?)null,
+                invoiceTime = "10:30",
+                currency = "VND",
+                subtotal = 100000m,
+                tax = 0m,
+                totalAmount = 100000m,
+                lineItems = new[] { new { description = "Văn phòng phẩm", quantity = 1m, unitPrice = 100000m, amount = 100000m } },
+                missingFields = Array.Empty<string>(),
+                warnings = Array.Empty<string>(),
+                suspiciousSignals = Array.Empty<string>(),
+                confidence = 0.97
+            });
+            var responseJson = JsonSerializer.Serialize(new
+            {
+                choices = new[] { new { finish_reason = "stop", message = new { content = factsJson } } }
+            });
+            var handler = new StubHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(responseJson, Encoding.UTF8, "application/json")
+            }));
+            var options = Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions
+            {
+                ApiKey = "test-key",
+                Model = "qwen/qwen3.8-flash",
+                PolicyPath = "BUSINESS_RULES.md"
+            });
+            var client = new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) };
+            var service = new OpenRouterVisionExtractorService(client, options,
+                new TestEnvironment(root), NullLogger<OpenRouterVisionExtractorService>.Instance);
+
+            var result = await service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg"));
+
+            Assert.Equal("RETAIL_RECEIPT", result.DocumentType);
+            Assert.Equal(100000m, result.TotalAmount);
+            Assert.Single(result.LineItems);
+            Assert.Equal(0.97, result.Confidence, 3);
         }
         finally
         {
