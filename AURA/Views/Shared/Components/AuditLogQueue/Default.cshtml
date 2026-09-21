@@ -53,6 +53,8 @@
                     @foreach (var entry in Model)
                     {
                         var request = entry.Request;
+                        var detailParts = (entry.Log.Details ?? string.Empty)
+                            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                         var actionLabel = entry.Log.Action switch
                         {
                             "MANAGER_YES" => "Quản lý duyệt",
@@ -106,10 +108,20 @@
                             <td>
                                 <details class="audit-details">
                                     <summary>
-                                        <span class="audit-details-preview">@entry.Log.Details</span>
+                                        <span class="audit-details-preview">
+                                            @foreach (var detail in detailParts.Take(3))
+                                            {
+                                                <span class="audit-detail-line">@detail</span>
+                                            }
+                                        </span>
                                         <span class="audit-details-toggle"></span>
                                     </summary>
-                                    <div class="audit-details-full">@entry.Log.Details</div>
+                                    <ul class="audit-details-full">
+                                        @foreach (var detail in detailParts)
+                                        {
+                                            <li>@detail</li>
+                                        }
+                                    </ul>
                                 </details>
                             </td>
                             <td>

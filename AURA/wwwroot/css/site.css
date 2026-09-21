@@ -796,6 +796,15 @@ main {
     line-clamp: 3;
 }
 
+.audit-detail-line {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.audit-detail-line:last-child {
+    margin-bottom: 0;
+}
+
 .audit-details-toggle {
     display: inline-flex;
     align-items: center;
@@ -838,6 +847,15 @@ main {
     border-top: 1px solid var(--colors-border);
     overflow-wrap: anywhere;
     color: var(--colors-ink-muted);
+}
+
+.audit-details-full li {
+    margin-bottom: 6px;
+    padding-left: 2px;
+}
+
+.audit-details-full li:last-child {
+    margin-bottom: 0;
 }
 
 .cell-code {

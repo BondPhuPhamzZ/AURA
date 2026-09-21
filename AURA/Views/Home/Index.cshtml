@@ -410,6 +410,19 @@
         });
         if (!response.ok) throw new Error(`Cập nhật bảng kết quả thất bại (HTTP ${response.status}).`);
         document.getElementById('resultsBody').innerHTML = await response.text();
+        updatePendingEscalationSummary();
+    }
+
+    function updatePendingEscalationSummary() {
+        const pendingCount = document.querySelectorAll('#resultsBody tr[data-case-id]').length;
+        const summary = document.getElementById('analysisSummary');
+        let escalatedChip = summary.querySelector('.summary-escalated');
+        if (!escalatedChip) {
+            escalatedChip = document.createElement('span');
+            escalatedChip.className = 'summary-escalated';
+            summary.appendChild(escalatedChip);
+        }
+        escalatedChip.textContent = pendingCount + ' đang chờ chuyển tiếp';
     }
 
     async function refreshWorkflowViews(includeResults = true) {
@@ -643,6 +656,8 @@
             if (submitButton) submitButton.disabled = false;
         }
     });
+
+    updatePendingEscalationSummary();
 
     window.setInterval(() => {
         if (document.visibilityState !== 'visible') return;
