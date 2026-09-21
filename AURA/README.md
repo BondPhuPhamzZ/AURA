@@ -61,4 +61,4 @@ Không đặt API key trong `appsettings*.json`, Git, ảnh chụp hoặc log. K
 - Free tier Gemini có rate limit và có thể trả `429/5xx`; ứng dụng retry lỗi tạm thời ba lần nhưng vẫn chuyển thủ công nếu thất bại.
 - Khi gặp `429`, xem **AI Studio → Dashboard → Usage & Billing** để phân biệt RPM/TPM với RPD. RPM/TPM thường chỉ cần tạm dừng vài phút; RPD reset lúc nửa đêm Pacific. Không chạy Verify lặp lại vì mỗi lượt dùng năm request; xem quy trình và phương án model dự phòng trong [runbook](docs/RUNBOOK.md).
 
-Xem [hướng dẫn deploy](docs/DEPLOYMENT.md), [runbook](docs/RUNBOOK.md), [test matrix](docs/TEST_CASES.md), [trạng thái Sprint 1](docs/SPRINT1_SUBMISSION.md) và [báo cáo kiểm định](PROJECT_AUDIT.md).
+Xem [hướng dẫn deploy](docs/DEPLOYMENT.md), [nội dung 5 slide và kịch bản video](docs/SPRINT1_SLIDES_AND_DEMO.md), [runbook](docs/RUNBOOK.md), [test matrix](docs/TEST_CASES.md), [trạng thái Sprint 1](docs/SPRINT1_SUBMISSION.md) và [báo cáo kiểm định](PROJECT_AUDIT.md).
