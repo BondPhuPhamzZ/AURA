@@ -60,6 +60,7 @@ Gemini__ApiKey=<secret>
 Gemini__Model=gemini-3.6-flash
 ConnectionStrings__DefaultConnection=<SQL Server connection string>
 ReceiptStorage__Directory=<persistent volume path>
+Database__ApplyMigrationsOnStartup=true
 ```
 
 Quy trình release:
@@ -70,7 +71,7 @@ dotnet publish AURA.csproj -c Release -o publish
 dotnet ef database update --connection "<DEPLOYMENT_CONNECTION>"
 ```
 
-Ứng dụng phải chạy sau HTTPS/reverse proxy. Persistent volume phải tồn tại qua lần restart/redeploy; kiểm tra bằng cách upload một ảnh, restart instance, rồi mở lại link **Xem hóa đơn** trong Audit.
+Ứng dụng phải chạy sau HTTPS/reverse proxy. Container Linux lắng nghe cổng `8080`; health endpoint là `/healthz`. Persistent volume phải tồn tại qua lần restart/redeploy; kiểm tra bằng cách upload một ảnh, restart instance, rồi mở lại link **Xem hóa đơn** trong Audit. Hướng dẫn Azure/Render cụ thể nằm tại `docs/DEPLOYMENT.md`.
 
 ## 6. Checklist trước nộp
 

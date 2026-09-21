@@ -16,7 +16,7 @@
 
 - Dùng Gemini Free Tier cho prototype; quota/rate limit không được bảo đảm.
 - Đã quan sát cả HTTP 503 và HTTP 429 khi gọi Gemini. Hệ thống retry backoff ba lần, trả mã lỗi an toàn (`AI_RATE_LIMIT`/`AI_TEMPORARILY_UNAVAILABLE`) và chuyển `ESCALATE_SYSTEM_ERROR`; không giả quyết định nghiệp vụ.
-- LocalDB chỉ phù hợp phát triển Windows. Deploy cần SQL Server/Azure SQL và persistent volume cho ảnh.
+- LocalDB chỉ phù hợp phát triển Windows. Mã nguồn đã có Linux container, `/healthz`, migration opt-in và hỗ trợ absolute persistent-volume path; deploy thật vẫn cần SQL Server/Azure SQL cùng tài nguyên cloud do nhóm sở hữu.
 - Test Kit v2 đã bổ sung mobile e-commerce, giấy in nhiệt, góc xoay, blur/crop và tiếng Việt có dấu; vẫn là dữ liệu tổng hợp nên không được xem là accuracy tổng quát.
 
 ## Tính năng lớn nhất cắt giảm

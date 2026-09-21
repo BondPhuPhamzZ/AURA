@@ -222,13 +222,14 @@ public sealed class ApplicantController : Controller
 
     private string GetStorageRoot()
     {
-        var contentRoot = Path.GetFullPath(_environment.ContentRootPath);
-        var root = Path.GetFullPath(Path.Combine(contentRoot, _storageOptions.Directory));
-        var contentRootPrefix = contentRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-            + Path.DirectorySeparatorChar;
-        if (!root.StartsWith(contentRootPrefix, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("ReceiptStorage:Directory phải nằm trong thư mục ứng dụng.");
-        return root;
+        if (string.IsNullOrWhiteSpace(_storageOptions.Directory))
+            throw new InvalidOperationException("ReceiptStorage:Directory không được để trống.");
+
+        // Relative paths stay anchored to ContentRoot. Cloud hosts can provide an absolute
+        // mount such as /home/data/receipts for durable evidence storage.
+        return Path.GetFullPath(Path.IsPathRooted(_storageOptions.Directory)
+            ? _storageOptions.Directory
+            : Path.Combine(_environment.ContentRootPath, _storageOptions.Directory));
     }
 
     private static bool HasValidSignature(byte[] bytes, string extension) => extension switch

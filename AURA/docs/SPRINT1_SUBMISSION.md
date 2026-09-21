@@ -29,7 +29,7 @@ Ngày cập nhật: 21/09/2026. Chuẩn đối chiếu: Track A trong `Challenge
 
 ## Blocker trước khi bấm nộp
 
-- Chọn dịch vụ deploy có SQL Server và persistent disk/volume, cấu hình secret Gemini.
+- Mã nguồn đã sẵn sàng Linux container; nhóm phải tạo Azure App Service/Azure SQL và bật `/home` persistent storage theo `docs/DEPLOYMENT.md`, sau đó cấu hình secret Gemini.
 - Chạy migration trên database deploy.
 - Xác minh fixture v2 đạt 5/5 trên live URL dưới 90 giây bằng đúng một lượt chạy và không chạm rate limit.
 - Điền live URL vào README, slide, video description và form nộp.

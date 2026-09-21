@@ -161,7 +161,7 @@ Không thể đạt “minh bạch tuyệt đối” chỉ bằng prompt. Tính 
 - Receipt file + DB không transactional; DB save lỗi có thể để orphan file.
 - Audit event chưa append-only/immutable bằng database permission hoặc hash chain.
 - Chưa có optimistic concurrency khi hai quản lý thao tác đồng thời.
-- Không có health endpoint/telemetry/correlation ID.
+- Đã có health endpoint `/healthz`; chưa có telemetry/correlation ID và health check này chưa thăm dò database/Gemini.
 - Test hiện khóa policy; chưa có automated integration tests cho controller/DB/file/HTTP client.
 
 ## 9. Lưu trữ hóa đơn
@@ -180,7 +180,7 @@ Yêu cầu tra cứu đã được đáp ứng local bằng:
 
 ### P0 trước deadline Sprint 1
 
-1. Deploy với SQL Server và persistent storage; cấu hình secret không commit.
+1. Tạo tài nguyên cloud và deploy Linux container với SQL Server/Azure SQL cùng persistent storage; cấu hình secret không commit. Xem `docs/DEPLOYMENT.md`.
 2. Chạy migration và smoke-test live URL từ cửa sổ ẩn danh.
 3. Chạy một ảnh smoke test rồi đúng một lượt Verify v2 trên live URL; ghi nhận expected/actual và thời gian dưới 90 giây, tránh tiêu hao quota bằng các lượt lặp không cần thiết.
 4. Điền Live URL vào README, slide, video và form nộp.

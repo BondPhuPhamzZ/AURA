@@ -47,6 +47,13 @@ builder.Services.AddHttpClient<IVisionExtractor, GeminiVisionExtractorService>((
 
 var app = builder.Build();
 
+if (builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var database = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await database.Database.MigrateAsync();
+}
+
 // Cấu hình HTTP Pipeline
 if (!app.Environment.IsDevelopment())
 {
@@ -62,6 +69,13 @@ app.UseStaticFiles();
 
 app.UseRouting();
 app.UseAuthorization();
+
+app.MapGet("/healthz", () => Results.Ok(new
+{
+    status = "ok",
+    service = "AURA",
+    timestamp = DateTimeOffset.UtcNow
+}));
 
 app.MapControllerRoute(
     name: "default",

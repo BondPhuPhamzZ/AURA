@@ -8,7 +8,7 @@ AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứn
 - 46 kiểm thử tự động: 44 test chính sách/workflow (gồm e-commerce/mã vận chuyển) và 2 test toàn vẹn manifest/ảnh Test Kit.
 - Verify Vision v2: 5 ảnh tổng hợp đa layout gồm 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`; đang chờ đúng một lượt benchmark sau deploy để bảo toàn quota. Kết quả 5/5 ngày 20/09/2026 thuộc fixture v1 và chỉ là lịch sử.
 - Route upload, Verify, audit, quản lý, CSRF và tra cứu chứng từ đã smoke-test local.
-- Live URL: **chưa điền**. Đây là blocker cuối trước khi nộp Sprint 1.
+- Live URL: **chưa điền**. Mã nguồn đã có Linux container, health endpoint và cấu hình storage/migration cho cloud; việc tạo tài nguyên bằng tài khoản của nhóm vẫn là blocker cuối trước khi nộp Sprint 1.
 
 ## Demo 90 giây
 
@@ -43,7 +43,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj
 ```
 
-Không đặt API key trong `appsettings*.json`, Git, ảnh chụp hoặc log. Khi deploy, dùng secret `Gemini__ApiKey` và override `ConnectionStrings__DefaultConnection`.
+Không đặt API key trong `appsettings*.json`, Git, ảnh chụp hoặc log. Khi deploy, dùng secret `Gemini__ApiKey`, override `ConnectionStrings__DefaultConnection` và làm theo [hướng dẫn deploy](docs/DEPLOYMENT.md).
 
 ## Dữ liệu và quyền riêng tư
 
@@ -61,4 +61,4 @@ Không đặt API key trong `appsettings*.json`, Git, ảnh chụp hoặc log. K
 - Free tier Gemini có rate limit và có thể trả `429/5xx`; ứng dụng retry lỗi tạm thời ba lần nhưng vẫn chuyển thủ công nếu thất bại.
 - Khi gặp `429`, xem **AI Studio → Dashboard → Usage & Billing** để phân biệt RPM/TPM với RPD. RPM/TPM thường chỉ cần tạm dừng vài phút; RPD reset lúc nửa đêm Pacific. Không chạy Verify lặp lại vì mỗi lượt dùng năm request; xem quy trình và phương án model dự phòng trong [runbook](docs/RUNBOOK.md).
 
-Xem [runbook](docs/RUNBOOK.md), [test matrix](docs/TEST_CASES.md), [trạng thái Sprint 1](docs/SPRINT1_SUBMISSION.md) và [báo cáo kiểm định](PROJECT_AUDIT.md).
+Xem [hướng dẫn deploy](docs/DEPLOYMENT.md), [runbook](docs/RUNBOOK.md), [test matrix](docs/TEST_CASES.md), [trạng thái Sprint 1](docs/SPRINT1_SUBMISSION.md) và [báo cáo kiểm định](PROJECT_AUDIT.md).

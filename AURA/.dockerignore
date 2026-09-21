@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/.vs/
+**/TestResults/
+App_Data/receipts/*
+tests/
+test_kit/
+.git/
+.github/
+*.user
+*.suo
+*.mdf
+*.ldf
