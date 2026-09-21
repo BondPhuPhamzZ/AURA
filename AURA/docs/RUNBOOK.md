@@ -45,6 +45,16 @@ Trong demo, `DecisionPolicy:EscalateDuplicateReceipts=false` cho phép chạy l�
 
 Nếu nhiều ca Verify cùng dừng gần đúng 60.000 ms, đó là `AI_TIMEOUT` theo `Gemini:TimeoutSeconds`, không phải model “học kém đi”. Harness sẽ dừng gọi AI cho các ca còn lại sau timeout, rate limit hoặc lỗi nhà cung cấp để bảo vệ quota. HTTP 429 không được tự động retry; chờ thời điểm reset hiển thị trong AI Studio hoặc chủ động đổi model/key/project đã có quota hợp lệ rồi mới chạy lại.
 
+### Model dự phòng cho demo
+
+- Ưu tiên tạm thời `gemini-3.5-flash-lite`: nhận ảnh, trả text có structured output, tối ưu độ trễ/chi phí cho phân tích tài liệu.
+- Phương án tương thích thận trọng `gemini-2.5-flash-lite`: nhận ảnh và hỗ trợ structured output; phù hợp extraction đơn giản, nhanh và tiết kiệm.
+- Quay lại `gemini-3.6-flash` khi trang Rate limits của đúng Google Cloud project cho thấy quota đã khả dụng và cần độ chính xác cao hơn Lite.
+- Không dùng model có hậu tố `-image`/Nano Banana cho OCR JSON của AURA; đó là dòng tạo/chỉnh sửa ảnh, không phải lựa chọn tối ưu cho extraction có schema.
+- Đổi model qua `Gemini:Model` trong biến môi trường/cấu hình deploy, không sửa prompt hoặc policy. Quota được tính theo project và có thể khác nhau theo model; đổi model chỉ có tác dụng nếu model thay thế còn quota trong project.
+
+RPD reset lúc nửa đêm theo Pacific Time. Vào giai đoạn Pacific Daylight Time, thời điểm này tương ứng khoảng 14:00 tại Việt Nam; khi Pacific Standard Time có thể là khoảng 15:00. RPM/TPM hoặc giới hạn chi tiêu có cửa sổ ngắn hơn, vì vậy luôn lấy thời điểm và bucket cụ thể đang hiển thị trong AI Studio làm nguồn chính xác.
+
 ### Khi Gemini trả HTTP 429
 
 1. Mở **Google AI Studio → Dashboard → Usage & Billing** và xem chính xác giới hạn nào đã chạm: RPM (request/phút), TPM (token/phút) hay RPD (request/ngày). Quota được tính theo **project**, không theo từng API key.
