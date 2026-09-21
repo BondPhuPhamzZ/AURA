@@ -53,7 +53,7 @@ This section gives context only; do not return a decision. The application uses 
 3. `AUTHORITY`: reliable and policy-compliant total is above 1,000,000 VND.
 4. `AUTO_APPROVE`: all required evidence is reliable, total exactly matches the claimed VND amount, date is a weekday within 90 days, visible time (if any) is 06:00-22:00, no prohibited item exists, and total is at most 1,000,000 VND.
 
-The application never asserts approval when a FACT issue exists. Human managers answer a specific Vietnamese yes/no question for every escalation.
+The application never asserts approval when a FACT issue exists. Employees only forward escalations; they never answer the approval question. Human managers receive a specific Vietnamese question and explicitly choose approve or reject for every escalation.
 
 ## 6. Output quality checklist
 
