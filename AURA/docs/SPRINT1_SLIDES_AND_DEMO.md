@@ -16,7 +16,7 @@ Hình minh họa: một luồng ngắn `Hóa đơn → Trích xuất → Policy 
 
 - Input: JPG/PNG tối đa 5 MB + số tiền nhân viên đề nghị.
 - Kiểm đầu vào: extension, MIME, magic bytes, kích thước và SHA-256 phát hiện trùng.
-- Qwen3.8 Flash qua OpenRouter trả dữ kiện theo JSON Schema; không trả quyền quyết định cuối.
+- Qwen3-VL-8B-Instruct qua OpenRouter trả dữ kiện theo JSON Schema; không trả quyền quyết định cuối. 8B là lựa chọn hosted vừa đủ cho demo; 4B là lộ trình self-host cần benchmark.
 - Policy ưu tiên `FACT → POLICY → AUTHORITY`.
 - Output: `AUTO_APPROVE` hoặc câu hỏi chuyển tiếp cụ thể; nhân viên chuyển hồ sơ, quản lý chọn đồng ý/từ chối duyệt; mọi bước vào audit và có hoàn tác.
 
@@ -25,7 +25,7 @@ Nhấn mạnh e-commerce: mã vận chuyển là bằng chứng truy vết logis
 ## Slide 3 — Demo và phương pháp đo
 
 - Verify một nút: 5 ảnh đại diện, kỳ vọng 3 tự duyệt + 2 chuyển tiếp.
-- Test offline: 51/51 automated tests; Test Kit v2 có 30 ảnh tổng hợp đa layout.
+- Test offline: 52/52 automated tests; 5 ca Verify chạy được và gói BGK đúng 15 ca, nằm trong ngân hàng mở rộng 30 ảnh tổng hợp đa layout.
 - Chỉ số hiển thị: expected/actual, PASS/FAIL, latency và timestamp.
 - Kết quả lịch sử fixture v1: 5/5, khoảng 32 giây ngày 20/09/2026.
 - Kết quả fixture v2 trên Live URL: **[ĐIỀN SAU KHI CHẠY: __/5, __ giây, thời điểm __]**.

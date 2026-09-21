@@ -16,7 +16,7 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 - Upload có claimed amount, kiểm extension + MIME + magic bytes + 5 MB, tên file ngẫu nhiên và private storage.
 - Hóa đơn, metadata, SHA-256, facts JSON, decision và audit được lưu để tra cứu.
 - Nhân viên chủ động chuyển một/toàn bộ ca `ESCALATE_*`; hàng đợi quản lý chỉ nhận hồ sơ đã chuyển và có Đồng ý/Từ chối/undo.
-- 51 automated tests đạt 51/51 (47 policy/workflow + 2 OpenRouter contract + 2 Test Kit integrity); build 0 warning/0 error.
+- 52 automated tests đạt 52/52 (47 policy/workflow + 2 OpenRouter contract + 3 Test Kit integrity); build 0 warning/0 error.
 - Benchmark lịch sử fixture v1 đạt 5/5 trong khoảng 32 giây; fixture v2 đa layout đang chờ đúng một lượt benchmark live để bảo toàn quota.
 
 ## 2. Bằng chứng kiểm thử
@@ -97,7 +97,7 @@ Route/action hiện khớp view và JavaScript. Không còn action `Applicant.In
 - Nhận ảnh và xuất text/JSON; Structured Output ép schema giúp giảm output sai định dạng.
 - Latency quan sát 4-9 giây/ảnh, đủ ngân sách 90 giây cho năm ca tuần tự.
 - Kết quả 5/5 trên fixture v1 cho thấy model từng đủ dùng cho demo được kiểm soát; fixture v2 phải được xác minh lại đúng một lượt.
-- Qwen3.8 Flash trả phí phù hợp demo vì hỗ trợ ảnh và JSON Schema; vẫn phải kiểm soát credit/key limit.
+- Qwen3-VL-8B-Instruct trả phí phù hợp demo vì tập trung vision/OCR, hỗ trợ JSON Schema và nhỏ hơn đáng kể so với model cỡ lớn; vẫn phải kiểm soát credit/key limit.
 
 ### Không thể xem là “đủ tuyệt đối”
 
@@ -106,7 +106,7 @@ Route/action hiện khớp view và JavaScript. Không còn action `Applicant.In
 - OpenRouter/provider vẫn có thể rate-limit hoặc lỗi tạm thời; ứng dụng fail-safe sang kiểm tra thủ công.
 - Ảnh gửi tới dịch vụ cloud; phải công bố và không dùng dữ liệu cá nhân thật khi chưa có đồng thuận.
 
-Kết luận hiện tại: AURA dùng **Qwen3.8 Flash trả phí qua OpenRouter/Alibaba Cloud**. `IVisionExtractor` giữ policy engine độc lập; model được đổi qua `OpenRouter:Model`. Cần kiểm tra credit, key limit, Activity và availability trước khi quay video.
+Kết luận hiện tại: AURA dùng **Qwen3-VL-8B-Instruct trả phí qua OpenRouter**. `IVisionExtractor` giữ policy engine độc lập; model được đổi qua `OpenRouter:Model`. Qwen3-VL-4B-Instruct là hướng self-host sau benchmark, không phải endpoint OpenRouter hiện tại. Cần kiểm tra credit, key limit, Activity và availability trước khi quay video. Xem `docs/MODEL_SELECTION_CASE_STUDY.md`.
 
 ## 7. Đánh giá BUSINESS_RULES.md
 

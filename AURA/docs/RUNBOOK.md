@@ -14,7 +14,7 @@ git clone https://github.com/BondPhuPhamzZ/AURA.git
 cd AURA/AURA
 dotnet restore
 dotnet user-secrets set "OpenRouter:ApiKey" "YOUR_OPENROUTER_KEY"
-dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3.8-flash"
+dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
 dotnet ef database update
 ```
 
@@ -40,7 +40,7 @@ Mở URL được in trong terminal. Không truy cập `/Verify` để tìm tran
 
 Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_receipts.py --as-of-date 2026-09-21`. Script đồng thời sinh Test Kit v2 gồm 30 ca nhưng chỉ 5 ca đại diện được Verify gọi. Không đổi `as-of-date`, fixture hoặc expected sau khi chốt mà không cập nhật manifest, tài liệu và commit.
 
-Để bảo toàn credit: build + 51 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 30 ảnh qua API.
+Để bảo toàn credit: build + 52 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 15/30 ảnh tham chiếu qua API.
 
 Trong demo, `DecisionPolicy:EscalateDuplicateReceipts=false` cho phép chạy lại cùng ảnh nhưng vẫn ghi nhận trùng trong audit. Trước production, đổi thành `true`. Thay đổi cấu hình này không cần sửa code.
 
@@ -48,7 +48,8 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 
 ### Model OpenRouter cho demo
 
-- Mặc định demo: `qwen/qwen3.8-flash`, model vision-language trả phí có hỗ trợ structured output bằng JSON Schema.
+- Mặc định demo: `qwen/qwen3-vl-8b-instruct`, model vision-language 8B tập trung OCR/document và hỗ trợ structured output bằng JSON Schema.
+- Qwen3-VL-4B-Instruct là ứng viên self-host tiếp theo, nhưng không được khai báo như route OpenRouter khi catalog chưa cung cấp endpoint đó.
 - HTTP 404 / `AI_MODEL_UNAVAILABLE`: slug model sai, đã bị gỡ hoặc hiện không có endpoint; đây không phải quota.
 - HTTP 401/403 / `AI_AUTH_ERROR`: key sai hoặc thiếu quyền.
 - HTTP 402 / `AI_CREDITS_REQUIRED`: tài khoản không đủ credit hoặc key không được phép dùng model.
@@ -70,7 +71,7 @@ Các biến môi trường bắt buộc:
 
 ```text
 OpenRouter__ApiKey=<secret>
-OpenRouter__Model=qwen/qwen3.8-flash
+OpenRouter__Model=qwen/qwen3-vl-8b-instruct
 ConnectionStrings__DefaultConnection=<SQL Server connection string>
 ReceiptStorage__Directory=<persistent volume path>
 Database__ApplyMigrationsOnStartup=true

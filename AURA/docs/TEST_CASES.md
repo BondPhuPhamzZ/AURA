@@ -12,7 +12,7 @@ Mốc cập nhật: 21/09/2026. Ký hiệu: `A` đã tự động hóa bằng xU
 | TC-04 | Phiếu in nhiệt để trống MST thật sự | 210.000 | ESCALATE_FACT | V2, chờ benchmark |
 | TC-05 | Nhà hàng có Bia Tiger x 6 | 780.000 | ESCALATE_POLICY | V2, chờ benchmark |
 
-Ngày 20/09/2026, provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026 và chưa benchmark bằng cấu hình Qwen3.8 Flash/OpenRouter hiện tại; phải chạy đúng một lượt sau deploy trước khi quay video. Kết quả cũ không được gán cho ảnh v2.
+Ngày 20/09/2026, provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026 và chưa benchmark bằng cấu hình Qwen3-VL-8B-Instruct/OpenRouter hiện tại; phải chạy đúng một lượt sau deploy trước khi quay video. Kết quả cũ không được gán cho ảnh v2.
 
 Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số `AUTO_APPROVE`/`ESCALATE_*`; facts trích xuất hiển thị cạnh upload; auto approve xuất hiện ngay trong Audit; escalation còn trong bảng kết quả cho tới khi chuyển quản lý; các thao tác không yêu cầu reload toàn trang.
 

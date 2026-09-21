@@ -17,7 +17,7 @@ AURA hiện là một **vertical slice chạy thật** cho Track A — The Escal
 6. Quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi cụ thể và có thể hoàn tác.
 7. Mọi bước quan trọng được ghi vào audit trail; ảnh gốc có thể mở lại.
 
-Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 51 automated test đạt (47 policy/workflow + 2 OpenRouter contract + 2 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5 với provider cũ, còn Qwen3.8 Flash/OpenRouter cần một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
+Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 52 automated test đạt (47 policy/workflow + 2 OpenRouter contract + 3 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5 với provider cũ, còn Qwen3-VL-8B-Instruct/OpenRouter cần một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
 
 Đánh giá công tâm:
 
@@ -32,7 +32,7 @@ Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện c�
 
 Nghiệp vụ cần giảm số hồ sơ thường quy mà quản lý phải đọc thủ công, nhưng không được để AI tự tin duyệt một hồ sơ thiếu chứng cứ. AURA chia bài toán thành hai phần:
 
-- **Nhìn và đọc:** Qwen3.8 Flash qua OpenRouter/Alibaba Cloud đọc pixel và trả dữ kiện.
+- **Nhìn và đọc:** Qwen3-VL-8B-Instruct qua OpenRouter đọc pixel và trả dữ kiện.
 - **Ra quyết định:** C# kiểm tra dữ kiện bằng luật rõ ràng, có thể test và tái lập.
 
 Sự tách biệt này quan trọng hơn việc dùng một prompt “thông minh” để AI tự quyết định. Cùng một JSON dữ kiện và cùng tham số đầu vào, `PolicyDecisionEngine` luôn trả cùng kết quả.
@@ -43,7 +43,7 @@ Sự tách biệt này quan trọng hơn việc dùng một prompt “thông min
 - Không gọi cơ quan thuế để xác thực mã số thuế/mã hóa đơn.
 - Không tự quy đổi ngoại tệ.
 - Không hỗ trợ PDF, nhiều trang hoặc nhiều hóa đơn trong một ảnh ở Sprint 1.
-- Không phải hệ thống on-premise/zero-cloud: ảnh được gửi qua OpenRouter tới provider Alibaba Cloud.
+- Không phải hệ thống on-premise/zero-cloud: ảnh được gửi qua OpenRouter tới provider được router lựa chọn.
 - Không dùng kết quả 5/5 nội bộ để tuyên bố accuracy trên thị trường.
 
 ## 3. Kiến trúc tổng thể
@@ -120,7 +120,7 @@ Các thư mục `bin/`, `obj/`, `publish/` và `wwwroot/lib/` là output build h
 `appsettings.json` chứa:
 
 - LocalDB connection string phục vụ Windows local.
-- Model mặc định `qwen/qwen3.8-flash`.
+- Model mặc định `qwen/qwen3-vl-8b-instruct`.
 - OpenRouter API base URL và route tương đối `chat/completions`.
 - `PolicyPath = BUSINESS_RULES.md`.
 - Timeout 90 giây và tối đa 4096 output token.
@@ -157,7 +157,7 @@ Vì Verify Harness là một phần của dashboard nên `/Verify` không phải
 7. Bảo đảm thư mục cấu hình nằm dưới content root.
 8. Lưu file ngoài `wwwroot`.
 9. Tính SHA-256 và hỏi DB xem ảnh đã xuất hiện chưa.
-10. Gọi Qwen3.8 Flash qua OpenRouter để trích xuất facts.
+10. Gọi Qwen3-VL-8B-Instruct qua OpenRouter để trích xuất facts.
 11. Serialize facts để giữ bằng chứng máy đã đọc gì.
 12. Gọi policy engine với facts, claimed amount và duplicate flag.
 13. Nếu AI/API lỗi, chuyển `ESCALATE_SYSTEM_ERROR` với mã an toàn như `AI_RATE_LIMIT`; không giả kết quả nghiệp vụ.
@@ -309,7 +309,7 @@ Năm fixture Verify v2 được chọn từ Test Kit 30 ca:
 
 Comparator chỉ PASS khi status đúng; expected `ESCALATE` tổng quát mới khớp mọi `ESCALATE_*`. `ESCALATE_SYSTEM_ERROR` không được hợp thức hóa thành PASS.
 
-Benchmark ngày 20/09/2026 với provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 được sinh offline ngày 21/09/2026 và chưa benchmark bằng Qwen3.8 Flash trả phí; kết quả v1 không được gán cho v2. Trước video cần chạy đúng một lượt v2 trên live URL và lưu expected/actual/latency/cost.
+Benchmark ngày 20/09/2026 với provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 được sinh offline ngày 21/09/2026 và chưa benchmark bằng Qwen3-VL-8B-Instruct trả phí; kết quả v1 không được gán cho v2. Trước video cần chạy đúng một lượt v2 trên live URL và lưu expected/actual/latency/cost.
 
 ## 13. Giao diện
 
@@ -329,7 +329,7 @@ Hai ViewComponent bắt lỗi DB và hiển thị thông báo thay vì làm hỏ
 
 ### 14.1 Automated policy tests
 
-47 xUnit policy/workflow cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, phạm vi tax ID theo loại chứng từ, currency, date, future/stale/weekend, late time, blur, duplicate, phép tính dòng hàng bất khả thi, chứng từ nháp/hủy, e-commerce/mã vận chuyển, bốn nhóm item cấm, authority, precedence, tám nhánh quyết định và ranh giới vai trò nhân viên/quản lý. Hai test bổ sung khóa đúng 5 fixture Verify, phân bố 3 auto + 2 escalate, 30 case benchmark, file tồn tại/duy nhất và không vượt 5 MB.
+47 xUnit policy/workflow cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, phạm vi tax ID theo loại chứng từ, currency, date, future/stale/weekend, late time, blur, duplicate, phép tính dòng hàng bất khả thi, chứng từ nháp/hủy, e-commerce/mã vận chuyển, bốn nhóm item cấm, authority, precedence, tám nhánh quyết định và ranh giới vai trò nhân viên/quản lý. Ba test Test Kit khóa đúng 5 fixture Verify, gói BGK 15 ca, ngân hàng 30 ca, phân bố expected status, file tồn tại/duy nhất và không vượt 5 MB.
 
 ### 14.2 Smoke tests đã thực hiện
 
@@ -361,7 +361,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Mục tiêu: build sạch và 51/51 automated test.
+Mục tiêu: build sạch và 52/52 automated test.
 
 ### Tầng B — fixture chuẩn hóa
 
@@ -536,7 +536,9 @@ Mỗi case lưu: ID, nguồn/license/consent, ground truth fields, claimed amoun
 
 ## 24. Nguồn tham khảo kiểm thử và model
 
-- OpenRouter Qwen3.8 Flash: `https://openrouter.ai/qwen/qwen3.8-flash`
+- Case study chọn model: `docs/MODEL_SELECTION_CASE_STUDY.md`
+- OpenRouter Qwen3-VL-8B-Instruct: `https://openrouter.ai/qwen/qwen3-vl-8b-instruct`
+- Qwen3-VL official repository (4B open weights): `https://github.com/QwenLM/Qwen3-VL`
 - OpenRouter API quickstart: `https://openrouter.ai/docs/quickstart`
 - OpenRouter structured outputs: `https://openrouter.ai/docs/features/structured-outputs`
 - OpenRouter multimodal images: `https://openrouter.ai/docs/features/multimodal/images`

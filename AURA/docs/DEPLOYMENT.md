@@ -17,7 +17,7 @@ Azure phù hợp nhất với stack hiện tại vì hỗ trợ ASP.NET Core, Az
 ```text
 ASPNETCORE_ENVIRONMENT=Production
 OpenRouter__ApiKey=<secret>
-OpenRouter__Model=qwen/qwen3.8-flash
+OpenRouter__Model=qwen/qwen3-vl-8b-instruct
 ConnectionStrings__DefaultConnection=<Azure SQL connection string>
 Database__ApplyMigrationsOnStartup=true
 ReceiptStorage__Directory=/home/data/receipts

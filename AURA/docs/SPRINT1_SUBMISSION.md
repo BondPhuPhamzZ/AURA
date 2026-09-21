@@ -7,7 +7,7 @@ Ngày cập nhật: 21/09/2026. Chuẩn đối chiếu: Track A trong `Challenge
 | Yêu cầu | Trạng thái | Bằng chứng |
 |---|---|---|
 | Quy trình và policy rõ | Đạt cơ bản | `BUSINESS_RULES.md`, policy engine tất định |
-| Tối thiểu 15 tình huống | Đạt | 51 automated tests và Test Kit v2 gồm 30 ảnh/ground truth |
+| Tối thiểu 15 tình huống | Đạt | 52 automated tests; `test_kit/judge-manifest.json` khóa đúng 15 ca/ground truth |
 | Ba nhóm FACT/POLICY/AUTHORITY | Đạt | status và precedence trong `PolicyDecisionEngine` |
 | Câu hỏi chuyển tiếp cụ thể | Đạt | câu hỏi tiếng Việt có dữ kiện và lựa chọn CÓ/KHÔNG |
 | Không over-escalate | Đạt trên fixture nội bộ | 3/3 routine cases auto-approve |
@@ -21,7 +21,7 @@ Ngày cập nhật: 21/09/2026. Chuẩn đối chiếu: Track A trong `Challenge
 ## Sáu sản phẩm phải chuẩn bị
 
 1. **Live URL:** chưa có; phải deploy và kiểm thử từ trình duyệt/thiết bị không đăng nhập.
-2. **Verify harness + bảng test + runbook:** Test Kit v2 có 30 ca offline và 5 ca Verify đại diện; cần ghi lại một run v2 từ live URL.
+2. **Verify harness + bảng test + runbook:** 5 ca Verify chạy trực tiếp; gói BGK đúng 15 ca trong `test_kit/judge-manifest.json`; ngân hàng mở rộng 30 ca chỉ dùng nội bộ. Cần ghi lại một run v2 từ live URL.
 3. **Public repository:** `https://github.com/BondPhuPhamzZ/AURA`; phải push toàn bộ commit, không squash/force-push.
 4. **Video demo tối đa 3 phút:** kịch bản 2:45 đã chốt tại `docs/SPRINT1_SLIDES_AND_DEMO.md`; chưa quay. Phải thể hiện live URL, Verify 5 ca, upload mới, manager decision và audit/undo; giữ lại cả giới hạn thực tế.
 5. **Đúng 5 slide:** nội dung từng slide đã chốt tại `docs/SPRINT1_SLIDES_AND_DEMO.md`; chưa xuất artifact cuối. Phải điền Live URL và kết quả fixture v2 thật trước khi xuất.
