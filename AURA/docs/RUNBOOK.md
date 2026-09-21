@@ -5,7 +5,7 @@
 - .NET 8 SDK
 - SQL Server LocalDB trên Windows hoặc SQL Server/Azure SQL có thể truy cập
 - `dotnet-ef` tương thích EF Core 8 (khuyến nghị)
-- Gemini API key có quyền gọi `gemini-3.6-flash`
+- OpenRouter API key có quyền gọi model cấu hình trong `OpenRouter:Model`
 
 ## 2. Clone và cấu hình local
 
@@ -13,7 +13,7 @@
 git clone https://github.com/BondPhuPhamzZ/AURA.git
 cd AURA/AURA
 dotnet restore
-dotnet user-secrets set "Gemini:ApiKey" "YOUR_KEY"
+dotnet user-secrets set "OpenRouter:ApiKey" "YOUR_OPENROUTER_KEY"
 dotnet ef database update
 ```
 
@@ -39,19 +39,20 @@ Mở URL được in trong terminal. Không truy cập `/Verify` để tìm tran
 
 Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_receipts.py --as-of-date 2026-09-21`. Script đồng thời sinh Test Kit v2 gồm 30 ca nhưng chỉ 5 ca đại diện được Verify gọi. Không đổi `as-of-date`, fixture hoặc expected sau khi chốt mà không cập nhật manifest, tài liệu và commit.
 
-Để bảo toàn quota: build + 49 automated test trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 30 ảnh trên free tier.
+Để bảo toàn quota: build + 50 automated test trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 30 ảnh trên free tier.
 
 Trong demo, `DecisionPolicy:EscalateDuplicateReceipts=false` cho phép chạy lại cùng ảnh nhưng vẫn ghi nhận trùng trong audit. Trước production, đổi thành `true`. Thay đổi cấu hình này không cần sửa code.
 
-Nếu nhiều ca Verify cùng dừng gần đúng 60.000 ms, đó là `AI_TIMEOUT` theo `Gemini:TimeoutSeconds`, không phải model “học kém đi”. Harness sẽ dừng gọi AI cho các ca còn lại sau timeout, rate limit hoặc lỗi nhà cung cấp để bảo vệ quota. HTTP 429 không được tự động retry; chờ thời điểm reset hiển thị trong AI Studio hoặc chủ động đổi model/key/project đã có quota hợp lệ rồi mới chạy lại.
+Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó là `AI_TIMEOUT`, không phải model “học kém đi”. Harness dừng gọi AI cho các ca còn lại sau timeout, rate limit, lỗi xác thực, thiếu credit hoặc model không tồn tại để bảo vệ quota. HTTP 429 không được tự động retry.
 
-### Model dự phòng cho demo
+### Model OpenRouter cho demo
 
-- Ưu tiên tạm thời `gemini-3.5-flash-lite`: nhận ảnh, trả text có structured output, tối ưu độ trễ/chi phí cho phân tích tài liệu.
-- Phương án tương thích thận trọng `gemini-2.5-flash-lite`: nhận ảnh và hỗ trợ structured output; phù hợp extraction đơn giản, nhanh và tiết kiệm.
-- Quay lại `gemini-3.6-flash` khi trang Rate limits của đúng Google Cloud project cho thấy quota đã khả dụng và cần độ chính xác cao hơn Lite.
-- Không dùng model có hậu tố `-image`/Nano Banana cho OCR JSON của AURA; đó là dòng tạo/chỉnh sửa ảnh, không phải lựa chọn tối ưu cho extraction có schema.
-- Đổi model qua `Gemini:Model` trong biến môi trường/cấu hình deploy, không sửa prompt hoặc policy. Quota được tính theo project và có thể khác nhau theo model; đổi model chỉ có tác dụng nếu model thay thế còn quota trong project.
+- Mặc định demo: `qwen/qwen3.8-27b:free`, model vision-language đang tồn tại trên OpenRouter.
+- HTTP 404 / `AI_MODEL_UNAVAILABLE`: slug model sai, đã bị gỡ hoặc hiện không có endpoint; đây không phải quota.
+- HTTP 401/403 / `AI_AUTH_ERROR`: key sai hoặc thiếu quyền.
+- HTTP 402 / `AI_CREDITS_REQUIRED`: cần credit hoặc không còn tuyến miễn phí.
+- HTTP 429 / `AI_RATE_LIMIT`: rate limit của OpenRouter/free provider; ứng dụng không tự retry.
+- Đổi model bằng `OpenRouter:Model`; luôn xác nhận model nhận input ảnh trên catalog trước khi đổi.
 
 RPD reset lúc nửa đêm theo Pacific Time. Vào giai đoạn Pacific Daylight Time, thời điểm này tương ứng khoảng 14:00 tại Việt Nam; khi Pacific Standard Time có thể là khoảng 15:00. RPM/TPM hoặc giới hạn chi tiêu có cửa sổ ngắn hơn, vì vậy luôn lấy thời điểm và bucket cụ thể đang hiển thị trong AI Studio làm nguồn chính xác.
 
@@ -70,8 +71,8 @@ Phương án dự phòng miễn phí ưu tiên để benchmark là `gemini-3.5-f
 Các biến môi trường bắt buộc:
 
 ```text
-Gemini__ApiKey=<secret>
-Gemini__Model=gemini-3.6-flash
+OpenRouter__ApiKey=<secret>
+OpenRouter__Model=qwen/qwen3.8-27b:free
 ConnectionStrings__DefaultConnection=<SQL Server connection string>
 ReceiptStorage__Directory=<persistent volume path>
 Database__ApplyMigrationsOnStartup=true

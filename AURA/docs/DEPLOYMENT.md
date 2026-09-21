@@ -16,8 +16,8 @@ Azure phù hợp nhất với stack hiện tại vì hỗ trợ ASP.NET Core, Az
 
 ```text
 ASPNETCORE_ENVIRONMENT=Production
-Gemini__ApiKey=<secret>
-Gemini__Model=gemini-3.6-flash
+OpenRouter__ApiKey=<secret>
+OpenRouter__Model=qwen/qwen3.8-27b:free
 ConnectionStrings__DefaultConnection=<Azure SQL connection string>
 Database__ApplyMigrationsOnStartup=true
 ReceiptStorage__Directory=/home/data/receipts
@@ -39,7 +39,7 @@ Render có thể build Dockerfile khi đặt **Root Directory** là `AURA`, heal
 Thực hiện trước theo thứ tự:
 
 1. `dotnet build --no-restore`.
-2. `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` — hiện có 49 test offline.
+2. `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` — hiện có 50 test offline.
 3. Gọi `/healthz`, mở ba tab và kiểm tra responsive/audit.
 4. Kiểm tra upload file quá 5 MB bị chặn tại client; bước này không gửi Gemini.
 5. Chỉ sau khi deploy ổn định mới gọi một ảnh smoke test, rồi đúng một lượt Verify 5 ảnh.

@@ -25,7 +25,7 @@ Nhấn mạnh e-commerce: mã vận chuyển là bằng chứng truy vết logis
 ## Slide 3 — Demo và phương pháp đo
 
 - Verify một nút: 5 ảnh đại diện, kỳ vọng 3 tự duyệt + 2 chuyển tiếp.
-- Test offline: 49/49 automated tests; Test Kit v2 có 30 ảnh tổng hợp đa layout.
+- Test offline: 50/50 automated tests; Test Kit v2 có 30 ảnh tổng hợp đa layout.
 - Chỉ số hiển thị: expected/actual, PASS/FAIL, latency và timestamp.
 - Kết quả lịch sử fixture v1: 5/5, khoảng 32 giây ngày 20/09/2026.
 - Kết quả fixture v2 trên Live URL: **[ĐIỀN SAU KHI CHẠY: __/5, __ giây, thời điểm __]**.
@@ -35,7 +35,7 @@ Không gọi 5/5 fixture tổng hợp là “độ chính xác thực tế”. A
 ## Slide 4 — Kiến trúc và phần chạy thật
 
 - ASP.NET Core MVC, EF Core, SQL Server/Azure SQL.
-- `GeminiVisionExtractorService` gọi model thật; `PolicyDecisionEngine` và audit chạy thật.
+- `OpenRouterVisionExtractorService` gọi Qwen vision thật; `PolicyDecisionEngine` và audit chạy thật.
 - Chứng từ lưu riêng tư ngoài `wwwroot`; DB giữ metadata, facts, status và audit.
 - Linux container, `/healthz`, migration opt-in và persistent storage path cấu hình bằng environment.
 - Live URL: **[ĐIỀN HTTPS URL]**; repository: `https://github.com/BondPhuPhamzZ/AURA`.

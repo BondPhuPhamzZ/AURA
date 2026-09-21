@@ -11,12 +11,12 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 
 - Verify Harness không còn bị hàm JavaScript trong layout ghi đè và báo sai “quay về trang chủ”.
 - Năm fixture/kỳ vọng đã được thay bằng bộ nhất quán 3 auto + 2 escalate.
-- Gemini 3.6 dùng Structured Output; policy C# mới quyết định tất định.
+- Qwen vision qua OpenRouter trả dữ kiện có cấu trúc; policy C# mới quyết định tất định.
 - Policy được đọc từ `BUSINESS_RULES.md` ở content root, không còn public trong `wwwroot`.
 - Upload có claimed amount, kiểm extension + MIME + magic bytes + 5 MB, tên file ngẫu nhiên và private storage.
 - Hóa đơn, metadata, SHA-256, facts JSON, decision và audit được lưu để tra cứu.
 - Nhân viên chủ động chuyển một/toàn bộ ca `ESCALATE_*`; hàng đợi quản lý chỉ nhận hồ sơ đã chuyển và có Đồng ý/Từ chối/undo.
-- 49 automated tests đạt 49/49 (47 policy/workflow + 2 Test Kit integrity); build 0 warning/0 error.
+- 50 automated tests đạt 50/50 (47 policy/workflow + 1 OpenRouter contract + 2 Test Kit integrity); build 0 warning/0 error.
 - Benchmark lịch sử fixture v1 đạt 5/5 trong khoảng 32 giây; fixture v2 đa layout đang chờ đúng một lượt benchmark live để bảo toàn quota.
 
 ## 2. Bằng chứng kiểm thử
@@ -24,7 +24,7 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 | Kiểm thử | Kết quả |
 |---|---|
 | `dotnet build --no-restore` | Đạt, 0 warning, 0 error |
-| `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` | Đạt 49/49 |
+| `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` | Đạt 50/50 |
 | EF migration `PersistReceiptEvidence` | Áp dụng thành công vào LocalDB |
 | `GET /`, `/Home/Index`, `/Home/Privacy` | 200 |
 | `GET /Applicant`, `/Verify` | 302 về trang chủ |
@@ -90,7 +90,7 @@ Route/action hiện khớp view và JavaScript. Không còn action `Applicant.In
 | Live URL public | **Không đạt/Blocker** | Chưa có URL |
 | Public repo đầy đủ lịch sử | Đạt local, chờ push/xác minh public | Không squash/force-push |
 
-## 6. Đánh giá Gemini 3.6 Flash
+## 6. Đánh giá nhà cung cấp Vision AI
 
 ### Phù hợp cho Sprint 1
 
@@ -106,7 +106,7 @@ Route/action hiện khớp view và JavaScript. Không còn action `Applicant.In
 - Free Tier có thể rate-limit; đã quan sát HTTP 429 và 503 trong kiểm thử thật.
 - Ảnh gửi tới dịch vụ cloud; phải công bố và không dùng dữ liệu cá nhân thật khi chưa có đồng thuận.
 
-Kết luận: **Gemini 3.6 Flash là lựa chọn khả thi nhất để kịp Sprint 1**, tốt hơn setup Qwen local sát deadline. Kiến trúc hiện tại cho phép đổi model qua `Gemini:Model` mà không đổi policy engine.
+Kết luận hiện tại: AURA dùng **Qwen vision qua OpenRouter** để tránh phụ thuộc quota Gemini. `IVisionExtractor` giữ policy engine độc lập; model được đổi qua `OpenRouter:Model`. Free route phù hợp demo nhưng không có SLA, vì vậy cần kiểm tra availability trước khi quay video.
 
 ## 7. Đánh giá BUSINESS_RULES.md
 

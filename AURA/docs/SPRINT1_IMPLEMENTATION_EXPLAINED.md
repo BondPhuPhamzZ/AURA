@@ -10,14 +10,14 @@ AURA hiện là một **vertical slice chạy thật** cho Track A — The Escal
 
 1. Nhân viên tải một ảnh hóa đơn JPG/PNG và nhập số tiền đề nghị.
 2. Server kiểm tra file, lưu bản gốc vào vùng không public và tạo SHA-256.
-3. Gemini 3.6 Flash chỉ trích xuất dữ kiện theo JSON Schema.
+3. Qwen vision qua OpenRouter chỉ trích xuất dữ kiện theo hợp đồng JSON.
 4. Giao diện hiển thị chính xác facts đã trích xuất cạnh ảnh và số tiền; không chỉ hiển thị quyết định cuối.
 4. Bộ luật C# tất định quyết định `AUTO_APPROVE` hoặc một trong ba loại chuyển tiếp.
 5. Ca chuyển tiếp xuất hiện ở cửa sổ nhân viên; nhân viên bấm **Chuyển tiếp** để giao đúng trách nhiệm.
 6. Quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi cụ thể và có thể hoàn tác.
 7. Mọi bước quan trọng được ghi vào audit trail; ảnh gốc có thể mở lại.
 
-Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 49 automated test đạt (47 policy/workflow + 2 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5, còn fixture v2 đa layout đang chờ một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
+Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 50 automated test đạt (47 policy/workflow + 1 OpenRouter contract + 2 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5 với provider cũ, còn Qwen/OpenRouter cần một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
 
 Đánh giá công tâm:
 
@@ -53,7 +53,7 @@ Browser / Razor UI
   -> ASP.NET Core MVC Controller
   -> kiểm CSRF + amount + extension + MIME + magic bytes + size
   -> private receipt storage (App_Data/receipts)
-  -> Gemini 3.6 Flash / Structured Output
+  -> Qwen vision / OpenRouter chat completions
   -> ReceiptExtractionDto
   -> PolicyDecisionEngine (FACT > POLICY > AUTHORITY)
   -> SQL Server: request + extracted JSON + decision
@@ -63,7 +63,7 @@ Browser / Razor UI
 
 Các lớp được ghép bằng Dependency Injection:
 
-- `IVisionExtractor` → `GeminiVisionExtractorService`
+- `IVisionExtractor` → `OpenRouterVisionExtractorService`
 - `IReimbursementRepository` → `ReimbursementRepository`
 - `IAuditLogger` → `AuditLogger`
 - `AppDbContext` → EF Core SQL Server
@@ -120,13 +120,13 @@ Các thư mục `bin/`, `obj/`, `publish/` và `wwwroot/lib/` là output build h
 `appsettings.json` chứa:
 
 - LocalDB connection string phục vụ Windows local.
-- Model `gemini-3.6-flash`.
+- Model mặc định `qwen/qwen3.8-27b:free`.
 - Gemini API base URL.
 - `PolicyPath = BUSINESS_RULES.md`.
 - Timeout 60 giây.
 - Kho ảnh `App_Data/receipts`, tối đa 5 MB.
 
-API key không nằm trong file config. Local dùng user secrets; deploy dùng `Gemini__ApiKey`. Connection string deploy phải override `ConnectionStrings__DefaultConnection`.
+API key không nằm trong file config. Local dùng user secrets; deploy dùng `OpenRouter__ApiKey`. Connection string deploy phải override `ConnectionStrings__DefaultConnection`.
 
 ## 6. Toàn bộ route hiện có
 
@@ -170,7 +170,7 @@ Lưu ý kỹ thuật còn tồn tại: file được ghi trước DB. Nếu DB s
 
 ### 8.1 Gemini làm gì
 
-`GeminiVisionExtractorService`:
+`OpenRouterVisionExtractorService`:
 
 - Từ chối chạy nếu thiếu API key, ảnh hoặc policy file.
 - Chỉ cho phép policy path nằm trong application root.
@@ -183,11 +183,11 @@ Lưu ý kỹ thuật còn tồn tại: file được ghi trước DB. Nếu DB s
 - Deserialize có kiểu; chuẩn hóa array null thành rỗng và clamp confidence 0..1.
 - Coi `MAX_TOKENS`, JSON ngoài/JSON extraction lỗi là thất bại; không sử dụng phản hồi bị cắt.
 
-Google chính thức xác nhận Gemini 3.6 Flash là model stable, nhận input hình ảnh và hỗ trợ Structured Outputs. Structured Outputs bảo đảm hình dạng JSON tốt hơn nhưng **không bảo đảm giá trị đúng về ngữ nghĩa**, vì vậy validation C# vẫn bắt buộc.
+OpenRouter nhận ảnh base64 qua `/api/v1/chat/completions` và chuyển đến model Qwen vision được cấu hình. JSON mode giúp ổn định hình dạng phản hồi nhưng **không bảo đảm giá trị đúng về ngữ nghĩa**, vì vậy validation C# vẫn bắt buộc.
 
 ### 8.2 AI có đọc được `BUSINESS_RULES.md` không?
 
-Có. File không cần nằm trong `wwwroot`. Server dùng `IWebHostEnvironment.ContentRootPath` ghép với `Gemini:PolicyPath`, đọc text và gửi trực tiếp trong request. Đặt file ở root ứng dụng còn tốt hơn đặt trong `wwwroot`, vì URL `/BUSINESS_RULES.md` hiện trả 404.
+Có. File không cần nằm trong `wwwroot`. Server dùng `IWebHostEnvironment.ContentRootPath` ghép với `OpenRouter:PolicyPath`, đọc text và gửi trực tiếp trong request. Đặt file ở root ứng dụng còn tốt hơn đặt trong `wwwroot`, vì URL `/BUSINESS_RULES.md` hiện trả 404.
 
 ### 8.3 Chất lượng policy hiện tại
 
@@ -361,7 +361,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Mục tiêu: build sạch và 49/49 automated test.
+Mục tiêu: build sạch và 50/50 automated test.
 
 ### Tầng B — fixture chuẩn hóa
 
@@ -475,7 +475,7 @@ Mỗi case lưu: ID, nguồn/license/consent, ground truth fields, claimed amoun
 - `Controllers/ReviewerController.cs`: Đồng ý/Từ chối/undo với state guard và atomic audit persistence.
 - `Services/EscalationWorkflow.cs`: ánh xạ ý nghĩa Có/Không theo từng loại escalation.
 - `Services/VisionExtractionException.cs`: mã lỗi AI an toàn, không làm lộ secret/response thô.
-- `Services/GeminiVisionExtractorService.cs`: REST client, schema, retry, parsing.
+- `Services/OpenRouterVisionExtractorService.cs`: REST client OpenRouter, image payload, JSON parsing và phân loại lỗi provider.
 - `Services/PolicyDecisionEngine.cs`: luật nghiệp vụ thuần, không phụ thuộc DB/API.
 - `Services/ReimbursementRepository.cs`: CRUD requests và duplicate hash query.
 - `Services/AuditLogger.cs`: append/read audit entries.

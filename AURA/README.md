@@ -1,11 +1,11 @@
 # AURA - Automated Underwriting & Reimbursement AI
 
-AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứng chi phí. Gemini 3.6 Flash chỉ đọc ảnh và trả dữ kiện theo JSON Schema; `PolicyDecisionEngine` của ASP.NET Core mới là thành phần quyết định tất định.
+AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứng chi phí. Qwen vision qua OpenRouter chỉ đọc ảnh và trả dữ kiện có cấu trúc; `PolicyDecisionEngine` của ASP.NET Core mới là thành phần quyết định tất định.
 
 ## Trạng thái Sprint 1
 
 - Build sạch: 0 warning, 0 error.
-- 49 kiểm thử tự động: 47 test chính sách/workflow (gồm e-commerce/mã vận chuyển, phạm vi MST theo loại chứng từ và phép tính dòng hàng bất khả thi) cùng 2 test toàn vẹn manifest/ảnh Test Kit.
+- 50 kiểm thử tự động: 47 test chính sách/workflow, 1 test hợp đồng OpenRouter/Qwen offline và 2 test toàn vẹn manifest/ảnh Test Kit.
 - Verify Vision v2: 5 ảnh tổng hợp đa layout gồm 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`; đang chờ đúng một lượt benchmark sau deploy để bảo toàn quota. Kết quả 5/5 ngày 20/09/2026 thuộc fixture v1 và chỉ là lịch sử.
 - Route upload, Verify, audit, quản lý, CSRF và tra cứu chứng từ đã smoke-test local.
 - Giao diện upload ba cột hiển thị trực tiếp facts AI đã đọc. Kết quả cho biết số ca tự động duyệt/chuyển tiếp; ca tự duyệt vào lịch sử, ca chuyển tiếp được giữ trong bảng kết quả ngay cả sau reload.
@@ -37,7 +37,7 @@ Thứ tự ưu tiên khi có nhiều lỗi: `FACT -> POLICY -> AUTHORITY`. Input
 Yêu cầu: .NET 8 SDK, SQL Server LocalDB/SQL Server, EF CLI.
 
 ```powershell
-dotnet user-secrets set "Gemini:ApiKey" "YOUR_KEY"
+dotnet user-secrets set "OpenRouter:ApiKey" "YOUR_OPENROUTER_KEY"
 dotnet ef database update
 dotnet run
 ```
@@ -49,7 +49,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj
 ```
 
-Không đặt API key trong `appsettings*.json`, Git, ảnh chụp hoặc log. Khi deploy, dùng secret `Gemini__ApiKey`, override `ConnectionStrings__DefaultConnection` và làm theo [hướng dẫn deploy](docs/DEPLOYMENT.md).
+Không đặt API key trong `appsettings*.json`, Git, ảnh chụp hoặc log. Khi deploy, dùng secret `OpenRouter__ApiKey`, override `ConnectionStrings__DefaultConnection` và làm theo [hướng dẫn deploy](docs/DEPLOYMENT.md).
 
 ## Dữ liệu và quyền riêng tư
 
