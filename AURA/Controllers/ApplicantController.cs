@@ -148,13 +148,14 @@ public sealed class ApplicantController : Controller
             ImageUrl = Url.Action(nameof(Receipt), "Applicant", new { id }) ?? $"/Applicant/Receipt/{id}",
             CreatedAt = DateTime.UtcNow
         };
+        ReceiptExtractionDto? extractedFacts = null;
 
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            var facts = await _vision.ExtractFactsAsync(physicalPath, cancellationToken);
-            request.ExtractedFactsJson = JsonSerializer.Serialize(facts);
-            var decision = PolicyDecisionEngine.Evaluate(facts, request.ClaimedAmount, duplicate);
+            extractedFacts = await _vision.ExtractFactsAsync(physicalPath, cancellationToken);
+            request.ExtractedFactsJson = JsonSerializer.Serialize(extractedFacts);
+            var decision = PolicyDecisionEngine.Evaluate(extractedFacts, request.ClaimedAmount, duplicate);
             request.Status = decision.Status;
             request.AiReasoning = decision.Reason;
             request.ManagerQuestion = decision.ManagerQuestion;
@@ -203,7 +204,8 @@ public sealed class ApplicantController : Controller
             canForward = PolicyDecisionEngine.IsEscalation(request.Status),
             handoffPrompt = PolicyDecisionEngine.IsEscalation(request.Status)
                 ? EscalationWorkflow.EmployeeHandoffPrompt
-                : null
+                : null,
+            facts = extractedFacts
         });
     }
 

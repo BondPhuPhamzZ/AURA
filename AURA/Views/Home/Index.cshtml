@@ -45,6 +45,16 @@
                     <div class="dropzone-subtext" style="color: var(--colors-ink-subtle); margin-top: 8px; font-size: 0.875rem;">Hỗ trợ JPG, PNG (Tối đa @ReceiptStorage.Value.MaxFileSizeMb MB)</div>
                 </div>
 
+                <section class="extracted-facts-panel" aria-labelledby="extracted-facts-title" aria-live="polite">
+                    <div class="extracted-facts-heading">
+                        <h4 id="extracted-facts-title">Nội dung AI đọc được</h4>
+                        <span id="extractedFactsConfidence" class="badge bg-secondary">Chưa quét</span>
+                    </div>
+                    <div id="extractedFactsBody" class="extracted-facts-empty">
+                        Kết quả trích xuất sẽ xuất hiện tại đây sau khi AI xử lý ảnh. Giá trị không đọc chắc chắn được hiển thị là “Không đọc được”, không tự suy đoán.
+                    </div>
+                </section>
+
                 <div class="amount-action-row">
                     <div class="amount-field">
                         <label for="claimedAmountDisplay" class="form-label fw-semibold">Số tiền nhân viên đề nghị hoàn ứng (VND)</label>
@@ -226,6 +236,53 @@
         dropzoneText.innerHTML = '<div style="color: var(--colors-primary); font-weight: 600;">' + fileName + '</div>';
         dropzoneSubtext.innerText = 'Click hoặc kéo thả ảnh khác để thay đổi';
         document.querySelector('.dropzone-icon').innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--colors-primary)" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>';
+        renderExtractedFacts(null);
+    }
+
+    function displayFact(value) {
+        return value == null || String(value).trim() === '' ? 'Không đọc được' : String(value);
+    }
+
+    function formatFactMoney(value) {
+        return value == null ? 'Không đọc được' : new Intl.NumberFormat('vi-VN').format(Number(value)) + ' VND';
+    }
+
+    function renderExtractedFacts(facts) {
+        const body = document.getElementById('extractedFactsBody');
+        const confidence = document.getElementById('extractedFactsConfidence');
+        if (!facts) {
+            confidence.className = 'badge bg-secondary';
+            confidence.textContent = 'Chưa quét';
+            body.className = 'extracted-facts-empty';
+            body.textContent = 'Kết quả trích xuất sẽ xuất hiện tại đây sau khi AI xử lý ảnh. Giá trị không đọc chắc chắn được hiển thị là “Không đọc được”, không tự suy đoán.';
+            return;
+        }
+
+        const confidencePercent = Math.round(Number(facts.confidence || 0) * 100);
+        confidence.className = 'badge ' + (confidencePercent >= 70 ? 'bg-success' : 'bg-warning text-dark');
+        confidence.textContent = `Tin cậy ${confidencePercent}%`;
+        const identifier = facts.invoiceNumber || facts.orderId || facts.bookingId || facts.shippingTrackingCode;
+        const evidenceDate = facts.invoiceDate || facts.transactionDate || facts.completionDate;
+        const items = Array.isArray(facts.lineItems) && facts.lineItems.length
+            ? '<ul class="extracted-line-items">' + facts.lineItems.map(item =>
+                '<li><span>' + escapeHtml(displayFact(item.description)) + '</span><strong>' + escapeHtml(formatFactMoney(item.amount)) + '</strong></li>').join('') + '</ul>'
+            : '<span class="fact-value missing">Không đọc được dòng hàng</span>';
+        const warnings = [...(facts.missingFields || []), ...(facts.warnings || []), ...(facts.suspiciousSignals || [])];
+
+        body.className = 'extracted-facts-content';
+        body.innerHTML =
+            '<dl class="extracted-facts-grid">' +
+                '<div><dt>Loại chứng từ</dt><dd>' + escapeHtml(displayFact(facts.documentType)) + '</dd></div>' +
+                '<div><dt>Đơn vị bán</dt><dd>' + escapeHtml(displayFact(facts.merchantName)) + '</dd></div>' +
+                '<div><dt>Số HĐ / mã truy vết</dt><dd>' + escapeHtml(displayFact(identifier)) + '</dd></div>' +
+                '<div><dt>Mã số thuế</dt><dd>' + escapeHtml(displayFact(facts.taxId)) + '</dd></div>' +
+                '<div><dt>Ngày chứng từ</dt><dd>' + escapeHtml(displayFact(evidenceDate)) + '</dd></div>' +
+                '<div><dt>Tổng tiền</dt><dd>' + escapeHtml(formatFactMoney(facts.totalAmount)) + '</dd></div>' +
+                '<div><dt>Tiền tệ</dt><dd>' + escapeHtml(displayFact(facts.currency)) + '</dd></div>' +
+                '<div><dt>Trạng thái</dt><dd>' + escapeHtml(displayFact(facts.documentStatus || facts.orderStatus)) + '</dd></div>' +
+            '</dl>' +
+            '<div class="extracted-items-block"><strong>Dòng hàng AI nhận diện</strong>' + items + '</div>' +
+            (warnings.length ? '<div class="extracted-warning"><strong>Cần lưu ý:</strong> ' + escapeHtml(warnings.join('; ')) + '</div>' : '');
     }
 
     function getSkeletonRow() {
@@ -381,6 +438,7 @@
             });
 
             const data = await readJsonResponse(response, 'Tải lên hóa đơn');
+            renderExtractedFacts(data.facts);
             
             if (data.error) {
                 document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Lỗi: ' + escapeHtml(data.error) + '</td></tr>';
@@ -433,6 +491,7 @@
                 html += renderResultRow(item);
             });
             document.getElementById('resultsBody').innerHTML = html;
+            renderExtractedFacts(data[0]?.facts || null);
         } catch(e) {
             document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Có lỗi xảy ra: ' + escapeHtml(e.message) + '</td></tr>';
         } finally {

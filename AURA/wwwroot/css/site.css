@@ -287,9 +287,101 @@ main {
 /* Dropzone */
 .upload-workspace {
     display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.75fr);
+    grid-template-columns: minmax(300px, 1fr) minmax(340px, 1.15fr) minmax(280px, 0.8fr);
     gap: 28px;
     align-items: stretch;
+}
+
+.extracted-facts-panel {
+    min-height: 250px;
+    padding: 20px;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    background: #101827;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.extracted-facts-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.extracted-facts-heading h4 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.extracted-facts-empty {
+    display: flex;
+    align-items: center;
+    min-height: 160px;
+    color: var(--colors-ink-subtle);
+    font-size: 0.88rem;
+    line-height: 1.6;
+}
+
+.extracted-facts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+}
+
+.extracted-facts-grid div {
+    min-width: 0;
+}
+
+.extracted-facts-grid dt {
+    color: var(--colors-ink-subtle);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.extracted-facts-grid dd {
+    margin: 3px 0 0;
+    color: var(--colors-ink);
+    font-size: 0.84rem;
+    overflow-wrap: anywhere;
+}
+
+.extracted-items-block {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--colors-border);
+    font-size: 0.8rem;
+}
+
+.extracted-line-items {
+    display: grid;
+    gap: 7px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.extracted-line-items li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--colors-ink-muted);
+}
+
+.extracted-line-items strong {
+    color: var(--colors-ink);
+    white-space: nowrap;
+}
+
+.extracted-warning {
+    margin-top: 12px;
+    padding: 9px 10px;
+    border-left: 3px solid #f59e0b;
+    background: rgba(245, 158, 11, 0.08);
+    color: #fcd34d;
+    font-size: 0.78rem;
 }
 
 .dropzone-area {
@@ -897,6 +989,16 @@ main {
         width: 100%;
         margin-left: 0;
         padding-bottom: 0;
+    }
+}
+
+@media (max-width: 1250px) and (min-width: 901px) {
+    .upload-workspace {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .amount-action-row {
+        grid-column: 1 / -1;
     }
 }
 

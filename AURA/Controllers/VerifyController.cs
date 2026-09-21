@@ -64,6 +64,7 @@ public sealed class VerifyController : Controller
             string reason;
             string question;
             string? extractedFactsJson = null;
+            ReceiptExtractionDto? extractedFacts = null;
 
             if (!imagePath.StartsWith(imageRoot, StringComparison.OrdinalIgnoreCase) || !System.IO.File.Exists(imagePath))
             {
@@ -75,9 +76,9 @@ public sealed class VerifyController : Controller
             {
                 try
                 {
-                    var facts = await _vision.ExtractFactsAsync(imagePath, cancellationToken);
-                    extractedFactsJson = JsonSerializer.Serialize(facts);
-                    var decision = PolicyDecisionEngine.Evaluate(facts, testCase.ClaimedAmount);
+                    extractedFacts = await _vision.ExtractFactsAsync(imagePath, cancellationToken);
+                    extractedFactsJson = JsonSerializer.Serialize(extractedFacts);
+                    var decision = PolicyDecisionEngine.Evaluate(extractedFacts, testCase.ClaimedAmount);
                     actualStatus = decision.Status;
                     reason = decision.Reason;
                     question = decision.ManagerQuestion;
@@ -143,7 +144,8 @@ public sealed class VerifyController : Controller
                 canForward = PolicyDecisionEngine.IsEscalation(actualStatus),
                 handoffPrompt = PolicyDecisionEngine.IsEscalation(actualStatus)
                     ? EscalationWorkflow.EmployeeHandoffPrompt
-                    : null
+                    : null,
+                facts = extractedFacts
             });
         }
 
