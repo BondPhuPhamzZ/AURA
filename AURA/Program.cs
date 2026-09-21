@@ -21,9 +21,6 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddOptions<OpenRouterOptions>()
     .Bind(builder.Configuration.GetSection(OpenRouterOptions.SectionName))
     .ValidateDataAnnotations();
-builder.Services.AddOptions<GeminiOptions>()
-    .Bind(builder.Configuration.GetSection(GeminiOptions.SectionName))
-    .ValidateDataAnnotations();
 builder.Services.AddOptions<ReceiptStorageOptions>()
     .Bind(builder.Configuration.GetSection(ReceiptStorageOptions.SectionName))
     .ValidateDataAnnotations()
@@ -88,6 +85,7 @@ app.MapControllerRoute(
     ;
 
 app.Run();
+
 
 
 
