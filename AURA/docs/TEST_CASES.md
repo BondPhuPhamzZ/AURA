@@ -54,6 +54,18 @@ Ngày 20/09/2026, Gemini 3.6 Flash đạt 5/5; latency từng ca xấp xỉ 8,7s
 | P34 | Mốc 06:00 và 22:00 | Inclusive; AUTO nếu điều kiện khác đạt | P |
 | P35 | Tổng đúng 1.000.000 VND | AUTO nếu điều kiện khác đạt | P |
 | P36 | Claim bằng 0/âm | HTTP 400, không gọi AI | P |
+| P37 | Ảnh màn hình hóa đơn còn “chưa cấp số/lưu và phát hành” | ESCALATE_FACT vì DRAFT | A |
+| P38 | Chứng từ CANCELLED/đã hủy | ESCALATE_FACT | A |
+| P39 | POS slip có MID/TID nhưng không có seller tax ID | MID/TID được trích xuất riêng; vẫn ESCALATE_FACT | policy/live |
+| P40 | Gemini trả `MAX_TOKENS` hoặc JSON lỗi | SYSTEM_ERROR, không dùng dữ kiện bị cắt | code |
+
+## Ma trận human-in-the-loop
+
+- Nhân viên chỉ chuyển tiếp được hồ sơ đang ở `ESCALATE_*`; thao tác tạo audit `EMPLOYEE_FORWARDED_TO_MANAGER`.
+- Cửa sổ quản lý chỉ thấy hồ sơ đã được nhân viên chuyển tiếp.
+- `Có/Không` được ánh xạ theo loại câu hỏi: FACT/SYSTEM_ERROR tiếp nhận thủ công hoặc trả lại; POLICY duyệt/từ chối ngoại lệ; AUTHORITY chuyển cấp hoặc trả lại.
+- Mỗi quyết định quản lý ghi câu hỏi, câu trả lời và outcome; hoàn tác đưa hồ sơ về đúng trạng thái escalation trước đó.
+- Tám nhánh `Có/Không` của bốn loại escalation đã được khóa bằng unit test.
 
 ## Tiêu chí comparator
 

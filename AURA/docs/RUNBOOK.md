@@ -67,6 +67,9 @@ dotnet ef database update --connection "<DEPLOYMENT_CONNECTION>"
 - `/BUSINESS_RULES.md` trả `404` vì policy không được public từ static root.
 - Upload giả MIME bị từ chối; JPG/PNG hợp lệ được lưu và mở lại qua route chứng từ.
 - Verify đạt 5/5 trong dưới 90 giây.
-- Audit hiển thị input, action, timestamp, reason; approve/reject/undo hoạt động.
+- Audit hiển thị input, action, timestamp, reason; chuyển tiếp/Có/Không/undo hoạt động.
+- Ca `ESCALATE_*` xuất hiện ở cửa sổ nhân viên trước; bấm **Chuyển tiếp** rồi mới xuất hiện ở cửa sổ quản lý.
+- Quản lý bấm **Có** hoặc **Không**; kiểm tra toast thành công và ba audit event: lần quét, chuyển tiếp, quyết định.
+- Ảnh POS có MID/TID không được dùng thay seller tax ID; ảnh hóa đơn nháp/chưa phát hành phải chuyển FACT.
 - Live URL đã điền trong README, slide và form nộp.
 - API key/connection string không xuất hiện trong Git hoặc video.

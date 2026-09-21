@@ -12,11 +12,11 @@ AURA hiện là một **vertical slice chạy thật** cho Track A — The Escal
 2. Server kiểm tra file, lưu bản gốc vào vùng không public và tạo SHA-256.
 3. Gemini 3.6 Flash chỉ trích xuất dữ kiện theo JSON Schema.
 4. Bộ luật C# tất định quyết định `AUTO_APPROVE` hoặc một trong ba loại chuyển tiếp.
-5. Ca chuyển tiếp xuất hiện ở cửa sổ quản lý với câu hỏi cụ thể.
-6. Quản lý có thể duyệt, từ chối và hoàn tác.
+5. Ca chuyển tiếp xuất hiện ở cửa sổ nhân viên; nhân viên bấm **Chuyển tiếp** để giao đúng trách nhiệm.
+6. Quản lý trả lời **Có/Không** theo câu hỏi cụ thể và có thể hoàn tác.
 7. Mọi bước quan trọng được ghi vào audit trail; ảnh gốc có thể mở lại.
 
-Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 22 policy test đạt, Verify Vision 5/5 trên fixture tổng hợp và các route chính đã smoke-test. Tuy vậy, Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
+Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 33 policy/workflow test đạt, Verify Vision 5/5 trên fixture tổng hợp và các route chính đã smoke-test. Tuy vậy, Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
 
 Đánh giá công tâm:
 
@@ -159,7 +159,7 @@ Vì Verify Harness là một phần của dashboard nên `/Verify` không phải
 10. Gọi Gemini để trích xuất facts.
 11. Serialize facts để giữ bằng chứng máy đã đọc gì.
 12. Gọi policy engine với facts, claimed amount và duplicate flag.
-13. Nếu AI/API lỗi, chuyển `ESCALATE_SYSTEM_ERROR`; không giả kết quả nghiệp vụ.
+13. Nếu AI/API lỗi, chuyển `ESCALATE_SYSTEM_ERROR` với mã an toàn như `AI_RATE_LIMIT`; không giả kết quả nghiệp vụ.
 14. Ghi latency thật, request và audit log.
 15. Trả JSON cho bảng kết quả.
 
@@ -180,6 +180,7 @@ Lưu ý kỹ thuật còn tồn tại: file được ghi trước DB. Nếu DB s
 - Retry tối đa ba lần với 429/500/502/503/504 và backoff/Retry-After.
 - Kiểm HTTP status, prompt block, candidate, finish reason và text part.
 - Deserialize có kiểu; chuẩn hóa array null thành rỗng và clamp confidence 0..1.
+- Coi `MAX_TOKENS`, JSON ngoài/JSON extraction lỗi là thất bại; không sử dụng phản hồi bị cắt.
 
 Google chính thức xác nhận Gemini 3.6 Flash là model stable, nhận input hình ảnh và hỗ trợ Structured Outputs. Structured Outputs bảo đảm hình dạng JSON tốt hơn nhưng **không bảo đảm giá trị đúng về ngữ nghĩa**, vì vậy validation C# vẫn bắt buộc.
 
@@ -195,14 +196,16 @@ File đã rõ ở các điểm:
 - Cấm làm theo prompt injection trong ảnh.
 - Không được đoán; thiếu/mờ phải `null` + `missingFields`.
 - Phân biệt seller/buyer, tax ID/invoice number/booking ID.
+- Phân biệt MID/TID của thiết bị thanh toán với seller tax ID và invoice number.
+- Nhận diện trạng thái `ISSUED/DRAFT/CANCELLED/UNKNOWN`; bản nháp hoặc “chưa cấp số” không được auto-approve.
 - Chuẩn hóa date/time/currency/amount.
 - Yêu cầu mọi line item và confidence.
 - Không cáo buộc fraud; chỉ báo visible anomaly.
 - Nêu precedence `FACT > POLICY > AUTHORITY > AUTO_APPROVE`.
 
-Nhưng chưa “bao phủ tuyệt đối”. Những khoảng trống cần version 1.1:
+Nhưng chưa “bao phủ tuyệt đối”. Version 1.1 đã bổ sung MID/TID và chứng từ nháp/hủy; những khoảng trống production còn lại:
 
-- Chưa mô tả hóa đơn điều chỉnh/thay thế/hủy, credit note, refund hoặc total âm.
+- Chưa mô tả đầy đủ hóa đơn điều chỉnh/thay thế, credit note, refund hoặc total âm.
 - Chưa định nghĩa rounding/tolerance khi VAT tạo số lẻ.
 - Chưa có taxonomy chi phí được phép; hiện chỉ có blacklist hạng mục cấm.
 - Chưa có rule cho tip/service charge/discount/voucher/shared bill.
@@ -236,7 +239,7 @@ Schema bắt buộc mọi property xuất hiện, nhưng nhiều field được 
 - `ESCALATE_POLICY`: có hạng mục ngoài chính sách.
 - `ESCALATE_AUTHORITY`: hợp lệ nhưng trên 1.000.000 VND.
 - `ESCALATE_SYSTEM_ERROR`: hạ tầng/AI lỗi; không phải kết luận nghiệp vụ.
-- `APPROVED_BY_MANAGER`, `REJECTED_BY_MANAGER`: trạng thái sau thao tác người quản lý.
+- Sau câu trả lời quản lý, trạng thái thể hiện đúng outcome: `MANUAL_REVIEW_ACCEPTED`, `RETURNED_FOR_MORE_EVIDENCE`, `APPROVED_POLICY_EXCEPTION`, `REJECTED_POLICY_EXCEPTION`, `FORWARDED_TO_AUTHORITY`, `RETURNED_BY_MANAGER` hoặc `RETURNED_FOR_RETRY`.
 
 ### 10.2 Precedence
 
@@ -245,6 +248,7 @@ Khi có nhiều vấn đề: `FACT` thắng `POLICY`, `POLICY` thắng `AUTHORIT
 ### 10.3 Điều kiện FACT
 
 - Facts null hoặc confidence dưới 0,70.
+- Chứng từ `DRAFT`, `CANCELLED`, “chưa cấp số/chưa phát hành”.
 - Byte-identical duplicate.
 - Total thiếu/không dương; claimed amount không hợp lệ; amount lệch sau round VND.
 - Thiếu merchant hoặc invoice number.
@@ -265,7 +269,9 @@ Rủi ro: keyword matching chưa phải classifier hoàn chỉnh, có thể fals
 
 ### 11.1 Entity `ReimbursementRequest`
 
-Lưu ID, claimed amount, receipt route, tên file gốc/tên lưu, MIME, size, SHA-256, extracted JSON, status, reasoning, manager question, latency và UTC created time.
+Lưu ID, claimed amount, receipt route, tên file gốc/tên lưu, MIME, size, SHA-256, extracted JSON, status, reasoning, manager question, cờ/thời gian chuyển tiếp, câu trả lời/thời gian quyết định quản lý, latency và UTC created time.
+
+`claimedAmount` vẫn cần thiết: đây là số tiền nhân viên yêu cầu hoàn, độc lập với số AI đọc trên ảnh, nên hệ thống mới phát hiện khai báo lệch chứng từ. Giao diện tự định dạng dấu chấm theo VND nhưng gửi giá trị số chuẩn về server. Nếu ảnh mờ đến mức không đọc được tiền, hệ thống không được đoán hoặc dùng số nhân viên nhập thay cho bằng chứng; kết quả phải là FACT và yêu cầu ảnh/chứng từ tốt hơn.
 
 ### 11.2 Entity `AuditLog`
 
@@ -276,6 +282,7 @@ Lưu auto-increment ID, request ID, action, details và UTC timestamp. Repositor
 - `InitialCreate`: tạo requests và audit logs.
 - `RemoveUserFields`: bỏ dữ liệu nhân viên khỏi prototype zero-login.
 - `PersistReceiptEvidence`: thêm metadata, SHA-256 và extracted facts; index SHA-256.
+- `AddEscalationWorkflow`: thêm trạng thái chuyển tiếp và quyết định Có/Không của quản lý.
 - Designer files và snapshot là metadata do EF sinh để migration tiếp theo đúng schema.
 
 ### 11.4 Tra cứu ảnh
@@ -307,8 +314,9 @@ Benchmark thật ngày 20/09/2026 với Gemini 3.6 Flash đạt 5/5, tổng kho�
 Dashboard có ba tab:
 
 - **Cửa Sổ Nhân Viên:** Verify một nút, upload thủ công, bảng kết quả.
-- **Cửa Sổ Quản Lý:** chỉ liệt kê status bắt đầu `ESCALATE_`, cho xem chứng từ và approve/reject.
-- **Lịch Sử:** hiển thị action, thời gian, chi tiết, liên kết chứng từ và nút undo khi phù hợp.
+- **Cửa Sổ Nhân Viên:** ca escalation có nút **Chuyển tiếp**; bảng cuộn ngang và giữ tiêu đề dễ đọc trên màn hình nhỏ.
+- **Cửa Sổ Quản Lý:** chỉ liệt kê hồ sơ `ESCALATE_*` đã được chuyển, cho xem chứng từ và trả lời **Có/Không**.
+- **Lịch Sử:** hiển thị lần quét, chuyển tiếp, câu hỏi/câu trả lời, outcome, thời gian, liên kết chứng từ và nút undo đúng dòng quyết định.
 
 Razor tạo URL và antiforgery token nên không hard-code route POST. JavaScript dùng `textContent`/`escapeHtml` khi render dữ liệu AI và lỗi để giảm DOM XSS. Loading skeleton cho người dùng biết request đang chạy.
 
@@ -318,7 +326,7 @@ Hai ViewComponent bắt lỗi DB và hiển thị thông báo thay vì làm hỏ
 
 ### 14.1 Automated policy tests
 
-22 xUnit cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, tax ID, currency, date, future/stale/weekend, late time, blur, duplicate, bốn nhóm item cấm, authority và precedence.
+33 xUnit cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, tax ID, currency, date, future/stale/weekend, late time, blur, duplicate, chứng từ nháp/hủy, bốn nhóm item cấm, authority, precedence và tám nhánh Có/Không của workflow.
 
 ### 14.2 Smoke tests đã thực hiện
 
@@ -350,7 +358,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Mục tiêu: build sạch và 22/22 test policy.
+Mục tiêu: build sạch và 33/33 test policy/workflow.
 
 ### Tầng B — fixture chuẩn hóa
 
@@ -404,13 +412,13 @@ Mỗi case lưu: ID, nguồn/license/consent, ground truth fields, claimed amoun
 |---|---|---|
 | Chủ đề và workflow Track A | Đạt | Hoàn ứng chi phí, input→decision→HITL rõ |
 | Policy rõ | Đạt cơ bản | Tốt cho scope một ảnh; còn gap production |
-| ≥15 tình huống | Đạt | 22 automated, matrix >30 |
+| ≥15 tình huống | Đạt | 33 automated, matrix 40 |
 | FACT/POLICY/AUTHORITY | Đạt | Có precedence tất định |
 | Câu hỏi chuyển tiếp cụ thể | Đạt | Tiếng Việt, dữ kiện cụ thể, CÓ/KHÔNG |
 | 3 ca tự xử lý + 2 chuyển tiếp một nút | Đạt local | Live benchmark 5/5 |
 | Input mới | Đạt local | Cùng extraction/policy path |
 | Audit trail, timestamp, latency | Đạt local | Có DB audit và UI |
-| Stop/override/undo | Đạt local | Approve/reject/undo |
+| Stop/override/undo | Đạt local | Nhân viên chuyển tiếp; quản lý Có/Không/undo |
 | Lưu và tra cứu ảnh | Đạt local | Private folder + route |
 | Chạy dưới 90 giây | Đạt benchmark | ~31,5 giây, quota vẫn biến động |
 | Live URL | **Không đạt** | Blocker trước nộp |
@@ -461,7 +469,9 @@ Mỗi case lưu: ID, nguồn/license/consent, ground truth fields, claimed amoun
 - `Controllers/HomeController.cs`: dashboard/privacy/error.
 - `Controllers/ApplicantController.cs`: upload, validation, persistence và receipt stream.
 - `Controllers/VerifyController.cs`: one-click five-case harness.
-- `Controllers/ReviewerController.cs`: approve/reject/undo với state guard.
+- `Controllers/ReviewerController.cs`: Có/Không/undo với state guard.
+- `Services/EscalationWorkflow.cs`: ánh xạ ý nghĩa Có/Không theo từng loại escalation.
+- `Services/VisionExtractionException.cs`: mã lỗi AI an toàn, không làm lộ secret/response thô.
 - `Services/GeminiVisionExtractorService.cs`: REST client, schema, retry, parsing.
 - `Services/PolicyDecisionEngine.cs`: luật nghiệp vụ thuần, không phụ thuộc DB/API.
 - `Services/ReimbursementRepository.cs`: CRUD requests và duplicate hash query.

@@ -7,14 +7,14 @@ Ngày cập nhật: 21/09/2026. Chuẩn đối chiếu: Track A trong `Challenge
 | Yêu cầu | Trạng thái | Bằng chứng |
 |---|---|---|
 | Quy trình và policy rõ | Đạt cơ bản | `BUSINESS_RULES.md`, policy engine tất định |
-| Tối thiểu 15 tình huống | Đạt | 22 automated policy cases; ma trận mở rộng trong `TEST_CASES.md` |
+| Tối thiểu 15 tình huống | Đạt | 33 automated policy/workflow tests; ma trận mở rộng trong `TEST_CASES.md` |
 | Ba nhóm FACT/POLICY/AUTHORITY | Đạt | status và precedence trong `PolicyDecisionEngine` |
 | Câu hỏi chuyển tiếp cụ thể | Đạt | câu hỏi tiếng Việt có dữ kiện và lựa chọn CÓ/KHÔNG |
 | Không over-escalate | Đạt trên fixture nội bộ | 3/3 routine cases auto-approve |
 | Không khẳng định input nghi vấn | Đạt | FACT có ưu tiên cao nhất; lỗi AI -> SYSTEM_ERROR/manual |
 | Verify một nút 3 auto + 2 escalate | Đạt local | benchmark Gemini 5/5 ngày 20/09/2026, khoảng 32 giây tổng |
 | Input mới | Đạt local | upload JPG/PNG + claimed amount dùng cùng production path |
-| Audit, human override, undo | Đạt local | DB audit log, manager approve/reject và undo |
+| Audit, human override, undo | Đạt local | Nhân viên chuyển tiếp; quản lý Có/Không; DB audit và undo |
 | Lưu chứng từ để tra cứu | Đạt local | private storage + metadata + SHA-256 + route download |
 | Live URL public | **Chưa đạt** | Chưa có URL deploy được ghi nhận |
 
