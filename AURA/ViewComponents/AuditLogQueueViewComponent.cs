@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AURA.Interfaces;
 using System.Linq;
 using AURA.ViewModels;
+using AURA.Services;
 
 namespace AURA.ViewComponents
 {
@@ -25,12 +26,8 @@ namespace AURA.ViewComponents
             try
             {
                 var requests = (await _repo.GetAllRequestsAsync()).ToDictionary(x => x.Id);
-                var logs = await _audit.GetRecentAsync();
-                var items = logs.Select(log => new AuditEntryViewModel
-                {
-                    Log = log,
-                    Request = requests.GetValueOrDefault(log.RequestId)
-                });
+                var logs = await _audit.GetRecentAsync(500);
+                var items = AuditTrailProjector.Project(logs, requests);
                 return View(items);
             }
             catch (Exception exception)

@@ -316,7 +316,7 @@ main {
 
 .upload-input-column {
     display: grid;
-    grid-template-rows: minmax(300px, 1fr) auto;
+    grid-template-rows: auto minmax(300px, 1fr) auto;
     gap: 20px;
     min-width: 0;
 }
@@ -329,6 +329,11 @@ main {
 
 .extracted-facts-title {
     flex: 0 0 auto;
+    margin-bottom: 20px;
+}
+
+.upload-input-column > .workflow-subtitle {
+    margin-bottom: 0;
 }
 
 .extracted-facts-panel {
@@ -883,6 +888,44 @@ main {
 
 .audit-details-full li:last-child {
     margin-bottom: 0;
+}
+
+.audit-timeline {
+    margin: 10px 0 0;
+    padding: 0 0 0 20px;
+    color: var(--colors-ink-muted);
+}
+
+.audit-timeline > li {
+    margin-bottom: 14px;
+    padding-left: 4px;
+}
+
+.audit-timeline > li:last-child {
+    margin-bottom: 0;
+}
+
+.audit-timeline-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 10px;
+}
+
+.audit-timeline-heading time {
+    color: #93c5fd;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.audit-timeline-heading strong {
+    color: var(--colors-ink);
+    font-size: 0.8rem;
+}
+
+.audit-timeline .audit-details-full {
+    margin-top: 6px;
+    padding-top: 6px;
 }
 
 .cell-code {

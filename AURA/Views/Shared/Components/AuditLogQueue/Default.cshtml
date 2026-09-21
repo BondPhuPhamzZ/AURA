@@ -1,8 +1,22 @@
 @model IEnumerable<AURA.ViewModels.AuditEntryViewModel>
+@functions {
+    private static string ActionLabel(string action) => action switch
+    {
+        "MANAGER_YES" or "MANAGER_APPROVE" => "Quản lý duyệt",
+        "MANAGER_NO" or "MANAGER_REJECT" => "Quản lý từ chối",
+        "MANAGER_UNDO" => "Hoàn tác quyết định",
+        "EMPLOYEE_FORWARDED_TO_MANAGER" => "Chuyển quản lý",
+        "AUTO_APPROVE" => "Tự động duyệt",
+        "AI_ANALYZED" => "AI thẩm định",
+        _ when action.StartsWith("AI_PROCESSED_", StringComparison.Ordinal) => "AI thẩm định",
+        _ when action.StartsWith("VERIFY_", StringComparison.Ordinal) => "Verify Harness",
+        _ => action.Replace('_', ' ')
+    };
+}
 
 <div class="audit-log-queue">
     <h4 class="mb-2 form-header">Nhật Ký Kiểm Toán</h4>
-    <p class="text-muted mb-4">Mỗi dòng ghi rõ thao tác, thời gian, hồ sơ đầu vào và lý do. Quyết định của quản lý có thể được hoàn tác.</p>
+    <p class="text-muted mb-4">Mỗi hồ sơ chỉ hiển thị một dòng theo trạng thái mới nhất. Mở chi tiết để xem đầy đủ timeline AI thẩm định, chuyển quản lý và quyết định; các sự kiện gốc vẫn được giữ bất biến để kiểm toán và hoàn tác.</p>
 
     <div class="audit-filter" role="search" aria-label="Lọc lịch sử theo ngày">
         <div class="audit-filter-field">
@@ -42,7 +56,7 @@
                     <tr>
                         <th>Thời Gian</th>
                         <th>Mã Đơn</th>
-                        <th>Thao Tác</th>
+                        <th>Thao Tác Cuối</th>
                         <th>Trạng Thái Hiện Tại</th>
                         <th>Dữ Liệu Đầu Vào</th>
                         <th>Chi Tiết / Lý Do</th>
@@ -55,20 +69,7 @@
                         var request = entry.Request;
                         var detailParts = (entry.Log.Details ?? string.Empty)
                             .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                        var actionLabel = entry.Log.Action switch
-                        {
-                            "MANAGER_YES" => "Quản lý duyệt",
-                            "MANAGER_APPROVE" => "Quản lý duyệt",
-                            "MANAGER_NO" => "Quản lý từ chối",
-                            "MANAGER_REJECT" => "Quản lý từ chối",
-                            "MANAGER_UNDO" => "Hoàn tác quyết định",
-                            "EMPLOYEE_FORWARDED_TO_MANAGER" => "Chuyển quản lý",
-                            "AUTO_APPROVE" => "Tự động duyệt",
-                            "AI_ANALYZED" => "AI thẩm định",
-                            _ when entry.Log.Action.StartsWith("AI_PROCESSED_", StringComparison.Ordinal) => "AI thẩm định",
-                            _ when entry.Log.Action.StartsWith("VERIFY_", StringComparison.Ordinal) => "Verify Harness",
-                            _ => entry.Log.Action.Replace('_', ' ')
-                        };
+                        var actionLabel = ActionLabel(entry.Log.Action);
                         var localTimestamp = entry.Log.Timestamp.ToLocalTime();
                         <tr class="audit-data-row" data-audit-date="@localTimestamp.ToString("yyyy-MM-dd")">
                             <td class="audit-time-cell">
@@ -116,12 +117,28 @@
                                         </span>
                                         <span class="audit-details-toggle"></span>
                                     </summary>
-                                    <ul class="audit-details-full">
-                                        @foreach (var detail in detailParts)
+                                    <ol class="audit-timeline">
+                                        @foreach (var timelineEvent in entry.Timeline.OrderBy(x => x.Timestamp).ThenBy(x => x.Id))
                                         {
-                                            <li>@detail</li>
+                                            var eventParts = (timelineEvent.Details ?? string.Empty)
+                                                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                                            <li>
+                                                <div class="audit-timeline-heading">
+                                                    <time datetime="@timelineEvent.Timestamp.ToString("O")">@timelineEvent.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</time>
+                                                    <strong>@ActionLabel(timelineEvent.Action)</strong>
+                                                </div>
+                                                @if (eventParts.Length > 0)
+                                                {
+                                                    <ul class="audit-details-full">
+                                                        @foreach (var detail in eventParts)
+                                                        {
+                                                            <li>@detail</li>
+                                                        }
+                                                    </ul>
+                                                }
+                                            </li>
                                         }
-                                    </ul>
+                                    </ol>
                                 </details>
                             </td>
                             <td>

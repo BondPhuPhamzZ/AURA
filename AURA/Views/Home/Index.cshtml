@@ -29,13 +29,12 @@
 
     <!-- Upload Thủ Công (Middle Section) -->
     <section class="workflow-section upload-section" aria-labelledby="single-upload-title">
-        <h3 id="single-upload-title" class="workflow-subtitle">Hoặc tải lên hóa đơn kiểm thử lẻ:</h3>
-        
         <form id="uploadForm" asp-controller="Applicant" asp-action="UploadReceipt" method="post" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
             
             <div class="upload-workspace">
                 <div class="upload-input-column">
+                    <h3 id="single-upload-title" class="workflow-subtitle">Hoặc tải lên hóa đơn kiểm thử lẻ:</h3>
                     <div class="dropzone-area" id="dropzone" onclick="document.getElementById('receiptFile').click()">
                         <input type="file" id="receiptFile" name="receiptFile" accept=".jpg,.jpeg,.png" style="display: none;" onchange="handleFileSelect(this)">
                         <img id="receiptLocalPreview" class="receipt-local-preview" alt="Xem trước hóa đơn đã chọn" hidden />
