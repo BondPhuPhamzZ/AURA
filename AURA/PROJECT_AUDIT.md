@@ -16,7 +16,7 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 - Upload có claimed amount, kiểm extension + MIME + magic bytes + 5 MB, tên file ngẫu nhiên và private storage.
 - Hóa đơn, metadata, SHA-256, facts JSON, decision và audit được lưu để tra cứu.
 - Nhân viên chủ động chuyển một/toàn bộ ca `ESCALATE_*`; hàng đợi quản lý chỉ nhận hồ sơ đã chuyển và có Đồng ý/Từ chối/undo.
-- 52 automated tests đạt 52/52 (47 policy/workflow + 2 OpenRouter contract + 3 Test Kit integrity); build 0 warning/0 error.
+- 53 automated tests đạt 53/53 (47 policy/workflow + 3 OpenRouter contract + 3 Test Kit integrity); build 0 warning/0 error.
 - Benchmark lịch sử fixture v1 đạt 5/5 trong khoảng 32 giây; fixture v2 đa layout đang chờ đúng một lượt benchmark live để bảo toàn quota.
 
 ## 2. Bằng chứng kiểm thử

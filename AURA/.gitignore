@@ -5,3 +5,7 @@ App_Data/receipts/*
 # Legacy/runtime upload folders must never be published from wwwroot.
 wwwroot/uploads/
 wwwroot/temp_test/
+
+# Optional private evaluation photos: keep instructions, never commit the receipts themselves.
+test_kit/local_real/*
+!test_kit/local_real/README.md

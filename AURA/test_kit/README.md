@@ -7,6 +7,12 @@
 
 `manifest.json` vẫn giữ ngân hàng mở rộng 30 ca để nhóm benchmark nội bộ; đây không phải yêu cầu bắt buộc phải chạy toàn bộ trong buổi chấm.
 
+## Ảnh thật nên đặt ở đâu?
+
+Không thay trực tiếp năm fixture Verify và không bỏ ảnh cá nhân vào root/wwwroot. Bộ chấm cần kết quả tái lập nên 5 + 15 ca đã commit vẫn là dữ liệu tổng hợp có ground truth. Nếu cần đánh giá độ chân thực, đặt bản đã được phép sử dụng và che dữ liệu cá nhân trong `local_real/`, sau đó upload từng ảnh qua luồng kiểm thử lẻ. Git đã được cấu hình để không commit các ảnh riêng tư trong thư mục này.
+
+Phương án thuyết phục nhất khi trình bày là: **5 ca tái lập chạy live + 15 ca challenge đã commit + một vài ảnh thật đã ẩn danh để smoke test thủ công**. Không lấy ảnh ngẫu nhiên trên Internet hoặc commit hóa đơn có dữ liệu cá nhân chỉ để giao diện trông thật hơn.
+
 Test Kit v2 gồm 30 ảnh tổng hợp có seed cố định và ground truth trong `manifest.json`. Bộ này được tạo offline, không chứa dữ liệu cá nhân thật và không gọi OpenRouter/Qwen.
 
 ## Phạm vi

@@ -17,7 +17,7 @@ AURA hiện là một **vertical slice chạy thật** cho Track A — The Escal
 6. Quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi cụ thể và có thể hoàn tác.
 7. Mọi bước quan trọng được ghi vào audit trail; ảnh gốc có thể mở lại.
 
-Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 52 automated test đạt (47 policy/workflow + 2 OpenRouter contract + 3 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5 với provider cũ, còn Qwen3-VL-8B-Instruct/OpenRouter cần một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
+Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 53 automated test đạt (47 policy/workflow + 3 OpenRouter contract + 3 Test Kit integrity); fixture v1 từng đạt Verify Vision 5/5 với provider cũ, còn Qwen3-VL-8B-Instruct/OpenRouter cần một lượt benchmark live. Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
 
 Đánh giá công tâm:
 
@@ -361,7 +361,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Mục tiêu: build sạch và 52/52 automated test.
+Mục tiêu: build sạch và 53/53 automated test.
 
 ### Tầng B — fixture chuẩn hóa
 

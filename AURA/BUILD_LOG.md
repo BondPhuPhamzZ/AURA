@@ -9,7 +9,7 @@
 
 - Tách extraction khỏi deterministic policy giúp kết quả giải thích và unit-test được.
 - Benchmark fixture v1 đạt 5/5 trong khoảng 32 giây tổng vào 20/09/2026. Test Kit v2 gồm 30 ảnh đa layout được sinh offline; 5 ảnh đại diện chưa gọi API để giữ quota cho live benchmark/video.
-- 52 automated tests gồm 47 policy/workflow test khóa precedence, e-commerce/mã vận chuyển, phạm vi MST theo loại chứng từ và các nhánh quyết định; 2 test hợp đồng OpenRouter/Qwen offline; 3 test toàn vẹn Test Kit/manifest, trong đó khóa đúng gói BGK 15 ca.
+- 53 automated tests gồm 47 policy/workflow test khóa precedence, e-commerce/mã vận chuyển, phạm vi MST theo loại chứng từ và các nhánh quyết định; 3 test hợp đồng OpenRouter/Qwen offline; 3 test toàn vẹn Test Kit/manifest, trong đó khóa đúng gói BGK 15 ca.
 - Structured Output giảm parsing lỗi so với JSON tự do.
 - UI hiển thị facts AI theo ba cột; bảng chuyển tiếp riêng được hợp nhất vào bảng kết quả để tránh trùng nhưng vẫn phục hồi escalation sau reload.
 - Hồ sơ và audit AI được ghi trong cùng một `SaveChanges`; các fragment kết quả/quản lý/lịch sử cập nhật sau thao tác mà không reload toàn trang.
