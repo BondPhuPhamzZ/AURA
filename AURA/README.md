@@ -5,7 +5,7 @@ AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứn
 ## Trạng thái Sprint 1
 
 - Build sạch: 0 warning, 0 error.
-- 33 kiểm thử chính sách và workflow tự động: đạt 33/33.
+- 39 kiểm thử chính sách và workflow tự động: đạt 39/39.
 - Verify Vision: 5 ảnh tổng hợp, đạt 5/5 với Gemini 3.6 Flash ngày 20/09/2026; gồm 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`.
 - Route upload, Verify, audit, quản lý, CSRF và tra cứu chứng từ đã smoke-test local.
 - Live URL: **chưa điền**. Đây là blocker cuối trước khi nộp Sprint 1.
@@ -15,12 +15,12 @@ AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứn
 1. Mở trang chủ.
 2. Bấm **Chạy Verify Harness (90s)**. Một lần bấm chạy đủ 5 ca và hiển thị expected/actual, PASS/FAIL, câu hỏi, latency và timestamp.
 3. Tải một JPG/PNG mới, nhập số tiền đề nghị và bấm **AI tự động kiểm**.
-4. Với ca chuyển tiếp, nhân viên bấm **Chuyển tiếp**; quản lý trả lời **Có/Không** theo đúng câu hỏi và hệ thống hiển thị thông báo kết quả.
+4. Với ca chuyển tiếp, nhân viên bấm **Chuyển tiếp** hoặc **Chuyển tiếp tất cả**; quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi và hệ thống hiển thị thông báo kết quả.
 5. Mở **Lịch Sử Của Hệ Thống** để xem lần quét, lần chuyển tiếp, câu trả lời, kết quả, thời gian và hoàn tác quyết định quản lý.
 
 ## Kiến trúc quyết định
 
-`Upload -> kiểm MIME/magic bytes/size -> lưu chứng từ riêng tư -> Gemini Structured Output -> C# policy engine -> AUTO_APPROVE hoặc ESCALATE_* -> nhân viên chuyển tiếp -> quản lý Có/Không -> audit trail`
+`Upload -> kiểm MIME/magic bytes/size -> lưu chứng từ riêng tư -> Gemini Structured Output -> C# policy engine -> AUTO_APPROVE hoặc ESCALATE_* -> nhân viên chuyển tiếp -> quản lý Đồng ý/Từ chối -> audit trail`
 
 Thứ tự ưu tiên khi có nhiều lỗi: `FACT -> POLICY -> AUTHORITY`. Input nghi vấn không bao giờ được tự động duyệt.
 

@@ -63,9 +63,10 @@ Ngày 20/09/2026, Gemini 3.6 Flash đạt 5/5; latency từng ca xấp xỉ 8,7s
 
 - Nhân viên chỉ chuyển tiếp được hồ sơ đang ở `ESCALATE_*`; thao tác tạo audit `EMPLOYEE_FORWARDED_TO_MANAGER`.
 - Cửa sổ quản lý chỉ thấy hồ sơ đã được nhân viên chuyển tiếp.
-- `Có/Không` được ánh xạ theo loại câu hỏi: FACT/SYSTEM_ERROR tiếp nhận thủ công hoặc trả lại; POLICY duyệt/từ chối ngoại lệ; AUTHORITY chuyển cấp hoặc trả lại.
+- Nhân viên không trả lời câu hỏi quyết định; họ chỉ **Chuyển tiếp** hoặc **Chuyển tiếp tất cả**.
+- `Đồng ý duyệt/Từ chối duyệt` của quản lý được ánh xạ theo loại câu hỏi: FACT/SYSTEM_ERROR tiếp nhận thủ công hoặc trả lại; POLICY duyệt/từ chối ngoại lệ; AUTHORITY chuyển cấp hoặc trả lại.
 - Mỗi quyết định quản lý ghi câu hỏi, câu trả lời và outcome; hoàn tác đưa hồ sơ về đúng trạng thái escalation trước đó.
-- Tám nhánh `Có/Không` của bốn loại escalation đã được khóa bằng unit test.
+- Tám nhánh quyết định của bốn loại escalation và nhãn phân quyền đã được khóa bằng unit test.
 
 ## Tiêu chí comparator
 

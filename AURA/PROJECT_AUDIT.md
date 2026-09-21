@@ -15,8 +15,8 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 - Policy được đọc từ `BUSINESS_RULES.md` ở content root, không còn public trong `wwwroot`.
 - Upload có claimed amount, kiểm extension + MIME + magic bytes + 5 MB, tên file ngẫu nhiên và private storage.
 - Hóa đơn, metadata, SHA-256, facts JSON, decision và audit được lưu để tra cứu.
-- Nhân viên chủ động chuyển ca `ESCALATE_*`; hàng đợi quản lý chỉ nhận hồ sơ đã chuyển và có Có/Không/undo.
-- 33 policy/workflow tests đạt 33/33; build 0 warning/0 error.
+- Nhân viên chủ động chuyển một/toàn bộ ca `ESCALATE_*`; hàng đợi quản lý chỉ nhận hồ sơ đã chuyển và có Đồng ý/Từ chối/undo.
+- 39 policy/workflow tests đạt 39/39; build 0 warning/0 error.
 - Benchmark Gemini thật đạt 5/5 trong khoảng 32 giây tổng.
 
 ## 2. Bằng chứng kiểm thử
@@ -24,7 +24,7 @@ Các blocker kỹ thuật ban đầu đã được sửa:
 | Kiểm thử | Kết quả |
 |---|---|
 | `dotnet build --no-restore` | Đạt, 0 warning, 0 error |
-| `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` | Đạt 33/33 |
+| `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore` | Đạt 39/39 |
 | EF migration `PersistReceiptEvidence` | Áp dụng thành công vào LocalDB |
 | `GET /`, `/Home/Index`, `/Home/Privacy` | 200 |
 | `GET /Applicant`, `/Verify` | 302 về trang chủ |
@@ -75,7 +75,7 @@ Route/action hiện khớp view và JavaScript. Không còn action `Applicant.In
 |---|---|---|
 | Quy trình thường quy cụ thể | Đạt | Hoàn ứng chi phí |
 | Policy rõ ràng | Đạt cơ bản | Root policy + deterministic engine; còn giới hạn tại mục 7 |
-| Tối thiểu 15 trường hợp | Đạt | 33 automated; 40 dòng ma trận |
+| Tối thiểu 15 trường hợp | Đạt | 39 automated; 40 dòng ma trận |
 | Mơ hồ / ngoài policy / vượt authority | Đạt | FACT/POLICY/AUTHORITY có test |
 | Câu hỏi chuyển tiếp cụ thể | Đạt | Nêu amount/item/vấn đề và CÓ/KHÔNG |
 | Không over-escalate | Đạt trên internal fixtures | 3 routine cases auto |
@@ -84,7 +84,7 @@ Route/action hiện khớp view và JavaScript. Không còn action `Applicant.In
 | Expected/actual/pass/timestamp/question | Đạt | JSON + bảng UI |
 | Input mới | Đạt local | Upload dùng cùng extraction/policy path |
 | Audit input/action/time/reason | Đạt cơ bản | DB AuditLogs + receipt/facts/decision metadata |
-| Stop/override/undo | Đạt cơ bản | employee handoff + manager Có/Không/undo; chưa có authentication |
+| Stop/override/undo | Đạt cơ bản | employee handoff + manager Đồng ý/Từ chối/undo; chưa có authentication |
 | Lưu hóa đơn để tra cứu | Đạt local | private path + receipt route; deploy cần persistent volume |
 | Demo 90 giây | Đạt local | benchmark khoảng 32 giây |
 | Live URL public | **Không đạt/Blocker** | Chưa có URL |

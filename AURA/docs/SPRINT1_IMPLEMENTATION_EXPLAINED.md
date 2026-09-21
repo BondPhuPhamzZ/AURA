@@ -13,10 +13,10 @@ AURA hiện là một **vertical slice chạy thật** cho Track A — The Escal
 3. Gemini 3.6 Flash chỉ trích xuất dữ kiện theo JSON Schema.
 4. Bộ luật C# tất định quyết định `AUTO_APPROVE` hoặc một trong ba loại chuyển tiếp.
 5. Ca chuyển tiếp xuất hiện ở cửa sổ nhân viên; nhân viên bấm **Chuyển tiếp** để giao đúng trách nhiệm.
-6. Quản lý trả lời **Có/Không** theo câu hỏi cụ thể và có thể hoàn tác.
+6. Quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi cụ thể và có thể hoàn tác.
 7. Mọi bước quan trọng được ghi vào audit trail; ảnh gốc có thể mở lại.
 
-Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 33 policy/workflow test đạt, Verify Vision 5/5 trên fixture tổng hợp và các route chính đã smoke-test. Tuy vậy, Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
+Phần mềm **đủ để bắt đầu test local ngay**. Kết quả hiện có: build 0 warning/0 error, 39 policy/workflow test đạt, Verify Vision 5/5 trên fixture tổng hợp và các route chính đã smoke-test. Tuy vậy, Sprint 1 **chưa hoàn tất để nộp** cho tới khi có live URL, kiểm thử lại trên môi trường deploy, 5 slide, video tối đa 3 phút và build log cuối.
 
 Đánh giá công tâm:
 
@@ -314,8 +314,9 @@ Benchmark thật ngày 20/09/2026 với Gemini 3.6 Flash đạt 5/5, tổng kho�
 Dashboard có ba tab:
 
 - **Cửa Sổ Nhân Viên:** Verify một nút, upload thủ công, bảng kết quả.
-- **Cửa Sổ Nhân Viên:** ca escalation có nút **Chuyển tiếp**; bảng cuộn ngang và giữ tiêu đề dễ đọc trên màn hình nhỏ.
-- **Cửa Sổ Quản Lý:** chỉ liệt kê hồ sơ `ESCALATE_*` đã được chuyển, cho xem chứng từ và trả lời **Có/Không**.
+- **Cửa Sổ Nhân Viên:** ca escalation có **Chuyển tiếp/Chuyển tiếp tất cả**, ảnh thu nhỏ và lời nhắc chỉ xác nhận giao việc; không yêu cầu nhân viên quyết định duyệt.
+- **Cửa Sổ Quản Lý:** chỉ liệt kê hồ sơ `ESCALATE_*` đã được chuyển, cho xem ảnh thu nhỏ và chọn **Đồng ý duyệt/Từ chối duyệt**.
+- Bốn bảng chính giới hạn chiều cao, có sticky header và scrollbar đồng bộ dark theme.
 - **Lịch Sử:** hiển thị lần quét, chuyển tiếp, câu hỏi/câu trả lời, outcome, thời gian, liên kết chứng từ và nút undo đúng dòng quyết định.
 
 Razor tạo URL và antiforgery token nên không hard-code route POST. JavaScript dùng `textContent`/`escapeHtml` khi render dữ liệu AI và lỗi để giảm DOM XSS. Loading skeleton cho người dùng biết request đang chạy.
@@ -326,7 +327,7 @@ Hai ViewComponent bắt lỗi DB và hiển thị thông báo thay vì làm hỏ
 
 ### 14.1 Automated policy tests
 
-33 xUnit cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, tax ID, currency, date, future/stale/weekend, late time, blur, duplicate, chứng từ nháp/hủy, bốn nhóm item cấm, authority, precedence và tám nhánh Có/Không của workflow.
+39 xUnit cases phủ routine, null facts, confidence, total, amount mismatch, merchant/identifier, tax ID, currency, date, future/stale/weekend, late time, blur, duplicate, chứng từ nháp/hủy, bốn nhóm item cấm, authority, precedence, tám nhánh quyết định và ranh giới vai trò nhân viên/quản lý.
 
 ### 14.2 Smoke tests đã thực hiện
 
@@ -358,7 +359,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Mục tiêu: build sạch và 33/33 test policy/workflow.
+Mục tiêu: build sạch và 39/39 test policy/workflow.
 
 ### Tầng B — fixture chuẩn hóa
 
@@ -412,13 +413,13 @@ Mỗi case lưu: ID, nguồn/license/consent, ground truth fields, claimed amoun
 |---|---|---|
 | Chủ đề và workflow Track A | Đạt | Hoàn ứng chi phí, input→decision→HITL rõ |
 | Policy rõ | Đạt cơ bản | Tốt cho scope một ảnh; còn gap production |
-| ≥15 tình huống | Đạt | 33 automated, matrix 40 |
+| ≥15 tình huống | Đạt | 39 automated, matrix 40 |
 | FACT/POLICY/AUTHORITY | Đạt | Có precedence tất định |
 | Câu hỏi chuyển tiếp cụ thể | Đạt | Tiếng Việt, dữ kiện cụ thể, CÓ/KHÔNG |
 | 3 ca tự xử lý + 2 chuyển tiếp một nút | Đạt local | Live benchmark 5/5 |
 | Input mới | Đạt local | Cùng extraction/policy path |
 | Audit trail, timestamp, latency | Đạt local | Có DB audit và UI |
-| Stop/override/undo | Đạt local | Nhân viên chuyển tiếp; quản lý Có/Không/undo |
+| Stop/override/undo | Đạt local | Chuyển từng/toàn bộ; quản lý Đồng ý/Từ chối/undo |
 | Lưu và tra cứu ảnh | Đạt local | Private folder + route |
 | Chạy dưới 90 giây | Đạt benchmark | ~31,5 giây, quota vẫn biến động |
 | Live URL | **Không đạt** | Blocker trước nộp |
@@ -469,7 +470,7 @@ Mỗi case lưu: ID, nguồn/license/consent, ground truth fields, claimed amoun
 - `Controllers/HomeController.cs`: dashboard/privacy/error.
 - `Controllers/ApplicantController.cs`: upload, validation, persistence và receipt stream.
 - `Controllers/VerifyController.cs`: one-click five-case harness.
-- `Controllers/ReviewerController.cs`: Có/Không/undo với state guard.
+- `Controllers/ReviewerController.cs`: Đồng ý/Từ chối/undo với state guard và atomic audit persistence.
 - `Services/EscalationWorkflow.cs`: ánh xạ ý nghĩa Có/Không theo từng loại escalation.
 - `Services/VisionExtractionException.cs`: mã lỗi AI an toàn, không làm lộ secret/response thô.
 - `Services/GeminiVisionExtractorService.cs`: REST client, schema, retry, parsing.
