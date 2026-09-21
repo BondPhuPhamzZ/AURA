@@ -43,6 +43,8 @@ Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_rec
 
 Trong demo, `DecisionPolicy:EscalateDuplicateReceipts=false` cho phép chạy lại cùng ảnh nhưng vẫn ghi nhận trùng trong audit. Trước production, đổi thành `true`. Thay đổi cấu hình này không cần sửa code.
 
+Nếu nhiều ca Verify cùng dừng gần đúng 60.000 ms, đó là `AI_TIMEOUT` theo `Gemini:TimeoutSeconds`, không phải model “học kém đi”. Harness sẽ dừng gọi AI cho các ca còn lại sau timeout, rate limit hoặc lỗi nhà cung cấp để bảo vệ quota. HTTP 429 không được tự động retry; chờ thời điểm reset hiển thị trong AI Studio hoặc chủ động đổi model/key/project đã có quota hợp lệ rồi mới chạy lại.
+
 ### Khi Gemini trả HTTP 429
 
 1. Mở **Google AI Studio → Dashboard → Usage & Billing** và xem chính xác giới hạn nào đã chạm: RPM (request/phút), TPM (token/phút) hay RPD (request/ngày). Quota được tính theo **project**, không theo từng API key.

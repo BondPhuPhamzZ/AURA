@@ -71,7 +71,18 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
             }
         };
 
-        var (statusCode, responseText) = await SendWithRetryAsync(payload, cancellationToken);
+        (HttpStatusCode statusCode, string responseText) response;
+        try
+        {
+            response = await SendWithRetryAsync(payload, cancellationToken);
+        }
+        catch (TaskCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new VisionExtractionException("AI_TIMEOUT",
+                $"Gemini không phản hồi trong {_options.TimeoutSeconds} giây. Đây là lỗi timeout mạng/dịch vụ hoặc model đang quá tải, không phải do nội dung 'kiểm thử' trong ảnh.", exception);
+        }
+
+        var (statusCode, responseText) = response;
         if ((int)statusCode is < 200 or >= 300)
         {
             _logger.LogWarning("Gemini returned HTTP {StatusCode} after retries.", (int)statusCode);
@@ -146,8 +157,10 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
         throw new InvalidOperationException("Gemini retry loop ended unexpectedly.");
     }
 
+    // Do not retry 429 automatically: repeated quota requests make a demo slower and can exhaust
+    // the remaining request budget. Operators can retry deliberately after the provider reset.
     private static bool IsTransient(HttpStatusCode statusCode) => statusCode is
-        HttpStatusCode.TooManyRequests or HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or
+        HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or
         HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout;
 
     private static VisionExtractionException CreateHttpFailure(HttpStatusCode statusCode) => statusCode switch

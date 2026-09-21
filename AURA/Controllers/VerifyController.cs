@@ -52,6 +52,7 @@ public sealed class VerifyController : Controller
             return StatusCode(500, new { error = "Verify Harness phải có đúng 5 ca (3 thường quy, 2 chuyển tiếp)." });
 
         var results = new List<object>(testCases.Count);
+        VisionExtractionException? blockingProviderFailure = null;
         foreach (var testCase in testCases)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -64,7 +65,13 @@ public sealed class VerifyController : Controller
             string? extractedFactsJson = null;
             ReceiptExtractionDto? extractedFacts = null;
 
-            if (!imagePath.StartsWith(imageRoot, StringComparison.OrdinalIgnoreCase) || !System.IO.File.Exists(imagePath))
+            if (blockingProviderFailure is not null)
+            {
+                actualStatus = "ESCALATE_SYSTEM_ERROR";
+                reason = $"Đã bỏ qua lời gọi AI để bảo vệ quota sau lỗi {blockingProviderFailure.Code}: {blockingProviderFailure.UserMessage}";
+                question = "AI đang không khả dụng. Quản lý có đồng ý tiếp nhận để kiểm tra thủ công không? [CÓ/KHÔNG]";
+            }
+            else if (!imagePath.StartsWith(imageRoot, StringComparison.OrdinalIgnoreCase) || !System.IO.File.Exists(imagePath))
             {
                 actualStatus = "ESCALATE_SYSTEM_ERROR";
                 reason = "Thiếu ảnh kiểm thử trong manifest.";
@@ -87,6 +94,8 @@ public sealed class VerifyController : Controller
                     actualStatus = "ESCALATE_SYSTEM_ERROR";
                     reason = $"{exception.UserMessage} Mã lỗi: {exception.Code}.";
                     question = "AI chưa xử lý được ảnh. Quản lý có đồng ý tiếp nhận để kiểm tra thủ công không? [CÓ/KHÔNG]";
+                    if (IsBlockingProviderFailure(exception.Code))
+                        blockingProviderFailure = exception;
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
@@ -152,4 +161,7 @@ public sealed class VerifyController : Controller
     private static bool StatusMatches(string expected, string actual) =>
         string.Equals(expected, actual, StringComparison.Ordinal) ||
         string.Equals(expected, "ESCALATE", StringComparison.Ordinal) && PolicyDecisionEngine.IsEscalation(actual);
+
+    private static bool IsBlockingProviderFailure(string code) => code is
+        "AI_TIMEOUT" or "AI_RATE_LIMIT" or "AI_NOT_CONFIGURED" or "AI_TEMPORARILY_UNAVAILABLE";
 }
