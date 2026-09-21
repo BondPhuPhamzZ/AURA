@@ -65,6 +65,18 @@ public sealed class PolicyDecisionEngineTests
     }
 
     [Theory]
+    [InlineData("DRAFT")]
+    [InlineData("CANCELLED")]
+    [InlineData("chưa phát hành")]
+    public void Draft_or_cancelled_document_is_fact_escalation(string documentStatus)
+    {
+        var facts = ValidFacts();
+        facts.DocumentStatus = documentStatus;
+
+        Assert.Equal("ESCALATE_FACT", Decide(facts).Status);
+    }
+
+    [Theory]
     [InlineData("Tiger Beer")]
     [InlineData("Thuốc lá")]
     [InlineData("Karaoke client event")]

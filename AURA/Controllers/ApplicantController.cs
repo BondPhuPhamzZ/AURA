@@ -137,6 +137,14 @@ public sealed class ApplicantController : Controller
             request.AiReasoning = decision.Reason;
             request.ManagerQuestion = decision.ManagerQuestion;
         }
+        catch (VisionExtractionException exception)
+        {
+            _logger.LogWarning(exception, "Vision extraction stopped with {ErrorCode} for request {RequestId}.",
+                exception.Code, request.Id);
+            request.Status = "ESCALATE_SYSTEM_ERROR";
+            request.AiReasoning = $"{exception.UserMessage} Mã lỗi: {exception.Code}. Không có quyết định tự động nào được đưa ra.";
+            request.ManagerQuestion = "AI chưa xử lý được ảnh. Anh/chị có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]";
+        }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             throw;

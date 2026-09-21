@@ -28,6 +28,8 @@ public static class PolicyDecisionEngine
         var factProblems = new List<string>();
         if (facts.Confidence < MinimumConfidence)
             factProblems.Add($"độ tin cậy trích xuất chỉ {facts.Confidence:P0}");
+        if (ContainsAny(facts.DocumentStatus, "draft", "nháp", "unissued", "chưa phát hành", "cancelled", "canceled", "đã hủy"))
+            factProblems.Add($"chứng từ ở trạng thái {facts.DocumentStatus}, chưa phải hóa đơn đã phát hành hợp lệ");
         if (isDuplicate)
             factProblems.Add("ảnh hóa đơn trùng với hồ sơ đã lưu");
         if (facts.TotalAmount is null or <= 0)

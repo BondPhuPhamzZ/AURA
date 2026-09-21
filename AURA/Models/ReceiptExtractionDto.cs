@@ -14,8 +14,11 @@ namespace AURA.Models
     public class ReceiptExtractionDto
     {
         public string? DocumentType { get; set; }
+        public string? DocumentStatus { get; set; }
         public string? MerchantName { get; set; }
         public string? TaxId { get; set; }
+        public string? MerchantId { get; set; }
+        public string? TerminalId { get; set; }
         public string? BookingId { get; set; }
         public string? InvoiceNumber { get; set; }
         public string? InvoiceDate { get; set; }

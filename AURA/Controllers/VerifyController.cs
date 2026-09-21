@@ -82,6 +82,13 @@ public sealed class VerifyController : Controller
                     reason = decision.Reason;
                     question = decision.ManagerQuestion;
                 }
+                catch (VisionExtractionException exception)
+                {
+                    _logger.LogWarning(exception, "Verify case {CaseId} stopped with {ErrorCode}.", testCase.Id, exception.Code);
+                    actualStatus = "ESCALATE_SYSTEM_ERROR";
+                    reason = $"{exception.UserMessage} Mã lỗi: {exception.Code}.";
+                    question = "AI chưa xử lý được ảnh. Anh/chị có đồng ý kiểm tra thủ công không? [CÓ/KHÔNG]";
+                }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
                     throw;

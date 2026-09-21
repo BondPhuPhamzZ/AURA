@@ -29,18 +29,20 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(_options.ApiKey))
-            throw new InvalidOperationException("Gemini API chưa được cấu hình. Hãy đặt secret 'Gemini:ApiKey'.");
+            throw new VisionExtractionException("AI_NOT_CONFIGURED",
+                "Gemini API chưa được cấu hình; hồ sơ cần được kiểm tra thủ công.");
 
         var fullImagePath = Path.GetFullPath(physicalImagePath);
         if (!File.Exists(fullImagePath))
-            throw new FileNotFoundException("Không tìm thấy ảnh hóa đơn cần phân tích.", fullImagePath);
+            throw new VisionExtractionException("IMAGE_NOT_FOUND", "Không tìm thấy ảnh hóa đơn cần phân tích.");
 
         var contentRoot = Path.GetFullPath(_environment.ContentRootPath);
         var policyPath = Path.GetFullPath(Path.Combine(contentRoot, _options.PolicyPath));
         var contentRootPrefix = contentRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
             + Path.DirectorySeparatorChar;
         if (!policyPath.StartsWith(contentRootPrefix, StringComparison.OrdinalIgnoreCase) || !File.Exists(policyPath))
-            throw new InvalidOperationException($"Không tìm thấy tài liệu chính sách bắt buộc tại '{_options.PolicyPath}'.");
+            throw new VisionExtractionException("POLICY_NOT_FOUND",
+                "Không tìm thấy tài liệu chính sách bắt buộc; không thể ra quyết định tự động.");
 
         var imageBytes = await File.ReadAllBytesAsync(fullImagePath, cancellationToken);
         var policy = await File.ReadAllTextAsync(policyPath, cancellationToken);
@@ -73,30 +75,43 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
         if ((int)statusCode is < 200 or >= 300)
         {
             _logger.LogWarning("Gemini returned HTTP {StatusCode} after retries.", (int)statusCode);
-            throw new InvalidOperationException($"Gemini không xử lý được yêu cầu (HTTP {(int)statusCode}).");
+            throw CreateHttpFailure(statusCode);
         }
 
-        using var responseDocument = JsonDocument.Parse(responseText);
+        using var responseDocument = ParseResponseDocument(responseText);
         var root = responseDocument.RootElement;
         if (root.TryGetProperty("promptFeedback", out var feedback) &&
             feedback.TryGetProperty("blockReason", out var blockReason))
-            throw new InvalidOperationException($"Gemini đã từ chối đầu vào: {blockReason.GetString()}.");
+            throw new VisionExtractionException("AI_INPUT_BLOCKED",
+                $"Gemini từ chối xử lý đầu vào ({blockReason.GetString() ?? "không rõ lý do"}); hồ sơ cần kiểm tra thủ công.");
 
         if (!root.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
-            throw new InvalidOperationException("Gemini không trả về kết quả trích xuất.");
+            throw new VisionExtractionException("AI_EMPTY_RESPONSE",
+                "Gemini không trả về kết quả trích xuất; hồ sơ cần kiểm tra thủ công.");
 
         var candidate = candidates[0];
         if (candidate.TryGetProperty("finishReason", out var finishReason) &&
-            finishReason.GetString() is not ("STOP" or "MAX_TOKENS"))
-            throw new InvalidOperationException($"Gemini dừng bất thường: {finishReason.GetString() ?? "không rõ"}.");
+            finishReason.GetString() is not "STOP")
+            throw new VisionExtractionException("AI_ABNORMAL_FINISH",
+                $"Gemini dừng bất thường ({finishReason.GetString() ?? "không rõ"}); hồ sơ cần kiểm tra thủ công.");
 
         if (!candidate.TryGetProperty("content", out var content) ||
             !content.TryGetProperty("parts", out var parts) || parts.GetArrayLength() == 0 ||
             !parts[0].TryGetProperty("text", out var textElement))
-            throw new InvalidOperationException("Phản hồi Gemini không chứa JSON trích xuất.");
+            throw new VisionExtractionException("AI_INVALID_RESPONSE",
+                "Gemini không trả về dữ liệu JSON hợp lệ; hồ sơ cần kiểm tra thủ công.");
 
-        var facts = JsonSerializer.Deserialize<ReceiptExtractionDto>(textElement.GetString() ?? string.Empty, JsonOptions)
-            ?? throw new InvalidOperationException("Không thể đọc JSON do Gemini trả về.");
+        ReceiptExtractionDto facts;
+        try
+        {
+            facts = JsonSerializer.Deserialize<ReceiptExtractionDto>(textElement.GetString() ?? string.Empty, JsonOptions)
+                ?? throw new JsonException("Empty extraction object.");
+        }
+        catch (JsonException exception)
+        {
+            throw new VisionExtractionException("AI_INVALID_JSON",
+                "Gemini trả về JSON không đọc được; hồ sơ cần kiểm tra thủ công.", exception);
+        }
         facts.LineItems ??= [];
         facts.MissingFields ??= [];
         facts.Warnings ??= [];
@@ -135,6 +150,30 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
         HttpStatusCode.TooManyRequests or HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or
         HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout;
 
+    private static VisionExtractionException CreateHttpFailure(HttpStatusCode statusCode) => statusCode switch
+    {
+        HttpStatusCode.TooManyRequests => new VisionExtractionException("AI_RATE_LIMIT",
+            "Gemini đang giới hạn lượt gọi hoặc đã chạm quota (HTTP 429) sau 3 lần thử; hãy đợi rồi thử lại hoặc chuyển kiểm tra thủ công."),
+        HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or
+            HttpStatusCode.GatewayTimeout => new VisionExtractionException("AI_TEMPORARILY_UNAVAILABLE",
+                $"Gemini đang tạm thời không khả dụng (HTTP {(int)statusCode}) sau 3 lần thử; hồ sơ cần kiểm tra thủ công."),
+        _ => new VisionExtractionException("AI_HTTP_ERROR",
+            $"Gemini từ chối yêu cầu (HTTP {(int)statusCode}); hồ sơ cần kiểm tra thủ công.")
+    };
+
+    private static JsonDocument ParseResponseDocument(string responseText)
+    {
+        try
+        {
+            return JsonDocument.Parse(responseText);
+        }
+        catch (JsonException exception)
+        {
+            throw new VisionExtractionException("AI_INVALID_RESPONSE",
+                "Gemini trả về phản hồi không phải JSON hợp lệ; hồ sơ cần kiểm tra thủ công.", exception);
+        }
+    }
+
     private static string GetMimeType(string filePath) => Path.GetExtension(filePath).ToLowerInvariant() switch
     {
         ".png" => "image/png",
@@ -146,13 +185,14 @@ public sealed class GeminiVisionExtractorService : IVisionExtractor
     {
         type = "object",
         additionalProperties = false,
-        required = new[] { "documentType", "merchantName", "taxId", "bookingId", "invoiceNumber",
+        required = new[] { "documentType", "documentStatus", "merchantName", "taxId", "merchantId", "terminalId", "bookingId", "invoiceNumber",
             "invoiceDate", "invoiceTime", "currency", "subtotal", "tax", "totalAmount", "lineItems",
             "missingFields", "warnings", "suspiciousSignals", "confidence" },
         properties = new Dictionary<string, object>
         {
-            ["documentType"] = NullableString(), ["merchantName"] = NullableString(),
-            ["taxId"] = NullableString(), ["bookingId"] = NullableString(),
+            ["documentType"] = NullableString(), ["documentStatus"] = NullableString(),
+            ["merchantName"] = NullableString(), ["taxId"] = NullableString(),
+            ["merchantId"] = NullableString(), ["terminalId"] = NullableString(), ["bookingId"] = NullableString(),
             ["invoiceNumber"] = NullableString(), ["invoiceDate"] = NullableString(),
             ["invoiceTime"] = NullableString(), ["currency"] = NullableString(),
             ["subtotal"] = NullableNumber(), ["tax"] = NullableNumber(), ["totalAmount"] = NullableNumber(),
