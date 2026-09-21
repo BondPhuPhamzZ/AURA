@@ -15,8 +15,8 @@
         }
         else
         {
-        <div style="overflow-x: auto;">
-            <table class="table-aura">
+        <div class="table-responsive-aura table-scroll-area">
+            <table class="table-aura manager-table">
                 <thead>
                     <tr>
                         <th>Mã Đơn</th>
@@ -35,25 +35,30 @@
                             <td style="font-family: monospace;">@item.Id.Substring(0, 8)...</td>
                             <td style="font-weight: 500;">Đơn Ẩn Danh</td>
                             <td style="font-weight: 500;">@item.ClaimedAmount.ToString("N0") VND</td>
-                            <td>
+                            <td class="manager-reason-column">
                                 <span class="badge bg-warning text-dark">@item.Status</span><br />
-                                <span style="color: #b91c1c;">@item.AiReasoning</span><br />
-                                <small>@item.ManagerQuestion</small>
+                                <span class="manager-ai-reason">@item.AiReasoning</span><br />
+                                <small class="manager-question">@item.ManagerQuestion</small>
                             </td>
-                            <td><a href="@item.ImageUrl" target="_blank" rel="noopener">Xem hóa đơn</a></td>
                             <td>
+                                <a class="receipt-preview-link" href="@item.ImageUrl" target="_blank" rel="noopener">
+                                    <img class="receipt-thumbnail receipt-thumbnail-large" src="@item.ImageUrl" alt="Ảnh chứng từ @item.OriginalFileName" loading="lazy" />
+                                    <span>Xem hóa đơn</span>
+                                </a>
+                            </td>
+                            <td class="manager-action-column">
                                 <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline">
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="decision" value="YES" />
-                                    <button type="submit" class="button-ghost-sm success" title="@choices.Yes">Có</button>
+                                    <button type="submit" class="button-ghost-sm success" title="@choices.Yes">Đồng ý duyệt</button>
                                 </form>
                                 <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline" style="margin-left: 8px;">
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="decision" value="NO" />
-                                    <button type="submit" class="button-ghost-sm danger" title="@choices.No">Không</button>
+                                    <button type="submit" class="button-ghost-sm danger" title="@choices.No">Từ chối duyệt</button>
                                 </form>
-                                <div><small><strong>Có:</strong> @choices.Yes[4..]</small></div>
-                                <div><small><strong>Không:</strong> @choices.No[7..]</small></div>
+                                <div class="decision-help"><small><strong>Đồng ý:</strong> @choices.Yes</small></div>
+                                <div class="decision-help"><small><strong>Từ chối:</strong> @choices.No</small></div>
                             </td>
                         </tr>
                     }

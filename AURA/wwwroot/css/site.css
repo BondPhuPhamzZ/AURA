@@ -194,7 +194,37 @@ main {
 }
 
 .amount-field {
-    max-width: 520px;
+    flex: 1 1 520px;
+    max-width: 720px;
+}
+
+.amount-action-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.amount-submit-wrap {
+    flex: 0 0 auto;
+    padding-bottom: 2px;
+}
+
+.amount-input-aura.form-control {
+    background-color: #172033;
+    border: 1px solid #334155;
+    color: var(--colors-ink);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.amount-input-aura.form-control::placeholder {
+    color: #7f8da3;
+}
+
+.amount-input-aura.form-control:focus {
+    background-color: #1b2740;
+    border-color: var(--colors-primary);
+    color: var(--colors-ink);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 /* Dropzone */
@@ -309,6 +339,51 @@ main {
     scrollbar-gutter: stable;
 }
 
+.table-scroll-area {
+    max-height: 460px;
+    overflow: auto;
+    overscroll-behavior: contain;
+    border: 1px solid var(--colors-border);
+    border-radius: 10px;
+    scrollbar-color: #475569 #111827;
+    scrollbar-width: thin;
+}
+
+.table-scroll-area-tall {
+    max-height: 580px;
+}
+
+.table-scroll-area::-webkit-scrollbar,
+.top-tabs::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.table-scroll-area::-webkit-scrollbar-track,
+.top-tabs::-webkit-scrollbar-track {
+    background: #111827;
+    border-radius: 999px;
+}
+
+.table-scroll-area::-webkit-scrollbar-thumb,
+.top-tabs::-webkit-scrollbar-thumb {
+    background: #475569;
+    border: 2px solid #111827;
+    border-radius: 999px;
+}
+
+.table-scroll-area::-webkit-scrollbar-thumb:hover,
+.top-tabs::-webkit-scrollbar-thumb:hover {
+    background: var(--colors-primary);
+}
+
+.table-scroll-area .table-aura thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--colors-surface);
+}
+
 .results-table th:nth-child(6),
 .results-table td:nth-child(6) {
     min-width: 360px;
@@ -340,6 +415,81 @@ main {
 .cell-actions form,
 .cell-actions button {
     margin: 0;
+}
+
+.queue-heading-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.queue-heading-row .section-title,
+.queue-heading-row .table-caption {
+    margin-bottom: 6px;
+}
+
+.receipt-preview-link {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    max-width: 150px;
+    color: #8db8ff;
+    text-decoration: none;
+}
+
+.receipt-preview-link:hover {
+    color: #bfdbfe;
+}
+
+.receipt-thumbnail {
+    display: block;
+    width: 96px;
+    height: 72px;
+    object-fit: cover;
+    object-position: center;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: var(--colors-canvas);
+}
+
+.receipt-thumbnail-large {
+    width: 128px;
+    height: 96px;
+}
+
+.manager-table {
+    min-width: 1180px;
+}
+
+.manager-reason-column {
+    width: 34%;
+    min-width: 320px;
+    max-width: 480px;
+}
+
+.manager-ai-reason {
+    display: inline-block;
+    margin-top: 8px;
+    color: #fca5a5;
+}
+
+.manager-question {
+    display: block;
+    margin-top: 8px;
+    color: var(--colors-ink-muted);
+}
+
+.manager-action-column {
+    min-width: 290px;
+}
+
+.decision-help {
+    margin-top: 8px;
+    max-width: 290px;
+    color: var(--colors-ink-muted);
 }
 
 .page-notice {
@@ -416,6 +566,23 @@ main {
 
     .dropzone-area {
         padding: 48px 16px;
+    }
+
+    .amount-action-row,
+    .queue-heading-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .amount-field {
+        width: 100%;
+        max-width: none;
+        flex-basis: auto;
+    }
+
+    .amount-submit-wrap .button-primary,
+    .queue-heading-row .button-primary {
+        width: 100%;
     }
 }
 

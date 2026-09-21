@@ -41,20 +41,21 @@
                 <div class="dropzone-subtext" style="color: var(--colors-ink-subtle); margin-top: 8px; font-size: 0.875rem;">Hỗ trợ JPG, PNG (Tối đa 5MB)</div>
             </div>
 
-            <div class="mt-3 amount-field">
-                <label for="claimedAmountDisplay" class="form-label fw-semibold">Số tiền nhân viên đề nghị hoàn ứng (VND)</label>
-                <input id="claimedAmountDisplay" type="text" inputmode="numeric" autocomplete="off" required
-                       class="form-control" placeholder="Ví dụ: 150.000" aria-describedby="claimedAmountHelp" />
-                <input id="claimedAmount" name="claimedAmount" type="hidden" />
-                <div id="claimedAmountHelp" class="form-text">
-                    Đây là số tiền nhân viên thực sự yêu cầu, được giữ độc lập để phát hiện khai báo hoặc nhận dạng sai. Hệ thống tự thêm dấu chấm phân cách hàng nghìn.
+            <div class="amount-action-row mt-3">
+                <div class="amount-field">
+                    <label for="claimedAmountDisplay" class="form-label fw-semibold">Số tiền nhân viên đề nghị hoàn ứng (VND)</label>
+                    <input id="claimedAmountDisplay" type="text" inputmode="numeric" autocomplete="off" required
+                           class="form-control amount-input-aura" placeholder="Ví dụ: 150.000" aria-describedby="claimedAmountHelp" />
+                    <input id="claimedAmount" name="claimedAmount" type="hidden" />
+                    <div id="claimedAmountHelp" class="form-text">
+                        Đây là số tiền nhân viên thực sự yêu cầu, được giữ độc lập để phát hiện khai báo hoặc nhận dạng sai. Hệ thống tự thêm dấu chấm phân cách hàng nghìn.
+                    </div>
                 </div>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
-                <button type="button" id="submitBtn" class="button-primary" onclick="submitUpload()" style="padding: 10px 24px; font-weight: 500;">
-                    <span id="btnText">AI tự động kiểm</span>
-                </button>
+                <div class="amount-submit-wrap">
+                    <button type="button" id="submitBtn" class="button-primary" onclick="submitUpload()">
+                        <span id="btnText">AI tự động kiểm</span>
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -71,7 +72,7 @@
         <p class="table-caption">
             <strong>Kỳ vọng/Đối chiếu</strong> chỉ dùng cho Verify có nhãn sẵn. Ảnh nhân viên tải mới không có đáp án chuẩn nên hiển thị “Không áp dụng”, không tự nhận là PASS.
         </p>
-        <div class="table-responsive-aura">
+        <div class="table-responsive-aura table-scroll-area">
             <table class="table-aura results-table">
                 <thead>
                     <tr>
@@ -233,14 +234,20 @@
         const action = item.canForward
             ? '<button type="button" class="button-primary button-compact" onclick="forwardToManager(\'' + escapeJsString(item.caseId) + '\', this)">Chuyển tiếp</button>'
             : '<span class="text-muted">Không cần</span>';
+        const receipt = item.receiptUrl
+            ? '<a class="receipt-preview-link" href="' + escapeHtml(item.receiptUrl) + '" target="_blank" rel="noopener">' +
+              '<img class="receipt-thumbnail" src="' + escapeHtml(item.receiptUrl) + '" alt="Ảnh chứng từ ' + escapeHtml(item.image) + '" loading="lazy" />' +
+              '<span>' + escapeHtml(item.image) + '</span></a>'
+            : escapeHtml(item.image);
+        const handoffText = item.canForward ? (item.handoffPrompt || '') : (item.question || '');
 
         return '<tr>' +
             '<td data-label="Mã hồ sơ" class="cell-code">' + escapeHtml(item.caseId ? item.caseId.substring(0,8) : '') + '</td>' +
-            '<td data-label="Ảnh">' + escapeHtml(item.image) + '</td>' +
+            '<td data-label="Ảnh">' + receipt + '</td>' +
             '<td data-label="Kỳ vọng">' + expectedBadge + '</td>' +
             '<td data-label="Kết quả">' + actualBadge + '</td>' +
             '<td data-label="Đối chiếu">' + passBadge + '</td>' +
-            '<td data-label="Lý do và câu hỏi" class="cell-reason"><strong>' + escapeHtml(item.reason) + '</strong><small>' + escapeHtml(item.question || '') + '</small></td>' +
+            '<td data-label="Lý do và câu hỏi" class="cell-reason"><strong>' + escapeHtml(item.reason) + '</strong><small>' + escapeHtml(handoffText) + '</small></td>' +
             '<td data-label="Độ trễ" class="cell-number">' + escapeHtml(item.latencyMs) + ' ms</td>' +
             '<td data-label="Thao tác" class="cell-actions">' + action + '</td>' +
         '</tr>';
