@@ -1,36 +1,73 @@
-# Kịch bản video demo AURA — 2 phút 45 giây
+# Kịch bản video demo AURA — 2 phút 50 giây
 
-Video URL: **[ĐIỀN SAU KHI UPLOAD — không commit file video lớn]**
+Live URL dự kiến: `https://bondphupham-001-site1.itempurl.com`
 
-## 00:00–00:20 — Bài toán
+Chỉ quay sau khi URL trên đã mở được trong cửa sổ ẩn danh, `/healthz` trả `status: ok` và một ảnh smoke test thành công. Lượt Verify live nên chính là lượt quay chính thức để không tốn thêm năm request. Video nên có thuyết minh tiếng Việt; không cần quay khuôn mặt.
 
-Hiện slide 1: quy trình hoàn ứng thủ công chậm, không nhất quán và khó truy vết. Chốt nguyên tắc: “AI đọc, policy quyết định, con người xử lý ngoại lệ”.
+## Chuẩn bị trước khi bấm ghi hình
 
-## 00:20–01:05 — Verify Harness
+1. Đổi `Database__ApplyMigrationsOnStartup` từ `true` sang `false`, lưu và recycle pool.
+2. Mở `/healthz`, trang Nhân viên, Quản lý và Lịch sử trong các tab riêng.
+3. Đăng xuất các tài khoản cá nhân, tắt thông báo và không mở OpenRouter Billing/API Keys.
+4. Chuẩn bị `test_kit/images/TK-04-missing-identifier.jpg` và số tiền `210000` để minh họa một hồ sơ cần con người xử lý.
+5. Đặt trình duyệt ở 100%, quay 1920x1080 và kiểm micro trước khi ghi.
+6. Làm sạch dữ liệu demo thừa nếu cần, nhưng giữ một hàng Audit đã hoàn tất để tránh chờ lâu khi quay. Chưa bấm Verify trong lúc diễn tập.
 
-Mở Live URL ở tab ẩn danh, bấm **Chạy Verify Harness** đúng một lần. Chỉ ra 5 ca gồm 3 routine và 2 escalation, expected/actual, PASS/FAIL, latency. Không mở OpenRouter Activity, billing hoặc secret.
+## 00:00–00:15 — Mở đầu tại Live URL
 
-## 01:05–01:40 — Một hóa đơn mới
+**Thao tác:** Mở Live URL trong cửa sổ ẩn danh, lia qua ba khu vực Nhân viên, Quản lý và Lịch sử.
 
-Chọn ảnh tổng hợp đã chuẩn bị, cho thấy preview, nhập số tiền và bấm **AI tự động kiểm**. Chỉ vào facts Qwen đọc và kết quả policy. Nếu là escalation, bấm **Chuyển tiếp**.
+**Lời thoại:**
 
-## 01:40–02:10 — Quản lý và Audit
+> Xin chào Ban Giám khảo. Đây là AURA, hệ thống hỗ trợ thẩm định hoàn ứng. Qwen chỉ đọc dữ kiện trên hóa đơn; policy C# mới quyết định tự duyệt hay chuyển con người xử lý ngoại lệ.
 
-Mở tab **Quản lý**, trả lời Đồng ý/Từ chối cho một hồ sơ. Sau đó mở **Lịch sử**: một dòng đại diện cho hồ sơ, mở timeline để cho thấy AI xử lý → nhân viên chuyển → quản lý quyết định. Nếu dữ liệu demo đã chuẩn bị, hoàn tác một lần và chỉ ra trạng thái được khôi phục.
+## 00:15–01:00 — Verify Harness 5 ca
 
-## 02:10–02:35 — Kiến trúc
+**Thao tác:** Nhấn `Chạy Verify Harness` đúng một lần. Trong khi hệ thống chạy tuần tự, chỉ vào kỳ vọng, kết quả thực tế, đối chiếu và độ trễ. Khi hoàn tất, giữ màn hình ở bảng tổng kết 5 ca.
 
-Hiện slide 4: Qwen/OpenRouter chỉ extraction; policy C# quyết định; SQL Server lưu hồ sơ/audit; ảnh nằm ở private storage. Nêu rõ Test Kit là dữ liệu tổng hợp.
+**Lời thoại:**
 
-## 02:35–02:45 — Giới hạn
+> Bộ Verify chạy năm ảnh tổng hợp qua cùng đường xử lý production, gồm ba ca thường quy và hai ca phải chuyển tiếp. Bảng so sánh expected với actual, không gán PASS khi provider lỗi. Hệ thống dừng các lượt còn lại nếu gặp lỗi quota hoặc lỗi provider mang tính hệ thống.
 
-Hiện slide 5: chỉ JPG/PNG đơn trang, chưa xác thực hóa đơn với registry, provider có thể rate-limit. Kết thúc trước 3 phút.
+Nếu kết quả live không đạt 5/5, không quay lại liên tục để săn PASS. Dừng ghi, kiểm tra OpenRouter Activity và xử lý nguyên nhân trước.
 
-## Checklist quay
+## 01:00–01:40 — Upload một hóa đơn mới
 
-- Làm nóng Live URL và kiểm `/healthz` trước khi bấm record.
-- Mở sẵn ba tab: Nhân viên, Quản lý, Lịch sử.
-- Tắt notification, quay 1080p, zoom đủ đọc.
-- Dùng fixture tổng hợp, không dùng hóa đơn cá nhân.
-- Nếu provider lỗi, không chạy lặp để “săn PASS”; quay lại sau hoặc nêu đúng giới hạn.
-- Upload video dạng Unlisted/Anyone with link, thử link bằng cửa sổ ẩn danh.
+**Thao tác:** Chọn `TK-04-missing-identifier.jpg`, nhập `210000`, bấm `AI tự động kiểm`. Cho thấy preview ảnh, loading, khung dữ kiện AI và kết quả `ESCALATE_FACT`. Nhấn `Chuyển tiếp`.
+
+**Lời thoại:**
+
+> Đây là một hóa đơn thiếu số hóa đơn hoặc mã truy vết. AURA vẫn hiển thị những dữ kiện đọc được, nhưng policy ưu tiên bất định dữ kiện và yêu cầu kiểm tra thủ công. Nhân viên chủ động xác nhận chuyển tiếp; hệ thống không âm thầm giao quyền quyết định cho AI.
+
+## 01:40–02:15 — Quản lý và Audit Log
+
+**Thao tác:** Mở tab Quản lý, chọn hồ sơ vừa chuyển và nhấn `Từ chối` hoặc `Đồng ý` theo câu hỏi hiển thị. Chuyển sang Lịch sử, mở chi tiết/timeline của đúng hồ sơ.
+
+**Lời thoại:**
+
+> Quản lý nhận đúng câu hỏi cần quyết định, kèm ảnh và dữ kiện đầu vào. Sau thao tác, Audit Log hiển thị một hồ sơ với timeline từ kết quả AI, chuyển tiếp của nhân viên đến quyết định của quản lý; dữ liệu không bị nhân thành ba lịch sử rời rạc.
+
+## 02:15–02:38 — Kiến trúc và bằng chứng
+
+**Thao tác:** Hiện slide kiến trúc hoặc sơ đồ workflow trong hồ sơ nộp.
+
+**Lời thoại:**
+
+> AURA chạy trên ASP.NET Core 8, SQL Server và kho ảnh riêng. OpenRouter chuyển ảnh tới Qwen để trích xuất JSON có cấu trúc. Policy, workflow chuyển tiếp và audit chạy trong C#. Repo có 54 test offline, năm ca Verify trực tiếp và gói 15 ca tham chiếu cho Ban Giám khảo.
+
+## 02:38–02:50 — Giới hạn thật và kết thúc
+
+**Thao tác:** Hiện slide giới hạn hoặc quay về màn hình chính.
+
+**Lời thoại:**
+
+> Sprint này mới hỗ trợ JPG hoặc PNG một trang và còn phụ thuộc quota của provider. Khi AI lỗi, AURA chuyển kiểm tra thủ công thay vì tạo kết quả giả. Cảm ơn Ban Giám khảo.
+
+## Checklist sau khi quay
+
+- Thời lượng dưới 3 phút; ưu tiên một cảnh quay liền mạch.
+- Có tiếng thuyết minh rõ, không cần nhạc nền và không cần webcam.
+- Video có Live URL, Verify, một input mới, quyết định quản lý, Audit Log và một giới hạn chưa hoàn hảo.
+- Không lộ API key, connection string, billing, publish profile hoặc dữ liệu cá nhân thật.
+- Upload YouTube Unlisted hoặc Google Drive `Anyone with the link`, rồi thử link bằng cửa sổ ẩn danh.
+- Không commit video `.mp4` vào GitHub; chỉ điền link xem vào checklist/form nộp.
