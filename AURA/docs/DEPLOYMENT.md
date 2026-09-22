@@ -19,9 +19,10 @@ Kỳ vọng hiện tại: build 0 warning/error và 54/54 test pass. Không cầ
 ## 2. Tạo trial SmarterASP.NET
 
 1. Đăng ký tại `https://www.smarterasp.net/free_trial` bằng tài khoản của nhóm.
-2. Trong Hosting Control Panel, tạo website Windows và ghi lại URL tạm.
-3. Tạo một SQL Server database, một database user riêng và copy connection string từ control panel. Không chụp/commit mật khẩu.
-4. Kiểm tra hosting plan đã bật ASP.NET Core 8. Nếu runtime không có, mở ticket support trước khi deploy.
+2. Từ màn hình **Các gói hosting**, tại thẻ `bondphupham-001` / plan `W60-US`, bấm nút xanh **Quản lý**. Không cần bấm `+ Đơn hàng mới`, `Kế hoạch nâng cấp`, `Tên miền`, `VPN` hoặc `MCP/API`.
+3. Trong Hosting Control Panel vừa mở, vào **Websites**. Chọn website `aura`/temporary site rồi bấm **Manage Website**. Ghi lại Temporary URL và đặt website type/version là ASP.NET Core tương thích .NET 8.
+4. Vào **Databases → MSSQL → + Add Database**, chọn SQL Server version còn được gói trial hỗ trợ, đặt tên database và mật khẩu riêng rồi copy connection string. Không chụp/commit mật khẩu.
+5. Kiểm tra hosting plan đã bật ASP.NET Core 8 và application pool 64-bit. Nếu runtime không có, mở ticket support trước khi deploy.
 
 ## 3. Cấu hình biến môi trường
 

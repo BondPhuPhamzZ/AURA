@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from docx import Document
+from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
@@ -10,133 +10,255 @@ from docx.shared import Cm, Pt, RGBColor
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "submission" / "AURA_BUILD_LOG.docx"
+FONT = "Arial"
+NAVY = "17365D"
+LIGHT_BLUE = "EAF2F8"
+LIGHT_GRAY = "F5F6F7"
+BORDER = "D9D9D9"
 
 
-def set_cell_shading(cell, fill: str) -> None:
+def set_run_font(run, size=None, bold=None, italic=None, color=None):
+    run.font.name = FONT
+    run._element.get_or_add_rPr().rFonts.set(qn("w:ascii"), FONT)
+    run._element.get_or_add_rPr().rFonts.set(qn("w:hAnsi"), FONT)
+    run._element.get_or_add_rPr().rFonts.set(qn("w:eastAsia"), FONT)
+    if size is not None:
+        run.font.size = Pt(size)
+    if bold is not None:
+        run.bold = bold
+    if italic is not None:
+        run.italic = italic
+    if color is not None:
+        run.font.color.rgb = RGBColor.from_string(color)
+
+
+def set_cell_shading(cell, fill):
     tc_pr = cell._tc.get_or_add_tcPr()
-    shd = OxmlElement("w:shd")
+    shd = tc_pr.find(qn("w:shd"))
+    if shd is None:
+        shd = OxmlElement("w:shd")
+        tc_pr.append(shd)
     shd.set(qn("w:fill"), fill)
-    tc_pr.append(shd)
 
 
-def set_cell_margins(cell, top=90, start=120, bottom=90, end=120) -> None:
-    tc = cell._tc
-    tc_pr = tc.get_or_add_tcPr()
+def set_cell_margins(cell, top=85, start=115, bottom=85, end=115):
+    tc_pr = cell._tc.get_or_add_tcPr()
     tc_mar = tc_pr.first_child_found_in("w:tcMar")
     if tc_mar is None:
         tc_mar = OxmlElement("w:tcMar")
         tc_pr.append(tc_mar)
-    for margin, value in (("top", top), ("start", start), ("bottom", bottom), ("end", end)):
-        node = tc_mar.find(qn(f"w:{margin}"))
+    for name, value in (("top", top), ("start", start), ("bottom", bottom), ("end", end)):
+        node = tc_mar.find(qn(f"w:{name}"))
         if node is None:
-            node = OxmlElement(f"w:{margin}")
+            node = OxmlElement(f"w:{name}")
             tc_mar.append(node)
         node.set(qn("w:w"), str(value))
         node.set(qn("w:type"), "dxa")
 
 
-def add_bullet(document: Document, text: str) -> None:
+def set_table_borders(table):
+    tbl_pr = table._tbl.tblPr
+    borders = tbl_pr.first_child_found_in("w:tblBorders")
+    if borders is None:
+        borders = OxmlElement("w:tblBorders")
+        tbl_pr.append(borders)
+    for edge in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        tag = borders.find(qn(f"w:{edge}"))
+        if tag is None:
+            tag = OxmlElement(f"w:{edge}")
+            borders.append(tag)
+        tag.set(qn("w:val"), "single")
+        tag.set(qn("w:sz"), "4")
+        tag.set(qn("w:color"), BORDER)
+
+
+def add_heading(document, value):
+    paragraph = document.add_paragraph()
+    paragraph.paragraph_format.space_before = Pt(5)
+    paragraph.paragraph_format.space_after = Pt(1.5)
+    paragraph.paragraph_format.keep_with_next = True
+    run = paragraph.add_run(value)
+    set_run_font(run, size=11.5, bold=True, color="000000")
+
+
+def add_body(document, value, bold_lead=None):
+    paragraph = document.add_paragraph()
+    paragraph.paragraph_format.space_after = Pt(2.5)
+    paragraph.paragraph_format.line_spacing = 1.03
+    if bold_lead and value.startswith(bold_lead):
+        first = paragraph.add_run(bold_lead)
+        set_run_font(first, size=10.3, bold=True)
+        rest = paragraph.add_run(value[len(bold_lead):])
+        set_run_font(rest, size=10.3)
+    else:
+        run = paragraph.add_run(value)
+        set_run_font(run, size=10.3)
+    return paragraph
+
+
+def add_bullet(document, value):
     paragraph = document.add_paragraph(style="List Bullet")
-    paragraph.paragraph_format.space_after = Pt(2)
+    paragraph.paragraph_format.space_after = Pt(1.5)
     paragraph.paragraph_format.line_spacing = 1.0
-    run = paragraph.add_run(text)
-    run.font.size = Pt(10)
+    run = paragraph.add_run(value)
+    set_run_font(run, size=10.1)
 
 
 document = Document()
 section = document.sections[0]
 section.page_width = Cm(21)
 section.page_height = Cm(29.7)
-section.top_margin = Cm(1.15)
-section.bottom_margin = Cm(1.05)
+section.top_margin = Cm(1.05)
+section.bottom_margin = Cm(1.0)
 section.left_margin = Cm(1.35)
 section.right_margin = Cm(1.35)
 
 styles = document.styles
-styles["Normal"].font.name = "Arial"
-styles["Normal"].font.size = Pt(10)
-styles["Normal"].paragraph_format.space_after = Pt(2)
+styles["Normal"].font.name = FONT
+styles["Normal"].font.size = Pt(10.3)
+styles["Normal"]._element.rPr.rFonts.set(qn("w:ascii"), FONT)
+styles["Normal"]._element.rPr.rFonts.set(qn("w:hAnsi"), FONT)
+styles["Normal"]._element.rPr.rFonts.set(qn("w:eastAsia"), FONT)
 
-title = document.add_paragraph()
+title = document.add_paragraph(style="Title")
 title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-title.paragraph_format.space_after = Pt(2)
-run = title.add_run("AURA — BUILD LOG SPRINT 1")
-run.bold = True
-run.font.name = "Arial"
-run.font.size = Pt(18)
-run.font.color.rgb = RGBColor(25, 68, 145)
+title.paragraph_format.space_after = Pt(1)
+title.paragraph_format.keep_with_next = True
+# Override the blue bottom border carried by some Word Title style definitions.
+title_ppr = title._p.get_or_add_pPr()
+title_border = OxmlElement("w:pBdr")
+title_bottom = OxmlElement("w:bottom")
+title_bottom.set(qn("w:val"), "nil")
+title_bottom.set(qn("w:sz"), "0")
+title_bottom.set(qn("w:space"), "0")
+title_border.append(title_bottom)
+title_ppr.append(title_border)
+run = title.add_run("AURA BUILD LOG SPRINT 1")
+set_run_font(run, size=18, bold=True, color="000000")
 
 subtitle = document.add_paragraph()
 subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-subtitle.paragraph_format.space_after = Pt(7)
-run = subtitle.add_run("Track A: The Escalation Referee  •  22/09/2026  •  1 trang")
-run.italic = True
-run.font.size = Pt(8.5)
-run.font.color.rgb = RGBColor(88, 100, 120)
+subtitle.paragraph_format.space_after = Pt(5)
+run = subtitle.add_run("Track A The Escalation Referee | 22 09 2026 | Pham Gia Phu")
+set_run_font(run, size=9.2, italic=True, color="555555")
 
-summary = document.add_table(rows=1, cols=3)
-summary.autofit = False
-summary.columns[0].width = Cm(5.8)
-summary.columns[1].width = Cm(5.8)
-summary.columns[2].width = Cm(5.8)
-for cell, heading, value in zip(
-    summary.rows[0].cells,
-    ("OFFLINE TEST", "VERIFY V2 LOCAL", "QUYẾT ĐỊNH KIẾN TRÚC"),
-    ("54/54 PASS", "5/5 — người dùng xác nhận", "AI đọc • C# quyết định"),
-):
-    set_cell_shading(cell, "EAF1FF")
+intro = document.add_paragraph()
+intro.paragraph_format.space_after = Pt(4)
+intro.paragraph_format.line_spacing = 1.05
+run = intro.add_run(
+    "Trong Sprint 1, tôi dùng AI để rút ngắn thời gian đọc code, thử nghiệm kiến trúc và chuẩn hóa dữ liệu hóa đơn, "
+    "nhưng giữ quyết định nghiệp vụ trong policy C# có thể kiểm thử. Kết quả là một vertical slice chạy thật từ upload, "
+    "trích xuất và phân loại đến chuyển quản lý, audit và hoàn tác; các giới hạn của model được hiển thị thay vì che giấu."
+)
+set_run_font(run, size=10.4)
+
+add_heading(document, "1 Công cụ và phạm vi sử dụng")
+add_body(
+    document,
+    "Qwen3-VL-8B-Instruct qua OpenRouter đọc một ảnh JPG hoặc PNG và trả dữ kiện theo JSON Schema. "
+    "Codex và Antigravity hỗ trợ truy route, phát hiện lỗi JavaScript, refactor, viết test và đồng bộ tài liệu. "
+    "Tôi không dùng output của AI như bằng chứng duy nhất: thay đổi chỉ được giữ lại sau build, test và kiểm tra UI.",
+)
+
+add_heading(document, "2 Hành trình xây dựng và các lần AI sai")
+add_body(
+    document,
+    "Prototype đầu tiên dùng Gemini Free Tier nhưng gặp HTTP 429 và quota không ổn định. Khi chuyển sang OpenRouter, "
+    "một model slug hoặc endpoint sai từng gây HTTP 404; sau đó Qwen có lúc trả JSON lệch schema hoặc xem câu mô tả "
+    "trên fixture tổng hợp là prompt injection. Các lỗi này dẫn tới ba thay đổi: chuẩn hóa cấu hình provider, parser có "
+    "giới hạn rõ, và fail-safe sang ESCALATE_SYSTEM_ERROR thay vì cố suy đoán một quyết định.",
+)
+
+comparison = document.add_table(rows=1, cols=2)
+comparison.alignment = WD_TABLE_ALIGNMENT.CENTER
+comparison.autofit = False
+comparison.columns[0].width = Cm(8.9)
+comparison.columns[1].width = Cm(8.9)
+set_table_borders(comparison)
+for idx, label in enumerate(("AI giúp tăng tốc", "AI làm tốn công khi")):
+    cell = comparison.rows[0].cells[idx]
+    set_cell_shading(cell, NAVY)
     set_cell_margins(cell)
     cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
     p = cell.paragraphs[0]
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p.paragraph_format.space_after = Pt(1)
-    r = p.add_run(heading + "\n")
-    r.bold = True
-    r.font.size = Pt(7.5)
-    r.font.color.rgb = RGBColor(72, 89, 116)
+    r = p.add_run(label)
+    set_run_font(r, size=9.5, bold=True, color="FFFFFF")
+
+rows = [
+    ("Tìm nhanh luồng upload, Verify, reviewer và audit.", "Đề xuất model hoặc API không tồn tại/chưa đúng slug."),
+    ("Sinh test policy, contract và kiểm tra fixture offline.", "Output trông hợp lý nhưng không đúng schema hoặc policy."),
+    ("Đối chiếu prompt, UI và tài liệu sau mỗi thay đổi.", "Tài liệu dễ tuyên bố quá mức nếu không đọc lại code thực tế."),
+]
+for row_idx, values in enumerate(rows):
+    cells = comparison.add_row().cells
+    for col_idx, value in enumerate(values):
+        cell = cells[col_idx]
+        set_cell_shading(cell, LIGHT_BLUE if row_idx % 2 == 0 else "FFFFFF")
+        set_cell_margins(cell)
+        cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+        p = cell.paragraphs[0]
+        p.paragraph_format.space_after = Pt(0)
+        r = p.add_run(value)
+        set_run_font(r, size=9.3)
+
+add_heading(document, "3 Bằng chứng kiểm thử")
+evidence = document.add_table(rows=2, cols=4)
+evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
+evidence.autofit = False
+widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
+headers = ("Build", "Test offline", "Verify v2 local", "Gói BGK")
+values = ("0 warning 0 error", "54 trên 54 pass", "5 trên 5 đúng", "15 ca đã khóa")
+for index, width in enumerate(widths):
+    evidence.columns[index].width = width
+set_table_borders(evidence)
+for index, label in enumerate(headers):
+    cell = evidence.rows[0].cells[index]
+    set_cell_shading(cell, NAVY)
+    set_cell_margins(cell)
+    cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+    p = cell.paragraphs[0]
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r = p.add_run(label)
+    set_run_font(r, size=8.9, bold=True, color="FFFFFF")
+for index, value in enumerate(values):
+    cell = evidence.rows[1].cells[index]
+    set_cell_shading(cell, LIGHT_GRAY if index % 2 else LIGHT_BLUE)
+    set_cell_margins(cell, top=95, bottom=95)
+    cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+    p = cell.paragraphs[0]
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r = p.add_run(value)
-    r.bold = True
-    r.font.size = Pt(10)
-    r.font.color.rgb = RGBColor(25, 68, 145)
+    set_run_font(r, size=9.2, bold=True)
 
+add_body(
+    document,
+    "Kết quả 5 trên 5 thuộc bộ fixture tổng hợp đã biết trước, nên chỉ chứng minh harness và policy hoạt động nhất quán; "
+    "nó không phải độ chính xác tổng quát trên hóa đơn thực tế.",
+    bold_lead="Kết luận đo lường: ",
+)
 
-def heading(text: str) -> None:
-    paragraph = document.add_paragraph()
-    paragraph.paragraph_format.space_before = Pt(6)
-    paragraph.paragraph_format.space_after = Pt(2)
-    run = paragraph.add_run(text)
-    run.bold = True
-    run.font.size = Pt(11.5)
-    run.font.color.rgb = RGBColor(25, 68, 145)
+add_heading(document, "4 Cơ chế fail safe đã triển khai")
+add_body(
+    document,
+    "AURA không retry HTTP 429 để tránh đốt thêm quota, chỉ retry tối đa một lần với lỗi 5xx và dừng các ca Verify còn "
+    "lại khi provider gặp lỗi mang tính hệ thống. Đây chưa phải circuit breaker hoặc exponential backoff nhiều lần; "
+    "mọi lỗi extraction đều chuyển kiểm tra thủ công và không tạo kết quả PASS giả.",
+)
 
+add_heading(document, "5 Quyết định kiến trúc và phần cắt giảm")
+add_bullet(document, "Tách Qwen extraction khỏi PolicyDecisionEngine để model có thể thay đổi mà không đổi quy tắc duyệt.")
+add_bullet(document, "Giữ AuditLogs theo sự kiện append-only ở tầng ứng dụng, nhưng UI gom một hồ sơ thành một timeline để tránh cảm giác lặp.")
+add_bullet(document, "Chọn hosted Qwen 8B cho demo; Qwen 4B self-host chỉ là hướng benchmark khi có dữ liệu và phần cứng phù hợp.")
+add_bullet(document, "Hoãn PDF nhiều trang, authentication theo role, tax lookup, antivirus, object storage và benchmark tập dữ liệu độc lập.")
 
-heading("1. Công cụ AI và cách dùng")
-add_bullet(document, "Qwen3-VL-8B-Instruct qua OpenRouter trích xuất dữ kiện hóa đơn theo JSON Schema; model không được quyền duyệt hoặc từ chối hồ sơ.")
-add_bullet(document, "Codex và Antigravity hỗ trợ đọc code, truy route, refactor, viết test và tài liệu. Mọi đề xuất vẫn được kiểm bằng build, test và thao tác UI trước khi chấp nhận.")
-
-heading("2. Điều tạo ra giá trị")
-add_bullet(document, "Tách Vision khỏi PolicyDecisionEngine giúp quyết định FACT → POLICY → AUTHORITY giải thích được, kiểm thử được và không đổi theo cảm hứng của model.")
-add_bullet(document, "54/54 test offline khóa policy, workflow, audit projection, hợp đồng OpenRouter và tính toàn vẹn Test Kit; không tốn request AI.")
-add_bullet(document, "Verify v2 gồm 5 ảnh tổng hợp đa layout; người dùng xác nhận local đạt đúng 3 AUTO_APPROVE + 2 ESCALATE ngày 22/09/2026. Gói BGK có đúng 15 ca trong ngân hàng 30 ảnh.")
-add_bullet(document, "UI cập nhật bằng fetch/fragment thay vì reload; Audit giữ event gốc nhưng chỉ hiện một hồ sơ với timeline mở rộng, tránh cảm giác lặp ba dòng.")
-
-heading("3. Khi AI sai hoặc làm tốn công")
-add_bullet(document, "Gemini Free Tier chạm quota; endpoint/model Qwen cấu hình sai từng trả 404; output JSON có lúc lệch schema. Hệ thống phải map lỗi rõ và fail-safe sang kiểm tra thủ công.")
-add_bullet(document, "Fixture từng chứa câu mô tả tổng hợp bị model xem là prompt injection. Bộ ảnh và prompt đã được chỉnh để test đúng nghiệp vụ thay vì vô tình test watermark hướng dẫn.")
-add_bullet(document, "AURA không tuyên bố exponential backoff hay circuit breaker: mã hiện chỉ retry tối đa một lần cho 5xx, không retry 429 và dừng phần Verify còn lại khi gặp lỗi provider mang tính hệ thống.")
-
-heading("4. Cắt giảm lớn nhất và lý do")
-add_bullet(document, "Không self-host Qwen 4B và không dùng model 125B sát deadline. Bản demo dùng hosted 8B; 4B là hướng benchmark khi doanh nghiệp có phần cứng hạn chế.")
-add_bullet(document, "Hoãn PDF/nhiều trang, tax/e-invoice lookup, ngoại tệ, antivirus và authentication theo role để bảo đảm một vertical slice chạy thật: upload → extract → policy → human decision → audit/undo.")
-
-note = document.add_paragraph()
-note.paragraph_format.space_before = Pt(5)
-note.paragraph_format.space_after = Pt(0)
-note.alignment = WD_ALIGN_PARAGRAPH.CENTER
-run = note.add_run("Minh bạch: Test Kit là dữ liệu tổng hợp; 5/5 không phải độ chính xác tổng quát. Ảnh upload được gửi qua OpenRouter/provider Qwen.")
-run.bold = True
-run.font.size = Pt(8)
-run.font.color.rgb = RGBColor(144, 82, 20)
+add_heading(document, "6 Bài học và bước tiếp theo")
+add_body(
+    document,
+    "Lợi ích lớn nhất của AI là tăng tốc vòng lặp khám phá và kiểm thử, không phải thay người chịu trách nhiệm. "
+    "Trước khi nộp, tôi cần deploy lên SmarterASP.NET, kiểm tra lưu ảnh sau recycle, chạy một lượt Verify trên Live URL và "
+    "quay video dưới ba phút. Ảnh upload được gửi qua OpenRouter/provider Qwen; dữ liệu cá nhân thật không được đưa vào Git.",
+)
 
 OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 document.save(OUTPUT)
