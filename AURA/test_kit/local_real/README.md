@@ -11,3 +11,4 @@ Checklist trước khi dùng ảnh:
 3. Không chỉnh các trường đang cần đánh giá như tổng tiền, ngày, loại hàng và identifier giả lập.
 4. Ghi ground truth trước khi gọi AI; không sửa expected theo output.
 5. Không đưa ảnh này vào Git, slide công khai hoặc video nếu chưa có đồng ý rõ ràng.
+100
