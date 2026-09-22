@@ -58,6 +58,8 @@ public sealed class OpenRouterVisionExtractorServiceTests
             using var payload = JsonDocument.Parse(requestJson!);
             var rootElement = payload.RootElement;
             Assert.Equal(4096, rootElement.GetProperty("max_tokens").GetInt32());
+            Assert.Equal("response-healing",
+                rootElement.GetProperty("plugins")[0].GetProperty("id").GetString());
             var responseFormat = rootElement.GetProperty("response_format");
             Assert.Equal("json_schema", responseFormat.GetProperty("type").GetString());
             var jsonSchema = responseFormat.GetProperty("json_schema");
@@ -178,6 +180,58 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.Equal(88000m, result.TotalAmount);
             Assert.Equal(0.91, result.Confidence, 3);
             Assert.Single(result.LineItems);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Retries_once_when_qwen_returns_truncated_structured_output()
+    {
+        var root = CreateFixtureRoot();
+        try
+        {
+            var attempts = 0;
+            const string validFacts = """
+                {"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Cửa hàng thử nghiệm",
+                "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
+                "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":"PAID",
+                "invoiceNumber":"HD-003","invoiceDate":"2026-09-22","transactionDate":null,
+                "completionDate":null,"invoiceTime":"10:30","currency":"VND","subtotal":100000,
+                "tax":0,"totalAmount":100000,"lineItems":[{"description":"Văn phòng phẩm","quantity":1,
+                "unitPrice":100000,"amount":100000}],"missingFields":[],"warnings":[],
+                "suspiciousSignals":[],"confidence":0.95}
+                """;
+            var handler = new StubHandler(_ =>
+            {
+                attempts++;
+                var content = attempts == 1
+                    ? "{\"documentType\":\"RETAIL_RECEIPT\",\"lineItems\":[{"
+                    : validFacts;
+                var responseJson = JsonSerializer.Serialize(new
+                {
+                    choices = new[] { new { finish_reason = "stop", message = new { content } } }
+                });
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(responseJson, Encoding.UTF8, "application/json")
+                });
+            });
+            var options = Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions
+            {
+                ApiKey = "test-key", Model = "qwen/qwen3-vl-8b-instruct", PolicyPath = "BUSINESS_RULES.md"
+            });
+            var service = new OpenRouterVisionExtractorService(
+                new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) }, options,
+                new TestEnvironment(root), NullLogger<OpenRouterVisionExtractorService>.Instance);
+
+            var result = await service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg"));
+
+            Assert.Equal(2, attempts);
+            Assert.Equal("HD-003", result.InvoiceNumber);
+            Assert.Equal(100000m, result.TotalAmount);
         }
         finally
         {

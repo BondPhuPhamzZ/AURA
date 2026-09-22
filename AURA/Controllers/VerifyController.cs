@@ -169,7 +169,6 @@ public sealed class VerifyController : Controller
     private static bool IsBlockingProviderFailure(string code) => code is
         "AI_TIMEOUT" or "AI_RATE_LIMIT" or "AI_NOT_CONFIGURED" or "AI_TEMPORARILY_UNAVAILABLE" or
         "AI_AUTH_ERROR" or "AI_CREDITS_REQUIRED" or "AI_MODEL_UNAVAILABLE" or
-        "AI_REQUEST_INVALID" or "AI_RESPONSE_TRUNCATED" or "AI_SCHEMA_MISMATCH" or
-        "AI_INVALID_RESPONSE" or "AI_EMPTY_RESPONSE";
+        "AI_REQUEST_INVALID";
 }
 

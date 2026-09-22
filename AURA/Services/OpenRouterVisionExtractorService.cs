@@ -91,6 +91,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             },
             temperature = 0,
             max_tokens = _options.MaxOutputTokens,
+            plugins = new[] { new { id = "response-healing" } },
             response_format = new
             {
                 type = "json_schema",
@@ -103,6 +104,29 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             }
         };
 
+        const int maxMalformedResponseAttempts = 2;
+        for (var attempt = 1; attempt <= maxMalformedResponseAttempts; attempt++)
+        {
+            try
+            {
+                return await RequestFactsOnceAsync(payload, cancellationToken);
+            }
+            catch (VisionExtractionException exception) when (
+                attempt < maxMalformedResponseAttempts && IsMalformedResponse(exception.Code))
+            {
+                _logger.LogWarning(
+                    "Qwen returned malformed structured output ({ErrorCode}); retrying once (attempt {Attempt}/{MaxAttempts}).",
+                    exception.Code, attempt, maxMalformedResponseAttempts);
+                await Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken);
+            }
+        }
+
+        throw new UnreachableException();
+    }
+
+    private async Task<ReceiptExtractionDto> RequestFactsOnceAsync(object payload,
+        CancellationToken cancellationToken)
+    {
         (HttpStatusCode statusCode, string responseText) response;
         try
         {
@@ -194,6 +218,10 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
     private static bool IsTransient(HttpStatusCode statusCode) => statusCode is
         HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or
         HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout;
+
+    private static bool IsMalformedResponse(string code) => code is
+        "AI_EMPTY_RESPONSE" or "AI_INVALID_RESPONSE" or
+        "AI_RESPONSE_TRUNCATED" or "AI_SCHEMA_MISMATCH";
 
     private static VisionExtractionException CreateHttpFailure(HttpStatusCode statusCode, string responseBody, string model)
     {
