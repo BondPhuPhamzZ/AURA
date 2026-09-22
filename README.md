@@ -56,7 +56,7 @@ Kết quả trên fixture tổng hợp không phải tuyên bố độ chính x�
 ## API key dành cho BGK
 
 Nhóm cung cấp **API key để test**: 
-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
+"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"
 Sau khi nhận key, BGK thay `OPENROUTER_KEY_DUOC_CUNG_CAP_RIENG` trong lệnh bên dưới. `dotnet user-secrets` lưu key bên ngoài repository nên không làm thay đổi source code.
 
 ## Chạy local
