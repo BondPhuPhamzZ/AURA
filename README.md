@@ -11,8 +11,8 @@ Qwen Vision qua OpenRouter trích xuất dữ kiện từ ảnh. Các quy tắc 
 | Live Application | [Mở AURA](https://bondphupham-001-site1.ltempurl.com/) |
 | Video Demo | [Xem video dưới 3 phút](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
 | Source Code | [GitHub Repository](https://github.com/BondPhuPhamzZ/AURA) |
-| Slide thuyết trình | [AURA 5 Slides](submission/AURA_5_SLIDES.pptx) |
-| Build Log | [AURA Build Log](submission/AURA_BUILD_LOG.docx) |
+| Slide thuyết trình | [Tải AURA 5 Slides](AURA/submission/AURA_5_SLIDES.pptx?raw=1) |
+| Build Log | [Tải AURA Build Log](AURA/submission/AURA_BUILD_LOG.docx?raw=1) |
 
 > Đây là môi trường demo công khai. Không tải lên hóa đơn thật chứa dữ liệu cá nhân.
 
