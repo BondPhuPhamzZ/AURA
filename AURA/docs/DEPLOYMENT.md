@@ -10,7 +10,7 @@ Sau khi publish, website root phải chứa trực tiếp `web.config`, `AURA.dl
 
 ## Thứ tự smoke test production
 
-1. Mở `/healthz` trong cửa sổ ẩn danh và xác nhận HTTP 200 cùng `status: ok`.
+1. Mở `/healthz` trong cửa sổ ẩn danh và xác nhận HTTP 200, `status: ok`, `aiConfigured: true` và `policyAvailable: true`.
 2. Mở `/`, chuyển qua các tab Nhân viên, Quản lý và Lịch sử; xác nhận không còn trang `index.html` mặc định.
 3. Upload đúng một ảnh tổng hợp nhỏ, kiểm preview, facts AI, quyết định và một request tương ứng trong OpenRouter Activity.
 4. Với một hồ sơ `ESCALATE_*`, bấm chuyển tiếp, mở tab Quản lý, ra quyết định và xác nhận Audit Log chỉ hiển thị một hồ sơ với timeline nhất quán.
@@ -91,6 +91,7 @@ Thực hiện theo thứ tự để không tốn quota vô ích:
 | 500.30/502.5 | Runtime .NET 8, startup log tạm thời, connection string và environment variables |
 | Database login failed | server/database/user/password, firewall/provider connection string |
 | `AI_NOT_CONFIGURED`/401 | `OpenRouter__ApiKey` ở đúng app pool, recycle sau khi sửa |
+| `POLICY_NOT_FOUND` hoặc `policyAvailable: false` | Publish lại bản mới có `BUSINESS_RULES.md` cạnh `AURA.dll`; không chỉ upload riêng DLL |
 | 404 ảnh sau recycle | quyền ghi `App_Data/receipts` và publish không xóa folder |
 | 429/hết credit | dừng Verify, kiểm OpenRouter Activity/Credits; không tạo key mới để né limit |
 | App chạy nhưng redirect HTTPS lỗi | giữ URL HTTPS do host cấp và kiểm proxy/header; không hard-code domain |

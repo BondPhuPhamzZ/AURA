@@ -23,4 +23,12 @@
     <None Remove="tests\**\*" />
   </ItemGroup>
 
+  <!-- The vision extractor reads this policy at runtime. Keep it beside AURA.dll
+       in both local build output and Web Deploy packages. -->
+  <ItemGroup>
+    <None Update="BUSINESS_RULES.md"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

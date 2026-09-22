@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using AURA.Options;
 using Microsoft.AspNetCore.Http.Features;
 
@@ -82,12 +83,25 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
 
-app.MapGet("/healthz", () => Results.Ok(new
+app.MapGet("/healthz", (IOptions<OpenRouterOptions> configuredOpenRouter,
+    IWebHostEnvironment environment) =>
 {
-    status = "ok",
-    service = "AURA",
-    timestamp = DateTimeOffset.UtcNow
-}));
+    var openRouter = configuredOpenRouter.Value;
+    var policyPath = Path.GetFullPath(Path.Combine(environment.ContentRootPath, openRouter.PolicyPath));
+    var policyAvailable = File.Exists(policyPath);
+    var aiConfigured = !string.IsNullOrWhiteSpace(openRouter.ApiKey);
+    var ready = policyAvailable && aiConfigured;
+
+    return Results.Json(new
+    {
+        status = ready ? "ok" : "degraded",
+        service = "AURA",
+        aiConfigured,
+        policyAvailable,
+        model = openRouter.Model,
+        timestamp = DateTimeOffset.UtcNow
+    }, statusCode: ready ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable);
+});
 
 app.MapControllerRoute(
     name: "default",
