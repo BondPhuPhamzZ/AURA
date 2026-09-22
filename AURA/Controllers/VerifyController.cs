@@ -138,7 +138,10 @@ public sealed class VerifyController : Controller
 
             results.Add(new
             {
-                caseId = testCase.Id,
+                // Workflow actions must use the persisted request key. The manifest ID
+                // (for example TC-04) is only a human-readable Verify Harness label.
+                caseId = request.Id,
+                testCaseId = testCase.Id,
                 image = testCase.ImageName,
                 expected = testCase.ExpectedStatus,
                 actual = actualStatus,
