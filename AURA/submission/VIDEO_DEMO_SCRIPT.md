@@ -1,8 +1,8 @@
 # Kịch bản video demo AURA — 2 phút 50 giây
 
-Live URL dự kiến: `https://bondphupham-001-site1.itempurl.com`
+Live URL: `https://bondphupham-001-site1.ltempurl.com/`
 
-Chỉ quay sau khi URL trên đã mở được trong cửa sổ ẩn danh, `/healthz` trả `status: ok` và một ảnh smoke test thành công. Lượt Verify live nên chính là lượt quay chính thức để không tốn thêm năm request. Video nên có thuyết minh tiếng Việt; không cần quay khuôn mặt.
+Chỉ quay sau khi URL trên mở ổn định trong cửa sổ ẩn danh, file mặc định `index.html` của hosting không còn được phục vụ, `/healthz` trả `status: ok` và một ảnh smoke test thành công. Lượt Verify live nên chính là lượt quay chính thức để không tốn thêm năm request. Video nên có thuyết minh tiếng Việt; không cần quay khuôn mặt.
 
 ## Chuẩn bị trước khi bấm ghi hình
 

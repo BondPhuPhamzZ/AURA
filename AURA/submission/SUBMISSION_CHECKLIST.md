@@ -6,7 +6,7 @@ Cập nhật: 22/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 
 | Hạng mục | Trạng thái | File/bằng chứng |
 |---|---|---|
-| Live URL public, không cần đăng nhập | ☐ Chưa có | Điền sau khi hoàn tất `docs/DEPLOYMENT.md` |
+| Live URL public, không cần đăng nhập | ◐ Đã deploy, cần smoke cuối | `https://bondphupham-001-site1.ltempurl.com/`; loại bỏ trang `index.html` mặc định và xác minh ẩn danh |
 | Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, `test_kit/judge-manifest.json` đúng 15 ca |
 | Public repository và lịch sử commit | ◐ Cần push/xác minh public | `https://github.com/BondPhuPhamzZ/AURA` |
 | Video demo tối đa 3 phút | ☐ Chưa quay | `submission/VIDEO_DEMO_SCRIPT.md`; nộp link ngoài Git |
@@ -41,9 +41,9 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 
 ## 5. Việc còn phải làm trước hạn
 
-1. Deploy, mở Live URL trong cửa sổ ẩn danh và kiểm `/healthz`.
+1. Đổi tên/xóa `index.html` mặc định trên hosting, mở Live URL trong cửa sổ ẩn danh và kiểm `/healthz`.
 2. Chạy một ảnh smoke rồi đúng một lượt Verify; ghi thời điểm và kết quả thật.
-3. Điền Live URL đồng nhất vào README, slide, mô tả video và form nộp.
+3. Điền Live URL `https://bondphupham-001-site1.ltempurl.com/` vào form nộp và mô tả video.
 4. Quay video dưới 3 phút theo script; kiểm quyền “ai có link đều xem được”.
 5. Thu phản hồi có đồng thuận từ ba người dùng nếu rubric chấm hạng mục này; hiện chưa có bằng chứng nên không được tự tạo quote.
 6. Quét secret, build/test lần cuối, push nhánh chốt và xác minh repository public.

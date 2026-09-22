@@ -5,7 +5,7 @@ Phạm vi: `D:\aura\AURA\AURA`, Track A - The Escalation Referee, ưu tiên Spri
 
 ## 1. Kết luận điều hành
 
-**Mã nguồn hiện đã đạt một vertical slice Sprint 1 chạy thật ở local**, nhưng **chưa sẵn sàng bấm nộp** vì chưa có Live URL được xác minh và chưa có bằng chứng hoàn tất video/đúng 5 slide.
+**Mã nguồn đã đạt một vertical slice Sprint 1 và đã được publish lên SmarterASP.NET.** Bài chưa sẵn sàng bấm nộp cho tới khi Live URL được smoke ổn định sau khi loại bỏ trang mặc định `index.html`, Verify live hoàn tất và video dưới ba phút được tải lên.
 
 Các blocker kỹ thuật ban đầu đã được sửa:
 
@@ -87,7 +87,7 @@ Route/action hiện khớp view và JavaScript. Không còn action `Applicant.In
 | Stop/override/undo | Đạt cơ bản | employee handoff + manager Đồng ý/Từ chối/undo; chưa có authentication |
 | Lưu hóa đơn để tra cứu | Đạt local | private path + receipt route; deploy cần persistent volume |
 | Demo 90 giây | Đạt local | benchmark khoảng 32 giây |
-| Live URL public | **Không đạt/Blocker** | Chưa có URL |
+| Live URL public | ◐ Đã deploy, cần smoke cuối | `https://bondphupham-001-site1.ltempurl.com/`; cần loại bỏ trang mặc định và xác minh ẩn danh |
 | Public repo đầy đủ lịch sử | Đạt local, chờ push/xác minh public | Không squash/force-push |
 
 ## 6. Đánh giá nhà cung cấp Vision AI
@@ -182,10 +182,10 @@ Yêu cầu tra cứu đã được đáp ứng local bằng:
 
 ### P0 trước deadline Sprint 1
 
-1. Tạo tài nguyên cloud và deploy Linux container với SQL Server/Azure SQL cùng persistent storage; cấu hình secret không commit. Xem `docs/DEPLOYMENT.md`.
-2. Chạy migration và smoke-test live URL từ cửa sổ ẩn danh.
+1. Giữ cấu hình secret ngoài Git và kiểm tra lại SQL Server cùng thư mục lưu ảnh trên SmarterASP.NET. Xem `docs/DEPLOYMENT.md`.
+2. Đổi tên/xóa `index.html` mặc định, recycle pool và smoke-test Live URL từ cửa sổ ẩn danh.
 3. Chạy một ảnh smoke test rồi đúng một lượt Verify v2 trên live URL; ghi nhận expected/actual và thời gian dưới 90 giây, tránh tiêu hao quota bằng các lượt lặp không cần thiết.
-4. Điền Live URL vào README, slide, video và form nộp.
+4. Điền Live URL `https://bondphupham-001-site1.ltempurl.com/` vào form nộp và mô tả video.
 5. Push toàn bộ commit lên public GitHub, xác minh không có secret.
 6. Hoàn thiện đúng 5 slide và video tối đa 3 phút.
 7. Cân nhắc rate limit tối thiểu cho Verify trước khi public URL.
@@ -211,4 +211,4 @@ Yêu cầu tra cứu đã được đáp ứng local bằng:
 - **Chất lượng code local:** đạt Sprint 1 cơ bản.
 - **Verify/model trên fixture nội bộ:** đạt.
 - **Business rules:** đủ rõ cho phạm vi JPG/PNG đơn trang hiện tại; chưa đủ production/toàn bộ biên thực tế.
-- **Sẵn sàng nộp:** chưa, vì Live URL + slide/video chưa có bằng chứng hoàn tất.
+- **Sẵn sàng nộp:** chưa; Live URL đã có nhưng còn cần smoke ổn định, Verify live và video dưới ba phút. Bộ 5 slide và Build Log một trang đã có trong `submission/`.

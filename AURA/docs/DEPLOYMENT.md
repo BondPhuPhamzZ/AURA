@@ -1,5 +1,23 @@
 # Deploy AURA và lấy Live URL
 
+Live URL hiện tại: `https://bondphupham-001-site1.ltempurl.com/`.
+
+## Trang index mặc định của SmarterASP.NET
+
+Nếu cùng một URL lúc hiện AURA, lúc hiện trang `Dear customer`, website root vẫn còn `index.html` mặc định hoặc trình duyệt đang giữ bản cache của file đó. File này không thuộc AURA. Cách an toàn là đổi tên thành `index.smarterasp-backup.html`, recycle pool, kiểm tra bằng cửa sổ ẩn danh rồi mới xóa hẳn. Không xóa `web.config`, `AURA.dll`, `wwwroot` hoặc `App_Data`.
+
+Sau khi publish, website root phải chứa trực tiếp `web.config`, `AURA.dll`, `AURA.deps.json`, `AURA.runtimeconfig.json` và `wwwroot/`. Không để các file này nằm thêm một cấp trong thư mục `publish/`.
+
+## Thứ tự smoke test production
+
+1. Mở `/healthz` trong cửa sổ ẩn danh và xác nhận HTTP 200 cùng `status: ok`.
+2. Mở `/`, chuyển qua các tab Nhân viên, Quản lý và Lịch sử; xác nhận không còn trang `index.html` mặc định.
+3. Upload đúng một ảnh tổng hợp nhỏ, kiểm preview, facts AI, quyết định và một request tương ứng trong OpenRouter Activity.
+4. Với một hồ sơ `ESCALATE_*`, bấm chuyển tiếp, mở tab Quản lý, ra quyết định và xác nhận Audit Log chỉ hiển thị một hồ sơ với timeline nhất quán.
+5. Recycle pool, mở lại hồ sơ/ảnh vừa tạo để kiểm tra SQL và thư mục ảnh không mất dữ liệu.
+6. Chạy Verify Harness đúng một lượt, ưu tiên thực hiện ngay trong lần quay video; xác nhận đủ 5 dòng, expected/actual, PASS/FAIL, timestamp và tổng thời gian dưới 90 giây.
+7. Kiểm tra lại trên điện thoại hoặc mạng 4G, sau đó mới chia sẻ Live URL.
+
 Cập nhật: 22/09/2026. Phương án khuyến nghị cho bản nộp là **SmarterASP.NET 60-day trial**, vì AURA đang dùng ASP.NET Core 8 + SQL Server và cần lưu ảnh hóa đơn bền. Render Free chỉ nên dùng làm preview stateless.
 
 ## 1. Chuẩn bị local

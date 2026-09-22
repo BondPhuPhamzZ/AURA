@@ -10,7 +10,7 @@ AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứn
 - Route upload, Verify, audit, quản lý, CSRF và tra cứu chứng từ đã smoke-test local.
 - Giao diện upload ba cột hiển thị trực tiếp facts AI đã đọc. Kết quả cho biết số ca tự động duyệt/chuyển tiếp; ca tự duyệt vào lịch sử, ca chuyển tiếp được giữ trong bảng kết quả ngay cả sau reload.
 - Hàng đợi nhân viên, quản lý và audit cập nhật ngay sau thao tác bằng fragment AJAX, đồng thời polling nhẹ mỗi 10 giây để đồng bộ các tab đang mở.
-- Live URL: **chưa điền**. Mã nguồn đã có Linux container, health endpoint và cấu hình storage/migration cho cloud; việc tạo tài nguyên bằng tài khoản của nhóm vẫn là blocker cuối trước khi nộp Sprint 1.
+- Live URL: `https://bondphupham-001-site1.ltempurl.com/`. Website đã được publish lên SmarterASP.NET; trước khi nộp cần đổi tên/xóa trang mặc định `index.html`, xác minh `/healthz`, smoke một ảnh và chạy đúng một lượt Verify trên cửa sổ ẩn danh.
 
 ## Demo 90 giây
 

@@ -275,7 +275,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   text(s, "30 ảnh tổng hợp\n5 ca Verify\n15 ca giao BGK", 880, 470, 305, 92, 20, C.white, { bold: true });
   text(s, "Không có tax/e-invoice lookup\nKhông có user role thật", 880, 574, 305, 44, 14, C.muted);
   footer(s, 4);
-  s.speakerNotes.textFrame.setText("Repository: https://github.com/BondPhuPhamzZ/AURA — Live URL cần điền sau deploy.");
+  s.speakerNotes.textFrame.setText("Repository: https://github.com/BondPhuPhamzZ/AURA — Live URL: https://bondphupham-001-site1.ltempurl.com/");
 }
 
 // Slide 5
@@ -300,7 +300,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 157, 382, 242, C.surface2, "rounded-xl", C.green);
   text(s, "TRƯỚC KHI NỘP", 869, 180, 326, 24, 15, C.green, { bold: true });
-  const todo = ["Deploy SmarterASP.NET", "Smoke 1 ảnh + Verify 1 lượt", "Quay video < 3 phút", "Điền Live URL đồng nhất"];
+  const todo = ["Bỏ index.html mặc định", "Smoke 1 ảnh + Verify 1 lượt", "Quay video < 3 phút", "Gắn link video vào form"];
   todo.forEach((t, i) => {
     pill(s, `${i + 1}`, 869, 225 + i * 40, 30, C.green);
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });

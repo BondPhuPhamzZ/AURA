@@ -256,8 +256,9 @@ add_heading(document, "6 Bài học và bước tiếp theo")
 add_body(
     document,
     "Lợi ích lớn nhất của AI là tăng tốc vòng lặp khám phá và kiểm thử, không phải thay người chịu trách nhiệm. "
-    "Trước khi nộp, tôi cần deploy lên SmarterASP.NET, kiểm tra lưu ảnh sau recycle, chạy một lượt Verify trên Live URL và "
-    "quay video dưới ba phút. Ảnh upload được gửi qua OpenRouter/provider Qwen; dữ liệu cá nhân thật không được đưa vào Git.",
+    "Tôi đã deploy AURA lên SmarterASP.NET tại https://bondphupham-001-site1.ltempurl.com/. Trước khi nộp, tôi cần loại bỏ "
+    "trang index.html mặc định, kiểm tra lưu ảnh sau recycle, chạy một lượt Verify trên Live URL và quay video dưới ba phút. "
+    "Ảnh upload được gửi qua OpenRouter/provider Qwen; dữ liệu cá nhân thật không được đưa vào Git.",
 )
 
 OUTPUT.parent.mkdir(parents=True, exist_ok=True)
