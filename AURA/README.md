@@ -5,7 +5,7 @@ AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứn
 ## Trạng thái Sprint 1
 
 - Build sạch: 0 warning, 0 error.
-- 55 kiểm thử tự động: chính sách/workflow/audit, hợp đồng OpenRouter/Qwen offline, retry structured output và tính toàn vẹn manifest/ảnh Test Kit (gồm gói BGK đúng 15 ca).
+- 56 kiểm thử tự động: chính sách/workflow/audit, hợp đồng OpenRouter/Qwen offline, retry structured output, chống thao tác chồng và tính toàn vẹn manifest/ảnh Test Kit (gồm gói BGK đúng 15 ca).
 - Verify Vision v2: local đạt đúng 5/5 ngày 22/09/2026 với 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`; không suy rộng 5 fixture tổng hợp thành accuracy thực tế.
 - Route upload, Verify, audit, quản lý, CSRF và tra cứu chứng từ đã smoke-test local.
 - Giao diện upload ba cột hiển thị trực tiếp facts AI đã đọc. Kết quả cho biết số ca tự động duyệt/chuyển tiếp; ca tự duyệt vào lịch sử, ca chuyển tiếp được giữ trong bảng kết quả ngay cả sau reload.

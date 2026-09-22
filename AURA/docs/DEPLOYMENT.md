@@ -30,7 +30,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Kỳ vọng hiện tại: build 0 warning/error và 54/54 test pass. Không cần gọi API AI ở bước này.
+Kỳ vọng hiện tại: build 0 warning/error và 56/56 test pass. Không cần gọi API AI ở bước này.
 
 3. Trong Visual Studio, mở `AURA.csproj` và chọn **Publish → Folder** hoặc **Publish → Web Deploy**. Target framework là `net8.0`, cấu hình `Release`.
 

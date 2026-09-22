@@ -9,7 +9,7 @@
 
 - Tách extraction khỏi deterministic policy giúp kết quả giải thích và unit-test được.
 - Người dùng xác nhận Verify fixture v2 đạt đúng 5/5 local ngày 22/09/2026. Test Kit v2 gồm 30 ảnh đa layout được sinh offline; kết quả này là fixture demo, không phải accuracy trên dữ liệu độc lập.
-- 54 automated tests gồm 48 policy/workflow/audit test khóa precedence, e-commerce/mã vận chuyển, phạm vi MST, các nhánh quyết định và phép chiếu timeline; 3 test hợp đồng OpenRouter/Qwen offline; 3 test toàn vẹn Test Kit/manifest, trong đó khóa đúng gói BGK 15 ca.
+- 56 automated tests gồm 49 policy/workflow/audit và chống thao tác chồng, khóa precedence, e-commerce/mã vận chuyển, phạm vi MST, các nhánh quyết định và phép chiếu timeline; 4 test hợp đồng OpenRouter/Qwen offline; 3 test toàn vẹn Test Kit/manifest, trong đó khóa đúng gói BGK 15 ca.
 - Structured Output giảm parsing lỗi so với JSON tự do.
 - Bản production trên SmarterASP.NET đã smoke thành công luồng upload, AI extraction và audit sau khi API key được cập nhật trong Pool Manager.
 - UI hiển thị facts AI theo ba cột; bảng chuyển tiếp riêng được hợp nhất vào bảng kết quả để tránh trùng nhưng vẫn phục hồi escalation sau reload.
