@@ -27,7 +27,7 @@ AURA cần đọc một ảnh hóa đơn/chứng từ và trả dữ kiện có 
 
 Cấu hình mặc định là `qwen/qwen3-vl-8b-instruct`. Đây là phương án hosted “vừa đủ”: nhỏ hơn nhiều so với model cỡ 100B+, có endpoint OpenRouter thật và giữ được JSON Schema hiện có. Tên model nằm trong cấu hình/secret, nên sau này có thể benchmark 4B self-host mà không viết lại controller hoặc policy.
 
-Không mô tả 8B là “đã chính xác” trước khi có benchmark. Kết quả 5/5 cũ thuộc provider/fixture trước; bản hiện tại phải chạy đúng một lượt Verify 5 ca sau deploy và ghi lại actual, latency, lỗi và chi phí.
+Không mô tả 8B là “đã chính xác” trước khi có benchmark độc lập. Bản production đã smoke thành công một ảnh; lượt Verify 5 ca production tiếp theo cần được quay và ghi lại actual, latency, lỗi và chi phí.
 
 ## 5. Bộ kiểm thử bàn giao
 
@@ -40,8 +40,8 @@ Không mô tả 8B là “đã chính xác” trước khi có benchmark. Kết 
 
 1. Build sạch và toàn bộ automated tests đạt offline.
 2. Secret key không nằm trong Git/log; model secret trùng `qwen/qwen3-vl-8b-instruct`.
-3. Chạy một ảnh smoke test trên live URL; kiểm tra JSON, preview, lịch sử và OpenRouter Activity.
-4. Nếu smoke test ổn, chạy Verify đúng một lượt; mục tiêu 5/5 trong giới hạn 90 giây.
+3. Một ảnh smoke trên Live URL đã xác nhận JSON, preview và lịch sử hoạt động; vẫn kiểm OpenRouter Activity khi quay.
+4. Chạy Verify production đúng một lượt trong video; mục tiêu 5/5 trong giới hạn 90 giây.
 5. Nếu không đạt, giữ kết quả thật trong proposal, phân loại lỗi OCR/schema/policy/provider rồi mới điều chỉnh. Không sửa expected result để khớp output.
 
 ## 7. Lộ trình tối ưu tiếp theo

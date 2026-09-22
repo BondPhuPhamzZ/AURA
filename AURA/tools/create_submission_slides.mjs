@@ -300,7 +300,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 157, 382, 242, C.surface2, "rounded-xl", C.green);
   text(s, "TRƯỚC KHI NỘP", 869, 180, 326, 24, 15, C.green, { bold: true });
-  const todo = ["Bỏ index.html mặc định", "Smoke 1 ảnh + Verify 1 lượt", "Quay video < 3 phút", "Gắn link video vào form"];
+  const todo = ["Quay Verify production", "Demo quản lý + Audit", "Video dưới 3 phút", "Điền đủ 3 URL nộp"];
   todo.forEach((t, i) => {
     pill(s, `${i + 1}`, 869, 225 + i * 40, 30, C.green);
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });

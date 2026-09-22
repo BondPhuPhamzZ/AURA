@@ -6,9 +6,9 @@ Cập nhật: 22/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 
 | Hạng mục | Trạng thái | File/bằng chứng |
 |---|---|---|
-| Live URL public, không cần đăng nhập | ◐ Đã deploy, cần smoke cuối | `https://bondphupham-001-site1.ltempurl.com/`; loại bỏ trang `index.html` mặc định và xác minh ẩn danh |
+| Live URL public, không cần đăng nhập | ☑ Đã deploy và smoke | `https://bondphupham-001-site1.ltempurl.com/`; upload, AI extraction và audit đã hoạt động production |
 | Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, `test_kit/judge-manifest.json` đúng 15 ca |
-| Public repository và lịch sử commit | ◐ Cần push/xác minh public | `https://github.com/BondPhuPhamzZ/AURA` |
+| Public repository và lịch sử commit | ☑ Có | `https://github.com/BondPhuPhamzZ/AURA`; cần push commit chốt sau mỗi lần cập nhật hồ sơ |
 | Video demo tối đa 3 phút | ☐ Chưa quay | `docs/VIDEO_DEMO_SCRIPT.md`; nộp link ngoài Git |
 | Đúng 5 slide | ☑ Đã dựng | `submission/AURA_5_SLIDES.pptx` |
 | Build Log một trang Word | ☑ Đã dựng | `submission/AURA_BUILD_LOG.docx` |
@@ -16,8 +16,8 @@ Cập nhật: 22/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 ## 2. File nên có trong GitHub
 
 - Mã nguồn ASP.NET Core, migrations, views, CSS/JS và tests.
-- `README.md`, `BUSINESS_RULES.md`, `BUILD_LOG.md`, `PROJECT_AUDIT.md`.
-- `docs/`: deployment, runbook, test cases, model selection, measurement plan.
+- `README.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_AND_INTEGRATION_REPORT.md`.
+- `docs/`: Build Log nguồn, deployment, runbook, test cases, model selection, measurement plan.
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
 - `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; cập nhật Live URL trước bản nộp cuối nếu cần.
 - `submission/AURA_BUILD_LOG.docx`: một trang.
@@ -37,13 +37,12 @@ Cập nhật: 22/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 
 ## 4. Đối chiếu mẫu VNG
 
-Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một archive nộp cứng. Nó có README, runbook, build log, slide outline và demo script; không có PPTX, DOCX hay video binary. AURA giữ cùng tinh thần nhưng cung cấp thêm artifact mở được ngay.
+Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một archive nộp cứng. AURA đã bổ sung `ARCHITECTURE_AND_INTEGRATION_REPORT.md` tương đương tài liệu kiến trúc của mẫu, đồng thời cung cấp PPTX, DOCX và workflow mở được ngay.
 
 ## 5. Việc còn phải làm trước hạn
 
-1. Đổi tên/xóa `index.html` mặc định trên hosting, mở Live URL trong cửa sổ ẩn danh và kiểm `/healthz`.
-2. Chạy một ảnh smoke rồi đúng một lượt Verify; ghi thời điểm và kết quả thật.
-3. Điền Live URL `https://bondphupham-001-site1.ltempurl.com/` vào form nộp và mô tả video.
-4. Quay video dưới 3 phút theo script; kiểm quyền “ai có link đều xem được”.
-5. Thu phản hồi có đồng thuận từ ba người dùng nếu rubric chấm hạng mục này; hiện chưa có bằng chứng nên không được tự tạo quote.
-6. Quét secret, build/test lần cuối, push nhánh chốt và xác minh repository public.
+1. Dùng lượt Verify production tiếp theo làm lượt quay chính thức; ghi đúng expected/actual và không chạy lặp để tiết kiệm credit.
+2. Quay video dưới 3 phút theo script; tải lên ngoài Git và kiểm quyền “ai có link đều xem được”.
+3. Điền Live URL, GitHub URL và video URL vào form nộp.
+4. Thu phản hồi có đồng thuận từ ba người dùng nếu rubric chấm hạng mục này; hiện chưa có bằng chứng nên không được tự tạo quote.
+5. Quét secret, build/test lần cuối, push nhánh chốt và xác minh repository public.

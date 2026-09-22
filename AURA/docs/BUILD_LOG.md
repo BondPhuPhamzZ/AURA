@@ -11,6 +11,7 @@
 - Người dùng xác nhận Verify fixture v2 đạt đúng 5/5 local ngày 22/09/2026. Test Kit v2 gồm 30 ảnh đa layout được sinh offline; kết quả này là fixture demo, không phải accuracy trên dữ liệu độc lập.
 - 54 automated tests gồm 48 policy/workflow/audit test khóa precedence, e-commerce/mã vận chuyển, phạm vi MST, các nhánh quyết định và phép chiếu timeline; 3 test hợp đồng OpenRouter/Qwen offline; 3 test toàn vẹn Test Kit/manifest, trong đó khóa đúng gói BGK 15 ca.
 - Structured Output giảm parsing lỗi so với JSON tự do.
+- Bản production trên SmarterASP.NET đã smoke thành công luồng upload, AI extraction và audit sau khi API key được cập nhật trong Pool Manager.
 - UI hiển thị facts AI theo ba cột; bảng chuyển tiếp riêng được hợp nhất vào bảng kết quả để tránh trùng nhưng vẫn phục hồi escalation sau reload.
 - Hồ sơ và audit AI được ghi trong cùng một `SaveChanges`; các fragment kết quả/quản lý/lịch sử cập nhật sau thao tác mà không reload toàn trang.
 
@@ -18,7 +19,7 @@
 
 - Prototype ban đầu dùng Gemini Free Tier; bản hiện tại dùng Qwen3-VL-8B-Instruct trả phí qua OpenRouter để tránh phụ thuộc quota miễn phí. Qwen3-VL-4B-Instruct được giữ làm hướng self-host sau khi benchmark tài nguyên.
 - Hệ thống không retry HTTP 429, chỉ retry tối đa một lần với lỗi 5xx tạm thời, trả mã lỗi an toàn (`AI_RATE_LIMIT`/`AI_TEMPORARILY_UNAVAILABLE`) và chuyển `ESCALATE_SYSTEM_ERROR`; không giả quyết định nghiệp vụ.
-- LocalDB chỉ phù hợp phát triển Windows. Mã nguồn đã có Linux container, `/healthz`, migration opt-in và hỗ trợ absolute persistent-volume path; deploy thật vẫn cần SQL Server/Azure SQL cùng tài nguyên cloud do nhóm sở hữu.
+- LocalDB chỉ dùng khi phát triển Windows. Bản production hiện dùng SQL Server và folder ảnh riêng tư được cấu hình bằng biến môi trường trên SmarterASP.NET; mã nguồn vẫn giữ Linux container, `/healthz` và migration opt-in để có thể chuyển hạ tầng sau này.
 - Test Kit v2 đã bổ sung mobile e-commerce, giấy in nhiệt, góc xoay, blur/crop và tiếng Việt có dấu; vẫn là dữ liệu tổng hợp nên không được xem là accuracy tổng quát.
 
 ## Tính năng lớn nhất cắt giảm
