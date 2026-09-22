@@ -170,7 +170,6 @@
     const amountRawInput = document.getElementById('claimedAmount');
     const maxUploadBytes = @((long)ReceiptStorage.Value.MaxFileSizeMb * 1024L * 1024L);
     const maxUploadMegabytes = @ReceiptStorage.Value.MaxFileSizeMb;
-    let preserveVerifyResults = false;
     let localPreviewUrl = null;
 
     function syncClaimedAmount() {
@@ -399,21 +398,6 @@
             escalated > 0 ? 'warning' : 'success');
     }
 
-    async function refreshFragment(url, hostId, context) {
-        const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, cache: 'no-store' });
-        if (!response.ok) throw new Error(`${context} thất bại (HTTP ${response.status}).`);
-        document.getElementById(hostId).innerHTML = await response.text();
-    }
-
-    async function refreshPendingEscalations() {
-        const response = await fetch('@Url.Action("EmployeeEscalations", "Home")', {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }, cache: 'no-store'
-        });
-        if (!response.ok) throw new Error(`Cập nhật bảng kết quả thất bại (HTTP ${response.status}).`);
-        document.getElementById('resultsBody').innerHTML = await response.text();
-        updatePendingEscalationSummary();
-    }
-
     function updatePendingEscalationSummary() {
         const pendingCount = document.querySelectorAll('#resultsBody tr[data-case-id]').length;
         const summary = document.getElementById('analysisSummary');
@@ -424,16 +408,6 @@
             summary.appendChild(escalatedChip);
         }
         escalatedChip.textContent = pendingCount + ' đang chờ chuyển tiếp';
-    }
-
-    async function refreshWorkflowViews(includeResults = true) {
-        const tasks = [
-            refreshFragment('@Url.Action("ReviewerQueue", "Home")', 'reviewerQueueHost', 'Cập nhật hàng đợi quản lý'),
-            refreshFragment('@Url.Action("AuditTrail", "Home")', 'auditTrailHost', 'Cập nhật lịch sử')
-        ];
-        if (includeResults) tasks.push(refreshPendingEscalations());
-        await Promise.all(tasks);
-        window.initializeAuditFilter?.();
     }
 
     async function readJsonResponse(response, context) {
@@ -466,7 +440,6 @@
     }
 
     async function forwardToManager(caseId, button) {
-        preserveVerifyResults = false;
         button.disabled = true;
         const originalText = button.innerText;
         button.innerText = 'Đang chuyển...';
@@ -482,7 +455,7 @@
             });
             const data = await readJsonResponse(response, 'Chuyển tiếp hồ sơ');
             showToast(data.message, 'success');
-            await refreshWorkflowViews(true);
+            window.location.assign(data.redirectUrl || '@Url.Action("Index", "Home", new { tab = "reviewer" })');
         } catch (error) {
             showToast('Không thể chuyển tiếp: ' + error.message, 'danger');
             button.disabled = false;
@@ -491,7 +464,6 @@
     }
 
     async function forwardAllToManager(button) {
-        preserveVerifyResults = false;
         if (!confirm('Chuyển toàn bộ hồ sơ đang chờ đến quản lý?')) return;
         button.disabled = true;
         const originalText = button.innerText;
@@ -504,7 +476,7 @@
             });
             const data = await readJsonResponse(response, 'Chuyển tiếp tất cả');
             showToast(data.message, 'success');
-            await refreshWorkflowViews(true);
+            window.location.assign(data.redirectUrl || '@Url.Action("Index", "Home", new { tab = "reviewer" })');
         } catch (error) {
             showToast('Không thể chuyển tiếp: ' + error.message, 'danger');
         } finally {
@@ -519,7 +491,6 @@
 
     // AJAX Upload Single File
     async function submitUpload() {
-        preserveVerifyResults = false;
         if (!fileInput.files || fileInput.files.length === 0) {
             showToast('Vui lòng tải lên ảnh hóa đơn.', 'danger');
             return;
@@ -569,7 +540,6 @@
             } else {
                 document.getElementById('resultsBody').innerHTML = renderResultRow(data);
                 updateAnalysisSummary(data);
-                await refreshWorkflowViews(true);
             }
         } catch(e) {
             document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Có lỗi hệ thống: ' + escapeHtml(e.message) + '</td></tr>';
@@ -582,7 +552,6 @@
     
     // Verify Harness logic (AJAX)
     async function startVerifyHarness() {
-        preserveVerifyResults = true;
         const btn = document.getElementById('verifyHarnessButton');
         const btnText = document.getElementById('btnVerifyText');
         const originalText = btnText.innerText;
@@ -627,7 +596,6 @@
                 showToast('Không có nội dung AI nào được trả về trong lượt Verify này.', 'warning');
             }
             updateAnalysisSummary(data);
-            await refreshWorkflowViews(false);
             scrollToResults();
         } catch(e) {
             document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Có lỗi xảy ra: ' + escapeHtml(e.message) + '</td></tr>';
@@ -651,7 +619,7 @@
             });
             const data = await readJsonResponse(response, 'Cập nhật quyết định');
             showToast(data.message || 'Đã cập nhật thành công.', 'success');
-            await refreshWorkflowViews(true);
+            window.location.assign(data.redirectUrl || window.location.href);
         } catch (error) {
             showToast(error.message, 'danger');
             if (submitButton) submitButton.disabled = false;
@@ -659,9 +627,4 @@
     });
 
     updatePendingEscalationSummary();
-
-    window.setInterval(() => {
-        if (document.visibilityState !== 'visible') return;
-        refreshWorkflowViews(!preserveVerifyResults).catch(() => { /* polling must not interrupt the operator */ });
-    }, 10000);
 </script>

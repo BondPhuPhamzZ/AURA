@@ -70,8 +70,10 @@
             const url = new URL(window.location.href);
             if (tabId === 'applicant') url.searchParams.delete('tab');
             else url.searchParams.set('tab', tabId);
-            window.history.replaceState({ tab: tabId }, '', url.pathname + url.search);
-            switchTab(tabId);
+            // A full navigation intentionally rebuilds every workflow table from
+            // committed database state. This avoids stale fragments racing with
+            // AI, forwarding or manager-decision requests.
+            window.location.assign(url.pathname + url.search);
         }
 
         function showToast(message, type) {
