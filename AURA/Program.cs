@@ -51,6 +51,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Đăng ký Dependency Injection
 builder.Services.AddScoped<IReimbursementRepository, ReimbursementRepository>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
+builder.Services.AddSingleton<WorkflowOperationGate>();
 builder.Services.AddHttpClient<IVisionExtractor, OpenRouterVisionExtractorService>((services, client) =>
 {
     var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenRouterOptions>>().Value;

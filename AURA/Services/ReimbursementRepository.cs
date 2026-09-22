@@ -61,6 +61,23 @@ namespace AURA.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task UpdateRequestsWithAuditAsync(
+            IEnumerable<(ReimbursementRequest Request, string Details)> requests, string action)
+        {
+            var items = requests.ToList();
+            if (items.Count == 0) return;
+
+            _context.ReimbursementRequests.UpdateRange(items.Select(x => x.Request));
+            await _context.AuditLogs.AddRangeAsync(items.Select(x => new AuditLog
+            {
+                RequestId = x.Request.Id,
+                Action = action,
+                Details = x.Details,
+                Timestamp = DateTime.UtcNow
+            }));
+            await _context.SaveChangesAsync();
+        }
+
         public Task<bool> ExistsByFileHashAsync(string sha256)
         {
             return _context.ReimbursementRequests.AnyAsync(x => x.FileSha256 == sha256);

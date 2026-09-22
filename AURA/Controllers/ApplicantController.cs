@@ -6,6 +6,7 @@ using AURA.Models;
 using AURA.Options;
 using AURA.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace AURA.Controllers;
@@ -21,10 +22,12 @@ public sealed class ApplicantController : Controller
     private readonly ReceiptStorageOptions _storageOptions;
     private readonly DecisionPolicyOptions _decisionPolicyOptions;
     private readonly ILogger<ApplicantController> _logger;
+    private readonly WorkflowOperationGate _operationGate;
 
     public ApplicantController(IWebHostEnvironment environment, IReimbursementRepository repository,
         IVisionExtractor vision, IOptions<ReceiptStorageOptions> storageOptions,
-        IOptions<DecisionPolicyOptions> decisionPolicyOptions, ILogger<ApplicantController> logger)
+        IOptions<DecisionPolicyOptions> decisionPolicyOptions, ILogger<ApplicantController> logger,
+        WorkflowOperationGate operationGate)
     {
         _environment = environment;
         _repository = repository;
@@ -32,6 +35,7 @@ public sealed class ApplicantController : Controller
         _storageOptions = storageOptions.Value;
         _decisionPolicyOptions = decisionPolicyOptions.Value;
         _logger = logger;
+        _operationGate = operationGate;
     }
 
     [HttpGet]
@@ -59,6 +63,8 @@ public sealed class ApplicantController : Controller
     public async Task<IActionResult> ForwardToManager(string id)
     {
         if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { error = "Thiếu mã hồ sơ." });
+        if (!_operationGate.TryEnter("Chuyển hồ sơ đến quản lý", out var lease)) return WorkflowBusy();
+        using var operation = lease!;
 
         var request = await _repository.GetRequestByIdAsync(id);
         if (request is null) return NotFound(new { error = "Không tìm thấy hồ sơ." });
@@ -69,8 +75,15 @@ public sealed class ApplicantController : Controller
         {
             request.IsForwardedToManager = true;
             request.ForwardedAt = DateTime.UtcNow;
-            await _repository.UpdateRequestWithAuditAsync(request, "EMPLOYEE_FORWARDED_TO_MANAGER",
-                $"Mode=SINGLE; Question={request.ManagerQuestion}; Status={request.Status}");
+            try
+            {
+                await _repository.UpdateRequestWithAuditAsync(request, "EMPLOYEE_FORWARDED_TO_MANAGER",
+                    $"Mode=SINGLE; Question={request.ManagerQuestion}; Status={request.Status}");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Conflict(new { error = "Hồ sơ vừa được cập nhật ở thao tác khác. Vui lòng tải lại trang." });
+            }
         }
 
         TempData["Success"] = $"Đã chuyển hồ sơ {request.Id[..8]} đến cửa sổ quản lý.";
@@ -89,6 +102,9 @@ public sealed class ApplicantController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ForwardAllToManager()
     {
+        if (!_operationGate.TryEnter("Chuyển hàng loạt hồ sơ đến quản lý", out var lease)) return WorkflowBusy();
+        using var operation = lease!;
+
         var pending = (await _repository.GetAllRequestsAsync())
             .Where(x => !x.IsForwardedToManager && PolicyDecisionEngine.IsEscalation(x.Status))
             .ToList();
@@ -98,8 +114,17 @@ public sealed class ApplicantController : Controller
         {
             request.IsForwardedToManager = true;
             request.ForwardedAt = forwardedAt;
-            await _repository.UpdateRequestWithAuditAsync(request, "EMPLOYEE_FORWARDED_TO_MANAGER",
-                $"Mode=BULK; Question={request.ManagerQuestion}; Status={request.Status}");
+        }
+
+        try
+        {
+            await _repository.UpdateRequestsWithAuditAsync(pending.Select(request =>
+                    (request, $"Mode=BULK; Question={request.ManagerQuestion}; Status={request.Status}")),
+                "EMPLOYEE_FORWARDED_TO_MANAGER");
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(new { error = "Danh sách hồ sơ vừa thay đổi. Vui lòng tải lại trang rồi thử lại." });
         }
 
         TempData["Success"] = pending.Count == 0
@@ -107,12 +132,15 @@ public sealed class ApplicantController : Controller
             : $"Đã chuyển tiếp {pending.Count} hồ sơ đến cửa sổ quản lý.";
         if (string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase))
         {
+            var redirectUrl = Url.Action("Index", "Home", new { tab = pending.Count == 0 ? "applicant" : "reviewer" })
+                ?? "/?tab=reviewer";
             return Json(new
             {
                 message = pending.Count == 0
                     ? "Không có hồ sơ mới cần chuyển tiếp."
                     : $"Đã chuyển tiếp {pending.Count} hồ sơ đến cửa sổ quản lý.",
-                forwardedCount = pending.Count
+                forwardedCount = pending.Count,
+                redirectUrl
             });
         }
         return RedirectToAction("Index", "Home", new { tab = pending.Count == 0 ? "applicant" : "reviewer" });
@@ -125,6 +153,8 @@ public sealed class ApplicantController : Controller
     {
         var validationError = ValidateUpload(receiptFile, claimedAmount);
         if (validationError is not null) return BadRequest(new { error = validationError });
+        if (!_operationGate.TryEnter("AI đang xử lý hóa đơn", out var lease)) return WorkflowBusy();
+        using var operation = lease!;
 
         var file = receiptFile!;
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
@@ -233,6 +263,12 @@ public sealed class ApplicantController : Controller
             return "Chỉ chấp nhận ảnh JPG hoặc PNG có MIME hợp lệ.";
         return null;
     }
+
+    private IActionResult WorkflowBusy() => Conflict(new
+    {
+        error = "Hệ thống đang xử lý một thao tác khác. Vui lòng chờ thao tác hiện tại hoàn tất rồi thử lại.",
+        currentOperation = _operationGate.CurrentOperation
+    });
 
     private string GetStorageRoot()
     {

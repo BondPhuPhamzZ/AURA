@@ -11,6 +11,8 @@ namespace AURA.Interfaces
         Task<ReimbursementRequest?> GetRequestByIdAsync(string id);
         Task UpdateRequestAsync(ReimbursementRequest request);
         Task UpdateRequestWithAuditAsync(ReimbursementRequest request, string action, string details);
+        Task UpdateRequestsWithAuditAsync(IEnumerable<(ReimbursementRequest Request, string Details)> requests,
+            string action);
         Task<bool> ExistsByFileHashAsync(string sha256);
     }
 }

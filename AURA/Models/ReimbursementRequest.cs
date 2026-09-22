@@ -44,6 +44,9 @@ namespace AURA.Models
         public DateTime? ManagerDecisionAt { get; set; }
         
         public long ProcessingLatencyMs { get; set; }
+
+        [Timestamp]
+        public byte[] RowVersion { get; set; } = [];
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

@@ -14,14 +14,17 @@ public sealed class VerifyController : Controller
     private readonly IWebHostEnvironment _environment;
     private readonly IReimbursementRepository _repository;
     private readonly ILogger<VerifyController> _logger;
+    private readonly WorkflowOperationGate _operationGate;
 
     public VerifyController(IVisionExtractor vision, IWebHostEnvironment environment,
-        IReimbursementRepository repository, ILogger<VerifyController> logger)
+        IReimbursementRepository repository, ILogger<VerifyController> logger,
+        WorkflowOperationGate operationGate)
     {
         _vision = vision;
         _environment = environment;
         _repository = repository;
         _logger = logger;
+        _operationGate = operationGate;
     }
 
     [HttpGet]
@@ -31,6 +34,16 @@ public sealed class VerifyController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RunHarness(CancellationToken cancellationToken)
     {
+        if (!_operationGate.TryEnter("Verify Harness đang chạy", out var lease))
+        {
+            return Conflict(new
+            {
+                error = "Hệ thống đang xử lý một thao tác khác. Vui lòng chờ thao tác hiện tại hoàn tất rồi thử lại.",
+                currentOperation = _operationGate.CurrentOperation
+            });
+        }
+        using var operation = lease!;
+
         var manifestPath = Path.Combine(_environment.WebRootPath, "test_data", "expected-results.json");
         if (!System.IO.File.Exists(manifestPath))
             return NotFound(new { error = "Không tìm thấy manifest kiểm thử." });
