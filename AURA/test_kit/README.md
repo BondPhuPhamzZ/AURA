@@ -37,7 +37,7 @@ Phải dùng cùng `--as-of-date` và seed trong manifest để tái tạo byte/
 ## Quy tắc benchmark
 
 1. Unit test policy trước; không cần API.
-2. Chạy đúng một ảnh smoke test sau khi deploy.
+2. Chạy đúng một ảnh smoke test sau khi cấu hình localhost.
 3. Nếu ổn và quota còn đủ, chạy một lượt Verify 5 ảnh.
 4. Chỉ chạy 30 ảnh khi có ngân sách benchmark riêng; ghi model, thời điểm, expected/actual, latency và lỗi.
 5. Không sửa expected để hợp thức hóa output của model.
