@@ -69,7 +69,7 @@ cd AURA\AURA
 
 dotnet tool restore
 dotnet restore
-dotnet user-secrets set "OpenRouter:ApiKey" "OPENROUTER_KEY_DUOC_CUNG_CAP_RIENG"
+dotnet user-secrets set "OpenRouter:ApiKey" "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"
 dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
 
 dotnet ef database update
