@@ -9,7 +9,7 @@ Cập nhật: 22/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 | Live URL public, không cần đăng nhập | ◐ Đã deploy, cần smoke cuối | `https://bondphupham-001-site1.ltempurl.com/`; loại bỏ trang `index.html` mặc định và xác minh ẩn danh |
 | Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, `test_kit/judge-manifest.json` đúng 15 ca |
 | Public repository và lịch sử commit | ◐ Cần push/xác minh public | `https://github.com/BondPhuPhamzZ/AURA` |
-| Video demo tối đa 3 phút | ☐ Chưa quay | `submission/VIDEO_DEMO_SCRIPT.md`; nộp link ngoài Git |
+| Video demo tối đa 3 phút | ☐ Chưa quay | `docs/VIDEO_DEMO_SCRIPT.md`; nộp link ngoài Git |
 | Đúng 5 slide | ☑ Đã dựng | `submission/AURA_5_SLIDES.pptx` |
 | Build Log một trang Word | ☑ Đã dựng | `submission/AURA_BUILD_LOG.docx` |
 
@@ -21,8 +21,8 @@ Cập nhật: 22/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
 - `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; cập nhật Live URL trước bản nộp cuối nếu cần.
 - `submission/AURA_BUILD_LOG.docx`: một trang.
-- `submission/VIDEO_DEMO_SCRIPT.md`: kịch bản và vị trí điền link video.
-- `submission/SUBMISSION_CHECKLIST.md`: manifest bàn giao.
+- `docs/VIDEO_DEMO_SCRIPT.md`: kịch bản quay, không phải artifact bắt buộc nộp.
+- `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.
 - 5 ảnh Verify trong `wwwroot/test_data/images`, manifest Verify và gói 15 ca BGK.
 - `Dockerfile`, `.dockerignore`, `.gitignore`.
 

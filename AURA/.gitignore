@@ -27,7 +27,7 @@ appsettings.Production.local.json
 *.publishsettings
 *.pubxml.user
 
-# Large demo recordings are hosted externally; only the script/link is versioned.
+# Large demo recordings are hosted externally; the versioned script lives in docs/.
 submission/*.mp4
 submission/*.mov
 submission/*.mkv

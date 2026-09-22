@@ -68,4 +68,4 @@ Không đặt API key trong `appsettings*.json`, Git, ảnh chụp hoặc log. K
 - OpenRouter/provider có thể trả `429/5xx`; ứng dụng không retry `429`, chỉ retry tối đa một lần với lỗi `5xx`, và luôn chuyển thủ công nếu trích xuất thất bại.
 - Theo dõi request, token và chi phí tại **OpenRouter → Activity**. Không chạy Verify lặp lại vì mỗi lượt dùng tối đa năm request trả phí; xem quy trình trong [runbook](docs/RUNBOOK.md).
 
-Xem [workflow đầy đủ](submission/AURA_WORKFLOW_SPEC.md), [checklist nộp](submission/SUBMISSION_CHECKLIST.md), [case study chọn model](docs/MODEL_SELECTION_CASE_STUDY.md), [hướng dẫn deploy](docs/DEPLOYMENT.md), [runbook](docs/RUNBOOK.md), [test matrix](docs/TEST_CASES.md) và [báo cáo kiểm định](PROJECT_AUDIT.md).
+Xem [workflow đầy đủ](submission/AURA_WORKFLOW_SPEC.md), [checklist nộp](docs/SUBMISSION_CHECKLIST.md), [kịch bản video](docs/VIDEO_DEMO_SCRIPT.md), [case study chọn model](docs/MODEL_SELECTION_CASE_STUDY.md), [hướng dẫn deploy](docs/DEPLOYMENT.md), [runbook](docs/RUNBOOK.md), [test matrix](docs/TEST_CASES.md) và [báo cáo kiểm định](PROJECT_AUDIT.md).
