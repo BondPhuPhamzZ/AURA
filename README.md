@@ -8,7 +8,7 @@ Qwen Vision qua OpenRouter chỉ trích xuất dữ kiện có cấu trúc từ 
 
 | Hạng mục | Đường dẫn |
 | --- | --- |
-| Video Demo | [Xem video dưới 3 phút](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
+| Video Demo & Test key cho OpenRouter | [Xem video dưới 3 phút](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
 | Slide thuyết trình | [Tải AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES.pptx) |
 | Build Log | [Tải AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.docx) |
 
@@ -57,7 +57,7 @@ Kết quả trên fixture tổng hợp không phải tuyên bố độ chính x�
 
 ## API key dành cho BGK
 
-Nhóm cung cấp API key đánh giá riêng qua kênh liên hệ riêng tư.
+Nhóm cung cấp API key đánh giá riêng qua kênh liên hệ riêng tư (đã đính kèm chung vào thư mục video).
 
 API key không được lưu trong GitHub, README, source code, ảnh chụp hoặc video. BTC thay placeholder dưới đây bằng key đánh giá được cung cấp:
 
