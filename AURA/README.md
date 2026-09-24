@@ -1,71 +1,124 @@
 # AURA - Automated Underwriting & Reimbursement AI
 
-AURA là sản phẩm Track A - The Escalation Referee cho quy trình hoàn ứng chi phí. Qwen vision qua OpenRouter chỉ đọc ảnh và trả dữ kiện có cấu trúc; `PolicyDecisionEngine` của ASP.NET Core mới là thành phần quyết định tất định.
+AURA automates the first-line review of employee reimbursement receipts. It was developed for the **VNG Track – Challenge A: The Escalation Referee** at the MLAI Hackathon 2026.
 
-## Trạng thái Sprint 1
+Qwen Vision, accessed through OpenRouter, extracts structured facts from receipt images. It does not make the final business decision. A deterministic C# policy engine decides whether a request can be approved automatically or must be escalated to a human reviewer.
 
-- Build sạch: 0 warning, 0 error.
-- 56 kiểm thử tự động: chính sách/workflow/audit, hợp đồng OpenRouter/Qwen offline, retry structured output, chống thao tác chồng và tính toàn vẹn manifest/ảnh Test Kit (gồm gói BGK đúng 15 ca).
-- Verify Vision v2: local đạt đúng 5/5 ngày 22/09/2026 với 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`; không suy rộng 5 fixture tổng hợp thành accuracy thực tế.
-- Route upload, Verify, audit, quản lý, CSRF và tra cứu chứng từ đã smoke-test local.
-- Giao diện upload ba cột hiển thị trực tiếp facts AI đã đọc. Kết quả cho biết số ca tự động duyệt/chuyển tiếp; ca tự duyệt vào lịch sử, ca chuyển tiếp được giữ trong bảng kết quả ngay cả sau reload.
-- Hàng đợi nhân viên, quản lý và audit cập nhật ngay sau thao tác bằng fragment AJAX, đồng thời polling nhẹ mỗi 10 giây để đồng bộ các tab đang mở.
+## Submission Materials
 
-## Demo 90 giây
+| Item | Link |
+| --- | --- |
+| Demo video | [Watch the demo (under 3 minutes)](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
+| Presentation | [Download AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES.pptx) |
+| Build Log | [Download AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.docx) |
 
-1. Mở trang chủ.
-2. Bấm **Chạy Verify Harness (90s)**. Một lần bấm chạy đủ 5 ca và hiển thị expected/actual, PASS/FAIL, câu hỏi, latency và timestamp.
-3. Tải một JPG/PNG mới, nhập số tiền đề nghị và bấm **AI tự động kiểm**.
-4. Với ca chuyển tiếp, nhân viên bấm **Chuyển tiếp** hoặc **Chuyển tiếp tất cả**; quản lý chọn **Đồng ý duyệt/Từ chối duyệt** theo câu hỏi và hệ thống hiển thị thông báo kết quả.
+## What AURA Can Do
 
-Dashboard dùng `fetch` cho upload và mọi quyết định nên không tải lại toàn trang. Ảnh được xem trước ngay khi chọn; nội dung AI, bảng nhân viên, hàng đợi quản lý và lịch sử được cập nhật theo từng fragment. Các cửa sổ đang mở đồng bộ lại mỗi 10 giây.
+- Read single-page JPG and PNG receipt images with Qwen Vision.
+- Return structured receipt facts using a JSON Schema contract.
+- Apply reimbursement rules through a deterministic C# policy engine.
+- Automatically approve clear, policy-compliant requests.
+- Escalate uncertain, exceptional, or unauthorized requests for human review.
+- Let an employee forward a case and let a manager approve, reject, or undo the latest decision.
+- Record the request lifecycle in an audit trail.
+- Run a five-case Verify Harness through the real application pipeline.
+- Prevent overlapping workflow writes and stale updates from creating duplicate or conflicting data.
 
-`DecisionPolicy:EscalateDuplicateReceipts` mặc định là `false` cho buổi demo để BGK có thể dùng lại cùng fixture. Hệ thống vẫn phát hiện và ghi `DuplicateDetected` vào audit. Khi vận hành thật, đặt giá trị này thành `true` để ảnh trùng byte trở thành `ESCALATE_FACT`.
-5. Mở **Lịch Sử Của Hệ Thống** để xem lần quét, lần chuyển tiếp, câu trả lời, kết quả, thời gian và hoàn tác quyết định quản lý.
+## Decision Flow
 
-## Kiến trúc quyết định
+```text
+Upload receipt
+→ Qwen extracts structured facts
+→ Backend validates the extracted data
+→ C# policy engine makes a deterministic decision
+→ AUTO_APPROVE or ESCALATE_*
+→ Employee forwards the exception
+→ Manager makes the human decision
+→ Audit trail records the outcome
+```
 
-`Upload -> kiểm MIME/magic bytes/size -> lưu chứng từ riêng tư -> Qwen3-VL-8B-Instruct qua OpenRouter + JSON Schema -> hiển thị facts -> C# policy engine -> AUTO_APPROVE hoặc ESCALATE_* -> nhân viên chuyển tiếp -> quản lý Đồng ý/Từ chối -> audit trail`
+AURA does not fine-tune Qwen and does not give the model final decision authority. The model acts as a document reader; `PolicyDecisionEngine` remains the source of truth for business decisions. When AI output is missing, invalid, or uncertain, the request is routed to a human instead of being guessed.
 
-Với e-commerce, schema tách riêng mã đơn hàng, mã vận chuyển, đơn vị vận chuyển, trạng thái đơn, ngày giao dịch và ngày hoàn tất. Mã vận chuyển chỉ là bằng chứng truy vết logistics; nó không thay MST và không tự chứng minh đã thanh toán.
+## Technology
 
-Thứ tự ưu tiên khi có nhiều lỗi: `FACT -> POLICY -> AUTHORITY`. Input nghi vấn không bao giờ được tự động duyệt.
+- ASP.NET Core 8 MVC
+- Entity Framework Core and SQL Server
+- Qwen3-VL-8B-Instruct through OpenRouter
+- JSON Schema structured output
+- Razor Views and the JavaScript Fetch API
 
-## Chạy local
+## Sprint 1 Verification
 
-Yêu cầu: .NET 8 SDK, SQL Server LocalDB/SQL Server, EF CLI.
+- Build: **0 warnings, 0 errors**
+- Automated tests: **56/56 passed**
+- Verify Harness: **5 smoke-test cases**
+- Evaluator reference pack: **15 test cases**
 
-Nhóm cung cấp API key đánh giá tạm thời cho BGK qua kênh riêng. Key thật không được lưu trong repository. Thay placeholder dưới đây bằng key được cung cấp:
+The recorded 5/5 Verify result uses controlled synthetic fixtures. It must not be interpreted as an accuracy claim for independent real-world receipts.
+
+## Evaluation API Key
+
+An evaluator-only OpenRouter key is provided to the organizers through a private channel. No active API key is stored in this repository, README, source code, screenshots, or demo video.
+
+After receiving the evaluation key, replace the placeholder in the command below. .NET User Secrets stores the value outside the repository:
 
 ```powershell
-dotnet user-secrets set "OpenRouter:ApiKey" "OPENROUTER_KEY_DUOC_CUNG_CAP_RIENG"
+dotnet user-secrets set "OpenRouter:ApiKey" "OPENROUTER_EVALUATION_KEY"
 dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
+```
+
+## Run Locally
+
+Requirements: Windows, .NET 8 SDK, and SQL Server LocalDB or SQL Server.
+
+```powershell
+git clone https://github.com/BondPhuPhamzZ/AURA.git
+cd AURA\AURA
+
+dotnet tool restore
+dotnet restore
+
+dotnet user-secrets set "OpenRouter:ApiKey" "OPENROUTER_EVALUATION_KEY"
+dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
+
 dotnet ef database update
 dotnet run
 ```
 
-Chạy kiểm thử:
+Open the localhost address printed in the terminal, then:
+
+1. Select **Run Verify Harness** to smoke-test five cases through the live AI pipeline.
+2. Or upload a JPG/PNG receipt, enter the claimed amount, and select **Run AI Review**.
+3. For an `ESCALATE_*` result, select **Forward**.
+4. Open the manager tab and select **Approve** or **Reject**.
+5. Open **System History** to inspect the audit trail.
+
+### Run the Automated Tests
+
+These tests do not call the paid AI API:
 
 ```powershell
-dotnet build --no-restore
-dotnet test tests/AURA.Tests/AURA.Tests.csproj
+dotnet test tests\AURA.Tests\AURA.Tests.csproj
 ```
 
-Không đặt API key trong `appsettings*.json`, Git, ảnh chụp hoặc log.
+## Documentation
 
-## Dữ liệu và quyền riêng tư
+- [Architecture and Integration Report](ARCHITECTURE_AND_INTEGRATION_REPORT.md)
+- [Business Rules](BUSINESS_RULES.md)
+- [Workflow Specification](submission/AURA_WORKFLOW_SPEC.md)
+- [Test Cases](docs/TEST_CASES.md)
+- [Deployment and Operations Runbook](docs/RUNBOOK.md)
 
-- Năm ảnh trong `wwwroot/test_data/images` là bộ Verify chạy trực tiếp. `test_kit/judge-manifest.json` khóa đúng 15 ca cho BGK; cả hai được tuyển từ ngân hàng mở rộng 30 ảnh, tạo offline với seed cố định bởi `tools/generate_verify_receipts.py`, không phải hóa đơn cá nhân thật.
-- Ảnh người dùng tải lên được lưu ngoài `wwwroot` tại `App_Data/receipts`, với tên ngẫu nhiên, SHA-256 và metadata để tra cứu/audit.
-- Ảnh được gửi qua OpenRouter tới provider mà router lựa chọn để Qwen trích xuất. Sản phẩm **không** phải zero-cloud/on-premise.
+## Sprint 1 Limitations
 
-## Giới hạn công bố
+- Supports one JPG/PNG image up to 5 MB; PDF and multi-page receipts are not supported yet.
+- Does not yet include role-based authentication, e-invoice verification, tax-code lookup, currency conversion, or malware scanning.
+- Depends on OpenRouter and the selected Qwen provider for vision extraction.
+- Uploaded receipt evidence is stored by the application instance; production deployment requires managed durable storage and an explicit retention policy.
+- AI failure or low confidence always results in human review rather than a fabricated decision.
 
-- Chỉ nhận một ảnh JPG/PNG tối đa 5 MB; trình duyệt chặn file quá giới hạn trước khi gửi và server vẫn kiểm tra lại MIME, magic bytes và kích thước. Chưa hỗ trợ PDF hoặc hóa đơn nhiều trang.
-- Vision không thể xác nhận tính hợp pháp/chính hãng chỉ từ pixel; AURA chỉ ghi nhận identifier và dấu hiệu nhìn thấy.
-- Chưa tích hợp tra cứu mã số thuế/e-invoice bên ngoài, tỷ giá ngoại tệ hoặc antivirus.
-- Kết quả 5/5 trên fixture tổng hợp không chứng minh độ chính xác trên dữ liệu độc lập.
-- OpenRouter/provider có thể trả `429/5xx` hoặc JSON hỏng; ứng dụng bật response healing, retry giới hạn với `5xx`/structured output hỏng và luôn chuyển thủ công nếu trích xuất vẫn thất bại.
-- Theo dõi request, token và chi phí tại **OpenRouter → Activity**. Không chạy Verify lặp lại vì mỗi lượt dùng tối đa năm request trả phí; xem quy trình trong [runbook](docs/RUNBOOK.md).
+## Author
 
-Xem [báo cáo kiến trúc và tích hợp](ARCHITECTURE_AND_INTEGRATION_REPORT.md), [workflow đầy đủ](submission/AURA_WORKFLOW_SPEC.md), [checklist nộp](docs/SUBMISSION_CHECKLIST.md), [Build Log nguồn](docs/BUILD_LOG.md), [kịch bản video](docs/VIDEO_DEMO_SCRIPT.md), [case study chọn model](docs/MODEL_SELECTION_CASE_STUDY.md), [runbook](docs/RUNBOOK.md) và [test matrix](docs/TEST_CASES.md).
+**Pham Gia Phu**
+
+VNG Track – Challenge A: The Escalation Referee
