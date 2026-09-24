@@ -1,74 +1,75 @@
 # AURA - Automated Underwriting & Reimbursement AI
 
-AURA là hệ thống hỗ trợ thẩm định hoàn ứng chi phí từ ảnh hóa đơn, phát triển cho **Track A – The Escalation Referee**.
+AURA automates the first-line review of employee reimbursement receipts. It was developed for the **VNG Track – Challenge A: The Escalation Referee** at the MLAI Hackathon 2026.
 
-Qwen Vision qua OpenRouter chỉ trích xuất dữ kiện có cấu trúc từ ảnh. Quyết định cuối cùng được thực hiện bởi các quy tắc nghiệp vụ tất định trong C#.
+Qwen Vision, accessed through OpenRouter, extracts structured facts from receipt images. It does not make the final business decision. A deterministic C# policy engine decides whether a request can be approved automatically or must be escalated to a human reviewer.
 
-## Tài liệu nộp
+## Submission Materials
 
-| Hạng mục | Đường dẫn |
+| Item | Link |
 | --- | --- |
-| Video Demo & Test key cho OpenRouter | [Xem video và test key đính kèm](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
-| Slide thuyết trình | [Tải AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES.pptx) |
-| Build Log | [Tải AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.docx) |
+| Demo video | [Watch the demo (under 3 minutes)](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
+| Presentation | [Download AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES.pptx) |
+| Build Log | [Download AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.docx) |
 
-## Chức năng chính
+## What AURA Can Do
 
-- Đọc hóa đơn JPG/PNG bằng Qwen Vision.
-- Trích xuất dữ kiện theo JSON Schema.
-- Đối chiếu chính sách hoàn ứng bằng C#.
-- Tự động duyệt ca rõ ràng; chuyển ngoại lệ cho con người.
-- Nhân viên chuyển tiếp, quản lý duyệt/từ chối và có thể hoàn tác.
-- Ghi Audit Log cho toàn bộ vòng đời hồ sơ.
-- Verify Harness chạy 5 ca qua pipeline thực tế.
-- Chặn thao tác đồng thời để tránh ghi trùng hoặc xung đột dữ liệu.
+- Read single-page JPG and PNG receipt images with Qwen Vision.
+- Return structured receipt facts using a JSON Schema contract.
+- Apply reimbursement rules through a deterministic C# policy engine.
+- Automatically approve clear, policy-compliant requests.
+- Escalate uncertain, exceptional, or unauthorized requests for human review.
+- Let an employee forward a case and let a manager approve, reject, or undo the latest decision.
+- Record the request lifecycle in an audit trail.
+- Run a five-case Verify Harness through the real application pipeline.
+- Prevent overlapping workflow writes and stale updates from creating duplicate or conflicting data.
 
-## Luồng xử lý
+## Decision Flow
 
 ```text
-Upload hóa đơn
-→ Qwen trích xuất dữ kiện
-→ Backend kiểm tra dữ liệu
-→ Policy C# ra quyết định
-→ AUTO_APPROVE hoặc ESCALATE_*
-→ Nhân viên chuyển tiếp
-→ Quản lý xử lý ngoại lệ
-→ Audit Log
+Upload receipt
+→ Qwen extracts structured facts
+→ Backend validates the extracted data
+→ C# policy engine makes a deterministic decision
+→ AUTO_APPROVE or ESCALATE_*
+→ Employee forwards the exception
+→ Manager makes the human decision
+→ Audit trail records the outcome
 ```
 
-AURA không fine-tune Qwen và không giao toàn bộ quyền quyết định cho AI. Model chỉ đọc dữ kiện; `PolicyDecisionEngine` áp dụng quy tắc nghiệp vụ tất định.
+AURA does not fine-tune Qwen and does not give the model final decision authority. The model acts as a document reader; `PolicyDecisionEngine` remains the source of truth for business decisions. When AI output is missing, invalid, or uncertain, the request is routed to a human instead of being guessed.
 
-## Công nghệ
+## Technology
 
 - ASP.NET Core 8 MVC
-- Entity Framework Core và SQL Server
-- Qwen3-VL-8B-Instruct qua OpenRouter
-- JSON Schema Structured Output
-- Razor Views và JavaScript Fetch API
+- Entity Framework Core and SQL Server
+- Qwen3-VL-8B-Instruct through OpenRouter
+- JSON Schema structured output
+- Razor Views and the JavaScript Fetch API
 
-## Kiểm thử
+## Sprint 1 Verification
 
-- Build: **0 warning, 0 error**
-- Automated tests: **56/56 pass**
-- Verify Harness: **5 test cases**
-- Gói tham chiếu dành cho BGK: **15 test cases**
+- Build: **0 warnings, 0 errors**
+- Automated tests: **56/56 passed**
+- Verify Harness: **5 smoke-test cases**
+- Evaluator reference pack: **15 test cases**
 
-Kết quả trên fixture tổng hợp không phải tuyên bố độ chính xác trên hóa đơn thực tế độc lập.
+The recorded 5/5 Verify result uses controlled synthetic fixtures. It must not be interpreted as an accuracy claim for independent real-world receipts.
 
-## API key dành cho BGK
+## Evaluation API Key
 
-Nhóm cung cấp API key đánh giá riêng qua kênh liên hệ riêng tư (đã đính kèm chung vào thư mục video).
+An evaluator-only OpenRouter key is provided to the organizers through a private channel. No active API key is stored in this repository, README, source code, screenshots, or demo video.
 
-API key không được lưu trong GitHub, README, source code, ảnh chụp hoặc video. BTC thay placeholder dưới đây bằng key đánh giá được cung cấp:
+After receiving the evaluation key, replace the placeholder in the command below. .NET User Secrets stores the value outside the repository:
 
 ```powershell
-dotnet user-secrets set "OpenRouter:ApiKey" "OPENROUTER_KEY_DUOC_CUNG_CAP_RIENG"
+dotnet user-secrets set "OpenRouter:ApiKey" "OPENROUTER_EVALUATION_KEY"
 dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
 ```
 
-## Chạy local
+## Run Locally
 
-Yêu cầu: Windows, .NET 8 SDK và SQL Server LocalDB hoặc SQL Server.
+Requirements: Windows, .NET 8 SDK, and SQL Server LocalDB or SQL Server.
 
 ```powershell
 git clone https://github.com/BondPhuPhamzZ/AURA.git
@@ -77,44 +78,47 @@ cd AURA\AURA
 dotnet tool restore
 dotnet restore
 
-dotnet user-secrets set "OpenRouter:ApiKey" "OPENROUTER_KEY_DUOC_CUNG_CAP_RIENG"
+dotnet user-secrets set "OpenRouter:ApiKey" "OPENROUTER_EVALUATION_KEY"
 dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
 
 dotnet ef database update
 dotnet run
 ```
 
-Mở địa chỉ localhost xuất hiện trong terminal. Sau đó:
+Open the localhost address printed in the terminal, then:
 
-1. Bấm **Chạy Verify Harness** để smoke-test 5 ca.
-2. Hoặc tải ảnh JPG/PNG, nhập số tiền và bấm **AI tự động kiểm**.
-3. Với hồ sơ `ESCALATE_*`, bấm **Chuyển tiếp**.
-4. Tại tab quản lý, chọn **Đồng ý duyệt** hoặc **Từ chối duyệt**.
-5. Mở **Lịch Sử Của Hệ Thống** để xem Audit Log.
+1. Select **Run Verify Harness** to smoke-test five cases through the live AI pipeline.
+2. Or upload a JPG/PNG receipt, enter the claimed amount, and select **Run AI Review**.
+3. For an `ESCALATE_*` result, select **Forward**.
+4. Open the manager tab and select **Approve** or **Reject**.
+5. Open **System History** to inspect the audit trail.
 
-### Chạy automated tests
+### Run the Automated Tests
 
-Các test này không gọi API trả phí:
+These tests do not call the paid AI API:
 
 ```powershell
 dotnet test tests\AURA.Tests\AURA.Tests.csproj
 ```
 
-## Tài liệu
+## Documentation
 
-- [Architecture and Integration Report](ARCHITECTURE_AND_INTEGRATION_REPORT.md)
-- [Business Rules](BUSINESS_RULES.md)
-- [Workflow Specification](submission/AURA_WORKFLOW_SPEC.md)
-- [Test Cases](docs/TEST_CASES.md)
+- [Architecture and Integration Report](AURA/ARCHITECTURE_AND_INTEGRATION_REPORT.md)
+- [Business Rules](AURA/BUSINESS_RULES.md)
+- [Workflow Specification](AURA/submission/AURA_WORKFLOW_SPEC.md)
+- [Test Cases](AURA/docs/TEST_CASES.md)
+- [Deployment and Operations Runbook](AURA/docs/RUNBOOK.md)
 
-## Giới hạn Sprint 1
+## Sprint 1 Limitations
 
-- Chỉ hỗ trợ ảnh JPG/PNG một trang, tối đa 5 MB.
-- Chưa hỗ trợ PDF, tra cứu e-invoice và authentication theo vai trò.
-- Hệ thống phụ thuộc OpenRouter và provider Qwen.
-- Khi AI lỗi hoặc không chắc chắn, hồ sơ được chuyển cho con người thay vì tạo kết quả giả.
+- Supports one JPG/PNG image up to 5 MB; PDF and multi-page receipts are not supported yet.
+- Does not yet include role-based authentication, e-invoice verification, tax-code lookup, currency conversion, or malware scanning.
+- Depends on OpenRouter and the selected Qwen provider for vision extraction.
+- Uploaded receipt evidence is stored by the application instance; production deployment requires managed durable storage and an explicit retention policy.
+- AI failure or low confidence always results in human review rather than a fabricated decision.
 
-## Tác giả
+## Author
 
-**Phạm Gia Phú**  
-Track A – The Escalation Referee
+**Pham Gia Phu**
+
+VNG Track – Challenge A: The Escalation Referee
