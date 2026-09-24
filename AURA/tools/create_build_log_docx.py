@@ -139,7 +139,7 @@ set_run_font(run, size=18, bold=True, color="000000")
 subtitle = document.add_paragraph()
 subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
 subtitle.paragraph_format.space_after = Pt(5)
-run = subtitle.add_run("Track A The Escalation Referee | 22 09 2026 | Pham Gia Phu")
+run = subtitle.add_run("Track A The Escalation Referee | 24 09 2026 | Pham Gia Phu")
 set_run_font(run, size=9.2, italic=True, color="555555")
 
 intro = document.add_paragraph()
@@ -156,7 +156,7 @@ add_heading(document, "1 Công cụ và phạm vi sử dụng")
 add_body(
     document,
     "Qwen3-VL-8B-Instruct qua OpenRouter đọc một ảnh JPG hoặc PNG và trả dữ kiện theo JSON Schema. "
-    "Codex và Antigravity hỗ trợ truy route, phát hiện lỗi JavaScript, refactor, viết test và đồng bộ tài liệu. "
+    "Codex hỗ trợ truy route, phát hiện lỗi JavaScript, refactor, viết test và đồng bộ tài liệu. "
     "Tôi không dùng output của AI như bằng chứng duy nhất: thay đổi chỉ được giữ lại sau build, test và kiểm tra UI.",
 )
 
@@ -208,7 +208,7 @@ evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
 headers = ("Build", "Test offline", "Verify v2 local", "Gói BGK")
-values = ("0 warning 0 error", "54 trên 54 pass", "5 trên 5 đúng", "15 ca đã khóa")
+values = ("0 warning 0 error", "56 trên 56 pass", "5 trên 5 đúng", "15 ca đã khóa")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -249,6 +249,7 @@ add_body(
 add_heading(document, "5 Quyết định kiến trúc và phần cắt giảm")
 add_bullet(document, "Tách Qwen extraction khỏi PolicyDecisionEngine để model có thể thay đổi mà không đổi quy tắc duyệt.")
 add_bullet(document, "Giữ AuditLogs theo sự kiện append-only ở tầng ứng dụng, nhưng UI gom một hồ sơ thành một timeline để tránh cảm giác lặp.")
+add_bullet(document, "Chặn thao tác workflow chồng trong một instance, dùng RowVersion chống ghi đè đồng thời và reload sau mutation để đọc lại trạng thái đã commit.")
 add_bullet(document, "Chọn hosted Qwen 8B cho demo; Qwen 4B self-host chỉ là hướng benchmark khi có dữ liệu và phần cứng phù hợp.")
 add_bullet(document, "Hoãn PDF nhiều trang, authentication theo role, tax lookup, antivirus, object storage và benchmark tập dữ liệu độc lập.")
 
@@ -256,9 +257,10 @@ add_heading(document, "6 Bài học và bước tiếp theo")
 add_body(
     document,
     "Lợi ích lớn nhất của AI là tăng tốc vòng lặp khám phá và kiểm thử, không phải thay người chịu trách nhiệm. "
-    "Tôi đã deploy AURA lên SmarterASP.NET tại https://bondphupham-001-site1.ltempurl.com/ và smoke thành công luồng "
-    "upload, AI extraction và audit sau khi cập nhật API key trong Pool Manager. Lượt Verify production tiếp theo sẽ được "
-    "dùng làm lượt quay chính thức; phần còn lại là hoàn tất video dưới ba phút và điền đủ ba URL nộp bài. "
+    "AURA có đường chạy localhost tái lập trong README; bản SmarterASP.NET đã smoke thành công luồng upload, AI extraction "
+    "và audit sau khi cập nhật API key trong Pool Manager. Gói Sprint 1 đã có video dưới ba phút, năm slide, Build Log, "
+    "năm ca Verify và mười lăm ca tham chiếu cho BGK. Bước tiếp theo là pilot trên dữ liệu độc lập, đo field accuracy, "
+    "over escalation, missed escalation và thời gian xử lý trước khi tuyên bố hiệu quả thực tế. "
     "Ảnh upload được gửi qua OpenRouter/provider Qwen; dữ liệu cá nhân thật không được đưa vào Git.",
 )
 

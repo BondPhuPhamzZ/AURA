@@ -93,7 +93,7 @@ function title(slide, number, heading, subheading) {
   return line;
 }
 
-function footer(slide, number, source = "AURA • Track A • 22/09/2026") {
+function footer(slide, number, source = "AURA • Track A • 24/09/2026") {
   text(slide, source, 54, 686, 950, 18, 12, C.muted);
   text(slide, `${number}/5`, 1160, 684, 64, 20, 13, C.muted, { align: "right", bold: true });
 }
@@ -217,7 +217,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   text(s, "Bằng chứng đã có", 54, 428, 250, 28, 20, C.white, { bold: true });
   const evidence = [
-    ["54/54", "test offline", C.blue],
+    ["56/56", "test offline", C.blue],
     ["5/5", "Verify v2 local", C.green],
     ["15", "ca BGK khóa", C.violet],
   ];
@@ -238,7 +238,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
   text(s, "Baseline và target chỉ điền sau khi có dữ liệu người dùng thật.", 635, 610, 589, 34, 15, C.amber, { align: "center", bold: true });
   footer(s, 3);
-  s.speakerNotes.textFrame.setText("Nguồn nội bộ: 54 test offline; người dùng xác nhận Verify v2 5/5 local ngày 22/09/2026. Không suy rộng thành accuracy thực tế.");
+  s.speakerNotes.textFrame.setText("Nguồn nội bộ: 56 test offline; người dùng xác nhận Verify v2 5/5 local ngày 22/09/2026. Không suy rộng thành accuracy thực tế.");
 }
 
 // Slide 4
@@ -248,7 +248,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   title(s, 4, "Kiến trúc: model thay được, policy đứng yên", "Vertical slice chạy thật trên ASP.NET Core; Test Kit chỉ là dữ liệu mô phỏng.");
 
   const layers = [
-    ["GIAO DIỆN", "Razor MVC • fetch/fragment • polling 10s", C.blue, 54, 162, 760],
+    ["GIAO DIỆN", "Razor MVC • fetch cho AI • reload sau workflow write", C.blue, 54, 162, 760],
     ["ỨNG DỤNG", "Applicant / Verify / Reviewer • state validation", C.cyan, 54, 248, 760],
     ["QUYẾT ĐỊNH", "IVisionExtractor → PolicyDecisionEngine → EscalationWorkflow", C.green, 54, 334, 760],
     ["DỮ LIỆU", "EF Core • SQL Server • private receipt storage • AuditLogs", C.violet, 54, 420, 760],
@@ -275,7 +275,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   text(s, "30 ảnh tổng hợp\n5 ca Verify\n15 ca giao BGK", 880, 470, 305, 92, 20, C.white, { bold: true });
   text(s, "Không có tax/e-invoice lookup\nKhông có user role thật", 880, 574, 305, 44, 14, C.muted);
   footer(s, 4);
-  s.speakerNotes.textFrame.setText("Repository: https://github.com/BondPhuPhamzZ/AURA — Live URL: https://bondphupham-001-site1.ltempurl.com/");
+  s.speakerNotes.textFrame.setText("Repository và hướng dẫn chạy localhost: https://github.com/BondPhuPhamzZ/AURA");
 }
 
 // Slide 5
@@ -299,8 +299,8 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
 
   shape(s, 842, 157, 382, 242, C.surface2, "rounded-xl", C.green);
-  text(s, "TRƯỚC KHI NỘP", 869, 180, 326, 24, 15, C.green, { bold: true });
-  const todo = ["Quay Verify production", "Demo quản lý + Audit", "Video dưới 3 phút", "Điền đủ 3 URL nộp"];
+  text(s, "ĐÃ BÀN GIAO", 869, 180, 326, 24, 15, C.green, { bold: true });
+  const todo = ["Repo + hướng dẫn local", "56 test offline", "5 Verify + 15 ca BGK", "Video • slide • Build Log"];
   todo.forEach((t, i) => {
     pill(s, `${i + 1}`, 869, 225 + i * 40, 30, C.green);
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });
