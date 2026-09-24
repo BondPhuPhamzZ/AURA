@@ -8,7 +8,7 @@ Qwen Vision, accessed through OpenRouter, extracts structured facts from receipt
 
 | Item | Link |
 | --- | --- |
-| Demo video | [Watch the demo (under 3 minutes)](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
+| Demo video & API Key | [Watch the demo & Get API Key](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
 | Presentation | [Download AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES.pptx) |
 | Build Log | [Download AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.docx) |
 
@@ -58,7 +58,7 @@ The recorded 5/5 Verify result uses controlled synthetic fixtures. It must not b
 
 ## Evaluation API Key
 
-An evaluator-only OpenRouter key is provided to the organizers through a private channel. No active API key is stored in this repository, README, source code, screenshots, or demo video.
+An evaluator-only OpenRouter key is provided to the organizers through a private channel (The API key is attached in the same folder containing the video). No active API key is stored in this repository, README, source code, screenshots, or demo video.
 
 After receiving the evaluation key, replace the placeholder in the command below. .NET User Secrets stores the value outside the repository:
 
