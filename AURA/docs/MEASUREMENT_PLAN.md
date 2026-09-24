@@ -26,5 +26,5 @@ Tỷ lệ hóa đơn hoàn toàn hợp lệ nhưng bị hệ thống ném vào h
 - Test Kit v2 có 30 ca nhưng Verify demo chỉ gọi 5 ca đại diện.
 - Build và 56 automated test (policy/workflow/audit + chống thao tác chồng + OpenRouter contract + Test Kit integrity) không gọi API AI.
 - Sau deploy: 1 request smoke test; nếu pass mới chạy 1 lượt Verify = 5 request. Giữ tối thiểu 10 request dự phòng cho BGK/video.
-- Không retry thủ công liên tục khi 429. Ghi lỗi và chờ đúng cửa sổ reset trong AI Studio.
+- Không retry thủ công liên tục khi 429. Ghi lỗi và chờ đúng cửa sổ rate-limit của OpenRouter/provider.
 - Benchmark 30 ca chỉ chạy trong một phiên đo riêng khi đã xác nhận quota/billing; không dùng trong luồng demo.

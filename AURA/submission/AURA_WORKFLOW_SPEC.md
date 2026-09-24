@@ -1,6 +1,6 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 1.0 — 22/09/2026
+Phiên bản: 1.1 — 24/09/2026
 Phạm vi: Sprint 1, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
@@ -45,7 +45,7 @@ flowchart LR
    - vượt thẩm quyền → `ESCALATE_AUTHORITY`;
    - AI/provider lỗi → `ESCALATE_SYSTEM_ERROR`.
 9. Hồ sơ, metadata, facts, trạng thái và sự kiện AI đầu tiên được lưu cùng một lần `SaveChanges`.
-10. UI cập nhật preview, khung “Nội dung AI đọc được”, bảng kết quả, bộ đếm và lịch sử bằng fragment AJAX.
+10. UI cập nhật preview, khung “Nội dung AI đọc được”, bảng kết quả, bộ đếm và lịch sử bằng các vùng HTML trả về từ server.
 
 ## 4. Workflow B — Verify Harness 5 ca
 
@@ -63,7 +63,7 @@ flowchart LR
 - Nút **Chuyển tiếp** xử lý một hồ sơ; **Chuyển tiếp tất cả** xử lý các hồ sơ escalation chưa gửi.
 - Server chỉ chấp nhận trạng thái `ESCALATE_*` và thao tác có antiforgery token.
 - Hồ sơ được đánh dấu `IsForwardedToManager=true`, lưu `ForwardedAt` và thêm sự kiện `EMPLOYEE_FORWARDED_TO_MANAGER`.
-- Các fragment nhân viên, quản lý và lịch sử cập nhật ngay; polling 10 giây đồng bộ các tab đang mở.
+- Sau khi server commit, trình duyệt điều hướng sang tab Quản lý và dựng lại toàn bộ bảng từ database. Cách này ưu tiên trạng thái nhất quán hơn cập nhật nhiều fragment hoặc polling nền.
 
 ### 5.2 Quản lý quyết định
 
@@ -95,11 +95,12 @@ Mỗi quyết định lưu câu hỏi, câu trả lời, kết quả và thời 
 
 Cách này vừa giữ bằng chứng để truy vết/hoàn tác, vừa tránh ghi đè log gốc và tránh ba dòng giống nhau trên màn hình.
 
-## 7. Realtime và điều hướng
+## 7. Đồng bộ và điều hướng
 
-- Upload, Verify, chuyển tiếp, quản lý quyết định và hoàn tác đều dùng `fetch`; không reload toàn trang.
-- Component liên quan được refresh ngay sau phản hồi thành công.
-- Polling 10 giây là lớp đồng bộ dự phòng giữa nhiều tab; đây là near-real-time, chưa phải WebSocket/SignalR.
+- Upload và Verify dùng `fetch` để giữ nguyên workspace trong lúc AI chạy và cập nhật các vùng kết quả liên quan.
+- Chuyển tiếp, quyết định quản lý và hoàn tác dùng `fetch` để nhận lỗi có cấu trúc, sau đó điều hướng toàn trang tới tab đích khi thành công. Mọi bảng vì vậy được dựng lại từ trạng thái database đã commit.
+- Không có polling nền, WebSocket hoặc SignalR trong Sprint 1. Nếu một tab khác đã mở từ trước, người dùng tải lại hoặc chọn lại tab để lấy trạng thái mới.
+- `WorkflowOperationGate` từ chối thao tác ghi chồng trong một tiến trình; SQL Server `RowVersion` phát hiện cập nhật đồng thời giữa nhiều tiến trình và trả lỗi conflict thay vì ghi đè âm thầm.
 - `GET /Applicant/Receipt/{id}` tải ảnh theo ID, không nhận đường dẫn từ client và đặt `NoStore`.
 
 ## 8. Nhánh lỗi và nguyên tắc fail-safe

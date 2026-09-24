@@ -1,15 +1,15 @@
 # AURA — Checklist nộp bài
 
-Cập nhật: 22/09/2026. Trạng thái này là nguồn đối chiếu cuối; không điền số liệu hoặc URL chưa được xác minh.
+Cập nhật: 24/09/2026. Trạng thái này là nguồn đối chiếu cuối; không điền số liệu hoặc URL chưa được xác minh.
 
 ## 1. Sáu hạng mục bắt buộc
 
 | Hạng mục | Trạng thái | File/bằng chứng |
 |---|---|---|
-| Live URL public, không cần đăng nhập | ☑ Đã deploy và smoke | `https://bondphupham-001-site1.ltempurl.com/`; upload, AI extraction và audit đã hoạt động production |
+| Frontend/backend clone và chạy localhost | ☑ Có | README root, .NET 8, LocalDB/SQL Server, user-secrets và migration |
 | Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, `test_kit/judge-manifest.json` đúng 15 ca |
 | Public repository và lịch sử commit | ☑ Có | `https://github.com/BondPhuPhamzZ/AURA`; cần push commit chốt sau mỗi lần cập nhật hồ sơ |
-| Video demo tối đa 3 phút | ☐ Chưa quay | `docs/VIDEO_DEMO_SCRIPT.md`; nộp link ngoài Git |
+| Video demo tối đa 3 phút (BTC ghi Optional) | ☑ Đã liên kết | Link Google Drive ở README root; `docs/VIDEO_DEMO_SCRIPT.md` là tài liệu nguồn |
 | Đúng 5 slide | ☑ Đã dựng | `submission/AURA_5_SLIDES.pptx` |
 | Build Log một trang Word | ☑ Đã dựng | `submission/AURA_BUILD_LOG.docx` |
 
@@ -19,7 +19,7 @@ Cập nhật: 22/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 - `README.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_AND_INTEGRATION_REPORT.md`.
 - `docs/`: Build Log nguồn, deployment, runbook, test cases, model selection, measurement plan.
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
-- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; cập nhật Live URL trước bản nộp cuối nếu cần.
+- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide và phản ánh 56 test cùng workflow hiện tại.
 - `submission/AURA_BUILD_LOG.docx`: một trang.
 - `docs/VIDEO_DEMO_SCRIPT.md`: kịch bản quay, không phải artifact bắt buộc nộp.
 - `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.
@@ -39,10 +39,10 @@ Cập nhật: 22/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 
 Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một archive nộp cứng. AURA đã bổ sung `ARCHITECTURE_AND_INTEGRATION_REPORT.md` tương đương tài liệu kiến trúc của mẫu, đồng thời cung cấp PPTX, DOCX và workflow mở được ngay.
 
-## 5. Việc còn phải làm trước hạn
+## 5. Trạng thái bàn giao và việc theo dõi
 
-1. Dùng lượt Verify production tiếp theo làm lượt quay chính thức; ghi đúng expected/actual và không chạy lặp để tiết kiệm credit.
-2. Quay video dưới 3 phút theo script; tải lên ngoài Git và kiểm quyền “ai có link đều xem được”.
-3. Điền Live URL, GitHub URL và video URL vào form nộp.
-4. Thu phản hồi có đồng thuận từ ba người dùng nếu rubric chấm hạng mục này; hiện chưa có bằng chứng nên không được tự tạo quote.
-5. Quét secret, build/test lần cuối, push nhánh chốt và xác minh repository public.
+1. Source, 5 ca Verify, gói 15 ca tham chiếu, video, slide và Build Log đã có đường dẫn từ README root.
+2. API key đánh giá chỉ gửi riêng cho BTC; không đặt key thật trong Git, README, ảnh hoặc video.
+3. Trước mỗi bản bàn giao mới: quét secret, build/test, push commit chốt và xác minh repository public.
+4. Nếu có thay đổi đáng kể trong lúc chấm, tạo ticket/báo cáo tiến độ cho BTC; sửa tài liệu hoặc độ ổn định nhỏ có thể báo theo commit.
+5. Phản hồi người dùng và benchmark dữ liệu thật vẫn là Sprint 2; không tự tạo quote hoặc accuracy khi chưa có bằng chứng.

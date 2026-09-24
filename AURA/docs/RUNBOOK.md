@@ -85,7 +85,7 @@ dotnet publish AURA.csproj -c Release -o publish
 dotnet ef database update --connection "<DEPLOYMENT_CONNECTION>"
 ```
 
-Ứng dụng phải chạy sau HTTPS/reverse proxy. Container Linux lắng nghe cổng `8080`; health endpoint là `/healthz`. Persistent volume phải tồn tại qua lần restart/redeploy; kiểm tra bằng cách upload một ảnh, restart instance, rồi mở lại link **Xem hóa đơn** trong Audit. Hướng dẫn Azure/Render cụ thể nằm tại `docs/DEPLOYMENT.md`.
+Khi deploy public, ứng dụng phải chạy sau HTTPS/reverse proxy. Container Linux lắng nghe cổng `8080`; health endpoint là `/healthz`. Persistent volume phải tồn tại qua lần restart/redeploy; kiểm tra bằng cách upload một ảnh, restart instance, rồi mở lại link **Xem hóa đơn** trong Audit. Hướng dẫn SmarterASP.NET và các giới hạn Render nằm tại `docs/DEPLOYMENT.md`.
 
 ## 6. Checklist trước nộp
 
@@ -102,5 +102,5 @@ dotnet ef database update --connection "<DEPLOYMENT_CONNECTION>"
 - Trạng thái quyết định và audit được lưu cùng một lần EF Core `SaveChanges`, tránh trạng thái đổi nhưng thiếu nhật ký.
 - Ảnh POS có MID/TID không được dùng thay số hóa đơn/biên nhận. Chỉ `VAT_INVOICE` bắt buộc seller tax ID; retail/restaurant/POS receipt có số biên nhận hợp lệ có thể không có MST. Ảnh hóa đơn nháp/chưa phát hành phải chuyển FACT.
 - Ảnh e-commerce được phép thiếu MST/invoice number nếu có order/booking/tracking/receipt ID cùng trạng thái hoàn tất, ngày giao dịch/thanh toán, merchant, total, currency và line items đáng tin cậy. Ngày giao hàng không tự thay ngày giao dịch; mã vận chuyển không được gọi là MST hay hóa đơn thuế.
-- Live URL đã điền trong README, slide và form nộp.
+- README có hướng dẫn localhost tái lập; Live URL chỉ cần điền vào form/video nếu nhóm tiếp tục công bố môi trường hosting tùy chọn.
 - API key/connection string không xuất hiện trong Git hoặc video.

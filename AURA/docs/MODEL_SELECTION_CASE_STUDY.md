@@ -1,6 +1,6 @@
 # Case study: chọn model vision vừa đủ cho AURA
 
-Ngày cập nhật: 22/09/2026.
+Ngày cập nhật: 24/09/2026.
 
 ## 1. Bài toán doanh nghiệp
 
@@ -27,7 +27,7 @@ AURA cần đọc một ảnh hóa đơn/chứng từ và trả dữ kiện có 
 
 Cấu hình mặc định là `qwen/qwen3-vl-8b-instruct`. Đây là phương án hosted “vừa đủ”: nhỏ hơn nhiều so với model cỡ 100B+, có endpoint OpenRouter thật và giữ được JSON Schema hiện có. Tên model nằm trong cấu hình/secret, nên sau này có thể benchmark 4B self-host mà không viết lại controller hoặc policy.
 
-Không mô tả 8B là “đã chính xác” trước khi có benchmark độc lập. Bản production đã smoke thành công một ảnh; lượt Verify 5 ca production tiếp theo cần được quay và ghi lại actual, latency, lỗi và chi phí.
+Không mô tả 8B là “đã chính xác” trước khi có benchmark độc lập. Bản production đã smoke thành công một ảnh và bản local fixture v2 đã đạt 5/5; đây vẫn chỉ là bằng chứng pipeline trên dữ liệu tổng hợp, không phải benchmark độc lập.
 
 ## 5. Bộ kiểm thử bàn giao
 
@@ -40,8 +40,8 @@ Không mô tả 8B là “đã chính xác” trước khi có benchmark độc 
 
 1. Build sạch và toàn bộ automated tests đạt offline.
 2. Secret key không nằm trong Git/log; model secret trùng `qwen/qwen3-vl-8b-instruct`.
-3. Một ảnh smoke trên Live URL đã xác nhận JSON, preview và lịch sử hoạt động; vẫn kiểm OpenRouter Activity khi quay.
-4. Chạy Verify production đúng một lượt trong video; mục tiêu 5/5 trong giới hạn 90 giây.
+3. Một ảnh smoke trên môi trường cần đánh giá phải xác nhận JSON, preview, policy và lịch sử hoạt động; đối chiếu OpenRouter Activity khi chẩn đoán provider.
+4. Chạy một lượt Verify 5 ca sau smoke test; ghi lại expected/actual, latency, lỗi và chi phí thay vì chạy lặp để săn PASS.
 5. Nếu không đạt, giữ kết quả thật trong proposal, phân loại lỗi OCR/schema/policy/provider rồi mới điều chỉnh. Không sửa expected result để khớp output.
 
 ## 7. Lộ trình tối ưu tiếp theo

@@ -13,7 +13,8 @@
 - Structured Output giảm parsing lỗi so với JSON tự do.
 - Bản production trên SmarterASP.NET đã smoke thành công luồng upload, AI extraction và audit sau khi API key được cập nhật trong Pool Manager.
 - UI hiển thị facts AI theo ba cột; bảng chuyển tiếp riêng được hợp nhất vào bảng kết quả để tránh trùng nhưng vẫn phục hồi escalation sau reload.
-- Hồ sơ và audit AI được ghi trong cùng một `SaveChanges`; các fragment kết quả/quản lý/lịch sử cập nhật sau thao tác mà không reload toàn trang.
+- Hồ sơ và audit AI được ghi trong cùng một `SaveChanges`; sau thao tác chuyển tiếp/quản lý, giao diện điều hướng toàn trang để dựng lại các bảng từ trạng thái database đã commit, tránh dữ liệu fragment cũ ghi đè nhau.
+- `WorkflowOperationGate` chặn thao tác ghi chồng trong một instance và SQL Server `RowVersion` phát hiện cập nhật đồng thời giữa nhiều instance.
 
 ## Chi phí/thời gian và sự cố thực tế
 

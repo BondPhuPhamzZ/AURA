@@ -1,6 +1,6 @@
 # AURA Test Matrix
 
-Mốc cập nhật: 22/09/2026. Ký hiệu: `A` đã tự động hóa bằng xUnit; `V` nằm trong Verify Vision; `P` backlog mở rộng, chưa tuyên bố đã đạt.
+Mốc cập nhật: 24/09/2026. Ký hiệu: `A` đã tự động hóa bằng xUnit; `V` nằm trong Verify Vision; `P` backlog mở rộng, chưa tuyên bố đã đạt.
 
 ## Verify một nút
 
@@ -12,9 +12,9 @@ Mốc cập nhật: 22/09/2026. Ký hiệu: `A` đã tự động hóa bằng xU
 | TC-04 | Phiếu in nhiệt để trống MST thật sự | 210.000 | ESCALATE_FACT | V2, local PASS 22/09/2026 |
 | TC-05 | Nhà hàng có Bia Tiger x 6 | 780.000 | ESCALATE_POLICY | V2, local PASS 22/09/2026 |
 
-Ngày 20/09/2026, provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026; người dùng xác nhận đạt đúng 5/5 local bằng Qwen3-VL-8B-Instruct/OpenRouter ngày 22/09/2026. Production upload/AI/audit đã smoke thành công; lượt Verify production tiếp theo nên được quay làm bằng chứng chính thức. Kết quả 5/5 trên fixture tổng hợp không phải accuracy tổng quát.
+Ngày 20/09/2026, provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026; người dùng xác nhận đạt đúng 5/5 local bằng Qwen3-VL-8B-Instruct/OpenRouter ngày 22/09/2026. Production upload/AI/audit đã smoke thành công và video demo đã được liên kết từ README. Kết quả 5/5 trên fixture tổng hợp không phải accuracy tổng quát.
 
-Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số `AUTO_APPROVE`/`ESCALATE_*`; facts trích xuất hiển thị cạnh upload; auto approve xuất hiện ngay trong Audit; escalation còn trong bảng kết quả cho tới khi chuyển quản lý; các thao tác không yêu cầu reload toàn trang.
+Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số `AUTO_APPROVE`/`ESCALATE_*`; facts trích xuất hiển thị cạnh upload; auto approve xuất hiện ngay trong Audit; escalation còn trong bảng kết quả cho tới khi chuyển quản lý. Upload/Verify cập nhật trong workspace; mutation workflow điều hướng toàn trang sau commit để tránh trạng thái cũ hoặc trùng lặp.
 
 ## Ma trận policy mở rộng
 

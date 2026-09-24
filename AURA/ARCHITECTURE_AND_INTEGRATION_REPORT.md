@@ -2,7 +2,7 @@
 
 ## AURA Automated Underwriting and Reimbursement AI
 
-Cập nhật ngày 22/09/2026. Tài liệu này mô tả cấu trúc mã nguồn, hợp đồng tích hợp và đường đi dữ liệu của bản Sprint 1 đang chạy tại `https://bondphupham-001-site1.ltempurl.com/`.
+Cập nhật ngày 24/09/2026. Tài liệu này mô tả cấu trúc mã nguồn, hợp đồng tích hợp và đường đi dữ liệu của bản Sprint 1. Cách đánh giá chuẩn là clone và chạy localhost theo README; bản SmarterASP.NET chỉ là môi trường demo tùy chọn.
 
 ## 1. Sơ đồ thành phần
 
@@ -13,19 +13,20 @@ AURA/
 │   ├── ApplicantController.cs         # upload, xem ảnh, chuyển quản lý
 │   ├── VerifyController.cs            # chạy 5 ca Verify qua cùng pipeline thật
 │   ├── ReviewerController.cs          # quản lý đồng ý, từ chối, hoàn tác
-│   └── HomeController.cs              # trang chính và các fragment đồng bộ
+│   └── HomeController.cs              # trang chính và các component đọc dữ liệu
 ├── Services/
 │   ├── OpenRouterVisionExtractorService.cs  # Qwen vision và JSON Schema
 │   ├── PolicyDecisionEngine.cs               # quyết định nghiệp vụ tất định
 │   ├── ReimbursementRepository.cs            # transaction hồ sơ và audit
 │   ├── AuditLogger.cs                        # ghi sự kiện
-│   └── AuditTrailProjector.cs                # gom sự kiện thành timeline UI
+│   ├── AuditTrailProjector.cs                # gom sự kiện thành timeline UI
+│   └── WorkflowOperationGate.cs               # chặn mutation chồng trong một instance
 ├── Data/                              # EF Core DbContext và migrations
 ├── Models/                            # request, facts AI, audit, DTO
 ├── Views/                             # Razor UI nhân viên, quản lý, lịch sử
 ├── wwwroot/test_data/                 # 5 fixture được Verify chạy trực tiếp
 ├── test_kit/                          # ngân hàng 30 ca và gói BGK 15 ca
-├── tests/AURA.Tests/                  # 54 kiểm thử tự động offline
+├── tests/AURA.Tests/                  # 56 kiểm thử tự động offline
 ├── docs/                              # runbook, deploy, test, checklist
 ├── submission/                        # 5 slide, Build Log Word, workflow
 └── tools/                             # tái tạo fixture và artifact nộp bài
@@ -51,7 +52,7 @@ SmarterASP.NET / IIS / ASP.NET Core 8
       Qwen3-VL-8B-Instruct
 ```
 
-Qwen chỉ trích xuất dữ kiện nhìn thấy trong ảnh. Quyết định `AUTO_APPROVE` hay `ESCALATE_*` nằm trong C# policy engine. Sprint 1 chưa có đăng nhập theo vai trò, nên Live URL là bản demo công khai và không phù hợp để nhận hóa đơn cá nhân thật.
+Qwen chỉ trích xuất dữ kiện nhìn thấy trong ảnh. Quyết định `AUTO_APPROVE` hay `ESCALATE_*` nằm trong C# policy engine. Sprint 1 chưa có đăng nhập theo vai trò, nên mọi bản demo công khai chỉ dùng dữ liệu tổng hợp và không phù hợp để nhận hóa đơn cá nhân thật.
 
 ## 3. Route và hợp đồng chính
 
@@ -81,6 +82,8 @@ Các POST thay đổi trạng thái đều kiểm antiforgery token. Upload ch�
 6. Hồ sơ và audit AI được ghi nhất quán. `AUTO_APPROVE` đi vào lịch sử; `ESCALATE_*` ở bảng thẩm định.
 7. Nhân viên xác nhận chuyển tiếp. Quản lý đồng ý hoặc từ chối theo câu hỏi đã sinh; quyết định có thể hoàn tác.
 8. UI gom các audit event của cùng hồ sơ thành một timeline, tránh hiển thị ba dòng trùng nghĩa.
+
+Các thao tác ghi workflow dùng `WorkflowOperationGate` để từ chối mutation chồng trong cùng một tiến trình và dùng `RowVersion` của SQL Server làm chốt optimistic concurrency khi có nhiều tiến trình. Sau chuyển tiếp/quyết định/hoàn tác, trình duyệt điều hướng toàn trang về tab đích để dựng lại tất cả bảng từ trạng thái database đã commit; không còn polling nền 10 giây.
 
 Nếu AI lỗi xác thực, rate limit, schema hoặc provider, AURA trả mã lỗi rõ ràng và chuyển `ESCALATE_SYSTEM_ERROR`. Hệ thống không dùng mock ngầm và không tạo PASS giả.
 
@@ -140,10 +143,10 @@ Recycle application pool chỉ nạp lại bảy biến hiện có. Không cần
 ## 10. Bằng chứng xác minh hiện tại
 
 - Build .NET 8 sạch, 0 warning và 0 error tại lần kiểm tra gần nhất.
-- 54 automated tests kiểm policy, workflow, audit, hợp đồng Qwen/OpenRouter và tính toàn vẹn Test Kit.
+- 56 automated tests kiểm policy, workflow, audit, chống thao tác chồng, hợp đồng Qwen/OpenRouter và tính toàn vẹn Test Kit.
 - Verify fixture v2 đạt 5/5 local ngày 22/09/2026.
 - Người dùng xác nhận production upload, AI extraction và audit hoạt động đúng sau khi cập nhật API key ở Pool Manager.
-- Một lượt Verify production nên được dùng làm lượt quay chính thức để vừa có bằng chứng live vừa tránh tiêu hao thêm năm request.
+- Video demo dưới ba phút đã được liên kết từ README; đường đánh giá tái lập cho BGK vẫn là localhost cùng test key được cấp riêng.
 
 Kết quả fixture tổng hợp không phải accuracy trên tập hóa đơn độc lập.
 

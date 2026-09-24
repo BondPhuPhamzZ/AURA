@@ -85,13 +85,13 @@ dotnet ef database update
 dotnet run
 ```
 
-Open the localhost address printed in the terminal, then:
+Open the localhost address printed in the terminal, then (the quoted labels below match the Vietnamese UI):
 
-1. Select **Run Verify Harness** to smoke-test five cases through the live AI pipeline.
-2. Or upload a JPG/PNG receipt, enter the claimed amount, and select **Run AI Review**.
-3. For an `ESCALATE_*` result, select **Forward**.
-4. Open the manager tab and select **Approve** or **Reject**.
-5. Open **System History** to inspect the audit trail.
+1. Select **Chạy Verify Harness** to smoke-test five cases through the live AI pipeline.
+2. Or upload a JPG/PNG receipt, enter the claimed amount, and select **AI tự động kiểm**.
+3. For an `ESCALATE_*` result, select **Chuyển tiếp**.
+4. Open the **Quản lý** tab and select **Đồng ý duyệt** or **Từ chối duyệt**.
+5. Open **Lịch Sử Của Hệ Thống** to inspect the audit trail.
 
 ### Run the Automated Tests
 

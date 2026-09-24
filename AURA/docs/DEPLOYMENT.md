@@ -1,6 +1,6 @@
-# Deploy AURA và lấy Live URL
+# Deploy AURA và lấy Live URL tùy chọn
 
-Live URL hiện tại: `https://bondphupham-001-site1.ltempurl.com/`.
+Live URL đã dùng để smoke Sprint 1: `https://bondphupham-001-site1.ltempurl.com/`. BTC có thể đánh giá đầy đủ bằng localhost theo README; hosting này là môi trường demo tùy chọn và có thể chậm hoặc gián đoạn theo tài nguyên gói trial.
 
 ## Trang index mặc định của SmarterASP.NET
 
@@ -79,7 +79,7 @@ Thực hiện theo thứ tự để không tốn quota vô ích:
 1. Mở `https://<live-url>/healthz`, kỳ vọng HTTP 200 và JSON `status: ok`.
 2. Mở trang chủ ở cửa sổ ẩn danh, kiểm CSS/JS/ba tab.
 3. Mở tab quản lý và lịch sử để xác nhận SQL Server/migration hoạt động.
-4. Upload một ảnh smoke tổng hợp; xác nhận preview, facts và bảng kết quả cập nhật không reload trang.
+4. Upload một ảnh smoke tổng hợp; xác nhận preview, facts và bảng kết quả cập nhật đúng trong workspace.
 5. Mở lại ảnh từ lịch sử, recycle app pool rồi mở lại lần nữa để xác minh file tồn tại.
 6. Chỉ khi 5 bước trên đạt, chạy đúng một lượt Verify Harness và ghi thời điểm, 5 expected/actual, tổng latency và OpenRouter cost.
 7. Đổi migration flag về `false`, recycle pool và kiểm `/healthz` lần cuối.
@@ -117,4 +117,4 @@ Muốn dùng Render ổn định phải trả phí Web Service + persistent disk
 - Ảnh vẫn mở sau recycle/redeploy kiểm soát.
 - Không có secret trong Git, log, slide hoặc video.
 - Một ảnh smoke và đúng một lượt Verify hoạt động; lỗi provider phải fail-safe chứ không giả PASS.
-- URL được điền đồng nhất vào README, slide, video description và form nộp.
+- Nếu tiếp tục công bố Live URL, URL phải được điền đồng nhất vào video description và form nộp; README hiện ưu tiên đường chạy localhost tái lập.

@@ -1,5 +1,7 @@
 # Kịch bản video demo AURA — 2 phút 50 giây
 
+Trạng thái: video demo đã được liên kết từ README root. Tài liệu này được giữ làm kịch bản tái hiện; BTC vẫn có thể chạy toàn bộ luồng bằng localhost nếu hosting trial không ổn định.
+
 Live URL: `https://bondphupham-001-site1.ltempurl.com/`
 
 Chỉ quay sau khi URL trên mở ổn định trong cửa sổ ẩn danh, file mặc định `index.html` của hosting không còn được phục vụ, `/healthz` trả `status: ok` và một ảnh smoke test thành công. Lượt Verify live nên chính là lượt quay chính thức để không tốn thêm năm request. Video nên có thuyết minh tiếng Việt; không cần quay khuôn mặt.
