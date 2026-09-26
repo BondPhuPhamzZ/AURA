@@ -93,7 +93,7 @@ function title(slide, number, heading, subheading) {
   return line;
 }
 
-function footer(slide, number, source = "AURA • Track A • 24/09/2026") {
+function footer(slide, number, source = "AURA • Track A • 26/09/2026") {
   text(slide, source, 54, 686, 950, 18, 12, C.muted);
   text(slide, `${number}/5`, 1160, 684, 64, 20, 13, C.muted, { align: "right", bold: true });
 }
@@ -164,7 +164,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   const flow = [
     ["Input", "JPG/PNG ≤5MB\n+ số tiền", C.blue],
     ["Kiểm file", "MIME • magic bytes\nSHA-256", C.cyan],
-    ["Vision", "Qwen/OpenRouter\nJSON Schema", C.violet],
+    ["Vision", "Provider cấu hình\nJSON Schema", C.violet],
     ["Policy", "C# tất định\nFACT → POLICY → AUTHORITY", C.green],
     ["Kết quả", "AUTO_APPROVE\nhoặc ESCALATE_*", C.amber],
   ];
@@ -217,7 +217,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   text(s, "Bằng chứng đã có", 54, 428, 250, 28, 20, C.white, { bold: true });
   const evidence = [
-    ["56/56", "test offline", C.blue],
+    ["60/60", "test offline", C.blue],
     ["5/5", "Verify v2 local", C.green],
     ["15", "ca BGK khóa", C.violet],
   ];
@@ -238,7 +238,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
   text(s, "Baseline và target chỉ điền sau khi có dữ liệu người dùng thật.", 635, 610, 589, 34, 15, C.amber, { align: "center", bold: true });
   footer(s, 3);
-  s.speakerNotes.textFrame.setText("Nguồn nội bộ: 56 test offline; người dùng xác nhận Verify v2 5/5 local ngày 22/09/2026. Không suy rộng thành accuracy thực tế.");
+  s.speakerNotes.textFrame.setText("Nguồn nội bộ: 60 test offline; người dùng xác nhận Verify v2 5/5 local ngày 22/09/2026. Không suy rộng thành accuracy thực tế.");
 }
 
 // Slide 4
@@ -263,12 +263,12 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
 
   shape(s, 54, 535, 760, 100, "#0E2A3D", "rounded-xl", C.cyan);
-  text(s, "OPENROUTER / QWEN", 75, 554, 205, 24, 15, C.cyan, { bold: true });
-  text(s, "Trích xuất JSON có cấu trúc • không có quyền quyết định", 75, 584, 700, 28, 19, C.white, { bold: true });
+  text(s, "VISION PROVIDER", 75, 554, 205, 24, 15, C.cyan, { bold: true });
+  text(s, "OpenRouter mặc định • Ollama local tùy chọn • không có quyền quyết định", 75, 584, 780, 28, 18, C.white, { bold: true });
 
   shape(s, 856, 162, 368, 210, C.surface2, "rounded-xl", C.green);
   pill(s, "CHẠY THẬT", 880, 184, 118, C.green);
-  text(s, "Upload + validation\nQwen/OpenRouter\nPolicy C#\nSQL + Audit + Undo", 880, 235, 305, 118, 20, C.white, { bold: true });
+  text(s, "Upload + validation\nVision provider\nPolicy C#\nSQL + Audit + Undo", 880, 235, 305, 118, 20, C.white, { bold: true });
 
   shape(s, 856, 397, 368, 238, C.surface2, "rounded-xl", C.amber);
   pill(s, "MÔ PHỎNG", 880, 419, 118, C.amber);
@@ -300,7 +300,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 157, 382, 242, C.surface2, "rounded-xl", C.green);
   text(s, "ĐÃ BÀN GIAO", 869, 180, 326, 24, 15, C.green, { bold: true });
-  const todo = ["Repo + hướng dẫn local", "56 test offline", "5 Verify + 15 ca BGK", "Video • slide • Build Log"];
+  const todo = ["Repo + hướng dẫn local", "60 test offline", "5 Verify + 15 ca BGK", "Video • slide • Build Log"];
   todo.forEach((t, i) => {
     pill(s, `${i + 1}`, 869, 225 + i * 40, 30, C.green);
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });
@@ -310,7 +310,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   text(s, "CHƯA CÓ TRONG SPRINT 1", 869, 447, 326, 24, 15, C.red, { bold: true });
   text(s, "PDF/nhiều trang • authentication\ntax lookup • object storage\nbenchmark dữ liệu độc lập", 869, 487, 326, 72, 17, C.white, { bold: true });
 
-  text(s, "Lộ trình: benchmark Qwen3-VL 4B self-host khi có dữ liệu và phần cứng phù hợp.", 842, 601, 382, 44, 14, C.amber, { align: "center", bold: true });
+  text(s, "Lộ trình: benchmark Ollama + Qwen3-VL 4B local; OpenRouter 8B vẫn là baseline.", 842, 601, 382, 44, 14, C.amber, { align: "center", bold: true });
   footer(s, 5, "AURA • Giới hạn hiện tại, không phải lời hứa marketing");
   s.speakerNotes.textFrame.setText(
     "Nguồn deploy: https://render.com/docs/free ; https://www.smarterasp.net/support/kb/a2437/how-to-set-environment-variable-for-your-account.aspx . Cơ chế retry đối chiếu OpenRouterVisionExtractorService.cs.",

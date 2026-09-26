@@ -2,7 +2,7 @@
 
 ## AURA Automated Underwriting and Reimbursement AI
 
-Cập nhật ngày 24/09/2026. Tài liệu này mô tả cấu trúc mã nguồn, hợp đồng tích hợp và đường đi dữ liệu của bản Sprint 1. Cách đánh giá chuẩn là clone và chạy localhost theo README; bản SmarterASP.NET chỉ là môi trường demo tùy chọn.
+Cập nhật ngày 26/09/2026. Tài liệu này mô tả cấu trúc mã nguồn, hợp đồng tích hợp và đường đi dữ liệu của bản Sprint 1. Cách đánh giá chuẩn là clone và chạy localhost theo README; bản SmarterASP.NET chỉ là môi trường demo tùy chọn. OpenRouter vẫn là provider mặc định; adapter Ollama local được thêm dưới cờ cấu hình và chưa thay đổi baseline Sprint 1.
 
 ## 1. Sơ đồ thành phần
 
@@ -15,7 +15,10 @@ AURA/
 │   ├── ReviewerController.cs          # quản lý đồng ý, từ chối, hoàn tác
 │   └── HomeController.cs              # trang chính và các component đọc dữ liệu
 ├── Services/
-│   ├── OpenRouterVisionExtractorService.cs  # Qwen vision và JSON Schema
+│   ├── ConfiguredVisionExtractor.cs          # chọn provider bằng cấu hình
+│   ├── OpenRouterVisionExtractorService.cs   # Qwen 8B hosted
+│   ├── OllamaVisionExtractorService.cs       # Qwen 4B local tùy chọn
+│   ├── ReceiptExtractionContract.cs          # prompt, schema và parser dùng chung
 │   ├── PolicyDecisionEngine.cs               # quyết định nghiệp vụ tất định
 │   ├── ReimbursementRepository.cs            # transaction hồ sơ và audit
 │   ├── AuditLogger.cs                        # ghi sự kiện
@@ -26,7 +29,7 @@ AURA/
 ├── Views/                             # Razor UI nhân viên, quản lý, lịch sử
 ├── wwwroot/test_data/                 # 5 fixture được Verify chạy trực tiếp
 ├── test_kit/                          # ngân hàng 30 ca và gói BGK 15 ca
-├── tests/AURA.Tests/                  # 56 kiểm thử tự động offline
+├── tests/AURA.Tests/                  # 60 kiểm thử tự động offline
 ├── docs/                              # runbook, deploy, test, checklist
 ├── submission/                        # 5 slide, Build Log Word, workflow
 └── tools/                             # tái tạo fixture và artifact nộp bài
@@ -44,12 +47,10 @@ SmarterASP.NET / IIS / ASP.NET Core 8
     ├── SQL Server: hồ sơ và audit event
     └── App_Data/receipts: ảnh riêng tư, tên ngẫu nhiên và SHA-256
              │
-             │ HTTPS, API key đặt trong Pool Manager
              ▼
-        OpenRouter
-             │
-             ▼
-      Qwen3-VL-8B-Instruct
+    ConfiguredVisionExtractor
+       ├── mặc định: OpenRouter → Qwen3-VL-8B-Instruct
+       └── tùy chọn local: Ollama → Qwen3-VL-4B-Instruct
 ```
 
 Qwen chỉ trích xuất dữ kiện nhìn thấy trong ảnh. Quyết định `AUTO_APPROVE` hay `ESCALATE_*` nằm trong C# policy engine. Sprint 1 chưa có đăng nhập theo vai trò, nên mọi bản demo công khai chỉ dùng dữ liệu tổng hợp và không phù hợp để nhận hóa đơn cá nhân thật.
@@ -76,7 +77,7 @@ Các POST thay đổi trạng thái đều kiểm antiforgery token. Upload ch�
 
 1. Server xác thực file và số tiền đề nghị.
 2. `ReceiptStorage` lưu ảnh ngoài `wwwroot`, đặt tên ngẫu nhiên và tính SHA-256.
-3. `OpenRouterVisionExtractorService` gửi ảnh cùng policy tới Qwen và yêu cầu JSON theo schema.
+3. `ConfiguredVisionExtractor` gọi đúng provider cấu hình. Hai adapter dùng chung prompt, JSON Schema và parser qua `ReceiptExtractionContract`.
 4. UI hiển thị dữ kiện AI đọc được; dữ kiện không chắc chắn giữ nguyên là không đọc được, không tự suy đoán.
 5. `PolicyDecisionEngine` áp quy tắc theo thứ tự `FACT`, `POLICY`, `AUTHORITY`.
 6. Hồ sơ và audit AI được ghi nhất quán. `AUTO_APPROVE` đi vào lịch sử; `ESCALATE_*` ở bảng thẩm định.
@@ -99,14 +100,14 @@ Nếu AI lỗi xác thực, rate limit, schema hoặc provider, AURA trả mã l
 
 Khi một hồ sơ có nhiều vấn đề, precedence là `FACT > POLICY > AUTHORITY`. Duplicate byte luôn được ghi audit; cấu hình demo có thể không chuyển tiếp duplicate để BGK chạy lại cùng fixture.
 
-## 6. Hợp đồng OpenRouter và Qwen
+## 6. Hợp đồng provider vision
 
-- Endpoint: OpenRouter Chat Completions qua HTTPS.
-- Model deploy: `qwen/qwen3-vl-8b-instruct`.
-- Output: JSON Schema chặt, sau đó server chuẩn hóa có giới hạn và validate lại.
-- Retry: không retry HTTP 429; tối đa một retry cho lỗi 5xx tạm thời.
-- Quan sát chi phí: OpenRouter Activity và key limit.
-- Bí mật: chỉ lưu `OpenRouter__ApiKey` trong user-secrets local hoặc Pool Manager production.
+- `Vision__Provider=OpenRouter` là mặc định và giữ nguyên bản deploy Sprint 1. Endpoint dùng OpenRouter Chat Completions qua HTTPS với `qwen/qwen3-vl-8b-instruct`.
+- `Vision__Provider=Ollama` gọi REST local `http://127.0.0.1:11434/api/chat` với `qwen3-vl:4b-instruct`. HTTP chỉ được chấp nhận trên loopback; endpoint khác phải dùng HTTPS.
+- Cả hai provider nhận cùng policy, JSON Schema và parser. Điều này cho phép benchmark model mà không đổi controller hoặc policy engine.
+- OpenRouter không retry HTTP 429 và retry tối đa một lần cho 5xx. Ollama không tự retry để tránh nhân đôi latency trên máy 16 GB.
+- Không có auto-fallback âm thầm giữa hai model. Một lần chạy dùng đúng provider cấu hình; lỗi vẫn chuyển `ESCALATE_SYSTEM_ERROR` để audit rõ ràng.
+- API key chỉ lưu trong user-secrets local hoặc Pool Manager production. Ollama local không cần API key và không được mở port ra Internet.
 
 ## 7. Database, storage và audit
 
@@ -131,19 +132,22 @@ Audit được ghi theo sự kiện để không mất dấu hành động. Giao
 | Biến | Chức năng |
 |---|---|
 | `ASPNETCORE_ENVIRONMENT` | Chọn cấu hình runtime |
+| `Vision__Provider` | `OpenRouter` mặc định hoặc `Ollama` local |
 | `OpenRouter__ApiKey` | API key bí mật |
 | `OpenRouter__Model` | Model Qwen |
+| `Ollama__BaseUrl` | Endpoint local; HTTP chỉ cho loopback |
+| `Ollama__Model` | Tag model local Qwen3-VL |
 | `ReceiptStorage__Directory` | Folder lưu ảnh riêng tư |
 | `ReceiptStorage__MaxFileSizeMb` | Giới hạn upload |
 | `ConnectionStrings__DefaultConnection` | SQL Server production |
 | `Database__ApplyMigrationsOnStartup` | Bật/tắt migration khi khởi động |
 
-Recycle application pool chỉ nạp lại bảy biến hiện có. Không cần tải lại publish XML hoặc publish lại code nếu chỉ thay giá trị Pool Manager.
+Recycle application pool chỉ nạp lại biến môi trường hiện có. Không cần tải lại publish XML hoặc publish lại code nếu chỉ thay giá trị Pool Manager. SmarterASP.NET tiếp tục đặt `Vision__Provider=OpenRouter`; Ollama dành cho máy local.
 
 ## 10. Bằng chứng xác minh hiện tại
 
 - Build .NET 8 sạch, 0 warning và 0 error tại lần kiểm tra gần nhất.
-- 56 automated tests kiểm policy, workflow, audit, chống thao tác chồng, hợp đồng Qwen/OpenRouter và tính toàn vẹn Test Kit.
+- 60 automated tests kiểm policy, workflow, audit, chống thao tác chồng, hợp đồng OpenRouter/Ollama và tính toàn vẹn Test Kit.
 - Verify fixture v2 đạt 5/5 local ngày 22/09/2026.
 - Người dùng xác nhận production upload, AI extraction và audit hoạt động đúng sau khi cập nhật API key ở Pool Manager.
 - Video demo dưới ba phút đã được liên kết từ README; đường đánh giá tái lập cho BGK vẫn là localhost cùng test key được cấp riêng.
@@ -155,9 +159,11 @@ Kết quả fixture tổng hợp không phải accuracy trên tập hóa đơn �
 | Quyết định | Lý do |
 |---|---|
 | Tách extraction và policy | Có thể đổi model mà không đổi quy tắc duyệt; policy unit-test được |
-| Hosted Qwen 8B cho Sprint 1 | Triển khai nhanh, không đòi phần cứng 125B; Qwen 4B self-host là hướng benchmark sau |
+| Hosted Qwen 8B cho Sprint 1 | Triển khai nhanh và giữ baseline đang được chấm |
+| Adapter Ollama 4B tắt mặc định | Cho phép benchmark local trên máy 16 GB mà không đổi controller, policy hoặc bản deploy |
+| Không auto-fallback giữa model | Tránh gọi hai model không kiểm soát, tăng latency và làm audit khó giải thích |
 | Fail-safe thay cho mock ngầm | Lỗi provider cần chuyển người xử lý, không được che bằng kết quả giả |
 | Audit event và timeline projection | Giữ dấu vết đầy đủ nhưng UI chỉ hiển thị một hồ sơ nhất quán |
 | Fixture tổng hợp tái lập | BGK có expected result rõ ràng mà không nhận dữ liệu cá nhân |
 
-Sprint 1 chưa hỗ trợ PDF/nhiều trang, antivirus, tra cứu MST/e-invoice, tỷ giá, object storage hoặc authentication theo vai trò. Xem thêm [workflow đầy đủ](submission/AURA_WORKFLOW_SPEC.md), [runbook](docs/RUNBOOK.md), [test matrix](docs/TEST_CASES.md) và [hướng dẫn deploy](docs/DEPLOYMENT.md).
+Sprint 1 chưa hỗ trợ PDF/nhiều trang, antivirus, tra cứu MST/e-invoice, tỷ giá, object storage hoặc authentication theo vai trò. Xem thêm [workflow đầy đủ](submission/AURA_WORKFLOW_SPEC.md), [runbook](docs/RUNBOOK.md), [cài Ollama local](docs/LOCAL_OLLAMA.md), [test matrix](docs/TEST_CASES.md) và [hướng dẫn deploy](docs/DEPLOYMENT.md).

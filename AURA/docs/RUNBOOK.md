@@ -7,12 +7,15 @@
 - `dotnet-ef` tương thích EF Core 8 (khuyến nghị)
 - OpenRouter API key có quyền gọi model cấu hình trong `OpenRouter:Model`
 
+OpenRouter là provider mặc định cho Sprint 1. Cấu hình Ollama local tùy chọn nằm tại [`docs/LOCAL_OLLAMA.md`](LOCAL_OLLAMA.md); không cần cài Ollama để chạy baseline của BGK.
+
 ## 2. Clone và cấu hình local
 
 ```powershell
 git clone https://github.com/BondPhuPhamzZ/AURA.git
 cd AURA/AURA
 dotnet restore
+dotnet user-secrets set "Vision:Provider" "OpenRouter"
 dotnet user-secrets set "OpenRouter:ApiKey" "YOUR_OPENROUTER_KEY"
 dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
 dotnet ef database update
@@ -40,7 +43,7 @@ Mở URL được in trong terminal. Không truy cập `/Verify` để tìm tran
 
 Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_receipts.py --as-of-date 2026-09-21`. Script đồng thời sinh Test Kit v2 gồm 30 ca nhưng chỉ 5 ca đại diện được Verify gọi. Không đổi `as-of-date`, fixture hoặc expected sau khi chốt mà không cập nhật manifest, tài liệu và commit.
 
-Để bảo toàn credit: build + 56 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 15/30 ảnh tham chiếu qua API.
+Để bảo toàn credit: build + 60 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 15/30 ảnh tham chiếu qua API.
 
 Trong demo, `DecisionPolicy:EscalateDuplicateReceipts=false` cho phép chạy lại cùng ảnh nhưng vẫn ghi nhận trùng trong audit. Trước production, đổi thành `true`. Thay đổi cấu hình này không cần sửa code.
 
@@ -55,6 +58,14 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 - HTTP 402 / `AI_CREDITS_REQUIRED`: tài khoản không đủ credit hoặc key không được phép dùng model.
 - HTTP 429 / `AI_RATE_LIMIT`: rate limit của OpenRouter/provider; ứng dụng không tự retry để tránh phát sinh thêm chi phí.
 - Đổi model bằng `OpenRouter:Model`; luôn xác nhận model nhận input ảnh trên catalog trước khi đổi.
+
+### Provider Ollama local tùy chọn
+
+- Chọn bằng `Vision:Provider=Ollama`; quay lại baseline bằng `Vision:Provider=OpenRouter`.
+- Model mặc định local là `qwen3-vl:4b-instruct`; một request tại một thời điểm, context 8192 và timeout 180 giây.
+- AURA không tự fallback từ OpenRouter sang Ollama. Lỗi provider phải hiện rõ và chuyển kiểm tra thủ công.
+- `/healthz` hiển thị provider/model cấu hình nhưng không thay cho một ảnh smoke test.
+- Xem hướng dẫn cài, giới hạn RAM và rollback tại `docs/LOCAL_OLLAMA.md`.
 
 ### Khi OpenRouter/Qwen trả lỗi
 
@@ -72,6 +83,7 @@ Các biến môi trường bắt buộc:
 ```text
 OpenRouter__ApiKey=<secret>
 OpenRouter__Model=qwen/qwen3-vl-8b-instruct
+Vision__Provider=OpenRouter
 ConnectionStrings__DefaultConnection=<SQL Server connection string>
 ReceiptStorage__Directory=<persistent volume path>
 Database__ApplyMigrationsOnStartup=true

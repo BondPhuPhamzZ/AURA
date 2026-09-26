@@ -43,14 +43,14 @@ AURA does not fine-tune Qwen and does not give the model final decision authorit
 
 - ASP.NET Core 8 MVC
 - Entity Framework Core and SQL Server
-- Qwen3-VL-8B-Instruct through OpenRouter
+- Qwen3-VL-8B-Instruct through OpenRouter by default; optional local Qwen3-VL-4B through Ollama
 - JSON Schema structured output
 - Razor Views and the JavaScript Fetch API
 
 ## Sprint 1 Verification
 
 - Build: **0 warnings, 0 errors**
-- Automated tests: **56/56 passed**
+- Automated tests: **60/60 passed**
 - Verify Harness: **5 smoke-test cases**
 - Evaluator reference pack: **15 test cases**
 
@@ -108,12 +108,13 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj
 - [Workflow Specification](AURA/submission/AURA_WORKFLOW_SPEC.md)
 - [Test Cases](AURA/docs/TEST_CASES.md)
 - [Deployment and Operations Runbook](AURA/docs/RUNBOOK.md)
+- [Optional Local Ollama Setup](AURA/docs/LOCAL_OLLAMA.md)
 
 ## Sprint 1 Limitations
 
 - Supports one JPG/PNG image up to 5 MB; PDF and multi-page receipts are not supported yet.
 - Does not yet include role-based authentication, e-invoice verification, tax-code lookup, currency conversion, or malware scanning.
-- Depends on OpenRouter and the selected Qwen provider for vision extraction.
+- The default evaluation path depends on OpenRouter; the optional Ollama path still requires local benchmark evidence before promotion.
 - Uploaded receipt evidence is stored by the application instance; production deployment requires managed durable storage and an explicit retention policy.
 - AI failure or low confidence always results in human review rather than a fabricated decision.
 

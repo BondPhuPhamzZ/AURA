@@ -55,7 +55,7 @@ Nếu kết quả live không đạt 5/5, không quay lại liên tục để s�
 
 **Lời thoại:**
 
-> AURA chạy trên ASP.NET Core 8, SQL Server và kho ảnh riêng. OpenRouter chuyển ảnh tới Qwen để trích xuất JSON có cấu trúc. Policy, workflow chuyển tiếp và audit chạy trong C#. Repo có 56 test offline, năm ca Verify trực tiếp và gói 15 ca tham chiếu cho Ban Giám khảo.
+> AURA chạy trên ASP.NET Core 8, SQL Server và kho ảnh riêng. Bản Sprint 1 dùng OpenRouter chuyển ảnh tới Qwen để trích xuất JSON có cấu trúc. Policy, workflow chuyển tiếp và audit chạy trong C#. Repo có 60 test offline, năm ca Verify trực tiếp và gói 15 ca tham chiếu cho Ban Giám khảo.
 
 ## 02:38–02:50 — Giới hạn thật và kết thúc
 

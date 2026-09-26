@@ -1,11 +1,11 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 1.1 — 24/09/2026
+Phiên bản: 1.2 — 26/09/2026
 Phạm vi: Sprint 1, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
 
-AURA hỗ trợ hoàn ứng chi phí theo nguyên tắc **AI đọc dữ kiện, policy quyết định, con người xử lý ngoại lệ**. Qwen vision qua OpenRouter không có quyền phê duyệt. `PolicyDecisionEngine` mới tạo trạng thái nghiệp vụ theo quy tắc tất định và thứ tự ưu tiên `FACT → POLICY → AUTHORITY`.
+AURA hỗ trợ hoàn ứng chi phí theo nguyên tắc **AI đọc dữ kiện, policy quyết định, con người xử lý ngoại lệ**. Qwen vision qua provider cấu hình không có quyền phê duyệt. OpenRouter 8B vẫn là mặc định Sprint 1; Ollama 4B local là tùy chọn benchmark tắt mặc định. `PolicyDecisionEngine` mới tạo trạng thái nghiệp vụ theo quy tắc tất định và thứ tự ưu tiên `FACT → POLICY → AUTHORITY`.
 
 Ba vai trò demo:
 
@@ -19,7 +19,7 @@ Ba vai trò demo:
 flowchart LR
     A[Ảnh JPG/PNG + số tiền] --> B[Kiểm size, MIME, magic bytes]
     B --> C[Lưu ảnh riêng tư + SHA-256]
-    C --> D[Qwen/OpenRouter trích xuất JSON]
+    C --> D[Qwen qua provider cấu hình trích xuất JSON]
     D --> E[Policy C# tất định]
     E -->|AUTO_APPROVE| F[Lịch sử]
     E -->|ESCALATE_*| G[Nhân viên xác nhận chuyển]
@@ -119,7 +119,7 @@ AURA hiện **không có circuit breaker tổng quát** và **không triển kha
 
 ## 9. Dữ liệu thật và dữ liệu mô phỏng
 
-- Chạy thật: upload, OpenRouter/Qwen, policy C#, SQL Server, audit, human decision và receipt retrieval.
+- Chạy thật baseline: upload, OpenRouter/Qwen 8B, policy C#, SQL Server, audit, human decision và receipt retrieval. Adapter Ollama/Qwen 4B local dùng cùng schema nhưng chưa thay baseline khi chưa benchmark.
 - Mô phỏng: 30 ảnh tổng hợp sinh offline; 5 ảnh Verify và manifest 15 ca BGK được tuyển từ ngân hàng này.
 - Không dùng hóa đơn cá nhân thật trong Git. Ảnh thật tùy chọn chỉ đặt tại `test_kit/local_real` và bị `.gitignore` loại trừ.
 
