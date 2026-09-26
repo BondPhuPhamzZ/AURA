@@ -93,7 +93,7 @@ function title(slide, number, heading, subheading) {
   return line;
 }
 
-function footer(slide, number, source = "AURA • Track A • 26/09/2026") {
+function footer(slide, number, source = "AURA • Track A • 27/09/2026") {
   text(slide, source, 54, 686, 950, 18, 12, C.muted);
   text(slide, `${number}/5`, 1160, 684, 64, 20, 13, C.muted, { align: "right", bold: true });
 }
@@ -164,7 +164,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   const flow = [
     ["Input", "JPG/PNG ≤5MB\n+ số tiền", C.blue],
     ["Kiểm file", "MIME • magic bytes\nSHA-256", C.cyan],
-    ["Vision", "Provider cấu hình\nJSON Schema", C.violet],
+    ["Vision", "JSON Schema\n+ semantic repair", C.violet],
     ["Policy", "C# tất định\nFACT → POLICY → AUTHORITY", C.green],
     ["Kết quả", "AUTO_APPROVE\nhoặc ESCALATE_*", C.amber],
   ];
@@ -217,8 +217,8 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   text(s, "Bằng chứng đã có", 54, 428, 250, 28, 20, C.white, { bold: true });
   const evidence = [
-    ["60/60", "test offline", C.blue],
-    ["5/5", "Verify v2 local", C.green],
+    ["70/70", "test offline", C.blue],
+    ["15/15", "3 batch Ollama", C.green],
     ["15", "ca BGK khóa", C.violet],
   ];
   evidence.forEach((e, i) => {
@@ -238,7 +238,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
   text(s, "Baseline và target chỉ điền sau khi có dữ liệu người dùng thật.", 635, 610, 589, 34, 15, C.amber, { align: "center", bold: true });
   footer(s, 3);
-  s.speakerNotes.textFrame.setText("Nguồn nội bộ: 60 test offline; người dùng xác nhận Verify v2 5/5 local ngày 22/09/2026. Không suy rộng thành accuracy thực tế.");
+  s.speakerNotes.textFrame.setText("Nguồn nội bộ: 70 test offline; Ollama 4B đạt 15/15 qua ba batch liên tiếp trên 5 fixture tổng hợp ngày 27/09/2026. Không suy rộng thành accuracy thực tế.");
 }
 
 // Slide 4
@@ -250,7 +250,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   const layers = [
     ["GIAO DIỆN", "Razor MVC • fetch cho AI • reload sau workflow write", C.blue, 54, 162, 760],
     ["ỨNG DỤNG", "Applicant / Verify / Reviewer • state validation", C.cyan, 54, 248, 760],
-    ["QUYẾT ĐỊNH", "IVisionExtractor → PolicyDecisionEngine → EscalationWorkflow", C.green, 54, 334, 760],
+    ["QUYẾT ĐỊNH", "Semantic validator → PolicyDecisionEngine → EscalationWorkflow", C.green, 54, 334, 760],
     ["DỮ LIỆU", "EF Core • SQL Server • private receipt storage • AuditLogs", C.violet, 54, 420, 760],
   ];
   layers.forEach(([label, detail, accent, x, y, w], i) => {
@@ -287,7 +287,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   const risks = [
     ["429 / hết credit", "Không retry • dừng phần Verify còn lại", C.red],
     ["5xx tạm thời", "Retry tối đa 1 lần • rồi kiểm thủ công", C.amber],
-    ["JSON lệch schema", "Chuẩn hóa giới hạn • fail-safe nếu vẫn sai", C.violet],
+    ["JSON / semantic sai", "Repair đúng 1 lần • rồi FACT fail-safe", C.violet],
     ["Ảnh mơ hồ / giả", "FACT ưu tiên • không auto-approve", C.cyan],
     ["Storage / deploy", "SQL Server + private folder bền", C.blue],
   ];
@@ -300,7 +300,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 157, 382, 242, C.surface2, "rounded-xl", C.green);
   text(s, "ĐÃ BÀN GIAO", 869, 180, 326, 24, 15, C.green, { bold: true });
-  const todo = ["Repo + hướng dẫn local", "60 test offline", "5 Verify + 15 ca BGK", "Video • slide • Build Log"];
+  const todo = ["Repo + hướng dẫn local", "70 test offline", "15/15 fixture + 15 ca BGK", "Video • slide • Build Log"];
   todo.forEach((t, i) => {
     pill(s, `${i + 1}`, 869, 225 + i * 40, 30, C.green);
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });
@@ -310,7 +310,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   text(s, "CHƯA CÓ TRONG SPRINT 1", 869, 447, 326, 24, 15, C.red, { bold: true });
   text(s, "PDF/nhiều trang • authentication\ntax lookup • object storage\nbenchmark dữ liệu độc lập", 869, 487, 326, 72, 17, C.white, { bold: true });
 
-  text(s, "Lộ trình: benchmark Ollama + Qwen3-VL 4B local; OpenRouter 8B vẫn là baseline.", 842, 601, 382, 44, 14, C.amber, { align: "center", bold: true });
+  text(s, "Ollama 4B đã qua fixture gate; benchmark độc lập vẫn là điều kiện đổi baseline.", 842, 601, 382, 44, 14, C.amber, { align: "center", bold: true });
   footer(s, 5, "AURA • Giới hạn hiện tại, không phải lời hứa marketing");
   s.speakerNotes.textFrame.setText(
     "Nguồn deploy: https://render.com/docs/free ; https://www.smarterasp.net/support/kb/a2437/how-to-set-environment-variable-for-your-account.aspx . Cơ chế retry đối chiếu OpenRouterVisionExtractorService.cs.",
@@ -322,7 +322,7 @@ for (let i = 0; i < deck.slides.length; i++) {
   await fs.writeFile(path.join(TMP_DIR, `slide-${i + 1}.png`), new Uint8Array(await preview.arrayBuffer()));
 }
 
-const stagingDir = path.join(WORKSPACE_DIR, ".tmp", "slides-finalizer");
+const stagingDir = path.join(WORKSPACE_DIR, ".tmp", "slides-finalizer-20260927");
 await fs.mkdir(stagingDir, { recursive: true });
 const candidatePath = path.join(stagingDir, "AURA_5_SLIDES.candidate.pptx");
 await (await PresentationFile.exportPptx(deck)).save(candidatePath);

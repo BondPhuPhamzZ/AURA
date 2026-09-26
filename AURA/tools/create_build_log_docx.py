@@ -139,7 +139,7 @@ set_run_font(run, size=18, bold=True, color="000000")
 subtitle = document.add_paragraph()
 subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
 subtitle.paragraph_format.space_after = Pt(5)
-run = subtitle.add_run("Track A The Escalation Referee | 26 09 2026 | Pham Gia Phu")
+run = subtitle.add_run("Track A The Escalation Referee | 27 09 2026 | Pham Gia Phu")
 set_run_font(run, size=9.2, italic=True, color="555555")
 
 intro = document.add_paragraph()
@@ -165,8 +165,9 @@ add_body(
     document,
     "Prototype đầu tiên dùng Gemini Free Tier nhưng gặp HTTP 429 và quota không ổn định. Khi chuyển sang OpenRouter, "
     "một model slug hoặc endpoint sai từng gây HTTP 404; sau đó Qwen có lúc trả JSON lệch schema hoặc xem câu mô tả "
-    "trên fixture tổng hợp là prompt injection. Các lỗi này dẫn tới ba thay đổi: chuẩn hóa cấu hình provider, parser có "
-    "giới hạn rõ, và fail-safe sang ESCALATE_SYSTEM_ERROR thay vì cố suy đoán một quyết định.",
+    "trên fixture tổng hợp là prompt injection. Ollama 4B còn từng đọc 295.199 VND thành 295.199 theo số thập phân "
+    "và nhầm đơn giao hàng thành ride-hailing. Các lỗi này dẫn tới cấu hình provider rõ ràng, parser giới hạn, kiểm tra "
+    "ngữ nghĩa và đúng một lượt đọc lại có mục tiêu; kết quả vẫn mâu thuẫn được chuyển cho người thay vì suy đoán.",
 )
 
 comparison = document.add_table(rows=1, cols=2)
@@ -208,7 +209,7 @@ evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
 headers = ("Build", "Test offline", "Verify v2 local", "Gói BGK")
-values = ("0 warning 0 error", "60 trên 60 pass", "5 trên 5 đúng", "15 ca đã khóa")
+values = ("0 warning 0 error", "70 trên 70 pass", "15 trên 15 fixture", "15 ca đã khóa")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -233,8 +234,8 @@ for index, value in enumerate(values):
 
 add_body(
     document,
-    "Kết quả 5 trên 5 thuộc bộ fixture tổng hợp đã biết trước, nên chỉ chứng minh harness và policy hoạt động nhất quán; "
-    "nó không phải độ chính xác tổng quát trên hóa đơn thực tế.",
+    "Kết quả Ollama 15 trên 15 là ba batch liên tiếp của cùng 5 fixture tổng hợp đã biết trước. Nó chứng minh pipeline, "
+    "semantic repair và policy hoạt động nhất quán trên bộ kiểm soát, không phải độ chính xác trên hóa đơn thực tế độc lập.",
     bold_lead="Kết luận đo lường: ",
 )
 
@@ -247,10 +248,10 @@ add_body(
 )
 
 add_heading(document, "5 Quyết định kiến trúc và phần cắt giảm")
-add_bullet(document, "Tách Qwen extraction khỏi PolicyDecisionEngine để model có thể thay đổi mà không đổi quy tắc duyệt.")
+add_bullet(document, "Tách Qwen extraction và semantic validation khỏi PolicyDecisionEngine để đổi model mà không đổi quy tắc duyệt.")
 add_bullet(document, "Giữ AuditLogs theo sự kiện append-only ở tầng ứng dụng, nhưng UI gom một hồ sơ thành một timeline để tránh cảm giác lặp.")
 add_bullet(document, "Chặn thao tác workflow chồng trong một instance, dùng RowVersion chống ghi đè đồng thời và reload sau mutation để đọc lại trạng thái đã commit.")
-add_bullet(document, "Giữ hosted Qwen 8B làm baseline; adapter Ollama/Qwen 4B local tắt mặc định để benchmark trên máy 16 GB.")
+add_bullet(document, "Giữ hosted Qwen 8B làm baseline; Ollama/Qwen 4B đã đạt 15/15 fixture nhưng vẫn tắt mặc định tới khi có benchmark độc lập.")
 add_bullet(document, "Hoãn PDF nhiều trang, authentication theo role, tax lookup, antivirus, object storage và benchmark tập dữ liệu độc lập.")
 
 add_heading(document, "6 Bài học và bước tiếp theo")
