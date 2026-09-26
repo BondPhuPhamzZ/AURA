@@ -19,6 +19,12 @@ builder.Logging.AddDebug();
 
 // Đăng ký Services
 builder.Services.AddControllersWithViews();
+builder.Services.AddOptions<VisionOptions>()
+    .Bind(builder.Configuration.GetSection(VisionOptions.SectionName))
+    .ValidateDataAnnotations()
+    .Validate(options => VisionOptions.IsSupportedProvider(options.Provider),
+        "Vision:Provider phải là OpenRouter hoặc Ollama.")
+    .ValidateOnStart();
 builder.Services.AddOptions<OpenRouterOptions>()
     .Bind(builder.Configuration.GetSection(OpenRouterOptions.SectionName))
     .ValidateDataAnnotations()
@@ -31,6 +37,19 @@ builder.Services.AddOptions<OpenRouterOptions>()
         "OpenRouter:ChatCompletionsPath phải là đường dẫn tương đối, ví dụ chat/completions.")
     .Validate(options => options.Model.StartsWith("qwen/", StringComparison.OrdinalIgnoreCase),
         "OpenRouter:Model phải là model Qwen trên OpenRouter.")
+    .ValidateOnStart();
+builder.Services.AddOptions<OllamaOptions>()
+    .Bind(builder.Configuration.GetSection(OllamaOptions.SectionName))
+    .ValidateDataAnnotations()
+    .Validate(options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri) &&
+        (uri.Scheme == Uri.UriSchemeHttps ||
+         (uri.Scheme == Uri.UriSchemeHttp && (uri.IsLoopback || uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)))),
+        "Ollama:BaseUrl chỉ cho phép HTTPS hoặc HTTP loopback local.")
+    .Validate(options => !Uri.TryCreate(options.ChatPath, UriKind.Absolute, out _) &&
+        !options.ChatPath.StartsWith('/'),
+        "Ollama:ChatPath phải là đường dẫn tương đối, ví dụ api/chat.")
+    .Validate(options => options.Model.StartsWith("qwen3-vl", StringComparison.OrdinalIgnoreCase),
+        "Ollama:Model phải là model Qwen3-VL local.")
     .ValidateOnStart();
 builder.Services.AddOptions<ReceiptStorageOptions>()
     .Bind(builder.Configuration.GetSection(ReceiptStorageOptions.SectionName))
@@ -52,12 +71,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IReimbursementRepository, ReimbursementRepository>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 builder.Services.AddSingleton<WorkflowOperationGate>();
-builder.Services.AddHttpClient<IVisionExtractor, OpenRouterVisionExtractorService>((services, client) =>
+builder.Services.AddHttpClient<OpenRouterVisionExtractorService>((services, client) =>
 {
     var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenRouterOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
     client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
 });
+builder.Services.AddHttpClient<OllamaVisionExtractorService>((services, client) =>
+{
+    var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<OllamaOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+});
+builder.Services.AddScoped<IVisionExtractor, ConfiguredVisionExtractor>();
 
 var app = builder.Build();
 
@@ -84,13 +110,20 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
 
-app.MapGet("/healthz", (IOptions<OpenRouterOptions> configuredOpenRouter,
+app.MapGet("/healthz", (IOptions<VisionOptions> configuredVision,
+    IOptions<OpenRouterOptions> configuredOpenRouter,
+    IOptions<OllamaOptions> configuredOllama,
     IWebHostEnvironment environment) =>
 {
+    var vision = configuredVision.Value;
     var openRouter = configuredOpenRouter.Value;
-    var policyPath = Path.GetFullPath(Path.Combine(environment.ContentRootPath, openRouter.PolicyPath));
+    var ollama = configuredOllama.Value;
+    var useOllama = string.Equals(vision.Provider, VisionOptions.OllamaProvider,
+        StringComparison.OrdinalIgnoreCase);
+    var policyPath = Path.GetFullPath(Path.Combine(environment.ContentRootPath,
+        useOllama ? ollama.PolicyPath : openRouter.PolicyPath));
     var policyAvailable = File.Exists(policyPath);
-    var aiConfigured = !string.IsNullOrWhiteSpace(openRouter.ApiKey);
+    var aiConfigured = useOllama || !string.IsNullOrWhiteSpace(openRouter.ApiKey);
     var ready = policyAvailable && aiConfigured;
 
     return Results.Json(new
@@ -99,7 +132,8 @@ app.MapGet("/healthz", (IOptions<OpenRouterOptions> configuredOpenRouter,
         service = "AURA",
         aiConfigured,
         policyAvailable,
-        model = openRouter.Model,
+        provider = useOllama ? VisionOptions.OllamaProvider : VisionOptions.OpenRouterProvider,
+        model = useOllama ? ollama.Model : openRouter.Model,
         timestamp = DateTimeOffset.UtcNow
     }, statusCode: ready ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable);
 });

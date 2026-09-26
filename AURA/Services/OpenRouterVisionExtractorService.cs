@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using AURA.Interfaces;
 using AURA.Models;
 using AURA.Options;
@@ -13,14 +12,6 @@ namespace AURA.Services;
 
 public sealed class OpenRouterVisionExtractorService : IVisionExtractor
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        // The upstream schema remains strict. Tolerate harmless provider-added metadata and
-        // numeric JSON strings so a valid extraction is not discarded solely by serialization quirks.
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip,
-        NumberHandling = JsonNumberHandling.AllowReadingFromString
-    };
     private readonly HttpClient _httpClient;
     private readonly OpenRouterOptions _options;
     private readonly IWebHostEnvironment _environment;
@@ -42,50 +33,23 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             throw new VisionExtractionException("AI_NOT_CONFIGURED",
                 "OpenRouter API chưa được cấu hình; hồ sơ cần được kiểm tra thủ công.");
 
-        var fullImagePath = Path.GetFullPath(physicalImagePath);
-        if (!File.Exists(fullImagePath))
-            throw new VisionExtractionException("IMAGE_NOT_FOUND", "Không tìm thấy ảnh hóa đơn cần phân tích.");
-
-        var contentRoot = Path.GetFullPath(_environment.ContentRootPath);
-        var policyPath = Path.GetFullPath(Path.Combine(contentRoot, _options.PolicyPath));
-        var contentRootPrefix = contentRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-            + Path.DirectorySeparatorChar;
-        if (!policyPath.StartsWith(contentRootPrefix, StringComparison.OrdinalIgnoreCase) || !File.Exists(policyPath))
-            throw new VisionExtractionException("POLICY_NOT_FOUND",
-                "Không tìm thấy tài liệu chính sách bắt buộc; không thể trích xuất dữ kiện an toàn.");
-        
-        var imageBytes = await File.ReadAllBytesAsync(fullImagePath, cancellationToken);
-        var policy = await File.ReadAllTextAsync(policyPath, cancellationToken);
-        var mimeType = Path.GetExtension(fullImagePath).ToLowerInvariant() switch
-        {
-            ".png" => "image/png",
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".webp" => "image/webp",
-            _ => throw new InvalidOperationException("Định dạng ảnh không được hỗ trợ.")
-        };
-        var base64Image = Convert.ToBase64String(imageBytes);
-
-        var responseSchema = BuildResponseSchema();
-        var systemPrompt = $"""
-            You are AURA's receipt-evidence extraction component. Follow the contract below exactly.
-            The API response format enforces the JSON schema. Return only the schema instance; never add Markdown or prose.
-
-            {policy}
-            """;
+        var input = await ReceiptExtractionContract.LoadInputAsync(physicalImagePath, _options.PolicyPath,
+            _environment.ContentRootPath, cancellationToken);
+        var responseSchema = ReceiptExtractionContract.BuildResponseSchema();
 
         var payload = new
         {
             model = _options.Model,
             messages = new object[]
             {
-                new { role = "system", content = systemPrompt },
+                new { role = "system", content = input.SystemPrompt },
                 new
                 {
                     role = "user",
                     content = new object[]
                     {
                         new { type = "text", text = "Trích xuất dữ kiện từ ảnh chứng từ này và chỉ trả về JSON đúng schema." },
-                        new { type = "image_url", image_url = new { url = $"data:{mimeType};base64,{base64Image}" } }
+                        new { type = "image_url", image_url = new { url = $"data:{input.MimeType};base64,{input.Base64Image}" } }
                     }
                 }
             },
@@ -166,13 +130,12 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             throw new VisionExtractionException("AI_INVALID_RESPONSE",
                 "Qwen không trả về dữ liệu JSON hợp lệ; hồ sơ cần kiểm tra thủ công.");
 
-        var contentStr = ExtractJsonObject(contentElement.GetString() ?? string.Empty);
+        var contentStr = contentElement.GetString() ?? string.Empty;
 
         ReceiptExtractionDto facts;
         try
         {
-            facts = JsonSerializer.Deserialize<ReceiptExtractionDto>(contentStr, JsonOptions)
-                ?? throw new JsonException("Empty extraction object.");
+            facts = ReceiptExtractionContract.ParseFacts(contentStr);
         }
         catch (JsonException exception)
         {
@@ -183,11 +146,6 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
                 "Qwen trả về kết quả không đúng cấu trúc quy định; hồ sơ cần kiểm tra thủ công.", exception);
         }
 
-        facts.LineItems ??= [];
-        facts.MissingFields ??= [];
-        facts.Warnings ??= [];
-        facts.SuspiciousSignals ??= [];
-        facts.Confidence = Math.Clamp(facts.Confidence, 0, 1);
         return facts;
     }
 
@@ -276,59 +234,5 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         }
     }
 
-    private static string TrimCodeFence(string content)
-    {
-        var trimmed = content.Trim();
-        if (!trimmed.StartsWith("```", StringComparison.Ordinal) ||
-            !trimmed.EndsWith("```", StringComparison.Ordinal))
-            return trimmed;
-
-        var firstNewLine = trimmed.IndexOf('\n');
-        if (firstNewLine < 0) return trimmed;
-        return trimmed[(firstNewLine + 1)..^3].Trim();
-    }
-
-    private static string ExtractJsonObject(string content)
-    {
-        var trimmed = TrimCodeFence(content);
-        var start = trimmed.IndexOf('{');
-        var end = trimmed.LastIndexOf('}');
-        return start >= 0 && end >= start ? trimmed[start..(end + 1)] : trimmed;
-    }
-
-    private static object BuildResponseSchema() => new
-    {
-        type = "object",
-        additionalProperties = false,
-        required = new[] { "documentType", "documentStatus", "merchantName", "taxId", "merchantId", "terminalId",
-            "platformName", "orderId", "bookingId", "shippingTrackingCode", "shippingProvider", "orderStatus",
-            "invoiceNumber", "invoiceDate", "transactionDate", "completionDate", "invoiceTime", "currency",
-            "subtotal", "tax", "totalAmount", "lineItems",
-            "missingFields", "warnings", "suspiciousSignals", "confidence" },
-        properties = new Dictionary<string, object>
-        {
-            ["documentType"] = NullableString(), ["documentStatus"] = NullableString(),
-            ["merchantName"] = NullableString(), ["taxId"] = NullableString(),
-            ["merchantId"] = NullableString(), ["terminalId"] = NullableString(),
-            ["platformName"] = NullableString(), ["orderId"] = NullableString(), ["bookingId"] = NullableString(),
-            ["shippingTrackingCode"] = NullableString(), ["shippingProvider"] = NullableString(),
-            ["orderStatus"] = NullableString(), ["invoiceNumber"] = NullableString(),
-            ["invoiceDate"] = NullableString(), ["transactionDate"] = NullableString(),
-            ["completionDate"] = NullableString(),
-            ["invoiceTime"] = NullableString(), ["currency"] = NullableString(),
-            ["subtotal"] = NullableNumber(), ["tax"] = NullableNumber(), ["totalAmount"] = NullableNumber(),
-            ["lineItems"] = new { type = "array", items = new { type = "object", additionalProperties = false,
-                required = new[] { "description", "quantity", "unitPrice", "amount" },
-                properties = new Dictionary<string, object> { ["description"] = new { type = "string" },
-                    ["quantity"] = NullableNumber(), ["unitPrice"] = NullableNumber(), ["amount"] = NullableNumber() } } },
-            ["missingFields"] = StringArray(), ["warnings"] = StringArray(),
-            ["suspiciousSignals"] = StringArray(),
-            ["confidence"] = new { type = "number", minimum = 0, maximum = 1 }
-        }
-    };
-
-    private static object NullableString() => new { type = new[] { "string", "null" } };
-    private static object NullableNumber() => new { type = new[] { "number", "null" } };
-    private static object StringArray() => new { type = "array", items = new { type = "string" } };
 }
 
