@@ -1,6 +1,6 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 1.2 — 26/09/2026
+Phiên bản: 1.3 — 27/09/2026
 Phạm vi: Sprint 1, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
@@ -20,7 +20,8 @@ flowchart LR
     A[Ảnh JPG/PNG + số tiền] --> B[Kiểm size, MIME, magic bytes]
     B --> C[Lưu ảnh riêng tư + SHA-256]
     C --> D[Qwen qua provider cấu hình trích xuất JSON]
-    D --> E[Policy C# tất định]
+    D --> V[Semantic validation và tối đa một repair]
+    V --> E[Policy C# tất định]
     E -->|AUTO_APPROVE| F[Lịch sử]
     E -->|ESCALATE_*| G[Nhân viên xác nhận chuyển]
     G --> H[Hàng đợi quản lý]
@@ -38,14 +39,15 @@ flowchart LR
 5. Server đặt tên file bằng GUID, lưu ngoài `wwwroot`, tính SHA-256 và kiểm ảnh trùng.
 6. Chế độ demo vẫn cho phép ảnh trùng; cờ trùng được ghi nhận. Production có thể bật `DecisionPolicy:EscalateDuplicateReceipts=true`.
 7. Qwen đọc ảnh và trả `ReceiptExtractionDto` theo JSON Schema: loại chứng từ, người bán, mã truy vết, ngày, tổng tiền, tiền tệ, trạng thái, line items, warnings và suspicious signals.
-8. Policy C# đối chiếu dữ kiện và số tiền khai báo:
+8. Backend kiểm tra semantic trước policy: VND phải là số nguyên đồng, document type phải phù hợp identifier, mã không được gán nhầm trường và line items phải đối chiếu được khi không có discount. Nếu mâu thuẫn, model đọc lại ảnh đúng một lần với lỗi cụ thể nhưng không nhận claimed amount; lỗi còn lại được gắn `ValidationIssues` để buộc `ESCALATE_FACT`.
+9. Policy C# đối chiếu dữ kiện và số tiền khai báo:
    - dữ kiện đáng tin cậy, đúng policy và trong thẩm quyền → `AUTO_APPROVE`;
    - thiếu/mâu thuẫn dữ kiện → `ESCALATE_FACT`;
    - ngoài chính sách → `ESCALATE_POLICY`;
    - vượt thẩm quyền → `ESCALATE_AUTHORITY`;
    - AI/provider lỗi → `ESCALATE_SYSTEM_ERROR`.
-9. Hồ sơ, metadata, facts, trạng thái và sự kiện AI đầu tiên được lưu cùng một lần `SaveChanges`.
-10. UI cập nhật preview, khung “Nội dung AI đọc được”, bảng kết quả, bộ đếm và lịch sử bằng các vùng HTML trả về từ server.
+10. Hồ sơ, metadata, facts, trạng thái và sự kiện AI đầu tiên được lưu cùng một lần `SaveChanges`.
+11. UI cập nhật preview, khung “Nội dung AI đọc được”, bảng kết quả, bộ đếm và lịch sử bằng các vùng HTML trả về từ server.
 
 ## 4. Workflow B — Verify Harness 5 ca
 
@@ -112,6 +114,7 @@ Cách này vừa giữ bằng chứng để truy vết/hoàn tác, vừa tránh 
 | HTTP 429/hết credit | Không retry, dừng harness còn lại |
 | HTTP 5xx | Retry tối đa một lần; vẫn lỗi thì chuyển thủ công |
 | JSON/schema không hợp lệ | Parser cố chuẩn hóa giới hạn; thất bại thì chuyển thủ công |
+| JSON đúng schema nhưng tự mâu thuẫn | Đọc lại đúng một lần; vẫn sai thì `ESCALATE_FACT`, không tự sửa theo claim |
 | Ảnh mơ hồ/prompt injection | Thêm suspicious signal; FACT có ưu tiên cao nhất |
 | File mất nhưng DB còn | Route trả 404; cần storage bền khi deploy |
 
@@ -119,7 +122,7 @@ AURA hiện **không có circuit breaker tổng quát** và **không triển kha
 
 ## 9. Dữ liệu thật và dữ liệu mô phỏng
 
-- Chạy thật baseline: upload, OpenRouter/Qwen 8B, policy C#, SQL Server, audit, human decision và receipt retrieval. Adapter Ollama/Qwen 4B local dùng cùng schema nhưng chưa thay baseline khi chưa benchmark.
+- Chạy thật baseline: upload, OpenRouter/Qwen 8B, semantic validator, policy C#, SQL Server, audit, human decision và receipt retrieval. Adapter Ollama/Qwen 4B local đạt 15/15 trên ba lượt fixture kiểm soát nhưng chưa thay baseline vì chưa benchmark tập độc lập.
 - Mô phỏng: 30 ảnh tổng hợp sinh offline; 5 ảnh Verify và manifest 15 ca BGK được tuyển từ ngân hàng này.
 - Không dùng hóa đơn cá nhân thật trong Git. Ảnh thật tùy chọn chỉ đặt tại `test_kit/local_real` và bị `.gitignore` loại trừ.
 

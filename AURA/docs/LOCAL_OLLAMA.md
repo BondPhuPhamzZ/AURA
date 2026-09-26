@@ -1,6 +1,6 @@
 # Chạy Qwen3 VL 4B local bằng Ollama
 
-Cập nhật: 26/09/2026. Tùy chọn này bổ sung một provider local để benchmark và demo ngoại tuyến. `Vision:Provider` vẫn mặc định là `OpenRouter`, nên cài Ollama không làm thay đổi bản Sprint 1 hiện tại. Không có cơ chế tự động gọi cả hai provider hoặc âm thầm thay kết quả.
+Cập nhật: 27/09/2026. Tùy chọn này bổ sung một provider local để benchmark và demo ngoại tuyến. `Vision:Provider` vẫn mặc định là `OpenRouter`, nên cài Ollama không làm thay đổi bản Sprint 1 hiện tại. Không có cơ chế tự động gọi cả hai provider hoặc âm thầm thay kết quả.
 
 ## 1. Phạm vi và cấu hình khuyến nghị
 
@@ -91,16 +91,19 @@ Mở `/healthz`. Kỳ vọng:
 }
 ```
 
-`/healthz` xác nhận cấu hình và policy, không chứng minh model đã nạp. Request ảnh đầu tiên mới là phép kiểm kết nối đầy đủ.
+`/healthz` xác nhận cấu hình và policy, không chứng minh model đã nạp. Request ảnh đầu tiên mới là phép kiểm kết nối đầy đủ. Sau mỗi lần trích xuất, backend kiểm tra chéo ngữ nghĩa như định dạng tiền VND, loại chứng từ, mã đơn/mã vận chuyển và tổng dòng hàng. Nếu JSON hợp lệ nhưng dữ kiện mâu thuẫn, AURA cho model đọc lại đúng một lần với chỉ dẫn sửa có mục tiêu; kết quả vẫn mâu thuẫn sẽ chuyển `ESCALATE_FACT` thay vì tự sửa số tiền.
 
 ## 6. Smoke test an toàn
 
 1. Không chạy Verify ngay. Upload đúng một fixture nhỏ trong `wwwroot/test_data/images`.
 2. Kiểm tra facts JSON, quyết định policy và Audit Log.
 3. Kiểm `ollama ps`, Task Manager RAM/GPU và thời gian xử lý.
-4. Nếu smoke pass, chạy Verify Harness đúng một lượt. Ollama có thể chậm hơn giới hạn 90 giây của bản hosted; ghi kết quả thật, không chạy lặp để săn PASS.
-5. Chạy lại cùng một ảnh ba lần để phát hiện output không ổn định.
-6. Chỉ dùng Ollama cho demo chính khi đạt cổng benchmark trong `docs/MEASUREMENT_PLAN.md`.
+4. Nếu smoke pass, chạy Verify Harness theo kế hoạch cố định. Không bấm lại chỉ để săn PASS; mỗi batch phải được ghi nhận kể cả khi fail.
+5. Với benchmark trước khi đổi provider, chạy ba batch Verify liên tiếp trên cùng build/cấu hình và dùng database riêng để không trộn dữ liệu demo. `Ollama:KeepAlive=30m` phù hợp trong benchmark/demo; sau đó có thể trả về `5m` để giải phóng RAM sớm hơn.
+6. Ghi actual status, semantic repair, latency từng ca, tổng thời gian batch, RAM/GPU và lỗi nếu có. Ollama local có thể mất khoảng năm phút cho 5 ca trên RTX 3050 Laptop 4 GB, không dùng mốc 90 giây của hosted để kết luận sai về chất lượng.
+7. Chỉ dùng Ollama cho demo chính khi đạt cổng benchmark trong `docs/MEASUREMENT_PLAN.md`.
+
+Kết quả kiểm soát ngày 27/09/2026 trên build semantic-hardening: ba batch liên tiếp đều đạt 5/5, tức 15/15 quyết định đúng trên 5 fixture tổng hợp. TC-02 cần một lượt repair nên khoảng 100 giây; các ca còn lại khoảng 45-55 giây; mỗi batch khoảng 303-304 giây. Đây là bằng chứng pipeline có kiểm soát, chưa phải accuracy trên hóa đơn thật độc lập.
 
 ## 7. Quay lại OpenRouter
 
@@ -123,10 +126,11 @@ Sau đó mở `/healthz` và xác nhận `provider` là `OpenRouter`. AURA khôn
 | `AI_MODEL_UNAVAILABLE` | Chưa pull đúng tag | Chạy `ollama pull qwen3-vl:4b-instruct` |
 | `AI_TIMEOUT` | CPU chậm, thiếu RAM hoặc ảnh/context lớn | Đóng ứng dụng nặng, giảm context 8192 xuống 4096, thử một ảnh |
 | `AI_SCHEMA_MISMATCH` | Model 4B không giữ đúng JSON Schema | Giữ fail-safe, ghi ca lỗi; không sửa expected result |
+| JSON hợp lệ nhưng sai loại chứng từ/định dạng VND | Lỗi ngữ nghĩa của model | Backend repair đúng một lần; nếu vẫn sai thì `ESCALATE_FACT`, không nhân tiền hoặc gán mã bằng suy đoán |
 | Máy swap/đơ | Nhiều model/request hoặc context quá lớn | Một model, một request, context 4096; `ollama stop qwen3-vl:4b-instruct` để giải phóng RAM |
 
 ## 9. Nguyên tắc đánh giá
 
-Không so sánh 4B local và 8B hosted bằng cảm giác. Chạy cùng ảnh, cùng policy và cùng schema; ghi model/tag, context, lượng tử hóa, latency, schema success, exact match các field quan trọng, missed escalation và over-escalation. Ollama chỉ trở thành provider mặc định sau khi đạt cổng chất lượng và có kế hoạch quay lại OpenRouter.
+Không so sánh 4B local và 8B hosted bằng cảm giác. Chạy cùng ảnh, cùng policy và cùng schema; ghi model/tag, context, lượng tử hóa, latency, schema success, semantic-repair rate, exact match các field quan trọng, missed escalation và over-escalation. Ollama chỉ trở thành provider mặc định sau khi đạt cổng chất lượng trên tập độc lập và có kế hoạch quay lại OpenRouter.
 
 Nguồn chính thức: `https://docs.ollama.com/windows`, `https://docs.ollama.com/api/chat`, `https://docs.ollama.com/capabilities/vision`, `https://docs.ollama.com/capabilities/structured-outputs`, `https://docs.ollama.com/faq`, `https://ollama.com/library/qwen3-vl/tags`.

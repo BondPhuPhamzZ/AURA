@@ -2,7 +2,7 @@
 
 ## AURA Automated Underwriting and Reimbursement AI
 
-Cập nhật ngày 26/09/2026. Tài liệu này mô tả cấu trúc mã nguồn, hợp đồng tích hợp và đường đi dữ liệu của bản Sprint 1. Cách đánh giá chuẩn là clone và chạy localhost theo README; bản SmarterASP.NET chỉ là môi trường demo tùy chọn. OpenRouter vẫn là provider mặc định; adapter Ollama local được thêm dưới cờ cấu hình và chưa thay đổi baseline Sprint 1.
+Cập nhật ngày 27/09/2026. Tài liệu này mô tả cấu trúc mã nguồn, hợp đồng tích hợp và đường đi dữ liệu của bản Sprint 1. Cách đánh giá chuẩn là clone và chạy localhost theo README; bản SmarterASP.NET chỉ là môi trường demo tùy chọn. OpenRouter vẫn là provider mặc định; adapter Ollama local được thêm dưới cờ cấu hình và chưa thay đổi baseline Sprint 1.
 
 ## 1. Sơ đồ thành phần
 
@@ -19,6 +19,7 @@ AURA/
 │   ├── OpenRouterVisionExtractorService.cs   # Qwen 8B hosted
 │   ├── OllamaVisionExtractorService.cs       # Qwen 4B local tùy chọn
 │   ├── ReceiptExtractionContract.cs          # prompt, schema và parser dùng chung
+│   ├── ReceiptSemanticValidator.cs           # kiểm mâu thuẫn semantic và hướng dẫn repair
 │   ├── PolicyDecisionEngine.cs               # quyết định nghiệp vụ tất định
 │   ├── ReimbursementRepository.cs            # transaction hồ sơ và audit
 │   ├── AuditLogger.cs                        # ghi sự kiện
@@ -29,7 +30,7 @@ AURA/
 ├── Views/                             # Razor UI nhân viên, quản lý, lịch sử
 ├── wwwroot/test_data/                 # 5 fixture được Verify chạy trực tiếp
 ├── test_kit/                          # ngân hàng 30 ca và gói BGK 15 ca
-├── tests/AURA.Tests/                  # 60 kiểm thử tự động offline
+├── tests/AURA.Tests/                  # 70 kiểm thử tự động offline
 ├── docs/                              # runbook, deploy, test, checklist
 ├── submission/                        # 5 slide, Build Log Word, workflow
 └── tools/                             # tái tạo fixture và artifact nộp bài
@@ -78,11 +79,13 @@ Các POST thay đổi trạng thái đều kiểm antiforgery token. Upload ch�
 1. Server xác thực file và số tiền đề nghị.
 2. `ReceiptStorage` lưu ảnh ngoài `wwwroot`, đặt tên ngẫu nhiên và tính SHA-256.
 3. `ConfiguredVisionExtractor` gọi đúng provider cấu hình. Hai adapter dùng chung prompt, JSON Schema và parser qua `ReceiptExtractionContract`.
-4. UI hiển thị dữ kiện AI đọc được; dữ kiện không chắc chắn giữ nguyên là không đọc được, không tự suy đoán.
-5. `PolicyDecisionEngine` áp quy tắc theo thứ tự `FACT`, `POLICY`, `AUTHORITY`.
-6. Hồ sơ và audit AI được ghi nhất quán. `AUTO_APPROVE` đi vào lịch sử; `ESCALATE_*` ở bảng thẩm định.
-7. Nhân viên xác nhận chuyển tiếp. Quản lý đồng ý hoặc từ chối theo câu hỏi đã sinh; quyết định có thể hoàn tác.
-8. UI gom các audit event của cùng hồ sơ thành một timeline, tránh hiển thị ba dòng trùng nghĩa.
+4. `ReceiptSemanticValidator` kiểm ý nghĩa chéo: VND không được có phần thập phân, loại chứng từ phải phù hợp identifier, mã không được gán nhầm trường và line items phải đối chiếu được với tổng tiền khi không có discount.
+5. Nếu JSON đúng schema nhưng mâu thuẫn semantic, provider đọc lại ảnh đúng một lần với danh sách lỗi cụ thể. Repair không nhận số tiền khai báo. Nếu vẫn mâu thuẫn hoặc repair lỗi, facts đầu tiên được đánh dấu và policy chuyển `ESCALATE_FACT`; hệ thống không tự nhân tiền hoặc tạo PASS giả.
+6. UI hiển thị dữ kiện AI đọc được; dữ kiện không chắc chắn giữ nguyên là không đọc được, không tự suy đoán.
+7. `PolicyDecisionEngine` áp quy tắc theo thứ tự `FACT`, `POLICY`, `AUTHORITY`.
+8. Hồ sơ và audit AI được ghi nhất quán. `AUTO_APPROVE` đi vào lịch sử; `ESCALATE_*` ở bảng thẩm định.
+9. Nhân viên xác nhận chuyển tiếp. Quản lý đồng ý hoặc từ chối theo câu hỏi đã sinh; quyết định có thể hoàn tác.
+10. UI gom các audit event của cùng hồ sơ thành một timeline, tránh hiển thị ba dòng trùng nghĩa.
 
 Các thao tác ghi workflow dùng `WorkflowOperationGate` để từ chối mutation chồng trong cùng một tiến trình và dùng `RowVersion` của SQL Server làm chốt optimistic concurrency khi có nhiều tiến trình. Sau chuyển tiếp/quyết định/hoàn tác, trình duyệt điều hướng toàn trang về tab đích để dựng lại tất cả bảng từ trạng thái database đã commit; không còn polling nền 10 giây.
 
@@ -105,7 +108,7 @@ Khi một hồ sơ có nhiều vấn đề, precedence là `FACT > POLICY > AUTH
 - `Vision__Provider=OpenRouter` là mặc định và giữ nguyên bản deploy Sprint 1. Endpoint dùng OpenRouter Chat Completions qua HTTPS với `qwen/qwen3-vl-8b-instruct`.
 - `Vision__Provider=Ollama` gọi REST local `http://127.0.0.1:11434/api/chat` với `qwen3-vl:4b-instruct`. HTTP chỉ được chấp nhận trên loopback; endpoint khác phải dùng HTTPS.
 - Cả hai provider nhận cùng policy, JSON Schema và parser. Điều này cho phép benchmark model mà không đổi controller hoặc policy engine.
-- OpenRouter không retry HTTP 429 và retry tối đa một lần cho 5xx. Ollama không tự retry để tránh nhân đôi latency trên máy 16 GB.
+- OpenRouter không retry HTTP 429 và retry tối đa một lần cho 5xx. Cả hai adapter chỉ semantic-repair tối đa một lần khi đã có JSON hợp lệ nhưng tự mâu thuẫn; đây không phải retry mù lỗi mạng.
 - Không có auto-fallback âm thầm giữa hai model. Một lần chạy dùng đúng provider cấu hình; lỗi vẫn chuyển `ESCALATE_SYSTEM_ERROR` để audit rõ ràng.
 - API key chỉ lưu trong user-secrets local hoặc Pool Manager production. Ollama local không cần API key và không được mở port ra Internet.
 
@@ -147,8 +150,8 @@ Recycle application pool chỉ nạp lại biến môi trường hiện có. Kh�
 ## 10. Bằng chứng xác minh hiện tại
 
 - Build .NET 8 sạch, 0 warning và 0 error tại lần kiểm tra gần nhất.
-- 60 automated tests kiểm policy, workflow, audit, chống thao tác chồng, hợp đồng OpenRouter/Ollama và tính toàn vẹn Test Kit.
-- Verify fixture v2 đạt 5/5 local ngày 22/09/2026.
+- 70 automated tests kiểm policy, workflow, audit, chống thao tác chồng, hợp đồng OpenRouter/Ollama, semantic validation/repair và tính toàn vẹn Test Kit.
+- Build cuối với Ollama/Qwen3-VL-4B Q4_K_M đạt 15/15 qua ba lượt Verify liên tiếp ngày 27/09/2026 trên 5 fixture tổng hợp: mỗi lượt đúng 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`. TC-02 cần một repair và có latency khoảng 100 giây; các ca còn lại khoảng 45-55 giây trên RTX 3050 Laptop 4 GB.
 - Người dùng xác nhận production upload, AI extraction và audit hoạt động đúng sau khi cập nhật API key ở Pool Manager.
 - Video demo dưới ba phút đã được liên kết từ README; đường đánh giá tái lập cho BGK vẫn là localhost cùng test key được cấp riêng.
 
@@ -160,7 +163,8 @@ Kết quả fixture tổng hợp không phải accuracy trên tập hóa đơn �
 |---|---|
 | Tách extraction và policy | Có thể đổi model mà không đổi quy tắc duyệt; policy unit-test được |
 | Hosted Qwen 8B cho Sprint 1 | Triển khai nhanh và giữ baseline đang được chấm |
-| Adapter Ollama 4B tắt mặc định | Cho phép benchmark local trên máy 16 GB mà không đổi controller, policy hoặc bản deploy |
+| Adapter Ollama 4B tắt mặc định | Đã đạt cổng Verify tổng hợp 15/15 nhưng còn chậm và chưa có tập hóa đơn thực tế độc lập; không tự thay baseline hosted |
+| Semantic validation + một repair | Sửa lỗi đọc dấu hàng nghìn/gán nhầm identifier mà không nới policy hoặc dùng claimed amount để dẫn dắt OCR |
 | Không auto-fallback giữa model | Tránh gọi hai model không kiểm soát, tăng latency và làm audit khó giải thích |
 | Fail-safe thay cho mock ngầm | Lỗi provider cần chuyển người xử lý, không được che bằng kết quả giả |
 | Audit event và timeline projection | Giữ dấu vết đầy đủ nhưng UI chỉ hiển thị một hồ sơ nhất quán |

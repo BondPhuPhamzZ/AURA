@@ -2,7 +2,7 @@
 
 AURA automates the first-line review of employee reimbursement receipts. It was developed for the **VNG Track – Challenge A: The Escalation Referee** at the MLAI Hackathon 2026.
 
-Qwen Vision, accessed through OpenRouter, extracts structured facts from receipt images. It does not make the final business decision. A deterministic C# policy engine decides whether a request can be approved automatically or must be escalated to a human reviewer.
+Qwen Vision, accessed through OpenRouter by default or optional local Ollama, extracts structured facts from receipt images. It does not make the final business decision. The backend validates semantic consistency, then a deterministic C# policy engine decides whether a request can be approved automatically or must be escalated to a human reviewer.
 
 ## Submission Materials
 
@@ -16,6 +16,7 @@ Qwen Vision, accessed through OpenRouter, extracts structured facts from receipt
 
 - Read single-page JPG and PNG receipt images with Qwen Vision.
 - Return structured receipt facts using a JSON Schema contract.
+- Detect semantic inconsistencies and allow one targeted AI re-read before safe human escalation.
 - Apply reimbursement rules through a deterministic C# policy engine.
 - Automatically approve clear, policy-compliant requests.
 - Escalate uncertain, exceptional, or unauthorized requests for human review.
@@ -50,11 +51,11 @@ AURA does not fine-tune Qwen and does not give the model final decision authorit
 ## Sprint 1 Verification
 
 - Build: **0 warnings, 0 errors**
-- Automated tests: **60/60 passed**
+- Automated tests: **70/70 passed**
 - Verify Harness: **5 smoke-test cases**
 - Evaluator reference pack: **15 test cases**
 
-The recorded 5/5 Verify result uses controlled synthetic fixtures. It must not be interpreted as an accuracy claim for independent real-world receipts.
+The local Ollama build passed three consecutive Verify batches (15/15 decisions across the five controlled synthetic fixtures) on 27 September 2026. This result must not be interpreted as an accuracy claim for independent real-world receipts.
 
 ## Evaluation API Key
 
@@ -114,7 +115,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj
 
 - Supports one JPG/PNG image up to 5 MB; PDF and multi-page receipts are not supported yet.
 - Does not yet include role-based authentication, e-invoice verification, tax-code lookup, currency conversion, or malware scanning.
-- The default evaluation path depends on OpenRouter; the optional Ollama path still requires local benchmark evidence before promotion.
+- The default evaluation path depends on OpenRouter; the optional Ollama path passed the controlled fixture gate but still needs an independent receipt benchmark before promotion.
 - Uploaded receipt evidence is stored by the application instance; production deployment requires managed durable storage and an explicit retention policy.
 - AI failure or low confidence always results in human review rather than a fabricated decision.
 

@@ -1,6 +1,6 @@
 # AURA — Checklist nộp bài
 
-Cập nhật: 24/09/2026. Trạng thái này là nguồn đối chiếu cuối; không điền số liệu hoặc URL chưa được xác minh.
+Cập nhật: 27/09/2026. Trạng thái này là nguồn đối chiếu cuối; không điền số liệu hoặc URL chưa được xác minh.
 
 ## 1. Sáu hạng mục bắt buộc
 
@@ -19,7 +19,7 @@ Cập nhật: 24/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 - `README.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_AND_INTEGRATION_REPORT.md`.
 - `docs/`: Build Log nguồn, deployment, runbook, test cases, model selection, measurement plan.
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
-- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide và phản ánh 60 test cùng workflow hiện tại.
+- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide và phản ánh 70 test cùng workflow hiện tại.
 - `submission/AURA_BUILD_LOG.docx`: một trang.
 - `docs/VIDEO_DEMO_SCRIPT.md`: kịch bản quay, không phải artifact bắt buộc nộp.
 - `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.

@@ -43,7 +43,7 @@ Mở URL được in trong terminal. Không truy cập `/Verify` để tìm tran
 
 Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_receipts.py --as-of-date 2026-09-21`. Script đồng thời sinh Test Kit v2 gồm 30 ca nhưng chỉ 5 ca đại diện được Verify gọi. Không đổi `as-of-date`, fixture hoặc expected sau khi chốt mà không cập nhật manifest, tài liệu và commit.
 
-Để bảo toàn credit: build + 60 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 15/30 ảnh tham chiếu qua API.
+Để bảo toàn credit: build + 70 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 15/30 ảnh tham chiếu qua API.
 
 Trong demo, `DecisionPolicy:EscalateDuplicateReceipts=false` cho phép chạy lại cùng ảnh nhưng vẫn ghi nhận trùng trong audit. Trước production, đổi thành `true`. Thay đổi cấu hình này không cần sửa code.
 
@@ -64,7 +64,9 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 - Chọn bằng `Vision:Provider=Ollama`; quay lại baseline bằng `Vision:Provider=OpenRouter`.
 - Model mặc định local là `qwen3-vl:4b-instruct`; một request tại một thời điểm, context 8192 và timeout 180 giây.
 - AURA không tự fallback từ OpenRouter sang Ollama. Lỗi provider phải hiện rõ và chuyển kiểm tra thủ công.
+- Sau JSON Schema, backend kiểm tra ngữ nghĩa tiền VND, loại chứng từ và các identifier. Dữ kiện mâu thuẫn được đọc lại đúng một lần; vẫn sai thì chuyển `ESCALATE_FACT`, không tự đoán hoặc tự nhân số tiền.
 - `/healthz` hiển thị provider/model cấu hình nhưng không thay cho một ảnh smoke test.
+- Build ngày 27/09/2026 đạt 15/15 qua ba batch Verify liên tiếp trên fixture tổng hợp bằng Ollama 4B. Mỗi batch khoảng 303-304 giây trên RTX 3050 Laptop 4 GB; đây không phải accuracy trên tập hóa đơn thật độc lập.
 - Xem hướng dẫn cài, giới hạn RAM và rollback tại `docs/LOCAL_OLLAMA.md`.
 
 ### Khi OpenRouter/Qwen trả lỗi

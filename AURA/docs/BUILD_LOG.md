@@ -8,9 +8,10 @@
 ## Điều mang lại hiệu quả
 
 - Tách extraction khỏi deterministic policy giúp kết quả giải thích và unit-test được.
-- Người dùng xác nhận Verify fixture v2 đạt đúng 5/5 local ngày 22/09/2026. Test Kit v2 gồm 30 ảnh đa layout được sinh offline; kết quả này là fixture demo, không phải accuracy trên dữ liệu độc lập.
-- 60 automated tests gồm 49 policy/workflow/audit và chống thao tác chồng; 4 test hợp đồng OpenRouter/Qwen; 4 test hợp đồng Ollama local; 3 test toàn vẹn Test Kit/manifest, trong đó khóa đúng gói BGK 15 ca.
+- Verify fixture v2 đạt 15/15 qua ba lượt liên tiếp với Ollama/Qwen3-VL-4B ngày 27/09/2026 sau semantic hardening. Test Kit v2 gồm 30 ảnh đa layout được sinh offline; kết quả này là fixture demo, không phải accuracy trên dữ liệu độc lập.
+- 70 automated tests bao phủ policy/workflow/audit, chống thao tác chồng, hợp đồng OpenRouter/Ollama, semantic validation/repair và tính toàn vẹn Test Kit/manifest.
 - Structured Output giảm parsing lỗi so với JSON tự do.
+- Backend phát hiện JSON đúng schema nhưng sai nghĩa như `295.199 đ -> 295.199`, `ECOMMERCE -> RIDE_HAILING`, hoặc số biên nhận bị gán vào `orderId`; model được đọc lại đúng một lần. Repair không nhận claimed amount và kết quả còn mâu thuẫn luôn đi `ESCALATE_FACT`.
 - Bản production trên SmarterASP.NET đã smoke thành công luồng upload, AI extraction và audit sau khi API key được cập nhật trong Pool Manager.
 - UI hiển thị facts AI theo ba cột; bảng chuyển tiếp riêng được hợp nhất vào bảng kết quả để tránh trùng nhưng vẫn phục hồi escalation sau reload.
 - Hồ sơ và audit AI được ghi trong cùng một `SaveChanges`; sau thao tác chuyển tiếp/quản lý, giao diện điều hướng toàn trang để dựng lại các bảng từ trạng thái database đã commit, tránh dữ liệu fragment cũ ghi đè nhau.
@@ -26,9 +27,9 @@
 ## Tính năng lớn nhất cắt giảm
 
 - PDF/hóa đơn nhiều trang, antivirus, tax/e-invoice lookup, ngoại tệ và xác thực người dùng theo role chưa triển khai trong Sprint 1.
-- Không fine-tune hoặc đổi provider mặc định trong lúc chấm. Adapter Ollama/Qwen3-VL-4B local được thêm dưới cờ cấu hình để benchmark sau; OpenRouter 8B vẫn là baseline Sprint 1.
+- Không fine-tune hoặc đổi provider mặc định trong lúc chấm. Adapter Ollama/Qwen3-VL-4B local đã vượt cổng Verify tổng hợp nhưng vẫn nằm dưới cờ cấu hình; OpenRouter 8B giữ nguyên baseline Sprint 1 cho tới khi có benchmark độc lập.
 - Ưu tiên một vertical slice chạy thật: upload -> extract -> decide -> audit -> human override/undo -> tra cứu chứng từ.
 
 ## Minh bạch dữ liệu
 
-Ba mươi fixture Test Kit v2 là dữ liệu tổng hợp sinh offline bằng script; không có hóa đơn cá nhân thật. Năm ảnh đại diện được dùng cho Verify. Baseline gửi ảnh qua OpenRouter tới provider Qwen, vì vậy AURA không tuyên bố on-premise hoặc zero-cloud. Ollama local mới là đường benchmark, chưa có kết quả chất lượng độc lập.
+Ba mươi fixture Test Kit v2 là dữ liệu tổng hợp sinh offline bằng script; không có hóa đơn cá nhân thật. Năm ảnh đại diện được dùng cho Verify. Baseline gửi ảnh qua OpenRouter tới provider Qwen, vì vậy AURA không tuyên bố on-premise hoặc zero-cloud. Ollama local có bằng chứng 15/15 trên fixture kiểm soát nhưng chưa có kết quả chất lượng trên tập hóa đơn thực tế độc lập.

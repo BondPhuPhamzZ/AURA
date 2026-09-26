@@ -1,6 +1,6 @@
 # AURA Receipt Evidence Extraction Contract
 
-Version: 1.4 - 2026-09-21
+Version: 1.5 - 2026-09-27
 Applies to: employee expense reimbursement in Vietnam  
 Policy owner: AURA demo team
 
@@ -18,13 +18,14 @@ Do not claim that an invoice is legally authentic. Vision can only report visibl
 - It may show a VAT invoice, retail receipt, restaurant bill, ride-hailing/e-commerce receipt, or an unsupported/non-receipt image.
 - If the document states `Trang 1/2`, is visibly cropped, omits the total section, or otherwise appears incomplete, add a precise warning. Do not reconstruct missing pages.
 - If a field is absent, obscured, ambiguous, or unreadable, return `null` and add its JSON field name to `missingFields`. Never guess.
-- Preserve monetary values as numbers without thousands separators. Parentheses or a leading minus mean a negative number.
+- Preserve monetary values as numbers without thousands separators. For VND, output whole đồng: `295.199 đ`, `295,199 VND`, and `295 199 ₫` must become JSON number `295199`; `3.000 đ` must become `3000`. Never return `295.199` or `3.0` for those printed VND values. Parentheses or a leading minus mean a negative number.
 - Interpret Vietnamese numeric punctuation from context: `.` or `,` may be a thousands separator, while a quantity may use a decimal comma. Validate every readable line using quantity × unit price = line amount. If an abnormal value such as `1,0000`, `1.0000`, or a separator interpretation makes that arithmetic impossible, do not silently repair, normalize away, or ignore the conflict. Preserve only values supported by the image, add `impossible arithmetic` to `suspiciousSignals`, and explain the conflicting printed values in `warnings`.
 - Separate original document content from later annotations or overlays. A user-added red box, decorative QR code, validation watermark, or stamp such as `Signature Valid` is not a merchant, identifier, line item, amount, date, or status. Do not copy it into data fields. If an overlay obscures or changes the underlying evidence, add a precise warning or suspicious signal.
 
 ## 3. Field extraction rules
 
 - `documentType`: one of `VAT_INVOICE`, `RETAIL_RECEIPT`, `RESTAURANT_BILL`, `RIDE_HAILING`, `ECOMMERCE`, `OTHER`, or null.
+- A product-order screen with purchased goods, delivery status, and an SPX/GHN/GHTK/J&T tracking code is `ECOMMERCE`, not `RIDE_HAILING`. `RIDE_HAILING` is only for passenger trips or booked transport services with a trip/booking/receipt identifier.
 - `documentStatus`: `ISSUED`, `COMPLETED`, `DRAFT`, `CANCELLED`, `REFUNDED`, `RETURNED`, or `UNKNOWN`. A screen that still says “chưa cấp số”, “lưu và phát hành”, draft/preview, or equivalent is `DRAFT`, not an issued invoice. A completed e-commerce order is `COMPLETED`; do not call it a VAT invoice unless the image actually shows an issued invoice.
 - `merchantName`: seller/service provider, never the buyer/customer.
 - `taxId`: seller's tax code only. Do not substitute the buyer's tax code, tax authority code, phone number, bank account, or invoice lookup code.
@@ -40,6 +41,7 @@ Do not claim that an invoice is legally authentic. Vision can only report visibl
 - `orderStatus`: visible order/payment/fulfilment status such as `COMPLETED`, `DELIVERED`, `PAID`, `PENDING`, `CANCELLED`, `REFUNDED`, `RETURNED`, or `UNKNOWN`.
 - A shipping tracking code is logistics evidence only. It never substitutes for a seller tax ID, never proves payment by itself, and never turns an order screen into a VAT invoice.
 - `invoiceNumber`: invoice/receipt number. Do not substitute serial, form number, tax authority code, or booking ID.
+- For `VAT_INVOICE`, `RETAIL_RECEIPT`, and `RESTAURANT_BILL`, a value visibly labelled `Số hóa đơn/biên nhận`, `Invoice No`, or `Receipt No` belongs only in `invoiceNumber`; do not duplicate it into `orderId`, `bookingId`, or `shippingTrackingCode`.
 - `invoiceDate`: normalize an unambiguous printed invoice/receipt date to `YYYY-MM-DD`; otherwise null. Do not use delivery, signing, lookup, or payment dates unless explicitly the invoice/receipt date.
 - `transactionDate`: normalize the visible purchase/payment/order date for digital evidence to `YYYY-MM-DD`; otherwise null. Never copy a delivery-completion date into this field.
 - `completionDate`: normalize a visible delivery/service-completion date to `YYYY-MM-DD`; otherwise null. This is supporting evidence and is not automatically the transaction date.

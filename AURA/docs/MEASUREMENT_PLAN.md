@@ -24,7 +24,7 @@ Tỷ lệ hóa đơn hoàn toàn hợp lệ nhưng bị hệ thống ném vào h
 ## 6. Ngân sách benchmark và quota
 
 - Test Kit v2 có 30 ca nhưng Verify demo chỉ gọi 5 ca đại diện.
-- Build và 60 automated test (policy/workflow/audit + chống thao tác chồng + OpenRouter/Ollama contract + Test Kit integrity) không gọi API AI.
+- Build và 70 automated test (policy/workflow/audit + chống thao tác chồng + OpenRouter/Ollama contract + semantic validation/repair + Test Kit integrity) không gọi API AI.
 - Sau deploy: 1 request smoke test; nếu pass mới chạy 1 lượt Verify = 5 request. Giữ tối thiểu 10 request dự phòng cho BGK/video.
 - Không retry thủ công liên tục khi 429. Ghi lỗi và chờ đúng cửa sổ rate-limit của OpenRouter/provider.
 - Benchmark 30 ca chỉ chạy trong một phiên đo riêng khi đã xác nhận quota/billing; không dùng trong luồng demo.
@@ -35,3 +35,4 @@ Tỷ lệ hóa đơn hoàn toàn hợp lệ nhưng bị hệ thống ném vào h
 - Báo schema success, exact match của amount/date/currency/identifier, missed-escalation, over-escalation, P50/P95 latency, RAM tối đa và chi phí trên hồ sơ hợp lệ.
 - Cổng tối thiểu trước khi cân nhắc đổi mặc định: Verify 5/5 trong ba lượt liên tiếp; 15 ca BGK đi đúng nhánh; không missed escalation trong ca rủi ro khóa; không có lỗi chưa bắt; có rollback cấu hình về OpenRouter.
 - Nếu local 4B chậm hơn giới hạn Verify hoặc giảm chất lượng field quan trọng, giữ OpenRouter làm mặc định và ghi Ollama là phương án privacy/cost có giới hạn. Không sửa expected result để làm đẹp benchmark.
+- Kết quả kiểm soát ngày 27/09/2026: Ollama 4B đạt 15/15 qua ba lượt Verify liên tiếp sau semantic hardening. Tổng latency mỗi batch khoảng 303-304 giây; ca TC-02 cần một repair khoảng 100 giây. Cổng fixture 5 ca đã đạt, nhưng gói BGK 15 ca và tập độc lập vẫn chưa được chạy/ghi nhãn nên chưa đủ điều kiện đổi provider mặc định.

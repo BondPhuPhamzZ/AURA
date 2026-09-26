@@ -15,7 +15,7 @@ Sau khi publish, website root phải chứa trực tiếp `web.config`, `AURA.dl
 3. Upload đúng một ảnh tổng hợp nhỏ, kiểm preview, facts AI, quyết định và một request tương ứng trong OpenRouter Activity.
 4. Với một hồ sơ `ESCALATE_*`, bấm chuyển tiếp, mở tab Quản lý, ra quyết định và xác nhận Audit Log chỉ hiển thị một hồ sơ với timeline nhất quán.
 5. Recycle pool, mở lại hồ sơ/ảnh vừa tạo để kiểm tra SQL và thư mục ảnh không mất dữ liệu.
-6. Chạy Verify Harness đúng một lượt, ưu tiên thực hiện ngay trong lần quay video; xác nhận đủ 5 dòng, expected/actual, PASS/FAIL, timestamp và tổng thời gian dưới 90 giây.
+6. Chạy Verify Harness đúng một lượt, ưu tiên thực hiện ngay trong lần quay video; xác nhận đủ 5 dòng, expected/actual, PASS/FAIL và timestamp. Mốc dưới 90 giây là mục tiêu của hosted/OpenRouter; Ollama 4B local đã đo khoảng 303-304 giây cho một batch trên RTX 3050 Laptop 4 GB.
 7. Kiểm tra lại trên điện thoại hoặc mạng 4G, sau đó mới chia sẻ Live URL.
 
 Cập nhật: 22/09/2026. Phương án khuyến nghị cho bản nộp là **SmarterASP.NET 60-day trial**, vì AURA đang dùng ASP.NET Core 8 + SQL Server và cần lưu ảnh hóa đơn bền. Render Free chỉ nên dùng làm preview stateless.
@@ -30,7 +30,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Kỳ vọng hiện tại: build 0 warning/error và 60/60 test pass. Không cần gọi API AI ở bước này.
+Kỳ vọng hiện tại: build 0 warning/error và 70/70 test pass. Không cần gọi API AI ở bước này.
 
 3. Trong Visual Studio, mở `AURA.csproj` và chọn **Publish → Folder** hoặc **Publish → Web Deploy**. Target framework là `net8.0`, cấu hình `Release`.
 

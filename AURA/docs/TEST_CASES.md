@@ -1,18 +1,18 @@
 # AURA Test Matrix
 
-Mốc cập nhật: 24/09/2026. Ký hiệu: `A` đã tự động hóa bằng xUnit; `V` nằm trong Verify Vision; `P` backlog mở rộng, chưa tuyên bố đã đạt.
+Mốc cập nhật: 27/09/2026. Ký hiệu: `A` đã tự động hóa bằng xUnit; `V` nằm trong Verify Vision; `P` backlog mở rộng, chưa tuyên bố đã đạt.
 
 ## Verify một nút
 
 | ID | Fixture tổng hợp | Claimed | Kỳ vọng | Phủ |
 |---|---|---:|---|---|
-| TC-01 | Mobile e-commerce hoàn tất, có mã SPX và ngày thanh toán | 295.199 | AUTO_APPROVE | V2, local PASS 22/09/2026 |
-| TC-02 | Phiếu in nhiệt tiếng Việt có dấu, đủ MST/biên nhận | 88.000 | AUTO_APPROVE | V2, local PASS 22/09/2026 |
-| TC-03 | Hóa đơn VAT văn phòng phẩm, layout ngang | 420.000 | AUTO_APPROVE | V2, local PASS 22/09/2026 |
-| TC-04 | Phiếu in nhiệt để trống MST thật sự | 210.000 | ESCALATE_FACT | V2, local PASS 22/09/2026 |
-| TC-05 | Nhà hàng có Bia Tiger x 6 | 780.000 | ESCALATE_POLICY | V2, local PASS 22/09/2026 |
+| TC-01 | Mobile e-commerce hoàn tất, có mã SPX và ngày thanh toán | 295.199 | AUTO_APPROVE | V2; Ollama 3/3 ngày 27/09/2026 |
+| TC-02 | Phiếu in nhiệt tiếng Việt có dấu, đủ MST/biên nhận | 88.000 | AUTO_APPROVE | V2; Ollama 3/3 sau targeted repair ngày 27/09/2026 |
+| TC-03 | Hóa đơn VAT văn phòng phẩm, layout ngang | 420.000 | AUTO_APPROVE | V2; Ollama 3/3 ngày 27/09/2026 |
+| TC-04 | Phiếu in nhiệt để trống MST thật sự | 210.000 | ESCALATE_FACT | V2; Ollama 3/3 ngày 27/09/2026 |
+| TC-05 | Nhà hàng có Bia Tiger x 6 | 780.000 | ESCALATE_POLICY | V2; Ollama 3/3 ngày 27/09/2026 |
 
-Ngày 20/09/2026, provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026; người dùng xác nhận đạt đúng 5/5 local bằng Qwen3-VL-8B-Instruct/OpenRouter ngày 22/09/2026. Production upload/AI/audit đã smoke thành công và video demo đã được liên kết từ README. Kết quả 5/5 trên fixture tổng hợp không phải accuracy tổng quát.
+Ngày 20/09/2026, provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026; người dùng xác nhận đạt đúng 5/5 local bằng Qwen3-VL-8B-Instruct/OpenRouter ngày 22/09/2026. Ngày 27/09/2026, Ollama/Qwen3-VL-4B đạt 15/15 qua ba batch liên tiếp sau semantic hardening. Production upload/AI/audit đã smoke thành công và video demo đã được liên kết từ README. Các kết quả fixture tổng hợp không phải accuracy tổng quát.
 
 Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số `AUTO_APPROVE`/`ESCALATE_*`; facts trích xuất hiển thị cạnh upload; auto approve xuất hiện ngay trong Audit; escalation còn trong bảng kết quả cho tới khi chuyển quản lý. Upload/Verify cập nhật trong workspace; mutation workflow điều hướng toàn trang sau commit để tránh trạng thái cũ hoặc trùng lặp.
 
@@ -67,6 +67,11 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P44 | E-commerce không có order/booking/tracking/receipt ID | ESCALATE_FACT | A |
 | P45 | Chỉ có ngày giao hàng nhưng thiếu ngày giao dịch/thanh toán | ESCALATE_FACT | A |
 | P46 | Đơn đã hoàn thành nhưng đồng thời REFUNDED/RETURNED | ESCALATE_FACT bất kể có tracking code | A |
+| P47 | Model đọc `295.199 đ` thành JSON number `295.199` thay vì `295199` | Phát hiện sai ngữ nghĩa; repair đúng một lần; không tự nhân tiền | A/V |
+| P48 | Model gọi đơn hàng giao qua SPX/GHN/GHTK/J&T là `RIDE_HAILING` | Phát hiện mâu thuẫn loại chứng từ và yêu cầu repair | A/V |
+| P49 | Model đưa số hóa đơn giấy vào `orderId` hoặc lặp cùng mã ở nhiều field | Repair/canonicalize về `invoiceNumber`; không giữ định danh số giả | A/V |
+| P50 | Repair vẫn còn mâu thuẫn ngữ nghĩa | `ESCALATE_FACT`, không AUTO_APPROVE và không gọi repair vô hạn | A |
+| P51 | E-commerce không có line items đáng tin cậy | `ESCALATE_FACT` | A |
 
 ## Ma trận human-in-the-loop
 
