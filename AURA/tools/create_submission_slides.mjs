@@ -218,7 +218,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   text(s, "Bằng chứng đã có", 54, 428, 250, 28, 20, C.white, { bold: true });
   const evidence = [
     ["70/70", "test offline", C.blue],
-    ["15/15", "3 batch Ollama", C.green],
+    ["25/25", "5 batch Ollama", C.green],
     ["15", "ca BGK khóa", C.violet],
   ];
   evidence.forEach((e, i) => {
@@ -238,7 +238,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
   text(s, "Baseline và target chỉ điền sau khi có dữ liệu người dùng thật.", 635, 610, 589, 34, 15, C.amber, { align: "center", bold: true });
   footer(s, 3);
-  s.speakerNotes.textFrame.setText("Nguồn nội bộ: 70 test offline; Ollama 4B đạt 15/15 qua ba batch liên tiếp trên 5 fixture tổng hợp ngày 27/09/2026. Không suy rộng thành accuracy thực tế.");
+  s.speakerNotes.textFrame.setText("Nguồn nội bộ: 70 test offline; Ollama 4B đạt 25/25 qua năm batch liên tiếp trên 5 fixture tổng hợp và upload HoaDon1 đạt AUTO_APPROVE 3/3 ngày 27/09/2026. Không suy rộng thành accuracy thực tế.");
 }
 
 // Slide 4
@@ -300,7 +300,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 157, 382, 242, C.surface2, "rounded-xl", C.green);
   text(s, "ĐÃ BÀN GIAO", 869, 180, 326, 24, 15, C.green, { bold: true });
-  const todo = ["Repo + hướng dẫn local", "70 test offline", "15/15 fixture + 15 ca BGK", "Video • slide • Build Log"];
+  const todo = ["Repo + hướng dẫn local", "70 test offline", "25/25 fixture + 15 ca BGK", "Video • slide • Build Log"];
   todo.forEach((t, i) => {
     pill(s, `${i + 1}`, 869, 225 + i * 40, 30, C.green);
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });
@@ -322,7 +322,7 @@ for (let i = 0; i < deck.slides.length; i++) {
   await fs.writeFile(path.join(TMP_DIR, `slide-${i + 1}.png`), new Uint8Array(await preview.arrayBuffer()));
 }
 
-const stagingDir = path.join(WORKSPACE_DIR, ".tmp", "slides-finalizer-20260927");
+const stagingDir = path.join(WORKSPACE_DIR, ".tmp", "slides-finalizer-20260927b");
 await fs.mkdir(stagingDir, { recursive: true });
 const candidatePath = path.join(stagingDir, "AURA_5_SLIDES.candidate.pptx");
 await (await PresentationFile.exportPptx(deck)).save(candidatePath);
