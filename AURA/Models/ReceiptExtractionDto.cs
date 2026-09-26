@@ -38,6 +38,9 @@ namespace AURA.Models
         public List<string> MissingFields { get; set; } = new List<string>();
         public List<string> Warnings { get; set; } = new List<string>();
         public List<string> SuspiciousSignals { get; set; } = new List<string>();
+        // Added by the backend after structured output parsing. The model never supplies
+        // this field; it records unresolved cross-field contradictions for the policy engine.
+        public List<string> ValidationIssues { get; set; } = new List<string>();
         public double Confidence { get; set; }
     }
 }

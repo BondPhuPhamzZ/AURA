@@ -45,6 +45,13 @@ internal static class ReceiptExtractionContract
             You are AURA's receipt-evidence extraction component. Follow the contract below exactly.
             Return only one JSON object that follows the supplied schema. Never add Markdown or prose.
 
+            HIGH-PRIORITY NORMALIZATION:
+            - VND has no decimal minor unit in this workflow. Vietnamese printed separators are thousands
+              separators: `295.199 đ` -> 295199 and `3.000 đ` -> 3000 in JSON numeric fields.
+            - A product-order screen with delivery status and SPX/GHN/GHTK/J&T tracking is ECOMMERCE,
+              not RIDE_HAILING. RIDE_HAILING is only for passenger trips with a trip/booking/receipt ID.
+            - Keep order IDs, trip/booking IDs and shipping tracking codes in their distinct fields.
+
             {policy}
             """;
 
@@ -61,8 +68,9 @@ internal static class ReceiptExtractionContract
         facts.MissingFields ??= [];
         facts.Warnings ??= [];
         facts.SuspiciousSignals ??= [];
+        facts.ValidationIssues ??= [];
         facts.Confidence = Math.Clamp(facts.Confidence, 0, 1);
-        return facts;
+        return ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
     }
 
     public static object BuildResponseSchema() => new
@@ -76,7 +84,10 @@ internal static class ReceiptExtractionContract
             "confidence" },
         properties = new Dictionary<string, object>
         {
-            ["documentType"] = NullableString(), ["documentStatus"] = NullableString(),
+            ["documentType"] = EnumOrNull("VAT_INVOICE", "RETAIL_RECEIPT", "RESTAURANT_BILL",
+                "RIDE_HAILING", "ECOMMERCE", "OTHER"),
+            ["documentStatus"] = EnumOrNull("ISSUED", "COMPLETED", "DRAFT", "CANCELLED",
+                "REFUNDED", "RETURNED", "UNKNOWN"),
             ["merchantName"] = NullableString(), ["taxId"] = NullableString(),
             ["merchantId"] = NullableString(), ["terminalId"] = NullableString(),
             ["platformName"] = NullableString(), ["orderId"] = NullableString(), ["bookingId"] = NullableString(),
@@ -84,8 +95,9 @@ internal static class ReceiptExtractionContract
             ["orderStatus"] = NullableString(), ["invoiceNumber"] = NullableString(),
             ["invoiceDate"] = NullableString(), ["transactionDate"] = NullableString(),
             ["completionDate"] = NullableString(), ["invoiceTime"] = NullableString(),
-            ["currency"] = NullableString(), ["subtotal"] = NullableNumber(), ["tax"] = NullableNumber(),
-            ["totalAmount"] = NullableNumber(),
+            ["currency"] = NullableString(), ["subtotal"] = NullableMoneyNumber("subtotal"),
+            ["tax"] = NullableMoneyNumber("tax"),
+            ["totalAmount"] = NullableMoneyNumber("final amount actually paid"),
             ["lineItems"] = new
             {
                 type = "array",
@@ -97,7 +109,8 @@ internal static class ReceiptExtractionContract
                     properties = new Dictionary<string, object>
                     {
                         ["description"] = new { type = "string" }, ["quantity"] = NullableNumber(),
-                        ["unitPrice"] = NullableNumber(), ["amount"] = NullableNumber()
+                        ["unitPrice"] = NullableMoneyNumber("line unit price"),
+                        ["amount"] = NullableMoneyNumber("line amount")
                     }
                 }
             },
@@ -128,5 +141,15 @@ internal static class ReceiptExtractionContract
 
     private static object NullableString() => new { type = new[] { "string", "null" } };
     private static object NullableNumber() => new { type = new[] { "number", "null" } };
+    private static object NullableMoneyNumber(string meaning) => new
+    {
+        type = new[] { "number", "null" },
+        description = $"Normalized numeric {meaning}. For VND remove thousands separators: 295.199 đ becomes 295199, never 295.199."
+    };
+    private static object EnumOrNull(params string[] values) => new
+    {
+        type = new[] { "string", "null" },
+        @enum = values.Cast<object?>().Append(null).ToArray()
+    };
     private static object StringArray() => new { type = "array", items = new { type = "string" } };
 }

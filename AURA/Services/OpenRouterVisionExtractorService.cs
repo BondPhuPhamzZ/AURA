@@ -37,37 +37,73 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             _environment.ContentRootPath, cancellationToken);
         var responseSchema = ReceiptExtractionContract.BuildResponseSchema();
 
-        var payload = new
+        var firstFacts = await RequestFactsWithMalformedRetryAsync(
+            BuildPayload(input, responseSchema, null), cancellationToken);
+        var firstIssues = ReceiptSemanticValidator.Validate(firstFacts);
+        if (firstIssues.Count == 0) return firstFacts;
+
+        _logger.LogWarning(
+            "Qwen returned schema-valid but semantically inconsistent receipt facts: {Issues}. Retrying once with correction guidance.",
+            string.Join(" | ", firstIssues));
+
+        try
         {
-            model = _options.Model,
-            messages = new object[]
+            var repairInstruction = ReceiptSemanticValidator.BuildRepairInstruction(firstIssues);
+            var repairedFacts = await RequestFactsWithMalformedRetryAsync(
+                BuildPayload(input, responseSchema, repairInstruction), cancellationToken);
+            var remainingIssues = ReceiptSemanticValidator.Validate(repairedFacts);
+            return remainingIssues.Count == 0
+                ? repairedFacts
+                : ReceiptSemanticValidator.MarkUnresolved(repairedFacts, remainingIssues);
+        }
+        catch (VisionExtractionException exception)
+        {
+            _logger.LogWarning(exception,
+                "Qwen semantic repair failed; returning the first extraction marked for manual review.");
+            return ReceiptSemanticValidator.MarkUnresolved(firstFacts, firstIssues);
+        }
+    }
+
+    private object BuildPayload(ReceiptExtractionContract.Input input, object responseSchema,
+        string? repairInstruction) => new
+    {
+        model = _options.Model,
+        messages = new object[]
+        {
+            new { role = "system", content = input.SystemPrompt },
+            new
             {
-                new { role = "system", content = input.SystemPrompt },
-                new
+                role = "user",
+                content = new object[]
                 {
-                    role = "user",
-                    content = new object[]
+                    new
                     {
-                        new { type = "text", text = "Trích xuất dữ kiện từ ảnh chứng từ này và chỉ trả về JSON đúng schema." },
-                        new { type = "image_url", image_url = new { url = $"data:{input.MimeType};base64,{input.Base64Image}" } }
-                    }
-                }
-            },
-            temperature = 0,
-            max_tokens = _options.MaxOutputTokens,
-            plugins = new[] { new { id = "response-healing" } },
-            response_format = new
-            {
-                type = "json_schema",
-                json_schema = new
-                {
-                    name = "aura_receipt_extraction",
-                    strict = true,
-                    schema = responseSchema
+                        type = "text",
+                        text = repairInstruction ??
+                            "Trích xuất dữ kiện từ ảnh chứng từ này và chỉ trả về JSON đúng schema."
+                    },
+                    new { type = "image_url", image_url = new { url = $"data:{input.MimeType};base64,{input.Base64Image}" } }
                 }
             }
-        };
+        },
+        temperature = 0,
+        max_tokens = _options.MaxOutputTokens,
+        plugins = new[] { new { id = "response-healing" } },
+        response_format = new
+        {
+            type = "json_schema",
+            json_schema = new
+            {
+                name = "aura_receipt_extraction",
+                strict = true,
+                schema = responseSchema
+            }
+        }
+    };
 
+    private async Task<ReceiptExtractionDto> RequestFactsWithMalformedRetryAsync(object payload,
+        CancellationToken cancellationToken)
+    {
         const int maxMalformedResponseAttempts = 2;
         for (var attempt = 1; attempt <= maxMalformedResponseAttempts; attempt++)
         {

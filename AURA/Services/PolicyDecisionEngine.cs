@@ -26,6 +26,8 @@ public static class PolicyDecisionEngine
                 "Hệ thống không đọc được hóa đơn. Quản lý có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]");
 
         var factProblems = new List<string>();
+        if (facts.ValidationIssues.Count > 0)
+            factProblems.Add("kết quả trích xuất còn mâu thuẫn: " + string.Join(", ", facts.ValidationIssues));
         if (facts.Confidence < MinimumConfidence)
             factProblems.Add($"độ tin cậy trích xuất chỉ {facts.Confidence:P0}");
         if (ContainsAny(facts.DocumentStatus, "draft", "nháp", "unissued", "chưa phát hành", "cancelled", "canceled", "đã hủy", "refunded", "hoàn tiền", "returned", "trả hàng"))
@@ -72,6 +74,9 @@ public static class PolicyDecisionEngine
             {
                 factProblems.Add($"đơn hàng trực tuyến chưa có trạng thái hoàn tất đáng tin cậy ({facts.OrderStatus})");
             }
+
+            if (facts.LineItems.Count == 0)
+                factProblems.Add("đơn hàng trực tuyến thiếu danh sách hàng hóa/dịch vụ để đối chiếu");
         }
         else if (isRideHailing && string.IsNullOrWhiteSpace(facts.BookingId) &&
                  string.IsNullOrWhiteSpace(facts.InvoiceNumber))

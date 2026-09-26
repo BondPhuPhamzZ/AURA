@@ -239,6 +239,70 @@ public sealed class OpenRouterVisionExtractorServiceTests
         }
     }
 
+    [Fact]
+    public async Task Applies_the_same_semantic_repair_contract_on_openrouter()
+    {
+        var root = CreateFixtureRoot();
+        try
+        {
+            var attempts = 0;
+            var handler = new StubHandler(_ =>
+            {
+                attempts++;
+                var content = attempts == 1 ? FaultyTc01Json : CorrectedTc01Json;
+                var responseJson = JsonSerializer.Serialize(new
+                {
+                    choices = new[] { new { finish_reason = "stop", message = new { content } } }
+                });
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(responseJson, Encoding.UTF8, "application/json")
+                });
+            });
+            var options = Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions
+            {
+                ApiKey = "test-key", Model = "qwen/qwen3-vl-8b-instruct", PolicyPath = "BUSINESS_RULES.md"
+            });
+            var service = new OpenRouterVisionExtractorService(
+                new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) }, options,
+                new TestEnvironment(root), NullLogger<OpenRouterVisionExtractorService>.Instance);
+
+            var result = await service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg"));
+
+            Assert.Equal(2, attempts);
+            Assert.Equal("ECOMMERCE", result.DocumentType);
+            Assert.Equal(295_199m, result.TotalAmount);
+            Assert.Empty(result.ValidationIssues);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private const string FaultyTc01Json = """
+        {"documentType":"RIDE_HAILING","documentStatus":"COMPLETED","merchantName":"Double Fish Việt Nam",
+        "taxId":null,"merchantId":null,"terminalId":null,"platformName":"SPX Instant",
+        "orderId":"SPX-VN2693231211394","bookingId":null,"shippingTrackingCode":"SPX-VN2693231211394",
+        "shippingProvider":"SPX Instant","orderStatus":"COMPLETED","invoiceNumber":null,"invoiceDate":null,
+        "transactionDate":"2026-09-18","completionDate":"2026-09-18","invoiceTime":"09:45",
+        "currency":"VND","subtotal":292.199,"tax":3.0,"totalAmount":295.199,
+        "lineItems":[{"description":"Vợt bóng bàn","quantity":1,"unitPrice":292.199,"amount":292.199},
+        {"description":"Bảo hiểm người tiêu dùng","quantity":1,"unitPrice":3.0,"amount":3.0}],
+        "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
+        """;
+
+    private const string CorrectedTc01Json = """
+        {"documentType":"ECOMMERCE","documentStatus":"COMPLETED","merchantName":"Double Fish Việt Nam",
+        "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,"bookingId":null,
+        "shippingTrackingCode":"SPX-VN2693231211394","shippingProvider":"SPX Instant","orderStatus":"COMPLETED",
+        "invoiceNumber":null,"invoiceDate":null,"transactionDate":"2026-09-18","completionDate":"2026-09-18",
+        "invoiceTime":"09:45","currency":"VND","subtotal":295199,"tax":0,"totalAmount":295199,
+        "lineItems":[{"description":"Vợt bóng bàn","quantity":1,"unitPrice":292199,"amount":292199},
+        {"description":"Bảo hiểm người tiêu dùng","quantity":1,"unitPrice":3000,"amount":3000}],
+        "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
+        """;
+
     private static string CreateFixtureRoot()
     {
         var root = Path.Combine(Path.GetTempPath(), "aura-openrouter-tests", Guid.NewGuid().ToString("N"));

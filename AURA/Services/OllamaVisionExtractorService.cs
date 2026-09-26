@@ -31,34 +31,68 @@ public sealed class OllamaVisionExtractorService : IVisionExtractor
             _environment.ContentRootPath, cancellationToken);
         var schema = ReceiptExtractionContract.BuildResponseSchema();
         var schemaJson = JsonSerializer.Serialize(schema);
-        var payload = new
-        {
-            model = _options.Model,
-            messages = new object[]
-            {
-                new
-                {
-                    role = "system",
-                    content = $"{input.SystemPrompt}\nJSON Schema:\n{schemaJson}"
-                },
-                new
-                {
-                    role = "user",
-                    content = "Trích xuất dữ kiện từ ảnh chứng từ này và chỉ trả về JSON đúng schema.",
-                    images = new[] { input.Base64Image }
-                }
-            },
-            stream = false,
-            format = schema,
-            keep_alive = _options.KeepAlive,
-            options = new
-            {
-                temperature = 0,
-                num_ctx = _options.ContextTokens,
-                num_predict = _options.MaxOutputTokens
-            }
-        };
 
+        var firstFacts = await RequestFactsOnceAsync(BuildPayload(input, schema, schemaJson, null), cancellationToken);
+        var firstIssues = ReceiptSemanticValidator.Validate(firstFacts);
+        if (firstIssues.Count == 0) return firstFacts;
+
+        _logger.LogWarning(
+            "Ollama returned schema-valid but semantically inconsistent receipt facts: {Issues}. Retrying once with correction guidance.",
+            string.Join(" | ", firstIssues));
+
+        try
+        {
+            var repairInstruction = ReceiptSemanticValidator.BuildRepairInstruction(firstIssues);
+            var repairedFacts = await RequestFactsOnceAsync(
+                BuildPayload(input, schema, schemaJson, repairInstruction), cancellationToken);
+            var remainingIssues = ReceiptSemanticValidator.Validate(repairedFacts);
+            return remainingIssues.Count == 0
+                ? repairedFacts
+                : ReceiptSemanticValidator.MarkUnresolved(repairedFacts, remainingIssues);
+        }
+        catch (VisionExtractionException exception)
+        {
+            // The first response remains useful evidence, but it must never be auto-approved.
+            // A failed optional repair is therefore a FACT escalation rather than a provider outage.
+            _logger.LogWarning(exception,
+                "Ollama semantic repair failed; returning the first extraction marked for manual review.");
+            return ReceiptSemanticValidator.MarkUnresolved(firstFacts, firstIssues);
+        }
+    }
+
+    private object BuildPayload(ReceiptExtractionContract.Input input, object schema, string schemaJson,
+        string? repairInstruction) => new
+    {
+        model = _options.Model,
+        messages = new object[]
+        {
+            new
+            {
+                role = "system",
+                content = $"{input.SystemPrompt}\nJSON Schema:\n{schemaJson}"
+            },
+            new
+            {
+                role = "user",
+                content = repairInstruction ??
+                    "Trích xuất dữ kiện từ ảnh chứng từ này và chỉ trả về JSON đúng schema.",
+                images = new[] { input.Base64Image }
+            }
+        },
+        stream = false,
+        format = schema,
+        keep_alive = _options.KeepAlive,
+        options = new
+        {
+            temperature = 0,
+            num_ctx = _options.ContextTokens,
+            num_predict = _options.MaxOutputTokens
+        }
+    };
+
+    private async Task<ReceiptExtractionDto> RequestFactsOnceAsync(object payload,
+        CancellationToken cancellationToken)
+    {
         HttpResponseMessage response;
         try
         {
