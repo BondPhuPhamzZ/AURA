@@ -45,4 +45,5 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 2. API key đánh giá chỉ gửi riêng cho BTC; không đặt key thật trong Git, README, ảnh hoặc video.
 3. Trước mỗi bản bàn giao mới: quét secret, build/test, push commit chốt và xác minh repository public.
 4. Nếu có thay đổi đáng kể trong lúc chấm, tạo ticket/báo cáo tiến độ cho BTC; sửa tài liệu hoặc độ ổn định nhỏ có thể báo theo commit.
-5. Phản hồi người dùng và benchmark dữ liệu thật vẫn là Sprint 2; không tự tạo quote hoặc accuracy khi chưa có bằng chứng.
+5. Bằng chứng local ngày 27/09/2026: Ollama/Qwen3-VL-4B đạt 25/25 qua năm batch Verify liên tiếp; upload `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Ba batch có số đo latency chi tiết, hai batch bổ sung chỉ xác nhận quyết định.
+6. Phản hồi người dùng, phép so sánh OpenRouter trên cùng build và benchmark dữ liệu thật vẫn là bước tiếp theo; không tự tạo quote hoặc accuracy khi chưa có bằng chứng.

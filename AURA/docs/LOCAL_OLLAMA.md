@@ -103,9 +103,31 @@ Mở `/healthz`. Kỳ vọng:
 6. Ghi actual status, semantic repair, latency từng ca, tổng thời gian batch, RAM/GPU và lỗi nếu có. Ollama local có thể mất khoảng năm phút cho 5 ca trên RTX 3050 Laptop 4 GB, không dùng mốc 90 giây của hosted để kết luận sai về chất lượng.
 7. Chỉ dùng Ollama cho demo chính khi đạt cổng benchmark trong `docs/MEASUREMENT_PLAN.md`.
 
-Kết quả kiểm soát ngày 27/09/2026 trên build semantic-hardening: ba batch liên tiếp đều đạt 5/5, tức 15/15 quyết định đúng trên 5 fixture tổng hợp. TC-02 cần một lượt repair nên khoảng 100 giây; các ca còn lại khoảng 45-55 giây; mỗi batch khoảng 303-304 giây. Đây là bằng chứng pipeline có kiểm soát, chưa phải accuracy trên hóa đơn thật độc lập.
+Kết quả kiểm soát ngày 27/09/2026 trên build semantic-hardening: năm batch liên tiếp đều đạt 5/5, tức 25/25 quyết định đúng trên 5 fixture tổng hợp; upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Ba batch có đo chi tiết mất khoảng 303-304 giây mỗi batch; TC-02 cần một lượt repair nên khoảng 100 giây và các ca còn lại khoảng 45-55 giây. Hai batch xác nhận bổ sung chưa tổng hợp latency. Đây là bằng chứng pipeline có kiểm soát, chưa phải accuracy trên hóa đơn thật độc lập.
 
-## 7. Quay lại OpenRouter
+## 7. Dừng phiên test và tắt máy an toàn
+
+1. Chờ request upload hoặc Verify hiện tại kết thúc; không ép tắt `AURA.exe` khi model còn xử lý.
+2. Tại terminal đang chạy AURA, nhấn `Ctrl+C` một lần và đợi trở lại dấu nhắc PowerShell.
+3. Dỡ model khỏi RAM/VRAM nếu muốn giải phóng ngay:
+
+```powershell
+ollama stop qwen3-vl:4b-instruct
+ollama ps
+```
+
+`ollama ps` không còn model là trạng thái mong đợi. Có thể chọn **Quit Ollama** ở biểu tượng khay hệ thống, hoặc tắt Windows bình thường. Không cần dừng SQL LocalDB, xóa database, reset migration, xóa model hay đặt lại user-secrets. `Ollama:KeepAlive=30m` chỉ giữ model trong bộ nhớ khi máy đang chạy; thiết lập vẫn được lưu cho phiên sau nhưng RAM/VRAM luôn được giải phóng khi tắt máy.
+
+Ngày test tiếp theo, mở Ollama rồi kiểm tra API trước khi chạy AURA:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:11434/api/tags
+dotnet run
+```
+
+Nếu model chưa được nạp, request ảnh đầu tiên là cold run và sẽ chậm hơn; đây là hành vi bình thường. Không cần chạy lệnh warm-up khi đang đo cold latency.
+
+## 8. Quay lại OpenRouter
 
 Không cần xóa Ollama hoặc tải lại database:
 
@@ -118,7 +140,7 @@ dotnet run
 
 Sau đó mở `/healthz` và xác nhận `provider` là `OpenRouter`. AURA không tự chuyển provider khi đang xử lý một hồ sơ; mỗi lần chạy dùng đúng provider đã cấu hình để audit và benchmark không bị lẫn.
 
-## 8. Lỗi thường gặp
+## 9. Lỗi thường gặp
 
 | Mã/hiện tượng | Nguyên nhân thường gặp | Cách xử lý |
 |---|---|---|
@@ -129,7 +151,7 @@ Sau đó mở `/healthz` và xác nhận `provider` là `OpenRouter`. AURA khôn
 | JSON hợp lệ nhưng sai loại chứng từ/định dạng VND | Lỗi ngữ nghĩa của model | Backend repair đúng một lần; nếu vẫn sai thì `ESCALATE_FACT`, không nhân tiền hoặc gán mã bằng suy đoán |
 | Máy swap/đơ | Nhiều model/request hoặc context quá lớn | Một model, một request, context 4096; `ollama stop qwen3-vl:4b-instruct` để giải phóng RAM |
 
-## 9. Nguyên tắc đánh giá
+## 10. Nguyên tắc đánh giá
 
 Không so sánh 4B local và 8B hosted bằng cảm giác. Chạy cùng ảnh, cùng policy và cùng schema; ghi model/tag, context, lượng tử hóa, latency, schema success, semantic-repair rate, exact match các field quan trọng, missed escalation và over-escalation. Ollama chỉ trở thành provider mặc định sau khi đạt cổng chất lượng trên tập độc lập và có kế hoạch quay lại OpenRouter.
 

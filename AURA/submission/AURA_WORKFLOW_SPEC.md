@@ -1,6 +1,6 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 1.3 — 27/09/2026
+Phiên bản: 1.4 — 27/09/2026
 Phạm vi: Sprint 1, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
@@ -122,7 +122,7 @@ AURA hiện **không có circuit breaker tổng quát** và **không triển kha
 
 ## 9. Dữ liệu thật và dữ liệu mô phỏng
 
-- Chạy thật baseline: upload, OpenRouter/Qwen 8B, semantic validator, policy C#, SQL Server, audit, human decision và receipt retrieval. Adapter Ollama/Qwen 4B local đạt 15/15 trên ba lượt fixture kiểm soát nhưng chưa thay baseline vì chưa benchmark tập độc lập.
+- Chạy thật baseline: upload, OpenRouter/Qwen 8B, semantic validator, policy C#, SQL Server, audit, human decision và receipt retrieval. Adapter Ollama/Qwen 4B local đạt 25/25 trên năm lượt fixture kiểm soát và upload `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3, nhưng chưa thay baseline vì chưa benchmark OpenRouter cùng build hoặc tập độc lập.
 - Mô phỏng: 30 ảnh tổng hợp sinh offline; 5 ảnh Verify và manifest 15 ca BGK được tuyển từ ngân hàng này.
 - Không dùng hóa đơn cá nhân thật trong Git. Ảnh thật tùy chọn chỉ đặt tại `test_kit/local_real` và bị `.gitignore` loại trừ.
 

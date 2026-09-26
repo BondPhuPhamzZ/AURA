@@ -66,7 +66,7 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 - AURA không tự fallback từ OpenRouter sang Ollama. Lỗi provider phải hiện rõ và chuyển kiểm tra thủ công.
 - Sau JSON Schema, backend kiểm tra ngữ nghĩa tiền VND, loại chứng từ và các identifier. Dữ kiện mâu thuẫn được đọc lại đúng một lần; vẫn sai thì chuyển `ESCALATE_FACT`, không tự đoán hoặc tự nhân số tiền.
 - `/healthz` hiển thị provider/model cấu hình nhưng không thay cho một ảnh smoke test.
-- Build ngày 27/09/2026 đạt 15/15 qua ba batch Verify liên tiếp trên fixture tổng hợp bằng Ollama 4B. Mỗi batch khoảng 303-304 giây trên RTX 3050 Laptop 4 GB; đây không phải accuracy trên tập hóa đơn thật độc lập.
+- Build ngày 27/09/2026 đạt 25/25 qua năm batch Verify liên tiếp trên fixture tổng hợp bằng Ollama 4B; upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Ba batch có đo chi tiết mất khoảng 303-304 giây mỗi batch trên RTX 3050 Laptop 4 GB; hai batch xác nhận bổ sung chưa tổng hợp latency. Đây không phải accuracy trên tập hóa đơn thật độc lập.
 - Xem hướng dẫn cài, giới hạn RAM và rollback tại `docs/LOCAL_OLLAMA.md`.
 
 ### Khi OpenRouter/Qwen trả lỗi
@@ -108,7 +108,7 @@ Khi deploy public, ứng dụng phải chạy sau HTTPS/reverse proxy. Container
 - `/BUSINESS_RULES.md` trả `404` vì policy không được public từ static root.
 - Upload giả MIME bị từ chối; JPG/PNG hợp lệ được lưu và mở lại qua route chứng từ.
 - Ảnh lớn hơn 5 MB bị chặn với thông báo dễ hiểu, không xuất hiện lỗi `Unexpected end of JSON input`. Giới hạn multipart có phần đệm cho antiforgery/boundary nhưng controller vẫn khóa riêng file ở 5 MB.
-- Verify đạt 5/5 trong thời gian demo cho phép; từng request có timeout 90 giây.
+- Verify đạt 5/5 trong thời gian demo cho phép. Timeout cấu hình là 90 giây cho OpenRouter và 180 giây cho Ollama; đây là chốt lỗi kỹ thuật, không phải tuyên bố latency mục tiêu.
 - Audit hiển thị input, action, timestamp, reason; chuyển tiếp/Đồng ý/Từ chối/undo hoạt động.
 - Ca `ESCALATE_*` xuất hiện ở cửa sổ nhân viên trước; bấm **Chuyển tiếp** rồi mới xuất hiện ở cửa sổ quản lý.
 - Nhân viên có thể chuyển từng hồ sơ hoặc **Chuyển tiếp tất cả**; mỗi hồ sơ phải có audit `EMPLOYEE_FORWARDED_TO_MANAGER`.

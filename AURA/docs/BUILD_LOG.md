@@ -8,7 +8,7 @@
 ## Điều mang lại hiệu quả
 
 - Tách extraction khỏi deterministic policy giúp kết quả giải thích và unit-test được.
-- Verify fixture v2 đạt 15/15 qua ba lượt liên tiếp với Ollama/Qwen3-VL-4B ngày 27/09/2026 sau semantic hardening. Test Kit v2 gồm 30 ảnh đa layout được sinh offline; kết quả này là fixture demo, không phải accuracy trên dữ liệu độc lập.
+- Verify fixture v2 đạt 25/25 qua năm lượt liên tiếp với Ollama/Qwen3-VL-4B ngày 27/09/2026 sau semantic hardening. Upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Test Kit v2 gồm 30 ảnh đa layout được sinh offline; các kết quả này là fixture demo, không phải accuracy trên dữ liệu độc lập.
 - 70 automated tests bao phủ policy/workflow/audit, chống thao tác chồng, hợp đồng OpenRouter/Ollama, semantic validation/repair và tính toàn vẹn Test Kit/manifest.
 - Structured Output giảm parsing lỗi so với JSON tự do.
 - Backend phát hiện JSON đúng schema nhưng sai nghĩa như `295.199 đ -> 295.199`, `ECOMMERCE -> RIDE_HAILING`, hoặc số biên nhận bị gán vào `orderId`; model được đọc lại đúng một lần. Repair không nhận claimed amount và kết quả còn mâu thuẫn luôn đi `ESCALATE_FACT`.
@@ -32,4 +32,4 @@
 
 ## Minh bạch dữ liệu
 
-Ba mươi fixture Test Kit v2 là dữ liệu tổng hợp sinh offline bằng script; không có hóa đơn cá nhân thật. Năm ảnh đại diện được dùng cho Verify. Baseline gửi ảnh qua OpenRouter tới provider Qwen, vì vậy AURA không tuyên bố on-premise hoặc zero-cloud. Ollama local có bằng chứng 15/15 trên fixture kiểm soát nhưng chưa có kết quả chất lượng trên tập hóa đơn thực tế độc lập.
+Ba mươi fixture Test Kit v2 là dữ liệu tổng hợp sinh offline bằng script; không có hóa đơn cá nhân thật. Năm ảnh đại diện được dùng cho Verify. Baseline gửi ảnh qua OpenRouter tới provider Qwen, vì vậy AURA không tuyên bố on-premise hoặc zero-cloud. Ollama local có bằng chứng 25/25 trên fixture kiểm soát và upload thủ công `HoaDon1.jpg` 3/3, nhưng chưa có kết quả chất lượng trên tập hóa đơn thực tế độc lập hoặc phép so sánh OpenRouter cùng build.

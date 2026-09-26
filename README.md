@@ -55,7 +55,7 @@ AURA does not fine-tune Qwen and does not give the model final decision authorit
 - Verify Harness: **5 smoke-test cases**
 - Evaluator reference pack: **15 test cases**
 
-The local Ollama build passed three consecutive Verify batches (15/15 decisions across the five controlled synthetic fixtures) on 27 September 2026. This result must not be interpreted as an accuracy claim for independent real-world receipts.
+The local Ollama build passed five consecutive Verify batches (25/25 decisions across the five controlled synthetic fixtures) on 27 September 2026. A separate manual upload of `HoaDon1.jpg` also returned `AUTO_APPROVE` in 3/3 repeated runs. These controlled results must not be interpreted as an accuracy claim for independent real-world receipts. OpenRouter remains the default provider until the same build is compared on a fixed benchmark.
 
 ## Evaluation API Key
 

@@ -151,7 +151,7 @@ Recycle application pool chỉ nạp lại biến môi trường hiện có. Kh�
 
 - Build .NET 8 sạch, 0 warning và 0 error tại lần kiểm tra gần nhất.
 - 70 automated tests kiểm policy, workflow, audit, chống thao tác chồng, hợp đồng OpenRouter/Ollama, semantic validation/repair và tính toàn vẹn Test Kit.
-- Build cuối với Ollama/Qwen3-VL-4B Q4_K_M đạt 15/15 qua ba lượt Verify liên tiếp ngày 27/09/2026 trên 5 fixture tổng hợp: mỗi lượt đúng 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`. TC-02 cần một repair và có latency khoảng 100 giây; các ca còn lại khoảng 45-55 giây trên RTX 3050 Laptop 4 GB.
+- Build cuối với Ollama/Qwen3-VL-4B Q4_K_M đạt 25/25 qua năm lượt Verify liên tiếp ngày 27/09/2026 trên 5 fixture tổng hợp: mỗi lượt đúng 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`. Ba lượt có đo chi tiết mất khoảng 303-304 giây mỗi batch; trong đó TC-02 cần một repair và khoảng 100 giây, các ca còn lại khoảng 45-55 giây trên RTX 3050 Laptop 4 GB. Hai lượt xác nhận bổ sung chưa tổng hợp latency. Upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3.
 - Người dùng xác nhận production upload, AI extraction và audit hoạt động đúng sau khi cập nhật API key ở Pool Manager.
 - Video demo dưới ba phút đã được liên kết từ README; đường đánh giá tái lập cho BGK vẫn là localhost cùng test key được cấp riêng.
 
@@ -163,7 +163,7 @@ Kết quả fixture tổng hợp không phải accuracy trên tập hóa đơn �
 |---|---|
 | Tách extraction và policy | Có thể đổi model mà không đổi quy tắc duyệt; policy unit-test được |
 | Hosted Qwen 8B cho Sprint 1 | Triển khai nhanh và giữ baseline đang được chấm |
-| Adapter Ollama 4B tắt mặc định | Đã đạt cổng Verify tổng hợp 15/15 nhưng còn chậm và chưa có tập hóa đơn thực tế độc lập; không tự thay baseline hosted |
+| Adapter Ollama 4B tắt mặc định | Đã đạt cổng Verify tổng hợp 25/25 nhưng còn chậm và chưa có benchmark OpenRouter cùng build hoặc tập hóa đơn thực tế độc lập; không tự thay baseline hosted |
 | Semantic validation + một repair | Sửa lỗi đọc dấu hàng nghìn/gán nhầm identifier mà không nới policy hoặc dùng claimed amount để dẫn dắt OCR |
 | Không auto-fallback giữa model | Tránh gọi hai model không kiểm soát, tăng latency và làm audit khó giải thích |
 | Fail-safe thay cho mock ngầm | Lỗi provider cần chuyển người xử lý, không được che bằng kết quả giả |

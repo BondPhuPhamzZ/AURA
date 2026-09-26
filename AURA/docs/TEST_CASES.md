@@ -6,13 +6,13 @@ Mốc cập nhật: 27/09/2026. Ký hiệu: `A` đã tự động hóa bằng xU
 
 | ID | Fixture tổng hợp | Claimed | Kỳ vọng | Phủ |
 |---|---|---:|---|---|
-| TC-01 | Mobile e-commerce hoàn tất, có mã SPX và ngày thanh toán | 295.199 | AUTO_APPROVE | V2; Ollama 3/3 ngày 27/09/2026 |
-| TC-02 | Phiếu in nhiệt tiếng Việt có dấu, đủ MST/biên nhận | 88.000 | AUTO_APPROVE | V2; Ollama 3/3 sau targeted repair ngày 27/09/2026 |
-| TC-03 | Hóa đơn VAT văn phòng phẩm, layout ngang | 420.000 | AUTO_APPROVE | V2; Ollama 3/3 ngày 27/09/2026 |
-| TC-04 | Phiếu in nhiệt để trống MST thật sự | 210.000 | ESCALATE_FACT | V2; Ollama 3/3 ngày 27/09/2026 |
-| TC-05 | Nhà hàng có Bia Tiger x 6 | 780.000 | ESCALATE_POLICY | V2; Ollama 3/3 ngày 27/09/2026 |
+| TC-01 | Mobile e-commerce hoàn tất, có mã SPX và ngày thanh toán | 295.199 | AUTO_APPROVE | V2; Ollama 5/5 ngày 27/09/2026 |
+| TC-02 | Phiếu in nhiệt tiếng Việt có dấu, đủ MST/biên nhận | 88.000 | AUTO_APPROVE | V2; Ollama 5/5 sau targeted repair ngày 27/09/2026 |
+| TC-03 | Hóa đơn VAT văn phòng phẩm, layout ngang | 420.000 | AUTO_APPROVE | V2; Ollama 5/5 ngày 27/09/2026 |
+| TC-04 | Phiếu in nhiệt để trống MST thật sự | 210.000 | ESCALATE_FACT | V2; Ollama 5/5 ngày 27/09/2026 |
+| TC-05 | Nhà hàng có Bia Tiger x 6 | 780.000 | ESCALATE_POLICY | V2; Ollama 5/5 ngày 27/09/2026 |
 
-Ngày 20/09/2026, provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026; người dùng xác nhận đạt đúng 5/5 local bằng Qwen3-VL-8B-Instruct/OpenRouter ngày 22/09/2026. Ngày 27/09/2026, Ollama/Qwen3-VL-4B đạt 15/15 qua ba batch liên tiếp sau semantic hardening. Production upload/AI/audit đã smoke thành công và video demo đã được liên kết từ README. Các kết quả fixture tổng hợp không phải accuracy tổng quát.
+Ngày 20/09/2026, provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026; người dùng xác nhận đạt đúng 5/5 local bằng Qwen3-VL-8B-Instruct/OpenRouter ngày 22/09/2026. Ngày 27/09/2026, Ollama/Qwen3-VL-4B đạt 25/25 qua năm batch liên tiếp sau semantic hardening; upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Production upload/AI/audit đã smoke thành công và video demo đã được liên kết từ README. Các kết quả fixture tổng hợp không phải accuracy tổng quát.
 
 Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số `AUTO_APPROVE`/`ESCALATE_*`; facts trích xuất hiển thị cạnh upload; auto approve xuất hiện ngay trong Audit; escalation còn trong bảng kết quả cho tới khi chuyển quản lý. Upload/Verify cập nhật trong workspace; mutation workflow điều hướng toàn trang sau commit để tránh trạng thái cũ hoặc trùng lặp.
 

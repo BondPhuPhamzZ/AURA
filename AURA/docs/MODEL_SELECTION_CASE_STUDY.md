@@ -19,7 +19,7 @@ AURA cần đọc một ảnh hóa đơn/chứng từ và trả dữ kiện có 
 
 | Phương án | Điểm mạnh | Hạn chế | Quyết định |
 |---|---|---|---|
-| Qwen3-VL-4B-Instruct qua Ollama local | Model Q4_K_M khoảng 3,3 GB; không tính phí theo request; dữ liệu ở máy local; Verify tổng hợp đạt 15/15 | Chậm, TC-02 repair khoảng 100 giây; chưa benchmark tập hóa đơn thực tế độc lập | **Giữ tùy chọn local, chưa đổi mặc định** |
+| Qwen3-VL-4B-Instruct qua Ollama local | Model Q4_K_M khoảng 3,3 GB; không tính phí theo request; dữ liệu ở máy local; Verify tổng hợp đạt 25/25 và upload `HoaDon1.jpg` đạt 3/3 | Chậm, TC-02 repair khoảng 100 giây; chưa benchmark OpenRouter cùng build hoặc tập hóa đơn thực tế độc lập | **Giữ tùy chọn local, chưa đổi mặc định** |
 | Qwen3-VL-8B-Instruct qua OpenRouter | Model vision 8B; hỗ trợ ảnh, OCR/document parsing và structured output; có nhiều provider để router failover | Dữ liệu đi qua dịch vụ bên ngoài; phụ thuộc credit/provider | **Chọn cho demo và deploy Sprint 1** |
 | Model vision cỡ rất lớn (ví dụ 100B+) | Năng lực tổng quát cao | Compute, giá và độ trễ không tương xứng tác vụ OCR; khó biện minh trong bối cảnh doanh nghiệp | Không chọn |
 
@@ -27,7 +27,7 @@ AURA cần đọc một ảnh hóa đơn/chứng từ và trả dữ kiện có 
 
 Cấu hình mặc định vẫn là `Vision:Provider=OpenRouter` với `qwen/qwen3-vl-8b-instruct`. `ConfiguredVisionExtractor` cho phép đổi sang Ollama local bằng cấu hình, còn `ReceiptExtractionContract` giữ cùng prompt, schema và parser. Adapter local không đồng nghĩa model 4B đã đạt chất lượng; nó chỉ tạo đường benchmark tái lập mà không viết lại controller hoặc policy.
 
-Không mô tả 8B hay 4B là “đã chính xác” trước khi có benchmark độc lập. Bản production đã smoke thành công một ảnh; Ollama local fixture v2 đạt 15/15 qua ba lượt liên tiếp sau khi thêm semantic validation và một correction pass có giới hạn. Đây vẫn chỉ là bằng chứng pipeline trên dữ liệu tổng hợp, không phải benchmark độc lập.
+Không mô tả 8B hay 4B là “đã chính xác” trước khi có benchmark độc lập. Bản production đã smoke thành công một ảnh; Ollama local fixture v2 đạt 25/25 qua năm lượt liên tiếp và upload thủ công `HoaDon1.jpg` đạt 3/3 sau khi thêm semantic validation cùng một correction pass có giới hạn. Đây vẫn chỉ là bằng chứng pipeline trên dữ liệu tổng hợp, không phải benchmark độc lập.
 
 ## 5. Bộ kiểm thử bàn giao
 
