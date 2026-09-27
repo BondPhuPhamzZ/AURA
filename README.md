@@ -55,7 +55,7 @@ AURA does not fine-tune Qwen and does not give the model final decision authorit
 - Verify Harness: **5 smoke-test cases**
 - Evaluator reference pack: **15 test cases**
 
-The local Ollama build passed five consecutive Verify batches (25/25 decisions across the five controlled synthetic fixtures) on 27 September 2026. A separate manual upload of `HoaDon1.jpg` also returned `AUTO_APPROVE` in 3/3 repeated runs. These controlled results must not be interpreted as an accuracy claim for independent real-world receipts. OpenRouter remains the default provider until the same build is compared on a fixed benchmark.
+On 27 September 2026, OpenRouter passed three consecutive Verify batches (15/15 decisions) and three manual uploads of `HoaDon1.jpg` (3/3 `AUTO_APPROVE`) on the current build. Its adjusted per-case latency was median 4.371 seconds and P95 11.317 seconds. The local Ollama build passed five consecutive Verify batches (25/25 decisions) and the same manual upload 3/3, but measured batches took about 303–304 seconds each on an RTX 3050 Laptop 4 GB. These are controlled synthetic-fixture results, not an accuracy claim for independent real-world receipts. OpenRouter therefore remains the default demo provider; Ollama remains an optional local privacy/offline path.
 
 ## Evaluation API Key
 
@@ -92,7 +92,7 @@ Open the localhost address printed in the terminal, then (the quoted labels belo
 2. Or upload a JPG/PNG receipt, enter the claimed amount, and select **AI tự động kiểm**.
 3. For an `ESCALATE_*` result, select **Chuyển tiếp**.
 4. Open the **Quản lý** tab and select **Đồng ý duyệt** or **Từ chối duyệt**.
-5. Open **Lịch Sử Của Hệ Thống** to inspect the audit trail.
+5. Open **Lịch sử hành vi** to inspect the audit trail.
 
 ### Run the Automated Tests
 
@@ -108,6 +108,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj
 - [Business Rules](AURA/BUSINESS_RULES.md)
 - [Workflow Specification](AURA/submission/AURA_WORKFLOW_SPEC.md)
 - [Test Cases](AURA/docs/TEST_CASES.md)
+- [OpenRouter Benchmark — 27/09/2026](AURA/docs/OPENROUTER_BENCHMARK_2026-09-27.md)
 - [Deployment and Operations Runbook](AURA/docs/RUNBOOK.md)
 - [Optional Local Ollama Setup](AURA/docs/LOCAL_OLLAMA.md)
 
@@ -115,7 +116,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj
 
 - Supports one JPG/PNG image up to 5 MB; PDF and multi-page receipts are not supported yet.
 - Does not yet include role-based authentication, e-invoice verification, tax-code lookup, currency conversion, or malware scanning.
-- The default evaluation path depends on OpenRouter; the optional Ollama path passed the controlled fixture gate but still needs an independent receipt benchmark before promotion.
+- The default evaluation path depends on OpenRouter. Ollama remains an optional local path; both providers still need an independent real-receipt benchmark before any production accuracy claim.
 - Uploaded receipt evidence is stored by the application instance; production deployment requires managed durable storage and an explicit retention policy.
 - AI failure or low confidence always results in human review rather than a fabricated decision.
 

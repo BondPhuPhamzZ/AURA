@@ -234,9 +234,9 @@ for index, value in enumerate(values):
 
 add_body(
     document,
-    "Kết quả Ollama 25 trên 25 là năm batch liên tiếp của cùng 5 fixture tổng hợp đã biết trước; upload thủ công "
-    "HoaDon1 đạt AUTO_APPROVE 3 trên 3. Các số liệu chứng minh pipeline, semantic repair và policy hoạt động nhất quán "
-    "trên bộ kiểm soát, không phải độ chính xác trên hóa đơn thực tế độc lập.",
+    "OpenRouter đạt 15 trên 15 quyết định qua ba batch cùng build, upload HoaDon1 đạt AUTO_APPROVE 3 trên 3 và "
+    "adjusted P95 là 11,317 giây. Ollama đạt 25 trên 25 nhưng ba batch đo mất khoảng 303–304 giây mỗi batch. "
+    "Đây là fixture tổng hợp lặp lại, không phải độ chính xác trên hóa đơn thực tế độc lập.",
     bold_lead="Kết luận đo lường: ",
 )
 
@@ -252,7 +252,7 @@ add_heading(document, "5 Quyết định kiến trúc và phần cắt giảm")
 add_bullet(document, "Tách Qwen extraction và semantic validation khỏi PolicyDecisionEngine để đổi model mà không đổi quy tắc duyệt.")
 add_bullet(document, "Giữ AuditLogs theo sự kiện append-only ở tầng ứng dụng, nhưng UI gom một hồ sơ thành một timeline để tránh cảm giác lặp.")
 add_bullet(document, "Chặn thao tác workflow chồng trong một instance, dùng RowVersion chống ghi đè đồng thời và reload sau mutation để đọc lại trạng thái đã commit.")
-add_bullet(document, "Giữ hosted Qwen 8B làm baseline; Ollama/Qwen 4B đã đạt 25/25 fixture nhưng vẫn tắt mặc định tới khi có benchmark OpenRouter cùng build và tập độc lập.")
+add_bullet(document, "Giữ hosted Qwen 8B làm baseline nhờ benchmark cùng build đáp ứng demo; Ollama/Qwen 4B giữ tùy chọn local vì chậm trên RTX 3050 4 GB.")
 add_bullet(document, "Hoãn PDF nhiều trang, authentication theo role, tax lookup, antivirus, object storage và benchmark tập dữ liệu độc lập.")
 
 add_heading(document, "6 Bài học và bước tiếp theo")

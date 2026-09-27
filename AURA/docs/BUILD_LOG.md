@@ -8,7 +8,7 @@
 ## Điều mang lại hiệu quả
 
 - Tách extraction khỏi deterministic policy giúp kết quả giải thích và unit-test được.
-- Verify fixture v2 đạt 25/25 qua năm lượt liên tiếp với Ollama/Qwen3-VL-4B ngày 27/09/2026 sau semantic hardening. Upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Test Kit v2 gồm 30 ảnh đa layout được sinh offline; các kết quả này là fixture demo, không phải accuracy trên dữ liệu độc lập.
+- Verify fixture v2 đạt 25/25 qua năm lượt liên tiếp với Ollama/Qwen3-VL-4B. OpenRouter/Qwen3-VL-8B cùng build đạt 15/15 qua ba lượt và upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3; adjusted P95 là 11,317 giây. Exact match năm field khóa là 72/75 vì TC-04 lệch taxonomy chứng từ. Test Kit v2 là dữ liệu tổng hợp; các kết quả này không phải accuracy trên dữ liệu độc lập.
 - 70 automated tests bao phủ policy/workflow/audit, chống thao tác chồng, hợp đồng OpenRouter/Ollama, semantic validation/repair và tính toàn vẹn Test Kit/manifest.
 - Structured Output giảm parsing lỗi so với JSON tự do.
 - Backend phát hiện JSON đúng schema nhưng sai nghĩa như `295.199 đ -> 295.199`, `ECOMMERCE -> RIDE_HAILING`, hoặc số biên nhận bị gán vào `orderId`; model được đọc lại đúng một lần. Repair không nhận claimed amount và kết quả còn mâu thuẫn luôn đi `ESCALATE_FACT`.
@@ -27,9 +27,9 @@
 ## Tính năng lớn nhất cắt giảm
 
 - PDF/hóa đơn nhiều trang, antivirus, tax/e-invoice lookup, ngoại tệ và xác thực người dùng theo role chưa triển khai trong Sprint 1.
-- Không fine-tune hoặc đổi provider mặc định trong lúc chấm. Adapter Ollama/Qwen3-VL-4B local đã vượt cổng Verify tổng hợp nhưng vẫn nằm dưới cờ cấu hình; OpenRouter 8B giữ nguyên baseline Sprint 1 cho tới khi có benchmark độc lập.
+- Không fine-tune hoặc đổi provider mặc định trong lúc chấm. Adapter Ollama/Qwen3-VL-4B local đã vượt cổng Verify tổng hợp nhưng vẫn nằm dưới cờ cấu hình; OpenRouter 8B giữ baseline Sprint 1 vì phép đo cùng build cho độ trễ phù hợp demo. Cả hai vẫn cần benchmark độc lập.
 - Ưu tiên một vertical slice chạy thật: upload -> extract -> decide -> audit -> human override/undo -> tra cứu chứng từ.
 
 ## Minh bạch dữ liệu
 
-Ba mươi fixture Test Kit v2 là dữ liệu tổng hợp sinh offline bằng script; không có hóa đơn cá nhân thật. Năm ảnh đại diện được dùng cho Verify. Baseline gửi ảnh qua OpenRouter tới provider Qwen, vì vậy AURA không tuyên bố on-premise hoặc zero-cloud. Ollama local có bằng chứng 25/25 trên fixture kiểm soát và upload thủ công `HoaDon1.jpg` 3/3, nhưng chưa có kết quả chất lượng trên tập hóa đơn thực tế độc lập hoặc phép so sánh OpenRouter cùng build.
+Ba mươi fixture Test Kit v2 là dữ liệu tổng hợp sinh offline bằng script; không có hóa đơn cá nhân thật. Năm ảnh đại diện được dùng cho Verify. Baseline gửi ảnh qua OpenRouter tới provider Qwen, vì vậy AURA không tuyên bố on-premise hoặc zero-cloud. Phép so sánh cùng build đã có cho 5 fixture lặp lại, nhưng chưa có kết quả chất lượng trên tập hóa đơn thực tế độc lập.

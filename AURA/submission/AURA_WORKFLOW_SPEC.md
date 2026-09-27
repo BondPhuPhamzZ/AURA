@@ -47,7 +47,7 @@ flowchart LR
    - vượt thẩm quyền → `ESCALATE_AUTHORITY`;
    - AI/provider lỗi → `ESCALATE_SYSTEM_ERROR`.
 10. Hồ sơ, metadata, facts, trạng thái và sự kiện AI đầu tiên được lưu cùng một lần `SaveChanges`.
-11. UI cập nhật preview, khung “Nội dung AI đọc được”, bảng kết quả, bộ đếm và lịch sử bằng các vùng HTML trả về từ server.
+11. UI cập nhật preview, khung “Nội dung AI”, bảng kết quả, bộ đếm và lịch sử bằng các vùng HTML trả về từ server.
 
 ## 4. Workflow B — Verify Harness 5 ca
 
@@ -122,7 +122,7 @@ AURA hiện **không có circuit breaker tổng quát** và **không triển kha
 
 ## 9. Dữ liệu thật và dữ liệu mô phỏng
 
-- Chạy thật baseline: upload, OpenRouter/Qwen 8B, semantic validator, policy C#, SQL Server, audit, human decision và receipt retrieval. Adapter Ollama/Qwen 4B local đạt 25/25 trên năm lượt fixture kiểm soát và upload `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3, nhưng chưa thay baseline vì chưa benchmark OpenRouter cùng build hoặc tập độc lập.
+- Chạy thật baseline: upload, OpenRouter/Qwen 8B, semantic validator, policy C#, SQL Server, audit, human decision và receipt retrieval. OpenRouter cùng build đạt 15/15 qua ba batch Verify và upload `HoaDon1.jpg` 3/3, adjusted P95 11,317 giây. Ollama/Qwen 4B local đạt 25/25 qua năm batch nhưng chậm hơn trên RTX 3050 4 GB. Cả hai chưa có benchmark dữ liệu thực độc lập.
 - Mô phỏng: 30 ảnh tổng hợp sinh offline; 5 ảnh Verify và manifest 15 ca BGK được tuyển từ ngân hàng này.
 - Không dùng hóa đơn cá nhân thật trong Git. Ảnh thật tùy chọn chỉ đặt tại `test_kit/local_real` và bị `.gitignore` loại trừ.
 

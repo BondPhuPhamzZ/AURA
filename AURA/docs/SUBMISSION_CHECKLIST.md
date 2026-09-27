@@ -9,7 +9,7 @@ Cập nhật: 27/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 | Frontend/backend clone và chạy localhost | ☑ Có | README root, .NET 8, LocalDB/SQL Server, user-secrets và migration |
 | Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, `test_kit/judge-manifest.json` đúng 15 ca |
 | Public repository và lịch sử commit | ☑ Có | `https://github.com/BondPhuPhamzZ/AURA`; cần push commit chốt sau mỗi lần cập nhật hồ sơ |
-| Video demo tối đa 3 phút (BTC ghi Optional) | ☑ Đã liên kết | Link Google Drive ở README root; `docs/VIDEO_DEMO_SCRIPT.md` là tài liệu nguồn |
+| Video demo tối đa 3 phút (BTC ghi Optional) | ☑ Đã liên kết | Link Google Drive ở README root |
 | Đúng 5 slide | ☑ Đã dựng | `submission/AURA_5_SLIDES.pptx` |
 | Build Log một trang Word | ☑ Đã dựng | `submission/AURA_BUILD_LOG.docx` |
 
@@ -21,7 +21,6 @@ Cập nhật: 27/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
 - `submission/AURA_5_SLIDES.pptx`: đúng 5 slide và phản ánh 70 test cùng workflow hiện tại.
 - `submission/AURA_BUILD_LOG.docx`: một trang.
-- `docs/VIDEO_DEMO_SCRIPT.md`: kịch bản quay, không phải artifact bắt buộc nộp.
 - `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.
 - 5 ảnh Verify trong `wwwroot/test_data/images`, manifest Verify và gói 15 ca BGK.
 - `Dockerfile`, `.dockerignore`, `.gitignore`.
@@ -46,4 +45,5 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 3. Trước mỗi bản bàn giao mới: quét secret, build/test, push commit chốt và xác minh repository public.
 4. Nếu có thay đổi đáng kể trong lúc chấm, tạo ticket/báo cáo tiến độ cho BTC; sửa tài liệu hoặc độ ổn định nhỏ có thể báo theo commit.
 5. Bằng chứng local ngày 27/09/2026: Ollama/Qwen3-VL-4B đạt 25/25 qua năm batch Verify liên tiếp; upload `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Ba batch có số đo latency chi tiết, hai batch bổ sung chỉ xác nhận quyết định.
-6. Phản hồi người dùng, phép so sánh OpenRouter trên cùng build và benchmark dữ liệu thật vẫn là bước tiếp theo; không tự tạo quote hoặc accuracy khi chưa có bằng chứng.
+6. OpenRouter cùng build đạt 15/15 qua ba batch Verify và upload `HoaDon1.jpg` 3/3; adjusted P95 11,317 giây. Bằng chứng chi tiết nằm tại `docs/OPENROUTER_BENCHMARK_2026-09-27.md`.
+7. Benchmark dữ liệu thật độc lập, token/cost metadata, concurrency và 15 ca BGK live vẫn là bước tiếp theo; không tự tạo quote hoặc accuracy khi chưa có bằng chứng.
