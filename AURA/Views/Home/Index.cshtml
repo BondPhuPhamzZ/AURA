@@ -11,7 +11,7 @@
     <!-- Hướng dẫn & Verify Harness (Top Section) -->
     <div class="section-heading-row verify-heading-row">
         <div class="verify-copy">
-            <h2 class="hero-title" style="font-size: 1.5rem; margin-bottom: 8px;">Kiểm Thử Tự Động (Verify Harness)</h2>
+            <h2 class="hero-title" style="font-size: 1.5rem; margin-bottom: 8px;">Verify Harness</h2>
             <p class="hero-sub" style="color: var(--colors-ink-subtle); margin: 0; font-size: 0.95rem;">
                 Nhấn nút bên phải để AI tự động chạy kiểm thử trên bộ 5 hóa đơn chuẩn hóa. Bạn cũng có thể tải lên 1 hóa đơn thủ công ở khung bên dưới.
             </p>
@@ -34,7 +34,7 @@
             
             <div class="upload-workspace">
                 <div class="upload-input-column">
-                    <h3 id="single-upload-title" class="workflow-subtitle">Hoặc tải lên hóa đơn kiểm thử lẻ:</h3>
+                    <h3 id="single-upload-title" class="workflow-subtitle">Tải lên hóa đơn lẻ</h3>
                     <div class="dropzone-area" id="dropzone" onclick="document.getElementById('receiptFile').click()">
                         <input type="file" id="receiptFile" name="receiptFile" accept=".jpg,.jpeg,.png" style="display: none;" onchange="handleFileSelect(this)">
                         <img id="receiptLocalPreview" class="receipt-local-preview" alt="Xem trước hóa đơn đã chọn" hidden />
@@ -65,7 +65,7 @@
                 </div>
 
                 <div class="extracted-facts-column">
-                    <h3 id="extracted-facts-title" class="workflow-subtitle extracted-facts-title">Nội dung AI đọc được</h3>
+                    <h3 id="extracted-facts-title" class="workflow-subtitle extracted-facts-title">Nội dung AI</h3>
                     <section class="extracted-facts-panel" aria-labelledby="extracted-facts-title" aria-live="polite">
                         <div class="extracted-facts-toolbar">
                             <span id="extractedFactsConfidence" class="badge facts-confidence-badge bg-secondary">Chưa quét</span>
@@ -90,7 +90,7 @@
             </div>
             <div class="results-heading-actions">
                 <button type="button" class="button-primary button-compact" onclick="forwardAllToManager(this)">Chuyển tiếp tất cả</button>
-                <button type="button" class="button-ghost-sm history-button" onclick="navigateToTab('audit')">Xem Lịch Sử</button>
+                <button type="button" class="button-ghost-sm history-button" onclick="navigateToTab('audit')">Xem lịch sử hành vi</button>
             </div>
         </div>
         

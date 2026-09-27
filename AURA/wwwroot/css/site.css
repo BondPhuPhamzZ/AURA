@@ -339,7 +339,7 @@ main {
 .extracted-facts-panel {
     position: relative;
     flex: 1 1 auto;
-    min-height: 100%;
+    min-height: 0;
     padding: 20px;
     border: 1px solid #334155;
     border-radius: 16px;
@@ -740,6 +740,10 @@ main {
 
 .table-scroll-area-tall {
     max-height: 580px;
+}
+
+.audit-scroll-area {
+    max-height: 420px;
 }
 
 .table-scroll-area::-webkit-scrollbar,
@@ -1225,6 +1229,10 @@ main {
     .upload-workspace {
         grid-template-columns: 1fr;
         gap: 20px;
+    }
+
+    .extracted-facts-panel {
+        min-height: 300px;
     }
 
     .amount-action-row,
