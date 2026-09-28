@@ -71,7 +71,7 @@ Giá trị `confidence` do model tự báo không phải xác suất đã hiệu
 - OpenRouter 8B giữ vai trò mặc định cho demo/Sprint 1: cùng build đạt 15/15 quyết định, upload 3/3 và adjusted P95 khoảng 11.317 giây, thấp hơn giới hạn 90 giây của luồng demo.
 - Ollama 4B giữ vai trò local tùy chọn cho privacy/offline và học tập: đạt 25/25 quyết định trên cùng 5 fixture nhưng ba batch có đo chi tiết mất khoảng 303–304 giây mỗi batch trên RTX 3050 Laptop 4 GB.
 - Đây là lựa chọn theo bối cảnh phần cứng, độ trễ và vận hành; chưa có cơ sở kết luận OpenRouter 8B chính xác hơn trên dữ liệu thực.
-- AURA hiện không tự động fallback giữa hai provider. Mỗi lần chạy dùng đúng provider cấu hình; lỗi được audit và chuyển `ESCALATE_SYSTEM_ERROR`.
+- Các số đo ngày 27/09 được thực hiện khi chưa có fallback và vì vậy vẫn là baseline OpenRouter thuần. Build ngày 28/09 đã thêm fallback opt-in; phải giữ `Vision:FallbackEnabled=false` khi tái lập benchmark này.
 
 ## Khoảng trống trước pilot thực tế
 

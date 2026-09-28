@@ -1,6 +1,6 @@
 # Chạy Qwen3 VL 4B local bằng Ollama
 
-Cập nhật: 27/09/2026. Tùy chọn này bổ sung một provider local để benchmark và demo ngoại tuyến. `Vision:Provider` vẫn mặc định là `OpenRouter`, nên cài Ollama không làm thay đổi bản Sprint 1 hiện tại. Không có cơ chế tự động gọi cả hai provider hoặc âm thầm thay kết quả.
+Cập nhật: 28/09/2026. Tùy chọn này bổ sung provider local để benchmark, demo ngoại tuyến hoặc làm fallback có kiểm soát. `Vision:Provider` vẫn mặc định là `OpenRouter`; fallback mặc định tắt và chỉ hoạt động khi người vận hành chủ động bật.
 
 ## 1. Phạm vi và cấu hình khuyến nghị
 
@@ -138,7 +138,17 @@ dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
 dotnet run
 ```
 
-Sau đó mở `/healthz` và xác nhận `provider` là `OpenRouter`. AURA không tự chuyển provider khi đang xử lý một hồ sơ; mỗi lần chạy dùng đúng provider đã cấu hình để audit và benchmark không bị lẫn.
+Sau đó mở `/healthz` và xác nhận `provider` là `OpenRouter`. Khi benchmark, đặt `Vision:FallbackEnabled=false` để mỗi lượt chỉ dùng provider đang đo.
+
+Để dùng OpenRouter chính và Ollama fallback trên cùng laptop demo:
+
+```powershell
+dotnet user-secrets set "Vision:Provider" "OpenRouter"
+dotnet user-secrets set "Vision:FallbackEnabled" "true"
+dotnet user-secrets set "Vision:FallbackProvider" "Ollama"
+```
+
+Audit phải ghi `PrimaryProvider=OpenRouter`, `ServedProvider=Ollama` và `FallbackUsed=True` nếu fallback thực sự được dùng. Không bật cấu hình này trên hosted server nếu Ollama chỉ chạy ở laptop, vì loopback của server không trỏ về laptop.
 
 ## 9. Lỗi thường gặp
 

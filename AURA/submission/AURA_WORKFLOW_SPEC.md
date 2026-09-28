@@ -1,11 +1,11 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 1.4 — 27/09/2026
-Phạm vi: Sprint 1, Track A — The Escalation Referee
+Phiên bản: 1.5 — 28/09/2026
+Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
 
-AURA hỗ trợ hoàn ứng chi phí theo nguyên tắc **AI đọc dữ kiện, policy quyết định, con người xử lý ngoại lệ**. Qwen vision qua provider cấu hình không có quyền phê duyệt. OpenRouter 8B vẫn là mặc định Sprint 1; Ollama 4B local là tùy chọn benchmark tắt mặc định. `PolicyDecisionEngine` mới tạo trạng thái nghiệp vụ theo quy tắc tất định và thứ tự ưu tiên `FACT → POLICY → AUTHORITY`.
+AURA hỗ trợ hoàn ứng chi phí theo nguyên tắc **AI đọc dữ kiện, policy quyết định, con người xử lý ngoại lệ**. Qwen vision không có quyền phê duyệt. OpenRouter 8B là provider chính; Ollama 4B local là fallback có kiểm soát nhưng mặc định tắt. `PolicyDecisionEngine` tạo trạng thái nghiệp vụ theo quy tắc tất định và thứ tự ưu tiên `FACT → POLICY → AUTHORITY`.
 
 Ba vai trò demo:
 
@@ -19,7 +19,9 @@ Ba vai trò demo:
 flowchart LR
     A[Ảnh JPG/PNG + số tiền] --> B[Kiểm size, MIME, magic bytes]
     B --> C[Lưu ảnh riêng tư + SHA-256]
-    C --> D[Qwen qua provider cấu hình trích xuất JSON]
+    C --> Q[Lưu PENDING + audit AI_QUEUED]
+    Q --> W[Worker claim job bằng lease]
+    W --> D[Qwen chính hoặc fallback đủ điều kiện]
     D --> V[Semantic validation và tối đa một repair]
     V --> E[Policy C# tất định]
     E -->|AUTO_APPROVE| F[Lịch sử]
@@ -34,20 +36,22 @@ flowchart LR
 
 1. Trình duyệt chỉ nhận một JPG/PNG tối đa 5 MB và hiển thị preview ngay khi chọn.
 2. Nhân viên nhập số tiền đề nghị hoàn ứng lớn hơn 0.
-3. Client gửi `POST /Applicant/UploadReceipt` bằng `fetch` kèm antiforgery token; trang không reload.
+3. Client gửi `POST /Applicant/UploadReceipt` bằng `fetch` kèm antiforgery token và ngữ cảnh người gửi; trang không reload.
 4. Server kiểm extension, MIME, kích thước và magic bytes.
 5. Server đặt tên file bằng GUID, lưu ngoài `wwwroot`, tính SHA-256 và kiểm ảnh trùng.
 6. Chế độ demo vẫn cho phép ảnh trùng; cờ trùng được ghi nhận. Production có thể bật `DecisionPolicy:EscalateDuplicateReceipts=true`.
-7. Qwen đọc ảnh và trả `ReceiptExtractionDto` theo JSON Schema: loại chứng từ, người bán, mã truy vết, ngày, tổng tiền, tiền tệ, trạng thái, line items, warnings và suspicious signals.
-8. Backend kiểm tra semantic trước policy: VND phải là số nguyên đồng, document type phải phù hợp identifier, mã không được gán nhầm trường và line items phải đối chiếu được khi không có discount. Nếu mâu thuẫn, model đọc lại ảnh đúng một lần với lỗi cụ thể nhưng không nhận claimed amount; lỗi còn lại được gắn `ValidationIssues` để buộc `ESCALATE_FACT`.
-9. Policy C# đối chiếu dữ kiện và số tiền khai báo:
+7. Server commit hồ sơ `PENDING` cùng audit `AI_QUEUED`, trả `202 Accepted` và `statusUrl`; UI không giữ request HTTP trong lúc AI suy luận.
+8. Worker claim job bằng update có điều kiện, đặt lease và tăng attempt. DB là nguồn sự thật nên job còn lại sau refresh hoặc app restart.
+9. Qwen đọc ảnh và trả `ReceiptExtractionDto`. Khi bật fallback, chỉ lỗi hạ tầng trong allowlist mới chuyển một lần sang provider dự phòng; schema/semantic/request invalid không kích hoạt fallback.
+10. Backend kiểm tra semantic trước policy: VND phải là số nguyên đồng, document type phải phù hợp identifier, mã không được gán nhầm trường và line items phải đối chiếu được khi không có discount. Nếu mâu thuẫn, model đọc lại ảnh đúng một lần với lỗi cụ thể nhưng không nhận claimed amount; lỗi còn lại được gắn `ValidationIssues` để buộc `ESCALATE_FACT`.
+11. Policy C# đối chiếu dữ kiện và số tiền khai báo:
    - dữ kiện đáng tin cậy, đúng policy và trong thẩm quyền → `AUTO_APPROVE`;
    - thiếu/mâu thuẫn dữ kiện → `ESCALATE_FACT`;
    - ngoài chính sách → `ESCALATE_POLICY`;
    - vượt thẩm quyền → `ESCALATE_AUTHORITY`;
    - AI/provider lỗi → `ESCALATE_SYSTEM_ERROR`.
-10. Hồ sơ, metadata, facts, trạng thái và sự kiện AI đầu tiên được lưu cùng một lần `SaveChanges`.
-11. UI cập nhật preview, khung “Nội dung AI”, bảng kết quả, bộ đếm và lịch sử bằng các vùng HTML trả về từ server.
+12. Worker lưu facts, quyết định, latency, provider chính/provider phục vụ, fallback flag và sự kiện audit trong một lần `SaveChanges`.
+13. UI poll `GET /Applicant/Status/{id}` mỗi giây. `sessionStorage` giữ status URL để tiếp tục theo dõi sau refresh trong cùng tab.
 
 ## 4. Workflow B — Verify Harness 5 ca
 
@@ -99,10 +103,10 @@ Cách này vừa giữ bằng chứng để truy vết/hoàn tác, vừa tránh 
 
 ## 7. Đồng bộ và điều hướng
 
-- Upload và Verify dùng `fetch` để giữ nguyên workspace trong lúc AI chạy và cập nhật các vùng kết quả liên quan.
+- Upload trả `202` rồi poll status; Verify vẫn dùng một request tuần tự để giữ đúng baseline 5 ca.
 - Chuyển tiếp, quyết định quản lý và hoàn tác dùng `fetch` để nhận lỗi có cấu trúc, sau đó điều hướng toàn trang tới tab đích khi thành công. Mọi bảng vì vậy được dựng lại từ trạng thái database đã commit.
-- Không có polling nền, WebSocket hoặc SignalR trong Sprint 1. Nếu một tab khác đã mở từ trước, người dùng tải lại hoặc chọn lại tab để lấy trạng thái mới.
-- `WorkflowOperationGate` từ chối thao tác ghi chồng trong một tiến trình; SQL Server `RowVersion` phát hiện cập nhật đồng thời giữa nhiều tiến trình và trả lỗi conflict thay vì ghi đè âm thầm.
+- Polling chỉ theo dõi hồ sơ upload của tab hiện tại. Chưa có SignalR để đẩy thay đổi cross-tab cho bảng quản lý/audit.
+- Upload, chuyển tiếp và quyết định không dùng global gate. `WorkflowOperationGate` chỉ ngăn hai Verify batch chạy chồng; `RowVersion` phát hiện hai thao tác cùng sửa một hồ sơ.
 - `GET /Applicant/Receipt/{id}` tải ảnh theo ID, không nhận đường dẫn từ client và đặt `NoStore`.
 
 ## 8. Nhánh lỗi và nguyên tắc fail-safe
@@ -117,8 +121,11 @@ Cách này vừa giữ bằng chứng để truy vết/hoàn tác, vừa tránh 
 | JSON đúng schema nhưng tự mâu thuẫn | Đọc lại đúng một lần; vẫn sai thì `ESCALATE_FACT`, không tự sửa theo claim |
 | Ảnh mơ hồ/prompt injection | Thêm suspicious signal; FACT có ưu tiên cao nhất |
 | File mất nhưng DB còn | Route trả 404; cần storage bền khi deploy |
+| Provider chính lỗi hạ tầng và fallback bật | Gọi fallback đúng một lần; audit provider thực sự phục vụ |
+| Provider chính lỗi semantic/schema/request | Không fallback; fail-safe để tránh che lỗi dữ liệu/contract |
+| App restart khi job đang chạy | Lease hết hạn rồi worker reclaim; UI có thể tiếp tục poll bằng status URL |
 
-AURA hiện **không có circuit breaker tổng quát** và **không triển khai exponential backoff nhiều lần**. Cơ chế hiện hữu là một retry giới hạn cho 5xx, không retry 429, cùng quota guard của Verify Harness.
+AURA có circuit breaker trong bộ nhớ theo instance. Sau ngưỡng lỗi hạ tầng liên tiếp, request mới dùng fallback trong thời gian cooldown; hết cooldown, provider chính được probe lại. Hệ thống không exponential backoff nhiều lần và không fallback cho mọi lỗi.
 
 ## 9. Dữ liệu thật và dữ liệu mô phỏng
 
@@ -126,6 +133,6 @@ AURA hiện **không có circuit breaker tổng quát** và **không triển kha
 - Mô phỏng: 30 ảnh tổng hợp sinh offline; 5 ảnh Verify và manifest 15 ca BGK được tuyển từ ngân hàng này.
 - Không dùng hóa đơn cá nhân thật trong Git. Ảnh thật tùy chọn chỉ đặt tại `test_kit/local_real` và bị `.gitignore` loại trừ.
 
-## 10. Giới hạn Sprint 1
+## 10. Giới hạn hiện tại
 
-Chưa có authentication/role, PDF/nhiều trang, antivirus, tax/e-invoice lookup, ngoại tệ, object storage, SignalR, immutable audit ở tầng database, rate limiting public endpoint và benchmark trên tập dữ liệu độc lập lớn. Đây là các hạng mục Sprint 2, không được mô tả như tính năng hiện có.
+Chưa có authentication/role thật, PDF/nhiều trang, antivirus, tax/e-invoice lookup, ngoại tệ, object storage, SignalR, immutable audit ở tầng database, distributed circuit breaker, rate limiting public endpoint và benchmark trên tập dữ liệu độc lập lớn. Ba trường người gửi là metadata demo, không phải danh tính đã xác thực. Image resize chưa bật trước khi có benchmark chứng minh không làm giảm khả năng đọc chữ nhỏ.

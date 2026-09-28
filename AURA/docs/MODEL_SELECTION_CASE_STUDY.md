@@ -25,7 +25,7 @@ AURA cần đọc một ảnh hóa đơn/chứng từ và trả dữ kiện có 
 
 ## 4. Quyết định kiến trúc
 
-Cấu hình mặc định vẫn là `Vision:Provider=OpenRouter` với `qwen/qwen3-vl-8b-instruct`. `ConfiguredVisionExtractor` cho phép đổi sang Ollama local bằng cấu hình, còn `ReceiptExtractionContract` giữ cùng prompt, schema và parser. Adapter local không đồng nghĩa model 4B đã đạt chất lượng; nó chỉ tạo đường benchmark tái lập mà không viết lại controller hoặc policy.
+Cấu hình mặc định vẫn là `Vision:Provider=OpenRouter` với `qwen/qwen3-vl-8b-instruct`. `ConfiguredVisionExtractor` cho phép đổi sang Ollama hoặc bật Ollama làm fallback có kiểm soát. `ReceiptExtractionContract` giữ cùng prompt, schema và parser; audit ghi provider thực sự phục vụ. Adapter local không đồng nghĩa model 4B đã đạt chất lượng trên dữ liệu thực.
 
 Không mô tả 8B hay 4B là “đã chính xác” trước khi có benchmark độc lập. OpenRouter đạt 15/15 quyết định qua ba batch Verify và upload `HoaDon1.jpg` 3/3; exact match của năm field khóa là 72/75 do TC-04 lệch taxonomy `RESTAURANT_BILL`/`RETAIL_RECEIPT`. Ollama đạt 25/25 qua năm lượt Verify và upload 3/3. Đây vẫn chỉ là bằng chứng pipeline trên dữ liệu tổng hợp. Xem số đo và giới hạn diễn giải tại [OpenRouter benchmark](OPENROUTER_BENCHMARK_2026-09-27.md).
 
@@ -46,9 +46,9 @@ Không mô tả 8B hay 4B là “đã chính xác” trước khi có benchmark 
 
 ## 7. Lộ trình tối ưu tiếp theo
 
-- Giai đoạn 1: OpenRouter + Qwen3-VL-8B-Instruct để giảm rủi ro hạ tầng trước deadline.
-- Giai đoạn 2: adapter Ollama local đã vượt cổng 5 fixture nhưng vẫn tắt mặc định; tiếp tục benchmark 15 ca BGK và tập độc lập, đo latency P50/P95, RAM, schema success, accuracy theo field và tỷ lệ escalation sai.
-- Giai đoạn 3: chỉ chuyển sang 4B khi đạt cổng chất lượng và tổng chi phí sở hữu tốt hơn; giữ OpenRouter làm fallback nếu chính sách dữ liệu cho phép.
+- Giai đoạn 1: OpenRouter + Qwen3-VL-8B-Instruct là provider chính cho demo vì latency đã đo phù hợp hơn.
+- Giai đoạn 2: Ollama local có thể làm fallback trên cùng laptop khi operator bật cờ; circuit breaker chỉ chuyển với lỗi hạ tầng, không chuyển với lỗi semantic/contract.
+- Giai đoạn 3: chỉ đổi provider mặc định sau benchmark tập độc lập và kế hoạch hạ tầng GPU phù hợp; hosted deployment cần Ollama chạy trên chính server hoặc endpoint HTTPS được bảo vệ.
 
 ## Nguồn tham chiếu
 

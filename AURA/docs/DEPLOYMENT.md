@@ -30,7 +30,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Kỳ vọng hiện tại: build 0 warning/error và 70/70 test pass. Không cần gọi API AI ở bước này.
+Kỳ vọng hiện tại: build 0 warning/error và 80/80 test pass. Không cần gọi API AI ở bước này.
 
 3. Trong Visual Studio, mở `AURA.csproj` và chọn **Publish → Folder** hoặc **Publish → Web Deploy**. Target framework là `net8.0`, cấu hình `Release`.
 
@@ -51,6 +51,8 @@ Thêm:
 ```text
 ASPNETCORE_ENVIRONMENT=Production
 Vision__Provider=OpenRouter
+Vision__FallbackEnabled=false
+Vision__FallbackProvider=Ollama
 OpenRouter__ApiKey=<OPENROUTER_KEY_MỚI>
 OpenRouter__Model=qwen/qwen3-vl-8b-instruct
 ConnectionStrings__DefaultConnection=<SQL_SERVER_CONNECTION_STRING>
@@ -80,7 +82,7 @@ Thực hiện theo thứ tự để không tốn quota vô ích:
 1. Mở `https://<live-url>/healthz`, kỳ vọng HTTP 200 và JSON `status: ok`.
 2. Mở trang chủ ở cửa sổ ẩn danh, kiểm CSS/JS/ba tab.
 3. Mở tab quản lý và lịch sử để xác nhận SQL Server/migration hoạt động.
-4. Upload một ảnh smoke tổng hợp; xác nhận preview, facts và bảng kết quả cập nhật đúng trong workspace.
+4. Upload một ảnh smoke tổng hợp; xác nhận HTTP `202`, audit `AI_QUEUED`, rồi trạng thái `COMPLETED/FAILED`. Refresh giữa lúc xử lý không được làm mất job.
 5. Mở lại ảnh từ lịch sử, recycle app pool rồi mở lại lần nữa để xác minh file tồn tại.
 6. Chỉ khi 5 bước trên đạt, chạy đúng một lượt Verify Harness và ghi thời điểm, 5 expected/actual, tổng latency và OpenRouter cost.
 7. Đổi migration flag về `false`, recycle pool và kiểm `/healthz` lần cuối.
@@ -98,6 +100,8 @@ Thực hiện theo thứ tự để không tốn quota vô ích:
 | App chạy nhưng redirect HTTPS lỗi | giữ URL HTTPS do host cấp và kiểm proxy/header; không hard-code domain |
 
 Chỉ bật stdout startup log khi cần chẩn đoán, tải log về rồi tắt lại để tránh đầy storage hoặc lộ cấu hình.
+
+Hosted deployment không thể gọi Ollama trên laptop qua `127.0.0.1`; loopback khi đó là chính server hosting. Chỉ bật fallback Ollama nếu model chạy trên cùng server hoặc một endpoint HTTPS riêng đã được bảo vệ. Bản demo trên máy cá nhân có thể bật fallback vì ASP.NET và Ollama cùng máy.
 
 ## 7. Vì sao không chọn Render Free cho bản nộp
 

@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 from docx import Document
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
@@ -9,7 +10,7 @@ from docx.shared import Cm, Pt, RGBColor
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "submission" / "AURA_BUILD_LOG.docx"
+OUTPUT = Path(os.environ.get("AURA_BUILD_LOG_OUTPUT", ROOT / "submission" / "AURA_BUILD_LOG.docx"))
 FONT = "Arial"
 NAVY = "17365D"
 LIGHT_BLUE = "EAF2F8"
@@ -133,13 +134,13 @@ title_bottom.set(qn("w:sz"), "0")
 title_bottom.set(qn("w:space"), "0")
 title_border.append(title_bottom)
 title_ppr.append(title_border)
-run = title.add_run("AURA BUILD LOG SPRINT 1")
+run = title.add_run("AURA BUILD LOG SPRINT 1 VÀ HARDENING")
 set_run_font(run, size=18, bold=True, color="000000")
 
 subtitle = document.add_paragraph()
 subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
 subtitle.paragraph_format.space_after = Pt(5)
-run = subtitle.add_run("Track A The Escalation Referee | 27 09 2026 | Pham Gia Phu")
+run = subtitle.add_run("Track A The Escalation Referee | 28 09 2026 | Pham Gia Phu")
 set_run_font(run, size=9.2, italic=True, color="555555")
 
 intro = document.add_paragraph()
@@ -209,7 +210,7 @@ evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
 headers = ("Build", "Test offline", "Verify v2 local", "Gói BGK")
-values = ("0 warning 0 error", "70 trên 70 pass", "25 trên 25 fixture", "15 ca đã khóa")
+values = ("0 warning 0 error", "80 trên 80 pass", "25 trên 25 fixture", "15 ca đã khóa")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -243,15 +244,16 @@ add_body(
 add_heading(document, "4 Cơ chế fail safe đã triển khai")
 add_body(
     document,
-    "AURA không retry HTTP 429 để tránh đốt thêm quota, chỉ retry tối đa một lần với lỗi 5xx và dừng các ca Verify còn "
-    "lại khi provider gặp lỗi mang tính hệ thống. Đây chưa phải circuit breaker hoặc exponential backoff nhiều lần; "
-    "mọi lỗi extraction đều chuyển kiểm tra thủ công và không tạo kết quả PASS giả.",
+    "Upload lưu hồ sơ PENDING rồi trả HTTP 202; worker claim job bằng lease nên refresh hoặc restart không làm mất hàng đợi. "
+    "Fallback OpenRouter sang Ollama mặc định tắt. Khi bật, hệ thống chỉ chuyển một lần cho lỗi hạ tầng đủ điều kiện, "
+    "mở circuit sau ngưỡng lỗi và ghi provider thực sự phục vụ. Lỗi schema hoặc semantic không được che bằng đổi model.",
 )
 
 add_heading(document, "5 Quyết định kiến trúc và phần cắt giảm")
 add_bullet(document, "Tách Qwen extraction và semantic validation khỏi PolicyDecisionEngine để đổi model mà không đổi quy tắc duyệt.")
 add_bullet(document, "Giữ AuditLogs theo sự kiện append-only ở tầng ứng dụng, nhưng UI gom một hồ sơ thành một timeline để tránh cảm giác lặp.")
-add_bullet(document, "Chặn thao tác workflow chồng trong một instance, dùng RowVersion chống ghi đè đồng thời và reload sau mutation để đọc lại trạng thái đã commit.")
+add_bullet(document, "Dùng DB-backed queue và lease cho upload; giữ gate riêng cho Verify và dùng RowVersion chống ghi đè cùng hồ sơ.")
+add_bullet(document, "Ghi ngữ cảnh người gửi, provider chính, provider phục vụ, fallback flag và mã lỗi trong hồ sơ/audit.")
 add_bullet(document, "Giữ hosted Qwen 8B làm baseline nhờ benchmark cùng build đáp ứng demo; Ollama/Qwen 4B giữ tùy chọn local vì chậm trên RTX 3050 4 GB.")
 add_bullet(document, "Hoãn PDF nhiều trang, authentication theo role, tax lookup, antivirus, object storage và benchmark tập dữ liệu độc lập.")
 
@@ -259,8 +261,8 @@ add_heading(document, "6 Bài học và bước tiếp theo")
 add_body(
     document,
     "Lợi ích lớn nhất của AI là tăng tốc vòng lặp khám phá và kiểm thử, không phải thay người chịu trách nhiệm. "
-    "AURA có đường chạy localhost tái lập trong README; bản SmarterASP.NET đã smoke thành công luồng upload, AI extraction "
-    "và audit sau khi cập nhật API key trong Pool Manager. Gói Sprint 1 đã có video dưới ba phút, năm slide, Build Log, "
+    "AURA có đường chạy localhost tái lập trong README. Pipeline mới cần được test lại với OpenRouter, Ollama và năm upload "
+    "đồng thời trước khi chốt số đo end-to-end. Gói Sprint 1 đã có video dưới ba phút, năm slide, Build Log, "
     "năm ca Verify và mười lăm ca tham chiếu cho BGK. Bước tiếp theo là pilot trên dữ liệu độc lập, đo field accuracy, "
     "over escalation, missed escalation và thời gian xử lý trước khi tuyên bố hiệu quả thực tế. "
     "Ảnh upload được gửi qua OpenRouter/provider Qwen; dữ liệu cá nhân thật không được đưa vào Git.",

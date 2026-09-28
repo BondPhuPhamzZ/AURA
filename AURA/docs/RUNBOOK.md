@@ -18,6 +18,7 @@ dotnet restore
 dotnet user-secrets set "Vision:Provider" "OpenRouter"
 dotnet user-secrets set "OpenRouter:ApiKey" "YOUR_OPENROUTER_KEY"
 dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
+dotnet user-secrets set "Vision:FallbackEnabled" "false"
 dotnet ef database update
 ```
 
@@ -43,7 +44,7 @@ Mở URL được in trong terminal. Không truy cập `/Verify` để tìm tran
 
 Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_receipts.py --as-of-date 2026-09-21`. Script đồng thời sinh Test Kit v2 gồm 30 ca nhưng chỉ 5 ca đại diện được Verify gọi. Không đổi `as-of-date`, fixture hoặc expected sau khi chốt mà không cập nhật manifest, tài liệu và commit.
 
-Để bảo toàn credit: build + 70 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 15/30 ảnh tham chiếu qua API.
+Để bảo toàn credit: build + 80 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Không chạy tự động 15/30 ảnh tham chiếu qua API.
 
 Trong demo, `DecisionPolicy:EscalateDuplicateReceipts=false` cho phép chạy lại cùng ảnh nhưng vẫn ghi nhận trùng trong audit. Trước production, đổi thành `true`. Thay đổi cấu hình này không cần sửa code.
 
@@ -63,7 +64,8 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 
 - Chọn bằng `Vision:Provider=Ollama`; quay lại baseline bằng `Vision:Provider=OpenRouter`.
 - Model mặc định local là `qwen3-vl:4b-instruct`; một request tại một thời điểm, context 8192 và timeout 180 giây.
-- AURA không tự fallback từ OpenRouter sang Ollama. Lỗi provider phải hiện rõ và chuyển kiểm tra thủ công.
+- Fallback mặc định tắt để benchmark không trộn provider. Khi demo cần đường dự phòng, bật `Vision:FallbackEnabled=true`, giữ `Vision:Provider=OpenRouter` và đặt `Vision:FallbackProvider=Ollama` sau khi smoke Ollama.
+- Fallback chỉ chạy một lần cho lỗi hạ tầng đủ điều kiện. Lỗi schema, semantic, truncated response hoặc invalid request vẫn chuyển kiểm tra thủ công.
 - Sau JSON Schema, backend kiểm tra ngữ nghĩa tiền VND, loại chứng từ và các identifier. Dữ kiện mâu thuẫn được đọc lại đúng một lần; vẫn sai thì chuyển `ESCALATE_FACT`, không tự đoán hoặc tự nhân số tiền.
 - `/healthz` hiển thị provider/model cấu hình nhưng không thay cho một ảnh smoke test.
 - Build ngày 27/09/2026 đạt 25/25 qua năm batch Verify liên tiếp trên fixture tổng hợp bằng Ollama 4B; upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Ba batch có đo chi tiết mất khoảng 303-304 giây mỗi batch trên RTX 3050 Laptop 4 GB; hai batch xác nhận bổ sung chưa tổng hợp latency. Đây không phải accuracy trên tập hóa đơn thật độc lập.
@@ -77,6 +79,27 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 4. Với `429`, dừng vài phút rồi thử đúng **một ảnh**; không bấm Verify liên tục.
 5. Với `5xx/timeout`, kiểm tra trang trạng thái OpenRouter/provider. Hệ thống phải giữ `ESCALATE_SYSTEM_ERROR`, không dùng kết quả giả hoặc cache cũ như một lần gọi AI mới.
 6. Chỉ đổi model sau khi chạy lại ma trận 5 ca và xác nhận input ảnh, JSON Schema, latency và câu hỏi chuyển tiếp.
+
+### Pipeline xử lý nền và fallback
+
+1. Luôn chạy `dotnet ef database update` sau khi pull commit có migration mới.
+2. Upload hợp lệ trả `202 Accepted` sau khi lưu file và record `PENDING`; model không còn giữ request HTTP mở.
+3. Worker claim job bằng lease; UI gọi `GET /Applicant/Status/{id}` đến khi `COMPLETED` hoặc `FAILED`.
+4. Refresh trong cùng tab không làm mất theo dõi vì status URL nằm trong `sessionStorage`. Nếu đóng tab, kết quả vẫn nằm trong database và audit.
+5. Audit `AI_QUEUED` chứng minh request đã nhận; audit `AI_PROCESSED_*` ghi provider chính, provider phục vụ, fallback flag, error code và latency AI.
+6. Circuit breaker mặc định mở sau ba lỗi hạ tầng liên tiếp, dùng fallback 60 giây rồi cho provider chính một lượt probe.
+
+Để bật fallback cho demo trên máy cá nhân:
+
+```powershell
+ollama list
+Invoke-RestMethod 'http://127.0.0.1:11434/api/tags'
+dotnet user-secrets set "Vision:Provider" "OpenRouter"
+dotnet user-secrets set "Vision:FallbackEnabled" "true"
+dotnet user-secrets set "Vision:FallbackProvider" "Ollama"
+```
+
+Khi benchmark từng provider, bắt buộc đặt `Vision:FallbackEnabled=false`; nếu không, một kết quả thành công có thể đến từ fallback và làm sai phép so sánh.
 
 ## 5. Cấu hình deploy
 

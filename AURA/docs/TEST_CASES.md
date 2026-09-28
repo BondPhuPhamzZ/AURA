@@ -14,6 +14,18 @@ Mốc cập nhật: 27/09/2026. Ký hiệu: `A` đã tự động hóa bằng xU
 
 Ngày 20/09/2026, provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026; người dùng xác nhận đạt đúng 5/5 local bằng Qwen3-VL-8B-Instruct/OpenRouter ngày 22/09/2026. Ngày 27/09/2026, Ollama/Qwen3-VL-4B đạt 25/25 qua năm batch liên tiếp sau semantic hardening; upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Production upload/AI/audit đã smoke thành công và video demo đã được liên kết từ README. Các kết quả fixture tổng hợp không phải accuracy tổng quát.
 
+Năm ca Verify chính thức không thay đổi trong hardening ngày 28/09/2026. Pipeline upload thật đã chuyển sang background processing; cần chạy bổ sung các ca vận hành dưới đây mà không sửa expected result của TC-01..TC-05.
+
+| ID vận hành | Kịch bản | Kỳ vọng |
+|---|---|---|
+| OP-01 | Refresh sau khi upload nhận `202` | Job vẫn hoàn tất; tab nối lại status từ `sessionStorage` |
+| OP-02 | Restart app khi job `PROCESSING` | Sau khi lease hết hạn, worker reclaim; không tạo request mới |
+| OP-03 | 5 upload đồng thời | Không trả global `409`; tất cả được ghi `AI_QUEUED` |
+| OP-04 | Primary timeout/429, fallback bật | Gọi fallback một lần; audit đúng primary/served provider |
+| OP-05 | Schema/semantic invalid, fallback bật | Không đổi provider; fail-safe theo contract/policy |
+| OP-06 | Nhiều lỗi hạ tầng đến ngưỡng | Circuit mở; hết cooldown có primary probe |
+| OP-07 | Hai manager action cùng hồ sơ | Một thao tác thành công, thao tác stale nhận conflict |
+
 Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số `AUTO_APPROVE`/`ESCALATE_*`; facts trích xuất hiển thị cạnh upload; auto approve xuất hiện ngay trong Audit; escalation còn trong bảng kết quả cho tới khi chuyển quản lý. Upload/Verify cập nhật trong workspace; mutation workflow điều hướng toàn trang sau commit để tránh trạng thái cũ hoặc trùng lặp.
 
 ## Ma trận policy mở rộng

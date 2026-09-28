@@ -19,7 +19,7 @@ Cập nhật: 27/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 - `README.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_AND_INTEGRATION_REPORT.md`.
 - `docs/`: Build Log nguồn, deployment, runbook, test cases, model selection, measurement plan.
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
-- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide và phản ánh 70 test cùng workflow hiện tại.
+- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide và phản ánh 80 test cùng workflow hiện tại.
 - `submission/AURA_BUILD_LOG.docx`: một trang.
 - `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.
 - 5 ảnh Verify trong `wwwroot/test_data/images`, manifest Verify và gói 15 ca BGK.

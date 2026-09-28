@@ -23,13 +23,17 @@ Qwen Vision, accessed through OpenRouter by default or optional local Ollama, ex
 - Let an employee forward a case and let a manager approve, reject, or undo the latest decision.
 - Record the request lifecycle in an audit trail.
 - Run a five-case Verify Harness through the real application pipeline.
-- Prevent overlapping workflow writes and stale updates from creating duplicate or conflicting data.
+- Accept receipt uploads quickly, process AI work in a durable database-backed queue, and resume status polling after a page refresh.
+- Optionally fail over once to Ollama for eligible infrastructure failures, with provider and error metadata in the audit trail.
+- Prevent stale updates from overwriting another reviewer action through SQL row-version checks.
 
 ## Decision Flow
 
 ```text
 Upload receipt
-→ Qwen extracts structured facts
+→ Save PENDING request and return HTTP 202
+→ Background worker claims the job with a lease
+→ Qwen extracts structured facts using the primary provider or an eligible fallback
 → Backend validates the extracted data
 → C# policy engine makes a deterministic decision
 → AUTO_APPROVE or ESCALATE_*
@@ -51,7 +55,7 @@ AURA does not fine-tune Qwen and does not give the model final decision authorit
 ## Sprint 1 Verification
 
 - Build: **0 warnings, 0 errors**
-- Automated tests: **70/70 passed**
+- Automated tests: **80/80 passed**
 - Verify Harness: **5 smoke-test cases**
 - Evaluator reference pack: **15 test cases**
 
@@ -94,6 +98,16 @@ Open the localhost address printed in the terminal, then (the quoted labels belo
 4. Open the **Quản lý** tab and select **Đồng ý duyệt** or **Từ chối duyệt**.
 5. Open **Lịch sử hành vi** to inspect the audit trail.
 
+The upload endpoint now returns `202 Accepted`. The browser polls the request status while the background worker processes AI inference. For demo fallback on the same laptop, start Ollama first and opt in explicitly:
+
+```powershell
+dotnet user-secrets set "Vision:Provider" "OpenRouter"
+dotnet user-secrets set "Vision:FallbackEnabled" "true"
+dotnet user-secrets set "Vision:FallbackProvider" "Ollama"
+```
+
+Fallback only applies to eligible infrastructure failures such as timeout, 429, provider outage, auth/credit failure, or local Ollama unavailability. Schema, semantic, truncated-response, and invalid-request failures do not switch models. Keep fallback disabled when benchmarking one provider in isolation.
+
 ### Run the Automated Tests
 
 These tests do not call the paid AI API:
@@ -111,12 +125,13 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj
 - [OpenRouter Benchmark — 27/09/2026](AURA/docs/OPENROUTER_BENCHMARK_2026-09-27.md)
 - [Deployment and Operations Runbook](AURA/docs/RUNBOOK.md)
 - [Optional Local Ollama Setup](AURA/docs/LOCAL_OLLAMA.md)
+- [Sprint 2 Implementation Progress](AURA/docs/SPRINT2_IMPLEMENTATION_PROGRESS_2026-09-28.md)
 
 ## Sprint 1 Limitations
 
 - Supports one JPG/PNG image up to 5 MB; PDF and multi-page receipts are not supported yet.
 - Does not yet include role-based authentication, e-invoice verification, tax-code lookup, currency conversion, or malware scanning.
-- The default evaluation path depends on OpenRouter. Ollama remains an optional local path; both providers still need an independent real-receipt benchmark before any production accuracy claim.
+- OpenRouter remains the default. Ollama fallback is opt-in and practical only on a machine where Ollama and the model are already installed; both providers still need an independent real-receipt benchmark before any production accuracy claim.
 - Uploaded receipt evidence is stored by the application instance; production deployment requires managed durable storage and an explicit retention policy.
 - AI failure or low confidence always results in human review rather than a fabricated decision.
 

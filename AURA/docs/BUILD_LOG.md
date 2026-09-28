@@ -9,13 +9,14 @@
 
 - Tách extraction khỏi deterministic policy giúp kết quả giải thích và unit-test được.
 - Verify fixture v2 đạt 25/25 qua năm lượt liên tiếp với Ollama/Qwen3-VL-4B. OpenRouter/Qwen3-VL-8B cùng build đạt 15/15 qua ba lượt và upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3; adjusted P95 là 11,317 giây. Exact match năm field khóa là 72/75 vì TC-04 lệch taxonomy chứng từ. Test Kit v2 là dữ liệu tổng hợp; các kết quả này không phải accuracy trên dữ liệu độc lập.
-- 70 automated tests bao phủ policy/workflow/audit, chống thao tác chồng, hợp đồng OpenRouter/Ollama, semantic validation/repair và tính toàn vẹn Test Kit/manifest.
+- 80 automated tests bao phủ policy/workflow/audit, hợp đồng OpenRouter/Ollama, semantic validation/repair, fallback/circuit breaker và tính toàn vẹn Test Kit/manifest.
 - Structured Output giảm parsing lỗi so với JSON tự do.
 - Backend phát hiện JSON đúng schema nhưng sai nghĩa như `295.199 đ -> 295.199`, `ECOMMERCE -> RIDE_HAILING`, hoặc số biên nhận bị gán vào `orderId`; model được đọc lại đúng một lần. Repair không nhận claimed amount và kết quả còn mâu thuẫn luôn đi `ESCALATE_FACT`.
 - Bản production trên SmarterASP.NET đã smoke thành công luồng upload, AI extraction và audit sau khi API key được cập nhật trong Pool Manager.
 - UI hiển thị facts AI theo ba cột; bảng chuyển tiếp riêng được hợp nhất vào bảng kết quả để tránh trùng nhưng vẫn phục hồi escalation sau reload.
 - Hồ sơ và audit AI được ghi trong cùng một `SaveChanges`; sau thao tác chuyển tiếp/quản lý, giao diện điều hướng toàn trang để dựng lại các bảng từ trạng thái database đã commit, tránh dữ liệu fragment cũ ghi đè nhau.
-- `WorkflowOperationGate` chặn thao tác ghi chồng trong một instance và SQL Server `RowVersion` phát hiện cập nhật đồng thời giữa nhiều instance.
+- Upload dùng hàng đợi DB-backed, trả `202 Accepted`, worker claim bằng lease và UI poll trạng thái. `WorkflowOperationGate` chỉ chống hai batch Verify chạy chồng; `RowVersion` chặn ghi đè cùng hồ sơ.
+- Fallback OpenRouter sang Ollama mặc định tắt. Khi bật, allowlist lỗi hạ tầng và circuit breaker giới hạn việc chuyển provider; audit ghi provider chính và provider phục vụ.
 
 ## Chi phí/thời gian và sự cố thực tế
 
