@@ -104,6 +104,12 @@ builder.Services.AddScoped<IVisionExtractor, ConfiguredVisionExtractor>();
 
 var app = builder.Build();
 
+var configuredStorage = app.Services.GetRequiredService<IOptions<ReceiptStorageOptions>>().Value;
+var receiptStorageRoot = Path.GetFullPath(Path.IsPathRooted(configuredStorage.Directory)
+    ? configuredStorage.Directory
+    : Path.Combine(app.Environment.ContentRootPath, configuredStorage.Directory));
+Directory.CreateDirectory(receiptStorageRoot);
+
 if (builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
 {
     await using var scope = app.Services.CreateAsyncScope();
@@ -127,10 +133,12 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
 
-app.MapGet("/healthz", (IOptions<VisionOptions> configuredVision,
+app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
     IOptions<OpenRouterOptions> configuredOpenRouter,
     IOptions<OllamaOptions> configuredOllama,
-    IWebHostEnvironment environment) =>
+    IWebHostEnvironment environment,
+    AppDbContext database,
+    CancellationToken cancellationToken) =>
 {
     var vision = configuredVision.Value;
     var openRouter = configuredOpenRouter.Value;
@@ -141,7 +149,18 @@ app.MapGet("/healthz", (IOptions<VisionOptions> configuredVision,
         useOllama ? ollama.PolicyPath : openRouter.PolicyPath));
     var policyAvailable = File.Exists(policyPath);
     var aiConfigured = useOllama || !string.IsNullOrWhiteSpace(openRouter.ApiKey);
-    var ready = policyAvailable && aiConfigured;
+    bool databaseAvailable;
+    try
+    {
+        databaseAvailable = await database.Database.CanConnectAsync(cancellationToken);
+    }
+    catch
+    {
+        databaseAvailable = false;
+    }
+
+    var storageAvailable = Directory.Exists(receiptStorageRoot);
+    var ready = policyAvailable && aiConfigured && databaseAvailable && storageAvailable;
 
     return Results.Json(new
     {
@@ -149,6 +168,8 @@ app.MapGet("/healthz", (IOptions<VisionOptions> configuredVision,
         service = "AURA",
         aiConfigured,
         policyAvailable,
+        databaseAvailable,
+        storageAvailable,
         provider = useOllama ? VisionOptions.OllamaProvider : VisionOptions.OpenRouterProvider,
         model = useOllama ? ollama.Model : openRouter.Model,
         processingMode = "durable-background-queue",
