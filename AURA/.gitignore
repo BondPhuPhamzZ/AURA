@@ -20,6 +20,7 @@ wwwroot/temp_test/
 # Optional private evaluation photos: keep instructions, never commit the receipts themselves.
 test_kit/local_real/*
 !test_kit/local_real/README.md
+test_kit/results/
 
 # Secrets and machine-specific production settings must never enter Git.
 appsettings.Secrets.json

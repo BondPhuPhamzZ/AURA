@@ -66,6 +66,10 @@ builder.Services.AddOptions<ReceiptProcessingOptions>()
     .Bind(builder.Configuration.GetSection(ReceiptProcessingOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
+builder.Services.AddOptions<VerifyOptions>()
+    .Bind(builder.Configuration.GetSection(VerifyOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 var maxUploadBytes = builder.Configuration.GetValue<int>("ReceiptStorage:MaxFileSizeMb", 5) * 1024L * 1024L;
 // Multipart contains the file plus antiforgery fields, boundaries and headers. Keep transport

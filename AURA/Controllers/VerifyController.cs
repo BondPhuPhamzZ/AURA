@@ -4,7 +4,9 @@ using System.Text.Json;
 using AURA.Interfaces;
 using AURA.Models;
 using AURA.Services;
+using AURA.Options;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace AURA.Controllers;
 
@@ -15,16 +17,18 @@ public sealed class VerifyController : Controller
     private readonly IReimbursementRepository _repository;
     private readonly ILogger<VerifyController> _logger;
     private readonly WorkflowOperationGate _operationGate;
+    private readonly VerifyOptions _verifyOptions;
 
     public VerifyController(IVisionExtractor vision, IWebHostEnvironment environment,
         IReimbursementRepository repository, ILogger<VerifyController> logger,
-        WorkflowOperationGate operationGate)
+        WorkflowOperationGate operationGate, IOptions<VerifyOptions> verifyOptions)
     {
         _vision = vision;
         _environment = environment;
         _repository = repository;
         _logger = logger;
         _operationGate = operationGate;
+        _verifyOptions = verifyOptions.Value;
     }
 
     [HttpGet]
@@ -94,7 +98,8 @@ public sealed class VerifyController : Controller
             {
                 try
                 {
-                    if (results.Count > 0) await Task.Delay(4000, cancellationToken);
+                    if (results.Count > 0 && _verifyOptions.InterCaseDelayMs > 0)
+                        await Task.Delay(_verifyOptions.InterCaseDelayMs, cancellationToken);
                     extractedFacts = await _vision.ExtractFactsAsync(imagePath, cancellationToken);
                     extractedFactsJson = JsonSerializer.Serialize(extractedFacts);
                     var decision = PolicyDecisionEngine.Evaluate(extractedFacts, testCase.ClaimedAmount);
