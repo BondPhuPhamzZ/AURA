@@ -31,9 +31,13 @@ Một ca đánh giá cần ảnh, `claimedAmount`, expected status và ground tr
 
 Runner ngoài UI gọi đúng endpoint production `/Applicant/UploadReceipt`, nhận HTTP 202, poll `/Applicant/Status/{id}` và lưu bằng chứng. Vì vậy phép đo vẫn đi qua validation, storage, queue, provider, semantic validator, policy, database và audit giống upload thủ công.
 
+Khi manifest tuyển chọn có `sourceManifest`, runner tự đối chiếu case theo `id` để lấy `expected_facts` từ manifest nguồn. Nhờ đó `field exact match` của gói 15 ca không còn bị để trống chỉ vì file tuyển chọn cố ý giữ cấu trúc ngắn. Metadata lưu cả SHA-256 của manifest tuyển chọn và manifest nguồn.
+
 ## 4. Chạy gói 15 ca
 
 Khởi động AURA trước, giữ fallback tắt khi đo riêng một provider. Sau đó chạy từng lệnh trên một dòng:
+
+Nếu source vừa thay đổi, phải chạy `dotnet build` rồi mới dùng `dotnet run --no-build`. Không dùng một assembly cũ để benchmark source mới; kiểm tra `/healthz` phải có `databaseAvailable=true` và `storageAvailable=true` trước khi bắt đầu.
 
 ```powershell
 cd D:\aura\AURA\AURA

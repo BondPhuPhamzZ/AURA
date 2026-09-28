@@ -1,6 +1,6 @@
 # Case study: chọn model vision vừa đủ cho AURA
 
-Ngày cập nhật: 27/09/2026.
+Ngày cập nhật: 29/09/2026.
 
 ## 1. Bài toán doanh nghiệp
 
@@ -19,15 +19,15 @@ AURA cần đọc một ảnh hóa đơn/chứng từ và trả dữ kiện có 
 
 | Phương án | Điểm mạnh | Hạn chế | Quyết định |
 |---|---|---|---|
-| Qwen3-VL-4B-Instruct qua Ollama local | Model Q4_K_M khoảng 3,3 GB; không tính phí theo request; dữ liệu ở máy local; Verify tổng hợp đạt 25/25 và upload `HoaDon1.jpg` đạt 3/3 | Ba batch có đo mất khoảng 303–304 giây/batch trên RTX 3050 Laptop 4 GB; chưa có benchmark hóa đơn thực tế độc lập | **Giữ tùy chọn local, chưa đổi mặc định** |
-| Qwen3-VL-8B-Instruct qua OpenRouter | Model vision 8B; structured output; cùng build đạt 15/15 Verify, upload 3/3; adjusted P95 11,317 giây | Dữ liệu đi qua dịch vụ bên ngoài; phụ thuộc credit/provider; chưa có benchmark hóa đơn thực tế độc lập | **Chọn cho demo và deploy Sprint 1** |
+| Qwen3-VL-4B-Instruct qua Ollama local | Không tính phí theo request; dữ liệu ở máy local; official Verify và upload nhỏ ổn định; judge set đạt 73/75 field | Judge set chỉ đạt 14/15 quyết định, bỏ sót TK-12; P95 58,318 giây và không phù hợp 4–5 request đồng thời trên RTX 3050 4 GB | **Giữ tùy chọn offline/manual fallback, chưa bật auto-fallback** |
+| Qwen3-VL-8B-Instruct qua OpenRouter | Structured output; judge set đạt 15/15 quyết định, không missed escalation; P95 16,459 giây; concurrency 5 request hoàn tất 5/5 | 70/75 field; dữ liệu đi qua dịch vụ ngoài; phụ thuộc Internet, credit và provider | **Chọn làm demo primary** |
 | Model vision cỡ rất lớn (ví dụ 100B+) | Năng lực tổng quát cao | Compute, giá và độ trễ không tương xứng tác vụ OCR; khó biện minh trong bối cảnh doanh nghiệp | Không chọn |
 
 ## 4. Quyết định kiến trúc
 
 Cấu hình mặc định vẫn là `Vision:Provider=OpenRouter` với `qwen/qwen3-vl-8b-instruct`. `ConfiguredVisionExtractor` cho phép đổi sang Ollama hoặc bật Ollama làm fallback có kiểm soát. `ReceiptExtractionContract` giữ cùng prompt, schema và parser; audit ghi provider thực sự phục vụ. Adapter local không đồng nghĩa model 4B đã đạt chất lượng trên dữ liệu thực.
 
-Không mô tả 8B hay 4B là “đã chính xác” trước khi có benchmark độc lập. OpenRouter đạt 15/15 quyết định qua ba batch Verify và upload `HoaDon1.jpg` 3/3; exact match của năm field khóa là 72/75 do TC-04 lệch taxonomy `RESTAURANT_BILL`/`RETAIL_RECEIPT`. Ollama đạt 25/25 qua năm lượt Verify và upload 3/3. Đây vẫn chỉ là bằng chứng pipeline trên dữ liệu tổng hợp. Xem số đo và giới hạn diễn giải tại [OpenRouter benchmark](OPENROUTER_BENCHMARK_2026-09-27.md).
+Không mô tả 8B hay 4B là “đã chính xác trong thực tế”. Trên judge set 15 ca tổng hợp, OpenRouter đạt 15/15 quyết định và 70/75 field; Ollama đạt 14/15 quyết định và 73/75 field. Ollama đọc metadata tốt hơn một chút nhưng bỏ sót một escalation, nên safety gate ưu tiên OpenRouter. Xem số đo, sai lệch và giới hạn tại [live validation](LIVE_VALIDATION_2026-09-29.md).
 
 ## 5. Bộ kiểm thử bàn giao
 

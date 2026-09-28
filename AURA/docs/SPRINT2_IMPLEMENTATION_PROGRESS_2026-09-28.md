@@ -8,6 +8,8 @@ Pipeline upload hóa đơn đã chuyển từ một HTTP request chờ model ho�
 
 OpenRouter tiếp tục là provider chính. Ollama có thể làm fallback trên cùng laptop demo, nhưng fallback mặc định tắt để không làm sai benchmark và không tạo phụ thuộc Ollama trên hosted server.
 
+Live validation ngày 29/09/2026 đã chốt thêm: OpenRouter đạt 15/15 quyết định với P95 16,459 giây; Ollama đạt 14/15 với P95 58,318 giây và bỏ sót escalation TK-12. Vì vậy Ollama vẫn là đường local/offline có giới hạn, chưa đủ điều kiện bật auto-fallback cho toàn bộ request. Xem [báo cáo live validation](LIVE_VALIDATION_2026-09-29.md).
+
 ## Những phần đã triển khai
 
 ### 1. Durable background processing
@@ -48,6 +50,10 @@ OpenRouter tiếp tục là provider chính. Ollama có thể làm fallback trê
 - Thêm `tools/Invoke-ExtendedDatasetEvaluation.ps1` để chạy 15/30 ca qua upload endpoint mà không thêm nút UI. Runner xuất metadata, CSV, JSON và summary gồm decision/field accuracy, missed/over-escalation, system error, fallback và P50/P95.
 - Delay 4 giây của Official Verify chuyển thành `Verify:InterCaseDelayMs`; mặc định vẫn 4000 ms để không thay đổi baseline/quota behavior.
 - `/healthz` giờ kiểm tra thêm kết nối database và khả dụng của thư mục receipt; thiếu một trong hai sẽ trả `503 degraded` thay vì báo sẵn sàng giả. Endpoint không gọi AI provider nên không tiêu quota.
+- Extended evaluator đã chạy thật trên cùng 15 ca với fallback tắt: OpenRouter 15/15, Ollama 14/15. Runner hiện resolve expected facts từ source manifest và lưu hash để field exact không bị rỗng.
+- Concurrent smoke OpenRouter 5 request hoàn tất 5/5, HTTP accepted P95 93 ms và end-to-end P95 17,072 giây.
+- UI đã đối chiếu Linear design system: một shape token 6 px, palette/contrast gọn hơn và không tràn trang ở 1280, 768, 390 px; Console không có warning/error.
+- Workbook so sánh có raw rows, công thức, chart, phương pháp và giới hạn được tạo tại `D:\aura\compare_Provider\AURA_Provider_Comparison_2026-09-29.xlsx`.
 
 ## Cấu hình khuyến nghị
 
@@ -83,6 +89,7 @@ Không bật Ollama fallback trên hosted server nếu Ollama chỉ chạy ở l
 | SignalR cross-tab realtime | Chưa triển khai | Polling theo request đã giải quyết upload; cần test race và reconnect trước khi mở rộng |
 | Authentication và role thật | Chưa triển khai | Metadata người gửi chỉ phục vụ demo; auth cần scope riêng và migration người dùng |
 | Resize/compress ảnh trước AI | Chưa bật | Thay pixel có thể làm mất chữ nhỏ; cần benchmark field accuracy trước |
+| Auto-fallback Ollama trong demo | Chưa bật | Local 4B còn missed escalation TK-12 và không đủ concurrent capacity trên RTX 3050 4 GB |
 | Distributed queue/circuit breaker | Chưa triển khai | Bản demo một instance dùng SQL job state + circuit memory là đủ; scale-out cần Redis/queue service |
 | PDF/nhiều trang và antivirus | Chưa triển khai | Không thuộc baseline đã chốt và cần pipeline file riêng |
 | Đổi nền tảng cloud | Chưa thực hiện | Demo chung kết chạy trên laptop theo xác nhận BTC; deploy chỉ là tùy chọn |
