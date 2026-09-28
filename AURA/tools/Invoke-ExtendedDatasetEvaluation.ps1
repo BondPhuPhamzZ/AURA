@@ -89,6 +89,30 @@ $manifest = Get-Content -Raw -LiteralPath $resolvedManifest | ConvertFrom-Json
 $manifestCases = @($(if ($null -ne $manifest.PSObject.Properties['cases']) { $manifest.cases } else { $manifest }))
 if ($manifestCases.Count -eq 0) { throw 'Manifest không có test case.' }
 
+$sourceManifestPath = $null
+$sourceManifestSha256 = $null
+$sourceCasesById = @{}
+$sourceManifestProperty = $manifest.PSObject.Properties['sourceManifest']
+if ($null -ne $sourceManifestProperty -and -not [string]::IsNullOrWhiteSpace([string]$sourceManifestProperty.Value)) {
+    $sourceManifestCandidate = Join-Path (Split-Path -Parent $resolvedManifest) ([string]$sourceManifestProperty.Value)
+    if (Test-Path -LiteralPath $sourceManifestCandidate -PathType Leaf) {
+        $sourceManifestPath = (Resolve-Path -LiteralPath $sourceManifestCandidate).Path
+        $sourceManifestSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $sourceManifestPath).Hash
+        $sourceManifest = Get-Content -Raw -LiteralPath $sourceManifestPath | ConvertFrom-Json
+        $sourceCases = @($(if ($null -ne $sourceManifest.PSObject.Properties['cases']) {
+            $sourceManifest.cases
+        } else {
+            $sourceManifest
+        }))
+        foreach ($sourceCase in $sourceCases) {
+            $sourceCaseId = [string](Get-CaseValue $sourceCase @('id'))
+            if (-not [string]::IsNullOrWhiteSpace($sourceCaseId)) {
+                $sourceCasesById[$sourceCaseId] = $sourceCase
+            }
+        }
+    }
+}
+
 $selectedCases = @($manifestCases | Select-Object -First $MaxCases)
 if ($selectedCases.Count -lt $MaxCases) {
     Write-Warning "Manifest chỉ có $($selectedCases.Count) ca; MaxCases=$MaxCases."
@@ -119,6 +143,9 @@ try {
         $expectedStatus = [string](Get-CaseValue $testCase @('expectedStatus', 'expected_status'))
         $claimedAmount = [decimal](Get-CaseValue $testCase @('claimedAmount', 'claimed_amount'))
         $expectedFacts = Get-CaseValue $testCase @('expectedFacts', 'expected_facts')
+        if ($null -eq $expectedFacts -and $sourceCasesById.ContainsKey($caseId)) {
+            $expectedFacts = Get-CaseValue $sourceCasesById[$caseId] @('expectedFacts', 'expected_facts')
+        }
         $imagePath = [IO.Path]::GetFullPath((Join-Path $resolvedImages ([IO.Path]::GetFileName($fileName))))
 
         if (-not $imagePath.StartsWith($resolvedImages, [StringComparison]::OrdinalIgnoreCase) -or
@@ -260,6 +287,8 @@ try {
         BaseUrl = $normalizedBaseUrl
         ManifestPath = $resolvedManifest
         ManifestSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $resolvedManifest).Hash
+        SourceManifestPath = $sourceManifestPath
+        SourceManifestSha256 = $sourceManifestSha256
         ImagesDirectory = $resolvedImages
         RequestedMaxCases = $MaxCases
         InterCaseDelaySeconds = $InterCaseDelaySeconds

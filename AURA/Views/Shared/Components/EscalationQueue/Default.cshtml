@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<AURA.Models.ReimbursementRequest>
 
 <div class="escalation-queue">
-    <h4 class="mb-4 form-header">Danh Sách Cần Sếp Duyệt</h4>
+    <h4 class="mb-4 form-header">Danh sách cần sếp duyệt</h4>
     @if (ViewData["LoadError"] is string loadError)
     {
         <div class="alert alert-danger feature-card" style="padding: 16px;">@loadError</div>
@@ -21,7 +21,7 @@
                     <tr>
                         <th>Mã Đơn</th>
                         <th>Nhân Viên</th>
-                        <th>Số Tiền</th>
+                        <th>Số tiền</th>
                         <th>Lý do từ AI</th>
                         <th>Chứng Từ</th>
                         <th>Hành Động</th>

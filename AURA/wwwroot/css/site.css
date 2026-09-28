@@ -1,19 +1,19 @@
 ﻿:root {
-    --colors-primary: #3B82F6;
+    --colors-primary: #5E6AD2;
     --colors-on-primary: #ffffff;
-    --colors-primary-hover: #2563EB;
-    --colors-primary-focus: #1D4ED8;
+    --colors-primary-hover: #828FFF;
+    --colors-primary-focus: #5E69D1;
     
     --colors-ink: #F9FAFB;
     --colors-ink-muted: #D0D6E0;
-    --colors-ink-subtle: #9CA3AF;
+    --colors-ink-subtle: #8A8F98;
     --colors-body: #D1D5DB;
     
-    --colors-canvas: #0B0F19;
-    --colors-surface: #111827;
-    --colors-surface-soft: #1F2937;
+    --colors-canvas: #010102;
+    --colors-surface: #0F1011;
+    --colors-surface-soft: #141516;
     
-    --colors-border: #1F2937;
+    --colors-border: #23252A;
 }
 
 html, body {
@@ -22,6 +22,24 @@ html, body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     min-height: 100vh;
     margin: 0;
+}
+
+/* Keep controls and status markers on AURA's single 6px shape token. */
+.form-control,
+.badge {
+    border-radius: 6px;
+}
+
+.alert-info {
+    color: var(--colors-ink-muted);
+    background-color: var(--colors-surface-soft);
+    border-color: #34343A;
+}
+
+.alert-danger {
+    color: #FCA5A5;
+    background-color: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.45);
 }
 
 /* Header & Tabs */
@@ -74,11 +92,11 @@ html, body {
 }
 
 .logo-icon {
-    background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+    background: var(--colors-primary);
     color: white;
     width: 32px;
     height: 32px;
-    border-radius: 8px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -89,7 +107,7 @@ html, body {
     display: flex;
     background-color: var(--colors-canvas);
     padding: 4px;
-    border-radius: 8px;
+    border-radius: 6px;
     border: 1px solid var(--colors-border);
     gap: 4px;
 }
@@ -121,7 +139,7 @@ html, body {
     color: var(--colors-ink);
     border: 1px solid var(--colors-border);
     padding: 8px 16px;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
@@ -160,10 +178,10 @@ html, body {
 .feature-card {
     background-color: var(--colors-surface);
     border: 1px solid var(--colors-border);
-    border-radius: 12px;
+    border-radius: 6px;
     padding: 32px;
     margin-bottom: 24px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
 }
 
 main {
@@ -215,14 +233,14 @@ main {
     gap: 8px;
     min-height: 46px;
     font-weight: 700;
-    background: linear-gradient(110deg, #2563eb 0%, #4f7cff 48%, #7c5cff 100%);
-    border: 1px solid rgba(147, 197, 253, 0.72);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12), 0 10px 26px rgba(59, 130, 246, 0.28);
+    background: var(--colors-primary);
+    border: 1px solid var(--colors-primary-focus);
+    box-shadow: none;
 }
 
 .verify-primary-button:hover {
-    background: linear-gradient(110deg, #3b82f6 0%, #638cff 48%, #8b6cff 100%);
-    box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.16), 0 13px 30px rgba(59, 130, 246, 0.38);
+    background: var(--colors-primary-hover);
+    box-shadow: none;
 }
 
 .section-title {
@@ -342,9 +360,9 @@ main {
     min-height: 0;
     padding: 20px;
     border: 1px solid #334155;
-    border-radius: 16px;
-    background: #101827;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 8px 24px rgba(0, 0, 0, 0.18);
+    border-radius: 6px;
+    background: var(--colors-surface);
+    box-shadow: none;
 }
 
 .extracted-facts-toolbar {
@@ -357,7 +375,7 @@ main {
 
 .facts-confidence-badge {
     padding: 0.48rem 0.72rem;
-    border-radius: 0.5rem;
+    border-radius: 6px;
     font-size: 0.9rem;
     font-weight: 800;
     line-height: 1.1;
@@ -375,7 +393,7 @@ main {
 .extracted-facts-unavailable {
     padding: 18px;
     border: 1px solid rgba(245, 158, 11, 0.45);
-    border-radius: 10px;
+    border-radius: 6px;
     background: rgba(245, 158, 11, 0.08);
     color: #fcd34d;
 }
@@ -411,7 +429,7 @@ main {
 
 .facts-loading-grid span {
     height: 42px;
-    border-radius: 8px;
+    border-radius: 6px;
     background: linear-gradient(100deg, #182236 20%, #253652 45%, #182236 70%);
     background-size: 240% 100%;
     animation: aura-shimmer 1.25s ease-in-out infinite;
@@ -496,7 +514,7 @@ main {
 
 .dropzone-area {
     border: 2px dashed #475569;
-    border-radius: 16px;
+    border-radius: 6px;
     text-align: center;
     background-color: var(--colors-canvas);
     transition: all 0.3s ease;
@@ -540,7 +558,7 @@ main {
     min-height: 0;
     max-height: 380px;
     object-fit: contain;
-    border-radius: 10px;
+    border-radius: 6px;
     background: #080d18;
 }
 
@@ -555,7 +573,7 @@ main {
     background-color: var(--colors-primary);
     color: var(--colors-on-primary);
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     padding: 12px 24px;
     font-size: 14px;
     font-weight: 500;
@@ -663,7 +681,7 @@ main {
 .analysis-summary .summary-escalated {
     padding: 4px 8px;
     border: 1px solid;
-    border-radius: 999px;
+    border-radius: 6px;
     font-weight: 700;
 }
 
@@ -725,7 +743,7 @@ main {
     overflow: auto;
     overscroll-behavior: contain;
     border: 1px solid #334155;
-    border-radius: 10px;
+    border-radius: 6px;
     scrollbar-color: #475569 #111827;
     scrollbar-width: thin;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -755,14 +773,14 @@ main {
 .table-scroll-area::-webkit-scrollbar-track,
 .top-tabs::-webkit-scrollbar-track {
     background: #111827;
-    border-radius: 999px;
+    border-radius: 6px;
 }
 
 .table-scroll-area::-webkit-scrollbar-thumb,
 .top-tabs::-webkit-scrollbar-thumb {
     background: #475569;
     border: 2px solid #111827;
-    border-radius: 999px;
+    border-radius: 6px;
 }
 
 .table-scroll-area::-webkit-scrollbar-thumb:hover,
@@ -993,7 +1011,7 @@ main {
     object-fit: cover;
     object-position: center;
     border: 1px solid #334155;
-    border-radius: 8px;
+    border-radius: 6px;
     background: var(--colors-canvas);
 }
 
@@ -1052,7 +1070,7 @@ main {
     margin: 0 0 18px;
     padding: 14px;
     border: 1px solid #334155;
-    border-radius: 10px;
+    border-radius: 6px;
     background: rgba(23, 32, 51, 0.7);
 }
 
@@ -1071,7 +1089,7 @@ main {
     min-height: 38px;
     padding: 7px 10px;
     border: 1px solid #475569;
-    border-radius: 7px;
+    border-radius: 6px;
     background: #111827;
     color: var(--colors-ink);
     color-scheme: dark;
@@ -1110,7 +1128,7 @@ main {
 .aura-toast {
     padding: 14px 16px;
     border: 1px solid;
-    border-radius: 10px;
+    border-radius: 6px;
     background: var(--colors-surface);
     box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
     opacity: 0;
@@ -1146,8 +1164,8 @@ main {
     width: 46px;
     height: 46px;
     padding: 0;
-    border: 1px solid #3b82f6;
-    border-radius: 999px;
+    border: 1px solid var(--colors-primary);
+    border-radius: 6px;
     background: #172033;
     color: var(--colors-ink);
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
@@ -1273,6 +1291,23 @@ main {
 
     .aura-logo > span {
         display: none;
+    }
+
+    .top-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        overflow: visible;
+    }
+
+    .top-tabs .nav-link {
+        width: 100%;
+        min-height: 44px;
+        padding-inline: 8px;
+        white-space: normal;
+    }
+
+    .top-tabs .nav-link:last-child {
+        grid-column: 1 / -1;
     }
 
     .back-to-top {

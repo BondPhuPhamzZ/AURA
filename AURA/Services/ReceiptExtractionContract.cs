@@ -51,6 +51,17 @@ internal static class ReceiptExtractionContract
             - A product-order screen with delivery status and SPX/GHN/GHTK/J&T tracking is ECOMMERCE,
               not RIDE_HAILING. RIDE_HAILING is only for passenger trips with a trip/booking/receipt ID.
             - Keep order IDs, trip/booking IDs and shipping tracking codes in their distinct fields.
+            - Read the document's overall status banner before local delivery milestones. Any visible
+              `đã trả hàng`, `hoàn tiền`, `refunded`, `returned`, `đã hủy` or `cancelled` label takes
+              precedence over `giao hàng thành công`/`completed`; set documentStatus and orderStatus to
+              the corresponding RETURNED, REFUNDED or CANCELLED state and never mark that document COMPLETED.
+            - On VAT invoices and receipts, actively read the seller name, tax ID, invoice/receipt number
+              and the final payable row labelled `TỔNG THANH TOÁN`, `TỔNG CỘNG` or `THÀNH TIỀN`.
+              When a clearly printed final total is visible, totalAmount must not be null and must not be
+              confused with a line-item subtotal.
+            - If the final payable row itself is blurred, covered or cropped, set totalAmount to null and
+              report that visual defect in warnings or suspiciousSignals. Never infer the final total from
+              a line-item amount, subtotal or the user's claimed amount, even when the numbers look equal.
 
             {policy}
             """;
