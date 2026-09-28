@@ -7,7 +7,7 @@ Cập nhật: 27/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 | Hạng mục | Trạng thái | File/bằng chứng |
 |---|---|---|
 | Frontend/backend clone và chạy localhost | ☑ Có | README root, .NET 8, LocalDB/SQL Server, user-secrets và migration |
-| Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, `test_kit/judge-manifest.json` đúng 15 ca |
+| Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, 15/30 ca chạy ngoài UI bằng evaluator |
 | Public repository và lịch sử commit | ☑ Có | `https://github.com/BondPhuPhamzZ/AURA`; cần push commit chốt sau mỗi lần cập nhật hồ sơ |
 | Video demo tối đa 3 phút (BTC ghi Optional) | ☑ Đã liên kết | Link Google Drive ở README root |
 | Đúng 5 slide | ☑ Đã dựng | `submission/AURA_5_SLIDES.pptx` |
@@ -46,4 +46,4 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 4. Nếu có thay đổi đáng kể trong lúc chấm, tạo ticket/báo cáo tiến độ cho BTC; sửa tài liệu hoặc độ ổn định nhỏ có thể báo theo commit.
 5. Bằng chứng local ngày 27/09/2026: Ollama/Qwen3-VL-4B đạt 25/25 qua năm batch Verify liên tiếp; upload `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Ba batch có số đo latency chi tiết, hai batch bổ sung chỉ xác nhận quyết định.
 6. OpenRouter cùng build đạt 15/15 qua ba batch Verify và upload `HoaDon1.jpg` 3/3; adjusted P95 11,317 giây. Bằng chứng chi tiết nằm tại `docs/OPENROUTER_BENCHMARK_2026-09-27.md`.
-7. Benchmark dữ liệu thật độc lập, token/cost metadata, concurrency và 15 ca BGK live vẫn là bước tiếp theo; không tự tạo quote hoặc accuracy khi chưa có bằng chứng.
+7. Benchmark dữ liệu thật độc lập, token/cost metadata, concurrency và 15 ca BGK live vẫn là bước tiếp theo; runner đã sẵn sàng nhưng chưa được chạy để tránh tiêu quota ngoài phiên đo.

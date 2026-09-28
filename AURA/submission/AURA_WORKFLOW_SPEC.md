@@ -104,6 +104,7 @@ Cách này vừa giữ bằng chứng để truy vết/hoàn tác, vừa tránh 
 ## 7. Đồng bộ và điều hướng
 
 - Upload trả `202` rồi poll status; Verify vẫn dùng một request tuần tự để giữ đúng baseline 5 ca.
+- Đánh giá mở rộng 15/30 ca chạy bằng PowerShell runner ngoài UI. Mỗi ca vẫn đi qua upload endpoint, queue, vision, policy và audit; dashboard không có thêm nút batch.
 - Chuyển tiếp, quyết định quản lý và hoàn tác dùng `fetch` để nhận lỗi có cấu trúc, sau đó điều hướng toàn trang tới tab đích khi thành công. Mọi bảng vì vậy được dựng lại từ trạng thái database đã commit.
 - Polling chỉ theo dõi hồ sơ upload của tab hiện tại. Chưa có SignalR để đẩy thay đổi cross-tab cho bảng quản lý/audit.
 - Upload, chuyển tiếp và quyết định không dùng global gate. `WorkflowOperationGate` chỉ ngăn hai Verify batch chạy chồng; `RowVersion` phát hiện hai thao tác cùng sửa một hồ sơ.
@@ -131,6 +132,7 @@ AURA có circuit breaker trong bộ nhớ theo instance. Sau ngưỡng lỗi h�
 
 - Chạy thật baseline: upload, OpenRouter/Qwen 8B, semantic validator, policy C#, SQL Server, audit, human decision và receipt retrieval. OpenRouter cùng build đạt 15/15 qua ba batch Verify và upload `HoaDon1.jpg` 3/3, adjusted P95 11,317 giây. Ollama/Qwen 4B local đạt 25/25 qua năm batch nhưng chậm hơn trên RTX 3050 4 GB. Cả hai chưa có benchmark dữ liệu thực độc lập.
 - Mô phỏng: 30 ảnh tổng hợp sinh offline; 5 ảnh Verify và manifest 15 ca BGK được tuyển từ ngân hàng này.
+- Ground truth tổng hợp được sinh tất định bằng Python/Pillow và khóa trong manifest. Ảnh generative AI không được dùng làm nhãn chuẩn; hóa đơn thật đã ẩn danh chỉ nằm trong holdout cục bộ ngoài Git.
 - Không dùng hóa đơn cá nhân thật trong Git. Ảnh thật tùy chọn chỉ đặt tại `test_kit/local_real` và bị `.gitignore` loại trừ.
 
 ## 10. Giới hạn hiện tại

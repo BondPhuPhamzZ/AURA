@@ -47,7 +47,7 @@ AURA does not fine-tune Qwen and does not give the model final decision authorit
 ## Technology
 
 - ASP.NET Core 8 MVC
-- Entity Framework Core and SQL Server
+- Entity Framework Core 8.0.31 and SQL Server
 - Qwen3-VL-8B-Instruct through OpenRouter by default; optional local Qwen3-VL-4B through Ollama
 - JSON Schema structured output
 - Razor Views and the JavaScript Fetch API
@@ -58,6 +58,7 @@ AURA does not fine-tune Qwen and does not give the model final decision authorit
 - Automated tests: **80/80 passed**
 - Verify Harness: **5 smoke-test cases**
 - Evaluator reference pack: **15 test cases**
+- Extended evaluator: **15 or 30 cases through the production upload endpoint, without an extra UI button**
 
 On 27 September 2026, OpenRouter passed three consecutive Verify batches (15/15 decisions) and three manual uploads of `HoaDon1.jpg` (3/3 `AUTO_APPROVE`) on the current build. Its adjusted per-case latency was median 4.371 seconds and P95 11.317 seconds. The local Ollama build passed five consecutive Verify batches (25/25 decisions) and the same manual upload 3/3, but measured batches took about 303–304 seconds each on an RTX 3050 Laptop 4 GB. These are controlled synthetic-fixture results, not an accuracy claim for independent real-world receipts. OpenRouter therefore remains the default demo provider; Ollama remains an optional local privacy/offline path.
 
@@ -74,7 +75,7 @@ dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
 
 ## Run Locally
 
-Requirements: Windows, .NET 8 SDK, and SQL Server LocalDB or SQL Server.
+Requirements: Windows, .NET 8 SDK (8.0.425 recommended), and SQL Server LocalDB or SQL Server.
 
 ```powershell
 git clone https://github.com/BondPhuPhamzZ/AURA.git
@@ -116,6 +117,16 @@ These tests do not call the paid AI API:
 dotnet test tests\AURA.Tests\AURA.Tests.csproj
 ```
 
+### Run the 15/30-case evaluation outside the UI
+
+The dashboard intentionally keeps only the official five-case Verify button. The extended runner uses the same upload endpoint, background worker, provider, policy and audit pipeline, then writes CSV/JSON evidence under the Git-ignored `test_kit/results` directory:
+
+```powershell
+.\tools\Invoke-ExtendedDatasetEvaluation.ps1 -BaseUrl "http://localhost:5000" -ManifestPath ".\test_kit\judge-manifest.json" -ImagesDirectory ".\test_kit\images" -MaxCases 15 -InterCaseDelaySeconds 4
+```
+
+Run all 30 cases only after checking provider quota and cost. Keep fallback disabled when benchmarking one provider.
+
 ## Documentation
 
 - [Architecture and Integration Report](AURA/ARCHITECTURE_AND_INTEGRATION_REPORT.md)
@@ -123,6 +134,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj
 - [Workflow Specification](AURA/submission/AURA_WORKFLOW_SPEC.md)
 - [Test Cases](AURA/docs/TEST_CASES.md)
 - [OpenRouter Benchmark — 27/09/2026](AURA/docs/OPENROUTER_BENCHMARK_2026-09-27.md)
+- [Dataset and Extended Evaluation Guide](AURA/docs/DATASET_EVALUATION_GUIDE.md)
 - [Deployment and Operations Runbook](AURA/docs/RUNBOOK.md)
 - [Optional Local Ollama Setup](AURA/docs/LOCAL_OLLAMA.md)
 - [Sprint 2 Implementation Progress](AURA/docs/SPRINT2_IMPLEMENTATION_PROGRESS_2026-09-28.md)

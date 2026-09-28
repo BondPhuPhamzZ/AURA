@@ -44,6 +44,10 @@ OpenRouter tiếp tục là provider chính. Ollama có thể làm fallback trê
 - LocalDB đã áp migration thành công trong lần xác minh.
 - Thêm `tools/Invoke-ConcurrentUploadSmoke.ps1` để chạy 1-10 upload đồng thời, đo HTTP accepted P95, end-to-end P95, provider phục vụ, fallback và error code.
 - Test integrity vẫn khóa Verify Harness ở đúng 5 ca: 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`.
+- EF Core SQL Server/Tools và local `dotnet-ef` đã nâng cùng major lên 8.0.31. Build Release 0 warning/0 error, 80/80 test pass, không còn package bị NuGet vulnerability scan cảnh báo và EF không có pending model change.
+- Thêm `tools/Invoke-ExtendedDatasetEvaluation.ps1` để chạy 15/30 ca qua upload endpoint mà không thêm nút UI. Runner xuất metadata, CSV, JSON và summary gồm decision/field accuracy, missed/over-escalation, system error, fallback và P50/P95.
+- Delay 4 giây của Official Verify chuyển thành `Verify:InterCaseDelayMs`; mặc định vẫn 4000 ms để không thay đổi baseline/quota behavior.
+- `/healthz` giờ kiểm tra thêm kết nối database và khả dụng của thư mục receipt; thiếu một trong hai sẽ trả `503 degraded` thay vì báo sẵn sàng giả. Endpoint không gọi AI provider nên không tiêu quota.
 
 ## Cấu hình khuyến nghị
 
@@ -75,6 +79,7 @@ Không bật Ollama fallback trên hosted server nếu Ollama chỉ chạy ở l
 | Hạng mục | Trạng thái | Lý do |
 |---|---|---|
 | Thay 5 ca Verify chính thức | Không thay đổi | BTC yêu cầu báo lại nếu thay đổi đáng kể; baseline hiện đã ổn định |
+| Nút batch 15/30 trên dashboard | Không thêm | Runner ngoài UI giữ màn hình gọn và bảo toàn mapping riêng của từng ca |
 | SignalR cross-tab realtime | Chưa triển khai | Polling theo request đã giải quyết upload; cần test race và reconnect trước khi mở rộng |
 | Authentication và role thật | Chưa triển khai | Metadata người gửi chỉ phục vụ demo; auth cần scope riêng và migration người dùng |
 | Resize/compress ảnh trước AI | Chưa bật | Thay pixel có thể làm mất chữ nhỏ; cần benchmark field accuracy trước |
@@ -85,16 +90,17 @@ Không bật Ollama fallback trên hosted server nếu Ollama chỉ chạy ở l
 ## Checklist người vận hành cần làm tiếp
 
 1. Pull commit mới và chạy `dotnet ef database update` trên đúng database demo.
-2. Chạy `dotnet build --no-restore` và `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore`; kỳ vọng 80/80.
+2. Chạy `dotnet build ../AURA.sln --no-restore` và `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore`; kỳ vọng 80/80. Không dùng `--no-build` nếu test project chưa vừa được build đúng configuration.
 3. Giữ fallback tắt, test một upload OpenRouter và một Verify 5 ca để tái xác nhận baseline.
 4. Mở Ollama, bật fallback, chủ động mô phỏng lỗi primary bằng một key/model test không hợp lệ chỉ trong database test; xác nhận audit provider. Không làm bước này trên database/video chính.
 5. Chạy concurrency smoke 5 request trên database riêng hoặc bản sao demo và ghi Accepted P95, End-to-end P95, error rate.
 6. Chạy lại ba lượt upload và ba batch Verify với fallback tắt nếu cần benchmark so sánh sau thay đổi pipeline. Không dùng số cũ để tuyên bố latency end-to-end của pipeline mới.
 7. Chỉ sau khi các cổng trên pass mới quay video/chốt slide và báo BTC. Nếu 5 fixture/expected không đổi, không cần ticket riêng về test case; nên gửi check-in về thay đổi kiến trúc xử lý nền và fallback opt-in.
+8. Khi quota cho phép, chạy gói 15 ca bằng runner ngoài UI và lưu nguyên thư mục evidence. Gói 30 ca chỉ chạy trong phiên benchmark riêng; không chạy trong phần trình bày.
 
 ## Tiêu chí hoàn tất trước demo
 
-- App khởi động sạch trên database đã migrate; `/healthz` trả `ok`.
+- App khởi động sạch trên database đã migrate; `/healthz` trả `ok` với `databaseAvailable=true` và `storageAvailable=true`.
 - Upload trả `202` nhanh và vẫn hoàn tất sau refresh.
 - Một lỗi provider không tạo PASS giả; fallback hoặc `ESCALATE_SYSTEM_ERROR` có audit rõ.
 - Verify đúng 5/5 trong cấu hình demo đã chốt.

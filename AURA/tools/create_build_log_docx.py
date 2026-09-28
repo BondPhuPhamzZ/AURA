@@ -209,8 +209,8 @@ evidence = document.add_table(rows=2, cols=4)
 evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
-headers = ("Build", "Test offline", "Verify v2 local", "Gói BGK")
-values = ("0 warning 0 error", "80 trên 80 pass", "25 trên 25 fixture", "15 ca đã khóa")
+headers = ("Build", "Test offline", "Dependency", "Evaluator")
+values = ("0 warning 0 error", "80 trên 80 pass", "Không còn advisory", "15/30 ca ngoài UI")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -241,12 +241,15 @@ add_body(
     bold_lead="Kết luận đo lường: ",
 )
 
+document.add_page_break()
 add_heading(document, "4 Cơ chế fail safe đã triển khai")
 add_body(
     document,
     "Upload lưu hồ sơ PENDING rồi trả HTTP 202; worker claim job bằng lease nên refresh hoặc restart không làm mất hàng đợi. "
     "Fallback OpenRouter sang Ollama mặc định tắt. Khi bật, hệ thống chỉ chuyển một lần cho lỗi hạ tầng đủ điều kiện, "
-    "mở circuit sau ngưỡng lỗi và ghi provider thực sự phục vụ. Lỗi schema hoặc semantic không được che bằng đổi model.",
+    "mở circuit sau ngưỡng lỗi và ghi provider thực sự phục vụ. Lỗi schema hoặc semantic không được che bằng đổi model. "
+    "Readiness trả degraded nếu database hoặc thư mục receipt không sẵn sàng mà không gọi provider. "
+    "EF Core và dotnet-ef đã được vá đồng bộ lên 8.0.31; vulnerability scan không còn advisory tại lần kiểm tra cuối.",
 )
 
 add_heading(document, "5 Quyết định kiến trúc và phần cắt giảm")
@@ -254,6 +257,7 @@ add_bullet(document, "Tách Qwen extraction và semantic validation khỏi Polic
 add_bullet(document, "Giữ AuditLogs theo sự kiện append-only ở tầng ứng dụng, nhưng UI gom một hồ sơ thành một timeline để tránh cảm giác lặp.")
 add_bullet(document, "Dùng DB-backed queue và lease cho upload; giữ gate riêng cho Verify và dùng RowVersion chống ghi đè cùng hồ sơ.")
 add_bullet(document, "Ghi ngữ cảnh người gửi, provider chính, provider phục vụ, fallback flag và mã lỗi trong hồ sơ/audit.")
+add_bullet(document, "Giữ Official Verify đúng năm ca; runner ngoài UI chạy gói 15/30 ca qua cùng upload endpoint và xuất evidence CSV/JSON.")
 add_bullet(document, "Giữ hosted Qwen 8B làm baseline nhờ benchmark cùng build đáp ứng demo; Ollama/Qwen 4B giữ tùy chọn local vì chậm trên RTX 3050 4 GB.")
 add_bullet(document, "Hoãn PDF nhiều trang, authentication theo role, tax lookup, antivirus, object storage và benchmark tập dữ liệu độc lập.")
 
@@ -263,7 +267,7 @@ add_body(
     "Lợi ích lớn nhất của AI là tăng tốc vòng lặp khám phá và kiểm thử, không phải thay người chịu trách nhiệm. "
     "AURA có đường chạy localhost tái lập trong README. Pipeline mới cần được test lại với OpenRouter, Ollama và năm upload "
     "đồng thời trước khi chốt số đo end-to-end. Gói Sprint 1 đã có video dưới ba phút, năm slide, Build Log, "
-    "năm ca Verify và mười lăm ca tham chiếu cho BGK. Bước tiếp theo là pilot trên dữ liệu độc lập, đo field accuracy, "
+    "năm ca Verify và runner cho mười lăm hoặc ba mươi ca tham chiếu. Bước tiếp theo là pilot trên dữ liệu độc lập, đo field accuracy, "
     "over escalation, missed escalation và thời gian xử lý trước khi tuyên bố hiệu quả thực tế. "
     "Ảnh upload được gửi qua OpenRouter/provider Qwen; dữ liệu cá nhân thật không được đưa vào Git.",
 )

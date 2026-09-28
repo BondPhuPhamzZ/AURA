@@ -28,6 +28,8 @@ Tỷ lệ hóa đơn hoàn toàn hợp lệ nhưng bị hệ thống ném vào h
 - Sau deploy: 1 request smoke test; nếu pass mới chạy 1 lượt Verify = 5 request. Giữ tối thiểu 10 request dự phòng cho BGK/video.
 - Không retry thủ công liên tục khi 429. Ghi lỗi và chờ đúng cửa sổ rate-limit của OpenRouter/provider.
 - Benchmark 30 ca chỉ chạy trong một phiên đo riêng khi đã xác nhận quota/billing; không dùng trong luồng demo.
+- Chạy gói 15/30 bằng `tools/Invoke-ExtendedDatasetEvaluation.ps1`; runner lưu manifest hash, commit, provider config, expected/actual, field match, P50/P95 và error code vào `test_kit/results`.
+- Không dùng ảnh do generative AI tạo làm ground truth chính vì chữ/số có thể bị bịa. Dùng Python/Pillow với seed và manifest cho synthetic coverage; giữ hóa đơn thật đã ẩn danh làm holdout độc lập ngoài Git.
 
 ## 7. So sánh OpenRouter 8B và Ollama 4B
 

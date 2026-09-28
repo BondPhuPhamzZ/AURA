@@ -10,7 +10,7 @@ Sau khi publish, website root phải chứa trực tiếp `web.config`, `AURA.dl
 
 ## Thứ tự smoke test production
 
-1. Mở `/healthz` trong cửa sổ ẩn danh và xác nhận HTTP 200, `status: ok`, `aiConfigured: true` và `policyAvailable: true`.
+1. Mở `/healthz` trong cửa sổ ẩn danh và xác nhận HTTP 200, `status: ok`, `aiConfigured: true`, `policyAvailable: true`, `databaseAvailable: true` và `storageAvailable: true`.
 2. Mở `/`, chuyển qua các tab Nhân viên, Quản lý và Lịch sử; xác nhận không còn trang `index.html` mặc định.
 3. Upload đúng một ảnh tổng hợp nhỏ, kiểm preview, facts AI, quyết định và một request tương ứng trong OpenRouter Activity.
 4. Với một hồ sơ `ESCALATE_*`, bấm chuyển tiếp, mở tab Quản lý, ra quyết định và xác nhận Audit Log chỉ hiển thị một hồ sơ với timeline nhất quán.
@@ -30,7 +30,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Kỳ vọng hiện tại: build 0 warning/error và 80/80 test pass. Không cần gọi API AI ở bước này.
+Kỳ vọng hiện tại: build 0 warning/error và 80/80 test pass. EF Core/dotnet-ef được pin ở 8.0.31. Chạy thêm `dotnet list AURA.csproj package --vulnerable --include-transitive`; kỳ vọng không có vulnerable package. Không cần gọi API AI ở bước này.
 
 3. Trong Visual Studio, mở `AURA.csproj` và chọn **Publish → Folder** hoặc **Publish → Web Deploy**. Target framework là `net8.0`, cấu hình `Release`.
 
@@ -79,12 +79,12 @@ Sau migration đầu tiên chạy thành công, nên đổi `Database__ApplyMigr
 
 Thực hiện theo thứ tự để không tốn quota vô ích:
 
-1. Mở `https://<live-url>/healthz`, kỳ vọng HTTP 200 và JSON `status: ok`.
+1. Mở `https://<live-url>/healthz`, kỳ vọng HTTP 200, JSON `status: ok` và cả `databaseAvailable`/`storageAvailable` đều là `true`. Endpoint không gọi AI provider nên vẫn cần ảnh smoke test riêng.
 2. Mở trang chủ ở cửa sổ ẩn danh, kiểm CSS/JS/ba tab.
 3. Mở tab quản lý và lịch sử để xác nhận SQL Server/migration hoạt động.
 4. Upload một ảnh smoke tổng hợp; xác nhận HTTP `202`, audit `AI_QUEUED`, rồi trạng thái `COMPLETED/FAILED`. Refresh giữa lúc xử lý không được làm mất job.
 5. Mở lại ảnh từ lịch sử, recycle app pool rồi mở lại lần nữa để xác minh file tồn tại.
-6. Chỉ khi 5 bước trên đạt, chạy đúng một lượt Verify Harness và ghi thời điểm, 5 expected/actual, tổng latency và OpenRouter cost.
+6. Chỉ khi 5 bước trên đạt, chạy đúng một lượt Verify Harness và ghi thời điểm, 5 expected/actual, tổng latency và OpenRouter cost. Gói 15/30 ca dùng runner ngoài UI trong phiên benchmark riêng, không chạy trong deployment smoke.
 7. Đổi migration flag về `false`, recycle pool và kiểm `/healthz` lần cuối.
 
 ## 6. Xử lý lỗi thường gặp

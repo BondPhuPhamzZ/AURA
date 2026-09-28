@@ -34,6 +34,7 @@ Không mô tả 8B hay 4B là “đã chính xác” trước khi có benchmark 
 - `wwwroot/test_data/expected-results.json`: đúng 5 ca chạy trực tiếp bằng Verify Harness, gồm 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`.
 - `test_kit/judge-manifest.json`: đúng 15 ca để BGK tham khảo/tạo biến thể, gồm 5 routine, 4 FACT, 3 POLICY và 3 AUTHORITY.
 - `test_kit/manifest.json`: ngân hàng mở rộng 30 ca nội bộ; không tự chạy để tránh tiêu credit.
+- `tools/Invoke-ExtendedDatasetEvaluation.ps1`: runner ngoài UI cho 15/30 ca, gọi cùng production upload endpoint và xuất evidence CSV/JSON; không thay Official Verify.
 - Automated tests xác minh số lượng, phân phối expected status, liên kết manifest và sự tồn tại/kích thước ảnh mà không gọi AI.
 
 ## 6. Cổng chấp nhận trước deploy

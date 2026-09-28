@@ -1,6 +1,6 @@
 # AURA Test Matrix
 
-Mốc cập nhật: 27/09/2026. Ký hiệu: `A` đã tự động hóa bằng xUnit; `V` nằm trong Verify Vision; `P` backlog mở rộng, chưa tuyên bố đã đạt.
+Mốc cập nhật: 28/09/2026. Ký hiệu: `A` đã tự động hóa bằng xUnit; `V` nằm trong Verify Vision; `R` chạy bằng evaluator ngoài UI; `P` backlog mở rộng, chưa tuyên bố đã đạt.
 
 ## Verify một nút
 
@@ -15,6 +15,8 @@ Mốc cập nhật: 27/09/2026. Ký hiệu: `A` đã tự động hóa bằng xU
 Ngày 20/09/2026, provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 đa layout được sinh offline ngày 21/09/2026; người dùng xác nhận đạt đúng 5/5 local bằng Qwen3-VL-8B-Instruct/OpenRouter ngày 22/09/2026. Ngày 27/09/2026, Ollama/Qwen3-VL-4B đạt 25/25 qua năm batch liên tiếp sau semantic hardening; upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Production upload/AI/audit đã smoke thành công và video demo đã được liên kết từ README. Các kết quả fixture tổng hợp không phải accuracy tổng quát.
 
 Năm ca Verify chính thức không thay đổi trong hardening ngày 28/09/2026. Pipeline upload thật đã chuyển sang background processing; cần chạy bổ sung các ca vận hành dưới đây mà không sửa expected result của TC-01..TC-05.
+
+Gói 15/30 ca không có nút riêng trên dashboard. `tools/Invoke-ExtendedDatasetEvaluation.ps1` đọc manifest, gọi đúng upload endpoint cho từng ảnh/claimed amount, poll trạng thái và ghi evidence CSV/JSON. Các ca trong `test_kit/judge-manifest.json` và `test_kit/manifest.json` mang ký hiệu `R` sau khi được chạy thật; hiện tại runner mới qua syntax/build gate, chưa có kết quả live sau hardening.
 
 | ID vận hành | Kịch bản | Kỳ vọng |
 |---|---|---|

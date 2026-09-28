@@ -85,13 +85,15 @@ Mở `/healthz`. Kỳ vọng:
 ```json
 {
   "status": "ok",
+  "databaseAvailable": true,
+  "storageAvailable": true,
   "provider": "Ollama",
   "model": "qwen3-vl:4b-instruct",
   "policyAvailable": true
 }
 ```
 
-`/healthz` xác nhận cấu hình và policy, không chứng minh model đã nạp. Request ảnh đầu tiên mới là phép kiểm kết nối đầy đủ. Sau mỗi lần trích xuất, backend kiểm tra chéo ngữ nghĩa như định dạng tiền VND, loại chứng từ, mã đơn/mã vận chuyển và tổng dòng hàng. Nếu JSON hợp lệ nhưng dữ kiện mâu thuẫn, AURA cho model đọc lại đúng một lần với chỉ dẫn sửa có mục tiêu; kết quả vẫn mâu thuẫn sẽ chuyển `ESCALATE_FACT` thay vì tự sửa số tiền.
+`/healthz` xác nhận cấu hình, policy, kết nối database và thư mục receipt; endpoint không gọi Ollama nên không chứng minh model đã nạp. Request ảnh đầu tiên mới là phép kiểm kết nối đầy đủ. Sau mỗi lần trích xuất, backend kiểm tra chéo ngữ nghĩa như định dạng tiền VND, loại chứng từ, mã đơn/mã vận chuyển và tổng dòng hàng. Nếu JSON hợp lệ nhưng dữ kiện mâu thuẫn, AURA cho model đọc lại đúng một lần với chỉ dẫn sửa có mục tiêu; kết quả vẫn mâu thuẫn sẽ chuyển `ESCALATE_FACT` thay vì tự sửa số tiền.
 
 ## 6. Smoke test an toàn
 
@@ -164,5 +166,7 @@ Audit phải ghi `PrimaryProvider=OpenRouter`, `ServedProvider=Ollama` và `Fall
 ## 10. Nguyên tắc đánh giá
 
 Không so sánh 4B local và 8B hosted bằng cảm giác. Chạy cùng ảnh, cùng policy và cùng schema; ghi model/tag, context, lượng tử hóa, latency, schema success, semantic-repair rate, exact match các field quan trọng, missed escalation và over-escalation. Ollama chỉ trở thành provider mặc định sau khi đạt cổng chất lượng trên tập độc lập và có kế hoạch quay lại OpenRouter.
+
+Khi cần chạy gói 15/30 ca bằng Ollama, dùng `tools/Invoke-ExtendedDatasetEvaluation.ps1` thay vì thêm nút vào UI. Đặt `Vision:FallbackEnabled=false`, giữ concurrency tuần tự và có thể đặt `-InterCaseDelaySeconds 0`; dự kiến thời gian dài trên RTX 3050 4 GB nên không dùng lượt này trong phần trình bày.
 
 Nguồn chính thức: `https://docs.ollama.com/windows`, `https://docs.ollama.com/api/chat`, `https://docs.ollama.com/capabilities/vision`, `https://docs.ollama.com/capabilities/structured-outputs`, `https://docs.ollama.com/faq`, `https://ollama.com/library/qwen3-vl/tags`.

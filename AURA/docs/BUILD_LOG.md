@@ -10,6 +10,7 @@
 - Tách extraction khỏi deterministic policy giúp kết quả giải thích và unit-test được.
 - Verify fixture v2 đạt 25/25 qua năm lượt liên tiếp với Ollama/Qwen3-VL-4B. OpenRouter/Qwen3-VL-8B cùng build đạt 15/15 qua ba lượt và upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3; adjusted P95 là 11,317 giây. Exact match năm field khóa là 72/75 vì TC-04 lệch taxonomy chứng từ. Test Kit v2 là dữ liệu tổng hợp; các kết quả này không phải accuracy trên dữ liệu độc lập.
 - 80 automated tests bao phủ policy/workflow/audit, hợp đồng OpenRouter/Ollama, semantic validation/repair, fallback/circuit breaker và tính toàn vẹn Test Kit/manifest.
+- EF Core SQL Server/Tools và local `dotnet-ef` đã vá lên 8.0.31 trong cùng major. Sau restore: build Release 0 warning/0 error, 80/80 test pass, NuGet không còn báo package vulnerable và EF không có pending model change.
 - Structured Output giảm parsing lỗi so với JSON tự do.
 - Backend phát hiện JSON đúng schema nhưng sai nghĩa như `295.199 đ -> 295.199`, `ECOMMERCE -> RIDE_HAILING`, hoặc số biên nhận bị gán vào `orderId`; model được đọc lại đúng một lần. Repair không nhận claimed amount và kết quả còn mâu thuẫn luôn đi `ESCALATE_FACT`.
 - Bản production trên SmarterASP.NET đã smoke thành công luồng upload, AI extraction và audit sau khi API key được cập nhật trong Pool Manager.
@@ -24,6 +25,8 @@
 - Hệ thống không retry HTTP 429, chỉ retry tối đa một lần với lỗi 5xx tạm thời, trả mã lỗi an toàn (`AI_RATE_LIMIT`/`AI_TEMPORARILY_UNAVAILABLE`) và chuyển `ESCALATE_SYSTEM_ERROR`; không giả quyết định nghiệp vụ.
 - LocalDB chỉ dùng khi phát triển Windows. Bản production hiện dùng SQL Server và folder ảnh riêng tư được cấu hình bằng biến môi trường trên SmarterASP.NET; mã nguồn vẫn giữ Linux container, `/healthz` và migration opt-in để có thể chuyển hạ tầng sau này.
 - Test Kit v2 đã bổ sung mobile e-commerce, giấy in nhiệt, góc xoay, blur/crop và tiếng Việt có dấu; vẫn là dữ liệu tổng hợp nên không được xem là accuracy tổng quát.
+- Runner PowerShell mới chạy gói 15/30 ca qua đúng upload endpoint, không thêm nút UI, và lưu metadata/CSV/JSON để phép đo có thể audit. Runner đã qua syntax check; chưa tiêu request thật trong lần build này.
+- Readiness `/healthz` kiểm tra policy, cấu hình AI, kết nối database và thư mục receipt. Endpoint không gọi provider, nên không tiêu quota và vẫn cần một ảnh smoke test riêng.
 
 ## Tính năng lớn nhất cắt giảm
 

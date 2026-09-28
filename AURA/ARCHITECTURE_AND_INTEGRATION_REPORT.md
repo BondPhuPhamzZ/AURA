@@ -35,7 +35,7 @@ AURA/
 ├── tests/AURA.Tests/                  # 80 kiểm thử tự động offline
 ├── docs/                              # runbook, deploy, test, checklist
 ├── submission/                        # 5 slide, Build Log Word, workflow
-└── tools/                             # tái tạo fixture và artifact nộp bài
+└── tools/                             # tái tạo fixture, chạy evaluator và sinh artifact
 ```
 
 ## 2. Kiến trúc triển khai
@@ -64,7 +64,7 @@ Qwen chỉ trích xuất dữ kiện nhìn thấy trong ảnh. Quyết định `
 | Route | Phương thức | Vai trò |
 |---|---|---|
 | `/` | GET | Dashboard nhân viên, quản lý và lịch sử |
-| `/healthz` | GET | Kiểm tra policy, cấu hình AI và model; không lộ API key |
+| `/healthz` | GET | Readiness: policy, cấu hình AI, kết nối DB và thư mục receipt; không gọi provider và không lộ API key |
 | `/Applicant/UploadReceipt` | POST | Kiểm file, lưu hồ sơ `PENDING`, trả `202 Accepted` và đánh thức worker |
 | `/Applicant/Status/{id}` | GET | Trả trạng thái `PENDING/PROCESSING/COMPLETED/FAILED` để UI poll |
 | `/Applicant/Receipt/{id}` | GET | Đọc ảnh từ storage riêng tư theo mã hồ sơ |
@@ -128,12 +128,12 @@ Audit được ghi theo sự kiện để không mất dấu hành động. Giao
 | Vị trí | Mục đích | Có được chạy tự động bởi Verify không |
 |---|---|---|
 | `wwwroot/test_data/` | 5 ảnh và expected result của Verify Harness | Có |
-| `test_kit/judge-manifest.json` | 15 ca challenge để BGK đọc và tạo biến thể | Không |
-| `test_kit/manifest.json` và `test_kit/images/` | Ngân hàng 30 ca tổng hợp cho benchmark có kiểm soát | Không |
+| `test_kit/judge-manifest.json` | 15 ca challenge để BGK đọc, tạo biến thể hoặc chạy qua runner ngoài UI | Không chạy bởi Verify |
+| `test_kit/manifest.json` và `test_kit/images/` | Ngân hàng 30 ca tổng hợp cho benchmark có kiểm soát | Không chạy bởi Verify |
 | `test_kit/local_real/` | Ảnh thật đã được phép dùng và ẩn danh, chỉ test thủ công | Không và ảnh bị Git ignore |
 | `publish/` | Output build cục bộ, bị Git ignore; có thể chứa bản fixture cũ | Không phải nguồn dữ liệu chuẩn |
 
-`tools/generate_verify_receipts.py` tạo ngân hàng 30 ca với seed cố định, sau đó sao chép 5 ca đầu sang `wwwroot/test_data`. Bản trong `publish/` chỉ là output cũ; Web Deploy phải tạo package mới từ source thay vì tải thủ công folder này.
+`tools/generate_verify_receipts.py` tạo ngân hàng 30 ca với seed cố định, sau đó sao chép 5 ca đầu sang `wwwroot/test_data`. `tools/Invoke-ExtendedDatasetEvaluation.ps1` chạy 15/30 ca qua đúng upload endpoint và xuất CSV/JSON evidence mà không thêm nút vào dashboard. Bản trong `publish/` chỉ là output cũ; Web Deploy phải tạo package mới từ source thay vì tải thủ công folder này.
 
 ## 9. Biến môi trường production
 
@@ -155,6 +155,7 @@ Audit được ghi theo sự kiện để không mất dấu hành động. Giao
 | `Database__ApplyMigrationsOnStartup` | Bật/tắt migration khi khởi động |
 | `ReceiptProcessing__PollIntervalMs` | Chu kỳ DB recovery poll; signal nội bộ đánh thức worker ngay |
 | `ReceiptProcessing__LeaseSeconds` | Thời gian lease trước khi job gián đoạn được reclaim |
+| `Verify__InterCaseDelayMs` | Delay cấu hình giữa các fixture Verify, mặc định 4000 ms |
 
 Recycle application pool chỉ nạp lại biến môi trường hiện có. Không cần tải lại publish XML hoặc publish lại code nếu chỉ thay giá trị Pool Manager. SmarterASP.NET tiếp tục đặt `Vision__Provider=OpenRouter`; Ollama dành cho máy local.
 
@@ -163,6 +164,8 @@ Recycle application pool chỉ nạp lại biến môi trường hiện có. Kh�
 - Build .NET 8 sạch, 0 warning và 0 error tại lần kiểm tra gần nhất.
 - 80 automated tests pass, gồm policy, workflow, audit, Verify/Test Kit integrity, hợp đồng OpenRouter/Ollama, semantic validation/repair và fallback/circuit breaker.
 - Build sau hardening: 0 warning, 0 error; EF báo không có model change chưa migration. LocalDB đã áp migration thành công.
+- EF Core SQL Server/Tools và local `dotnet-ef` đã được vá đồng bộ lên 8.0.31; NuGet vulnerability scan không còn advisory trong app và test project tại thời điểm kiểm tra.
+- Runner đánh giá mở rộng đã qua kiểm tra cú pháp; chưa gọi 15/30 request thật sau thay đổi để tránh tiêu quota trước khi người vận hành chốt phiên đo.
 - Build cuối với Ollama/Qwen3-VL-4B Q4_K_M đạt 25/25 qua năm lượt Verify liên tiếp trên 5 fixture tổng hợp; ba lượt có đo mất khoảng 303–304 giây/batch trên RTX 3050 Laptop 4 GB. OpenRouter/Qwen3-VL-8B cùng build đạt 15/15 qua ba batch và upload `HoaDon1.jpg` 3/3; adjusted latency median 4,371 giây, P95 11,317 giây. Exact match năm field khóa là 72/75 do TC-04 lệch taxonomy nhưng không làm sai nhánh policy. Đây không phải accuracy trên dữ liệu thực; xem `docs/OPENROUTER_BENCHMARK_2026-09-27.md`.
 - Người dùng xác nhận production upload, AI extraction và audit hoạt động đúng sau khi cập nhật API key ở Pool Manager.
 - Video demo dưới ba phút đã được liên kết từ README; đường đánh giá tái lập cho BGK vẫn là localhost cùng test key được cấp riêng.
@@ -180,6 +183,7 @@ Kết quả fixture tổng hợp không phải accuracy trên tập hóa đơn �
 | Fallback mặc định tắt, có allowlist và circuit breaker | Có đường dự phòng khi demo nhưng không đổi model cho lỗi semantic/contract; audit chỉ rõ provider quyết định |
 | Upload xử lý nền bằng DB state + lease | Request HTTP ngắn, chịu được refresh/restart và không khóa 4-5 người quan sát/thao tác |
 | Verify vẫn đúng 5 ca và có gate riêng | Giữ baseline BTC, tránh hai batch chạy chồng và bảo vệ quota |
+| Evaluator 15/30 ca nằm ngoài UI | Giữ dashboard demo gọn, vẫn chạy đúng production endpoint và bảo toàn mapping ảnh/claim/ground truth |
 | Fail-safe thay cho mock ngầm | Lỗi provider cần chuyển người xử lý, không được che bằng kết quả giả |
 | Audit event và timeline projection | Giữ dấu vết đầy đủ nhưng UI chỉ hiển thị một hồ sơ nhất quán |
 | Fixture tổng hợp tái lập | BGK có expected result rõ ràng mà không nhận dữ liệu cá nhân |

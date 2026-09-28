@@ -272,7 +272,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 856, 397, 368, 238, C.surface2, "rounded-xl", C.amber);
   pill(s, "MÔ PHỎNG", 880, 419, 118, C.amber);
-  text(s, "30 ảnh tổng hợp\n5 ca Verify\n15 ca giao BGK", 880, 470, 305, 92, 20, C.white, { bold: true });
+  text(s, "30 ảnh tổng hợp\n5 ca Verify trên UI\n15/30 ca qua runner", 880, 470, 305, 92, 20, C.white, { bold: true });
   text(s, "Không có tax/e-invoice lookup\nKhông có user role thật", 880, 574, 305, 44, 14, C.muted);
   footer(s, 4);
   s.speakerNotes.textFrame.setText("Repository và hướng dẫn chạy localhost: https://github.com/BondPhuPhamzZ/AURA");
@@ -300,7 +300,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 157, 382, 242, C.surface2, "rounded-xl", C.green);
   text(s, "ĐÃ BÀN GIAO", 869, 180, 326, 24, 15, C.green, { bold: true });
-  const todo = ["DB-backed upload queue", "80 test offline", "15/15 OR • 25/25 local", "Fallback opt-in + audit"];
+  const todo = ["DB-backed upload queue", "80 test • dependency sạch", "Evaluator 15/30 ngoài UI", "Fallback opt-in + audit"];
   todo.forEach((t, i) => {
     pill(s, `${i + 1}`, 869, 225 + i * 40, 30, C.green);
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });
@@ -310,10 +310,10 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   text(s, "CHƯA CÓ TRONG BASELINE", 869, 447, 326, 24, 15, C.red, { bold: true });
   text(s, "PDF/nhiều trang • authentication\ntax lookup • object storage\nbenchmark dữ liệu độc lập", 869, 487, 326, 72, 17, C.white, { bold: true });
 
-  text(s, "Verify vẫn đúng 5 ca BTC; fallback phải tắt khi benchmark từng provider.", 842, 601, 382, 44, 14, C.amber, { align: "center", bold: true });
+  text(s, "Verify vẫn đúng 5 ca BTC; runner mở rộng không làm rối dashboard.", 842, 601, 382, 44, 14, C.amber, { align: "center", bold: true });
   footer(s, 5, "AURA • Giới hạn hiện tại, không phải lời hứa marketing");
   s.speakerNotes.textFrame.setText(
-    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ConfiguredVisionExtractor.cs, VisionCircuitBreaker.cs và docs/SPRINT2_IMPLEMENTATION_PROGRESS_2026-09-28.md.",
+    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ConfiguredVisionExtractor.cs, VisionCircuitBreaker.cs, tools/Invoke-ExtendedDatasetEvaluation.ps1 và docs/SPRINT2_IMPLEMENTATION_PROGRESS_2026-09-28.md. EF Core 8.0.31 đã qua vulnerability scan không còn advisory.",
   );
 }
 
@@ -322,7 +322,7 @@ for (let i = 0; i < deck.slides.length; i++) {
   await fs.writeFile(path.join(TMP_DIR, `slide-${i + 1}.png`), new Uint8Array(await preview.arrayBuffer()));
 }
 
-const stagingDir = path.join(WORKSPACE_DIR, ".tmp", "slides-finalizer-20260928");
+const stagingDir = path.join(TMP_DIR, "finalizer");
 await fs.mkdir(stagingDir, { recursive: true });
 const candidatePath = path.join(stagingDir, "AURA_5_SLIDES.candidate.pptx");
 await (await PresentationFile.exportPptx(deck)).save(candidatePath);
