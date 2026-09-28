@@ -24,6 +24,11 @@ builder.Services.AddOptions<VisionOptions>()
     .ValidateDataAnnotations()
     .Validate(options => VisionOptions.IsSupportedProvider(options.Provider),
         "Vision:Provider phải là OpenRouter hoặc Ollama.")
+    .Validate(options => VisionOptions.IsSupportedProvider(options.FallbackProvider),
+        "Vision:FallbackProvider phải là OpenRouter hoặc Ollama.")
+    .Validate(options => !options.FallbackEnabled ||
+        !string.Equals(options.Provider, options.FallbackProvider, StringComparison.OrdinalIgnoreCase),
+        "Vision:FallbackProvider phải khác Vision:Provider khi bật fallback.")
     .ValidateOnStart();
 builder.Services.AddOptions<OpenRouterOptions>()
     .Bind(builder.Configuration.GetSection(OpenRouterOptions.SectionName))
@@ -57,6 +62,10 @@ builder.Services.AddOptions<ReceiptStorageOptions>()
     .ValidateOnStart();
 builder.Services.AddOptions<DecisionPolicyOptions>()
     .Bind(builder.Configuration.GetSection(DecisionPolicyOptions.SectionName));
+builder.Services.AddOptions<ReceiptProcessingOptions>()
+    .Bind(builder.Configuration.GetSection(ReceiptProcessingOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 var maxUploadBytes = builder.Configuration.GetValue<int>("ReceiptStorage:MaxFileSizeMb", 5) * 1024L * 1024L;
 // Multipart contains the file plus antiforgery fields, boundaries and headers. Keep transport
@@ -71,6 +80,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IReimbursementRepository, ReimbursementRepository>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 builder.Services.AddSingleton<WorkflowOperationGate>();
+builder.Services.AddSingleton<ReceiptProcessingQueue>();
+builder.Services.AddSingleton<VisionCircuitBreaker>();
+builder.Services.AddScoped<VisionExecutionContext>();
+builder.Services.AddHostedService<ReceiptProcessingWorker>();
 builder.Services.AddHttpClient<OpenRouterVisionExtractorService>((services, client) =>
 {
     var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenRouterOptions>>().Value;
@@ -134,6 +147,9 @@ app.MapGet("/healthz", (IOptions<VisionOptions> configuredVision,
         policyAvailable,
         provider = useOllama ? VisionOptions.OllamaProvider : VisionOptions.OpenRouterProvider,
         model = useOllama ? ollama.Model : openRouter.Model,
+        processingMode = "durable-background-queue",
+        fallbackEnabled = vision.FallbackEnabled,
+        fallbackProvider = vision.FallbackEnabled ? vision.FallbackProvider : null,
         timestamp = DateTimeOffset.UtcNow
     }, statusCode: ready ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable);
 });

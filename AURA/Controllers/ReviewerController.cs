@@ -10,14 +10,11 @@ namespace AURA.Controllers
     {
         private readonly IReimbursementRepository _repo;
         private readonly IAuditLogger _audit;
-        private readonly WorkflowOperationGate _operationGate;
 
-        public ReviewerController(IReimbursementRepository repo, IAuditLogger audit,
-            WorkflowOperationGate operationGate)
+        public ReviewerController(IReimbursementRepository repo, IAuditLogger audit)
         {
             _repo = repo;
             _audit = audit;
-            _operationGate = operationGate;
         }
 
         [HttpPost]
@@ -26,10 +23,6 @@ namespace AURA.Controllers
         {
             if (string.IsNullOrWhiteSpace(id) || decision is not ("YES" or "NO" or "UNDO"))
                 return BadRequest();
-            if (!_operationGate.TryEnter("Quản lý đang cập nhật quyết định", out var lease))
-                return WorkflowBusy();
-            using var operation = lease!;
-
             var req = await _repo.GetRequestByIdAsync(id);
             if (req == null) return NotFound();
 
@@ -99,11 +92,6 @@ namespace AURA.Controllers
         private bool IsAjaxRequest() =>
             string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
 
-        private IActionResult WorkflowBusy() => Conflict(new
-        {
-            error = "Hệ thống đang xử lý một thao tác khác. Vui lòng chờ thao tác hiện tại hoàn tất rồi thử lại.",
-            currentOperation = _operationGate.CurrentOperation
-        });
     }
 }
 

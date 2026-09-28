@@ -24,6 +24,12 @@ namespace AURA.Data
                 .HasIndex(r => r.FileSha256);
 
             modelBuilder.Entity<ReimbursementRequest>()
+                .HasIndex(r => new { r.ProcessingState, r.QueuedAt });
+
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(log => new { log.RequestId, log.Timestamp });
+
+            modelBuilder.Entity<ReimbursementRequest>()
                 .Property(r => r.ClaimedAmount)
                 .HasPrecision(18, 2);
         }

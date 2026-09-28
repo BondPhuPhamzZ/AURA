@@ -144,7 +144,17 @@ public sealed class VerifyController : Controller
                 Status = actualStatus,
                 AiReasoning = reason,
                 ManagerQuestion = question,
-                ProcessingLatencyMs = stopwatch.ElapsedMilliseconds
+                ProcessingLatencyMs = stopwatch.ElapsedMilliseconds,
+                ProcessingState = actualStatus == "ESCALATE_SYSTEM_ERROR"
+                    ? ProcessingStates.Failed
+                    : ProcessingStates.Completed,
+                QueuedAt = DateTime.UtcNow,
+                ProcessingStartedAt = DateTime.UtcNow,
+                ProcessingCompletedAt = DateTime.UtcNow,
+                ProcessingAttemptCount = blockingProviderFailure is null ? 1 : 0,
+                SubmitterCode = "VERIFY-HARNESS",
+                SubmitterDisplayName = "Verify Harness",
+                SubmitterDepartment = "Quality Assurance"
             };
             await _repository.AddRequestWithAuditAsync(request, $"VERIFY_{actualStatus}",
                 $"Case={testCase.Id}; Expected={testCase.ExpectedStatus}; Reason={reason}; Latency={stopwatch.ElapsedMilliseconds}ms");
@@ -182,6 +192,6 @@ public sealed class VerifyController : Controller
     private static bool IsBlockingProviderFailure(string code) => code is
         "AI_TIMEOUT" or "AI_RATE_LIMIT" or "AI_NOT_CONFIGURED" or "AI_TEMPORARILY_UNAVAILABLE" or
         "AI_AUTH_ERROR" or "AI_CREDITS_REQUIRED" or "AI_MODEL_UNAVAILABLE" or
-        "AI_REQUEST_INVALID";
+        "AI_REQUEST_INVALID" or "AI_ALL_PROVIDERS_UNAVAILABLE";
 }
 

@@ -28,6 +28,43 @@ namespace AURA.Models
         public string FileSha256 { get; set; } = string.Empty;
 
         public string? ExtractedFactsJson { get; set; }
+
+        [Required, StringLength(32)]
+        public string ProcessingState { get; set; } = ProcessingStates.Pending;
+
+        public DateTime QueuedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? ProcessingStartedAt { get; set; }
+
+        public DateTime? ProcessingCompletedAt { get; set; }
+
+        public DateTime? ProcessingLeaseUntil { get; set; }
+
+        public int ProcessingAttemptCount { get; set; }
+
+        [StringLength(50)]
+        public string? PrimaryProvider { get; set; }
+
+        [StringLength(50)]
+        public string? ServedProvider { get; set; }
+
+        [StringLength(100)]
+        public string? ProviderErrorCode { get; set; }
+
+        public bool FallbackUsed { get; set; }
+
+        public bool DuplicateDetected { get; set; }
+
+        public bool DuplicatePolicyEnabled { get; set; }
+
+        [Required, StringLength(100)]
+        public string SubmitterCode { get; set; } = "DEMO-EMPLOYEE";
+
+        [Required, StringLength(200)]
+        public string SubmitterDisplayName { get; set; } = "Nhân viên demo";
+
+        [Required, StringLength(200)]
+        public string SubmitterDepartment { get; set; } = "Demo";
         
         public string Status { get; set; } = "PENDING"; // PENDING, ESCALATE, AUTO_APPROVE, REJECTED
         
@@ -49,5 +86,13 @@ namespace AURA.Models
         public byte[] RowVersion { get; set; } = [];
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+
+    public static class ProcessingStates
+    {
+        public const string Pending = "PENDING";
+        public const string Processing = "PROCESSING";
+        public const string Completed = "COMPLETED";
+        public const string Failed = "FAILED";
     }
 }

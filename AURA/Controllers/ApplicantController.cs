@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.Security.Cryptography;
-using System.Text.Json;
 using AURA.Interfaces;
 using AURA.Models;
 using AURA.Options;
@@ -18,24 +16,19 @@ public sealed class ApplicantController : Controller
 
     private readonly IWebHostEnvironment _environment;
     private readonly IReimbursementRepository _repository;
-    private readonly IVisionExtractor _vision;
     private readonly ReceiptStorageOptions _storageOptions;
     private readonly DecisionPolicyOptions _decisionPolicyOptions;
-    private readonly ILogger<ApplicantController> _logger;
-    private readonly WorkflowOperationGate _operationGate;
+    private readonly ReceiptProcessingQueue _processingQueue;
 
     public ApplicantController(IWebHostEnvironment environment, IReimbursementRepository repository,
-        IVisionExtractor vision, IOptions<ReceiptStorageOptions> storageOptions,
-        IOptions<DecisionPolicyOptions> decisionPolicyOptions, ILogger<ApplicantController> logger,
-        WorkflowOperationGate operationGate)
+        IOptions<ReceiptStorageOptions> storageOptions,
+        IOptions<DecisionPolicyOptions> decisionPolicyOptions, ReceiptProcessingQueue processingQueue)
     {
         _environment = environment;
         _repository = repository;
-        _vision = vision;
         _storageOptions = storageOptions.Value;
         _decisionPolicyOptions = decisionPolicyOptions.Value;
-        _logger = logger;
-        _operationGate = operationGate;
+        _processingQueue = processingQueue;
     }
 
     [HttpGet]
@@ -63,9 +56,6 @@ public sealed class ApplicantController : Controller
     public async Task<IActionResult> ForwardToManager(string id)
     {
         if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { error = "Thiếu mã hồ sơ." });
-        if (!_operationGate.TryEnter("Chuyển hồ sơ đến quản lý", out var lease)) return WorkflowBusy();
-        using var operation = lease!;
-
         var request = await _repository.GetRequestByIdAsync(id);
         if (request is null) return NotFound(new { error = "Không tìm thấy hồ sơ." });
         if (!PolicyDecisionEngine.IsEscalation(request.Status))
@@ -102,9 +92,6 @@ public sealed class ApplicantController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ForwardAllToManager()
     {
-        if (!_operationGate.TryEnter("Chuyển hàng loạt hồ sơ đến quản lý", out var lease)) return WorkflowBusy();
-        using var operation = lease!;
-
         var pending = (await _repository.GetAllRequestsAsync())
             .Where(x => !x.IsForwardedToManager && PolicyDecisionEngine.IsEscalation(x.Status))
             .ToList();
@@ -149,12 +136,11 @@ public sealed class ApplicantController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UploadReceipt(IFormFile? receiptFile, decimal claimedAmount,
+        string? submitterCode, string? submitterDisplayName, string? submitterDepartment,
         CancellationToken cancellationToken)
     {
         var validationError = ValidateUpload(receiptFile, claimedAmount);
         if (validationError is not null) return BadRequest(new { error = validationError });
-        if (!_operationGate.TryEnter("AI đang xử lý hóa đơn", out var lease)) return WorkflowBusy();
-        using var operation = lease!;
 
         var file = receiptFile!;
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
@@ -186,69 +172,64 @@ public sealed class ApplicantController : Controller
             FileSizeBytes = file.Length,
             FileSha256 = sha256,
             ImageUrl = Url.Action(nameof(Receipt), "Applicant", new { id }) ?? $"/Applicant/Receipt/{id}",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            QueuedAt = DateTime.UtcNow,
+            ProcessingState = ProcessingStates.Pending,
+            Status = ProcessingStates.Pending,
+            DuplicateDetected = duplicate,
+            DuplicatePolicyEnabled = _decisionPolicyOptions.EscalateDuplicateReceipts,
+            SubmitterCode = NormalizeIdentity(submitterCode, "DEMO-EMPLOYEE", 100),
+            SubmitterDisplayName = NormalizeIdentity(submitterDisplayName, "Nhân viên demo", 200),
+            SubmitterDepartment = NormalizeIdentity(submitterDepartment, "Demo", 200)
         };
-        ReceiptExtractionDto? extractedFacts = null;
-
-        var stopwatch = Stopwatch.StartNew();
         try
         {
-            extractedFacts = await _vision.ExtractFactsAsync(physicalPath, cancellationToken);
-            request.ExtractedFactsJson = JsonSerializer.Serialize(extractedFacts);
-            var enforceDuplicatePolicy = duplicate && _decisionPolicyOptions.EscalateDuplicateReceipts;
-            var decision = PolicyDecisionEngine.Evaluate(extractedFacts, request.ClaimedAmount, enforceDuplicatePolicy);
-            request.Status = decision.Status;
-            request.AiReasoning = decision.Reason;
-            request.ManagerQuestion = decision.ManagerQuestion;
+            await _repository.AddRequestWithAuditAsync(request, "AI_QUEUED",
+                $"File={request.OriginalFileName}; Submitter={request.SubmitterCode}; Department={request.SubmitterDepartment}; " +
+                $"SHA256={request.FileSha256}; DuplicateDetected={duplicate}; " +
+                $"DuplicatePolicyEnabled={request.DuplicatePolicyEnabled}");
         }
-        catch (VisionExtractionException exception)
+        catch
         {
-            _logger.LogWarning(exception, "Vision extraction stopped with {ErrorCode} for request {RequestId}.",
-                exception.Code, request.Id);
-            request.Status = "ESCALATE_SYSTEM_ERROR";
-            request.AiReasoning = $"{exception.UserMessage} Mã lỗi: {exception.Code}. Không có quyết định tự động nào được đưa ra.";
-            request.ManagerQuestion = "AI chưa xử lý được ảnh. Quản lý có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]";
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
+            if (System.IO.File.Exists(physicalPath)) System.IO.File.Delete(physicalPath);
             throw;
         }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Vision extraction failed for request {RequestId}.", request.Id);
-            request.Status = "ESCALATE_SYSTEM_ERROR";
-            request.AiReasoning = "AI không thể trích xuất hóa đơn do lỗi kỹ thuật; không có quyết định tự động nào được đưa ra.";
-            request.ManagerQuestion = "AI không xử lý được ảnh. Quản lý có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]";
-        }
-        finally
-        {
-            stopwatch.Stop();
-            request.ProcessingLatencyMs = stopwatch.ElapsedMilliseconds;
-        }
+        _processingQueue.Signal(request.Id);
 
-        await _repository.AddRequestWithAuditAsync(request, $"AI_PROCESSED_{request.Status}",
-            $"File={request.OriginalFileName}; SHA256={request.FileSha256}; DuplicateDetected={duplicate}; DuplicatePolicyEnabled={_decisionPolicyOptions.EscalateDuplicateReceipts}; Reason={request.AiReasoning}; Latency={request.ProcessingLatencyMs}ms");
-
-        return Json(new
+        var result = ReimbursementResultDto.FromRequest(request);
+        return AcceptedAtAction(nameof(Status), new { id = request.Id }, new
         {
-            caseId = request.Id,
-            image = request.OriginalFileName,
-            expected = (string?)null,
-            actual = request.Status,
-            pass = (bool?)null,
-            reason = request.AiReasoning,
-            question = request.ManagerQuestion,
-            latencyMs = request.ProcessingLatencyMs,
-            timestamp = request.CreatedAt,
-            receiptUrl = request.ImageUrl,
-            canForward = PolicyDecisionEngine.IsEscalation(request.Status),
-            handoffPrompt = PolicyDecisionEngine.IsEscalation(request.Status)
-                ? EscalationWorkflow.EmployeeHandoffPrompt
-                : null,
-            duplicateDetected = duplicate,
-            duplicatePolicyEnabled = _decisionPolicyOptions.EscalateDuplicateReceipts,
-            facts = extractedFacts
+            result.CaseId,
+            result.Image,
+            result.Actual,
+            result.Pass,
+            result.ProcessingState,
+            result.Reason,
+            result.Question,
+            result.LatencyMs,
+            result.Timestamp,
+            result.ReceiptUrl,
+            result.CanForward,
+            result.HandoffPrompt,
+            result.DuplicateDetected,
+            result.DuplicatePolicyEnabled,
+            result.PrimaryProvider,
+            result.ServedProvider,
+            result.FallbackUsed,
+            result.ProviderErrorCode,
+            result.Facts,
+            statusUrl = Url.Action(nameof(Status), "Applicant", new { id = request.Id })
         });
+    }
+
+    [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<IActionResult> Status(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { error = "Thiếu mã hồ sơ." });
+        var request = await _repository.GetRequestByIdAsync(id);
+        if (request is null) return NotFound(new { error = "Không tìm thấy hồ sơ." });
+        return Json(ReimbursementResultDto.FromRequest(request));
     }
 
     private string? ValidateUpload(IFormFile? file, decimal claimedAmount)
@@ -263,12 +244,6 @@ public sealed class ApplicantController : Controller
             return "Chỉ chấp nhận ảnh JPG hoặc PNG có MIME hợp lệ.";
         return null;
     }
-
-    private IActionResult WorkflowBusy() => Conflict(new
-    {
-        error = "Hệ thống đang xử lý một thao tác khác. Vui lòng chờ thao tác hiện tại hoàn tất rồi thử lại.",
-        currentOperation = _operationGate.CurrentOperation
-    });
 
     private string GetStorageRoot()
     {
@@ -288,4 +263,10 @@ public sealed class ApplicantController : Controller
         ".jpg" or ".jpeg" => bytes.Length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF,
         _ => false
     };
+
+    private static string NormalizeIdentity(string? value, string fallback, int maxLength)
+    {
+        var normalized = string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+        return normalized.Length <= maxLength ? normalized : normalized[..maxLength];
+    }
 }

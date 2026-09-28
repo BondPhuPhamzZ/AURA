@@ -62,6 +62,20 @@
                             </button>
                         </div>
                     </div>
+                    <div class="submitter-context-grid" aria-label="Ngữ cảnh người gửi">
+                        <div>
+                            <label for="submitterCode" class="form-label fw-semibold">Mã nhân viên</label>
+                            <input id="submitterCode" name="submitterCode" class="form-control" maxlength="100" value="EMP-001" required />
+                        </div>
+                        <div>
+                            <label for="submitterDisplayName" class="form-label fw-semibold">Người gửi</label>
+                            <input id="submitterDisplayName" name="submitterDisplayName" class="form-control" maxlength="200" value="Nguyễn An" required />
+                        </div>
+                        <div>
+                            <label for="submitterDepartment" class="form-label fw-semibold">Bộ phận</label>
+                            <input id="submitterDepartment" name="submitterDepartment" class="form-control" maxlength="200" value="Vận hành" required />
+                        </div>
+                    </div>
                 </div>
 
                 <div class="extracted-facts-column">
@@ -130,6 +144,8 @@
 </div>
 
 <style>
+    .submitter-context-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+    @@media (max-width: 760px) { .submitter-context-grid { grid-template-columns: 1fr; } }
     /* CSS for skeleton loading animation */
     .skeleton-row td {
         position: relative;
@@ -341,6 +357,7 @@
     }
 
     function renderResultRow(item) {
+        const isProcessing = item.processingState === 'PENDING' || item.processingState === 'PROCESSING';
         const passBadge = item.pass == null
             ? '<span class="badge bg-secondary">KHÔNG ÁP DỤNG</span>'
             : item.pass ? '<span class="badge bg-success">PASS</span>' : '<span class="badge bg-danger">FAIL</span>';
@@ -350,12 +367,16 @@
         if(item.expected === 'AUTO_APPROVE') expectedBadge = '<span class="badge bg-success">APPROVE</span>';
         if(item.expected && item.expected.startsWith('ESCALATE')) expectedBadge = '<span class="badge bg-warning text-dark">' + escapeHtml(item.expected) + '</span>';
         
-        let actualBadge = '<span class="badge bg-secondary">' + item.actual + '</span>';
+        let actualBadge = isProcessing
+            ? '<span class="badge bg-info text-dark">ĐANG XỬ LÝ</span>'
+            : '<span class="badge bg-secondary">' + escapeHtml(item.actual || 'CHƯA CÓ') + '</span>';
         if(item.actual === 'AUTO_APPROVE') actualBadge = '<span class="badge bg-success">APPROVE</span>';
         if(item.actual && item.actual.startsWith('ESCALATE_')) actualBadge = '<span class="badge bg-warning text-dark">' + escapeHtml(item.actual) + '</span>';
         if(item.actual === 'ESCALATE_SYSTEM_ERROR') actualBadge = '<span class="badge bg-danger">SYSTEM_ERROR</span>';
         
-        const action = item.canForward
+        const action = isProcessing
+            ? '<span class="text-muted">Đang chờ</span>'
+            : item.canForward
             ? '<button type="button" class="button-primary button-compact" onclick="forwardToManager(\'' + escapeJsString(item.caseId) + '\', this)">Chuyển tiếp</button>'
             : '<span class="text-muted">Không cần</span>';
         const receipt = item.receiptUrl
@@ -372,7 +393,7 @@
             '<td data-label="Kết quả">' + actualBadge + '</td>' +
             '<td data-label="Đối chiếu">' + passBadge + '</td>' +
             '<td data-label="Lý do và câu hỏi" class="cell-reason"><strong>' + escapeHtml(item.reason) + '</strong><small>' + escapeHtml(handoffText) + '</small></td>' +
-            '<td data-label="Độ trễ" class="cell-number">' + escapeHtml(item.latencyMs) + ' ms</td>' +
+            '<td data-label="Độ trễ" class="cell-number">' + (item.latencyMs == null ? '—' : escapeHtml(item.latencyMs) + ' ms') + '</td>' +
             '<td data-label="Thao tác" class="cell-actions">' + action + '</td>' +
         '</tr>';
     }
@@ -526,27 +547,53 @@
             });
 
             const data = await readJsonResponse(response, 'Tải lên hóa đơn');
-            if (data.facts) {
-                renderExtractedFacts(data.facts);
-            } else {
-                renderExtractedFactsUnavailable('AI chưa trả về dữ liệu trích xuất cho ảnh này. Hồ sơ đã được chuyển sang trạng thái cần kiểm tra thủ công.');
-            }
-            if (data.duplicateDetected && !data.duplicatePolicyEnabled) {
+            document.getElementById('resultsBody').innerHTML = renderResultRow(data);
+            sessionStorage.setItem('aura.pendingReceipt', JSON.stringify({ caseId: data.caseId, statusUrl: data.statusUrl }));
+            btn.disabled = false;
+            btnText.innerText = originalText;
+            showToast('Đã ghi nhận hồ sơ. AI đang xử lý nền; bạn có thể tiếp tục thao tác.', 'success');
+            const completed = await pollReceiptStatus(data.statusUrl);
+            document.getElementById('resultsBody').innerHTML = renderResultRow(completed);
+            sessionStorage.removeItem('aura.pendingReceipt');
+            if (completed.facts) renderExtractedFacts(completed.facts);
+            else renderExtractedFactsUnavailable('AI chưa trả về dữ liệu trích xuất; hồ sơ đã được chuyển sang kiểm tra thủ công.');
+            if (completed.duplicateDetected && !completed.duplicatePolicyEnabled) {
                 showToast('Ảnh này đã từng được dùng; hệ thống vẫn xử lý vì đang bật chế độ kiểm thử.', 'warning');
             }
-            
-            if (data.error) {
-                document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Lỗi: ' + escapeHtml(data.error) + '</td></tr>';
-            } else {
-                document.getElementById('resultsBody').innerHTML = renderResultRow(data);
-                updateAnalysisSummary(data);
-            }
+            updateAnalysisSummary(completed);
         } catch(e) {
             document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Có lỗi hệ thống: ' + escapeHtml(e.message) + '</td></tr>';
             renderExtractedFactsUnavailable('Không nhận được nội dung từ AI: ' + e.message);
         } finally {
             btn.disabled = false;
             btnText.innerText = originalText;
+        }
+    }
+
+    async function pollReceiptStatus(statusUrl) {
+        if (!statusUrl) throw new Error('Máy chủ không trả về địa chỉ theo dõi hồ sơ.');
+        for (let attempt = 0; attempt < 900; attempt++) {
+            const response = await fetch(statusUrl, { cache: 'no-store' });
+            const item = await readJsonResponse(response, 'Theo dõi trạng thái AI');
+            document.getElementById('resultsBody').innerHTML = renderResultRow(item);
+            if (item.processingState === 'COMPLETED' || item.processingState === 'FAILED') return item;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        throw new Error('Hồ sơ vẫn đang xử lý sau 15 phút. Có thể tải lại trang để tiếp tục theo dõi.');
+    }
+
+    async function resumePendingReceipt() {
+        const raw = sessionStorage.getItem('aura.pendingReceipt');
+        if (!raw) return;
+        try {
+            const pending = JSON.parse(raw);
+            const completed = await pollReceiptStatus(pending.statusUrl);
+            sessionStorage.removeItem('aura.pendingReceipt');
+            document.getElementById('resultsBody').innerHTML = renderResultRow(completed);
+            if (completed.facts) renderExtractedFacts(completed.facts);
+            updateAnalysisSummary(completed);
+        } catch (error) {
+            showToast('Không thể khôi phục trạng thái xử lý: ' + error.message, 'warning');
         }
     }
     
@@ -627,4 +674,5 @@
     });
 
     updatePendingEscalationSummary();
+    resumePendingReceipt();
 </script>
