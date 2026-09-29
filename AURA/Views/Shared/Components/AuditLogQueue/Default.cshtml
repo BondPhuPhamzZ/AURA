@@ -101,6 +101,10 @@
                                 {
                                     <a href="@request.ImageUrl" target="_blank" rel="noopener">@request.OriginalFileName</a>
                                     <div><small>@request.ClaimedAmount.ToString("N0") VND</small></div>
+                                    <div class="audit-submitter">
+                                        <strong>@request.SubmitterDisplayName</strong>
+                                        <small>@request.SubmitterCode · @request.SubmitterDepartment</small>
+                                    </div>
                                 }
                                 else
                                 {

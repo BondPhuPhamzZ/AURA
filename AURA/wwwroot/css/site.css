@@ -1024,6 +1024,27 @@ main {
     min-width: 1180px;
 }
 
+.manager-submitter,
+.audit-submitter {
+    display: grid;
+    gap: 2px;
+}
+
+.manager-submitter span,
+.manager-submitter small,
+.audit-submitter small {
+    color: var(--colors-ink-muted);
+}
+
+.manager-submitter span {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.78rem;
+}
+
+.audit-submitter {
+    margin-top: 6px;
+}
+
 .manager-reason-column {
     width: 34%;
     min-width: 320px;
