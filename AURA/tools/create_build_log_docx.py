@@ -79,7 +79,7 @@ def add_heading(document, value):
     paragraph.paragraph_format.space_after = Pt(1.5)
     paragraph.paragraph_format.keep_with_next = True
     run = paragraph.add_run(value)
-    set_run_font(run, size=11.5, bold=True, color="000000")
+    set_run_font(run, size=10.8, bold=True, color="000000")
 
 
 def add_body(document, value, bold_lead=None):
@@ -88,12 +88,12 @@ def add_body(document, value, bold_lead=None):
     paragraph.paragraph_format.line_spacing = 1.03
     if bold_lead and value.startswith(bold_lead):
         first = paragraph.add_run(bold_lead)
-        set_run_font(first, size=10.3, bold=True)
+        set_run_font(first, size=9.2, bold=True)
         rest = paragraph.add_run(value[len(bold_lead):])
-        set_run_font(rest, size=10.3)
+        set_run_font(rest, size=9.2)
     else:
         run = paragraph.add_run(value)
-        set_run_font(run, size=10.3)
+        set_run_font(run, size=9.2)
     return paragraph
 
 
@@ -102,7 +102,7 @@ def add_bullet(document, value):
     paragraph.paragraph_format.space_after = Pt(1.5)
     paragraph.paragraph_format.line_spacing = 1.0
     run = paragraph.add_run(value)
-    set_run_font(run, size=10.1)
+    set_run_font(run, size=9.0)
 
 
 document = Document()
@@ -116,7 +116,7 @@ section.right_margin = Cm(1.35)
 
 styles = document.styles
 styles["Normal"].font.name = FONT
-styles["Normal"].font.size = Pt(10.3)
+styles["Normal"].font.size = Pt(9.2)
 styles["Normal"]._element.rPr.rFonts.set(qn("w:ascii"), FONT)
 styles["Normal"]._element.rPr.rFonts.set(qn("w:hAnsi"), FONT)
 styles["Normal"]._element.rPr.rFonts.set(qn("w:eastAsia"), FONT)
@@ -135,40 +135,37 @@ title_bottom.set(qn("w:space"), "0")
 title_border.append(title_bottom)
 title_ppr.append(title_border)
 run = title.add_run("AURA BUILD LOG SPRINT 1 VÀ HARDENING")
-set_run_font(run, size=18, bold=True, color="000000")
+set_run_font(run, size=16, bold=True, color="000000")
 
 subtitle = document.add_paragraph()
 subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
 subtitle.paragraph_format.space_after = Pt(5)
-run = subtitle.add_run("Track A The Escalation Referee | 28 09 2026 | Pham Gia Phu")
+run = subtitle.add_run("Track A The Escalation Referee | 29 09 2026 | Pham Gia Phu")
 set_run_font(run, size=9.2, italic=True, color="555555")
 
 intro = document.add_paragraph()
 intro.paragraph_format.space_after = Pt(4)
 intro.paragraph_format.line_spacing = 1.05
 run = intro.add_run(
-    "Trong Sprint 1, tôi dùng AI để rút ngắn thời gian đọc code, thử nghiệm kiến trúc và chuẩn hóa dữ liệu hóa đơn, "
-    "nhưng giữ quyết định nghiệp vụ trong policy C# có thể kiểm thử. Kết quả là một vertical slice chạy thật từ upload, "
-    "trích xuất và phân loại đến chuyển quản lý, audit và hoàn tác; các giới hạn của model được hiển thị thay vì che giấu."
+    "Tôi dùng AI để tăng tốc việc đọc code, thử nghiệm kiến trúc và chuẩn hóa dữ liệu hóa đơn, nhưng giữ quyết định "
+    "nghiệp vụ trong policy C# có thể kiểm thử. AURA chạy trọn luồng từ upload đến quản lý, audit và hoàn tác; lỗi model "
+    "được chuyển cho con người thay vì tạo kết quả giả."
 )
-set_run_font(run, size=10.4)
+set_run_font(run, size=9.4)
 
 add_heading(document, "1 Công cụ và phạm vi sử dụng")
 add_body(
     document,
     "Qwen3-VL-8B-Instruct qua OpenRouter đọc một ảnh JPG hoặc PNG và trả dữ kiện theo JSON Schema. "
-    "Codex hỗ trợ truy route, phát hiện lỗi JavaScript, refactor, viết test và đồng bộ tài liệu. "
-    "Tôi không dùng output của AI như bằng chứng duy nhất: thay đổi chỉ được giữ lại sau build, test và kiểm tra UI.",
+    "Codex hỗ trợ truy route, refactor, viết test và đồng bộ tài liệu. Mọi thay đổi chỉ được giữ sau build, test và kiểm tra UI.",
 )
 
 add_heading(document, "2 Hành trình xây dựng và các lần AI sai")
 add_body(
     document,
-    "Prototype đầu tiên dùng Gemini Free Tier nhưng gặp HTTP 429 và quota không ổn định. Khi chuyển sang OpenRouter, "
-    "một model slug hoặc endpoint sai từng gây HTTP 404; sau đó Qwen có lúc trả JSON lệch schema hoặc xem câu mô tả "
-    "trên fixture tổng hợp là prompt injection. Ollama 4B còn từng đọc 295.199 VND thành 295.199 theo số thập phân "
-    "và nhầm đơn giao hàng thành ride-hailing. Các lỗi này dẫn tới cấu hình provider rõ ràng, parser giới hạn, kiểm tra "
-    "ngữ nghĩa và đúng một lượt đọc lại có mục tiêu; kết quả vẫn mâu thuẫn được chuyển cho người thay vì suy đoán.",
+    "Gemini Free Tier từng gặp 429; model slug sai gây 404; Qwen có lúc trả JSON lệch schema hoặc đọc 295.199 VND "
+    "sai đơn vị. Các lỗi này dẫn tới cấu hình provider rõ ràng, parser giới hạn, semantic validation và đúng một lượt repair. "
+    "Kết quả còn mâu thuẫn luôn chuyển người xử lý.",
 )
 
 comparison = document.add_table(rows=1, cols=2)
@@ -190,7 +187,6 @@ for idx, label in enumerate(("AI giúp tăng tốc", "AI làm tốn công khi"))
 rows = [
     ("Tìm nhanh luồng upload, Verify, reviewer và audit.", "Đề xuất model hoặc API không tồn tại/chưa đúng slug."),
     ("Sinh test policy, contract và kiểm tra fixture offline.", "Output trông hợp lý nhưng không đúng schema hoặc policy."),
-    ("Đối chiếu prompt, UI và tài liệu sau mỗi thay đổi.", "Tài liệu dễ tuyên bố quá mức nếu không đọc lại code thực tế."),
 ]
 for row_idx, values in enumerate(rows):
     cells = comparison.add_row().cells
@@ -210,7 +206,7 @@ evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
 headers = ("Build", "Test offline", "Dependency", "Evaluator")
-values = ("0 warning 0 error", "80 trên 80 pass", "Không còn advisory", "15/30 ca ngoài UI")
+values = ("0 warning 0 error", "88 trên 88 pass", "Không còn advisory", "15 ca đã chạy thật")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -235,41 +231,31 @@ for index, value in enumerate(values):
 
 add_body(
     document,
-    "OpenRouter đạt 15 trên 15 quyết định qua ba batch cùng build, upload HoaDon1 đạt AUTO_APPROVE 3 trên 3 và "
-    "adjusted P95 là 11,317 giây. Ollama đạt 25 trên 25 nhưng ba batch đo mất khoảng 303–304 giây mỗi batch. "
-    "Đây là fixture tổng hợp lặp lại, không phải độ chính xác trên hóa đơn thực tế độc lập.",
+    "Kết luận đo lường: Trên cùng judge set 15 ca và fallback tắt, OpenRouter đạt 15 trên 15 quyết định, 70 trên 75 field và P95 "
+    "16,459 giây. Ollama đạt 14 trên 15, 73 trên 75 field và P95 58,318 giây, đồng thời bỏ sót escalation TK-12. "
+    "Đây là regression tổng hợp, không phải accuracy trên hóa đơn thật.",
     bold_lead="Kết luận đo lường: ",
 )
 
-document.add_page_break()
 add_heading(document, "4 Cơ chế fail safe đã triển khai")
 add_body(
     document,
-    "Upload lưu hồ sơ PENDING rồi trả HTTP 202; worker claim job bằng lease nên refresh hoặc restart không làm mất hàng đợi. "
-    "Fallback OpenRouter sang Ollama mặc định tắt. Khi bật, hệ thống chỉ chuyển một lần cho lỗi hạ tầng đủ điều kiện, "
-    "mở circuit sau ngưỡng lỗi và ghi provider thực sự phục vụ. Lỗi schema hoặc semantic không được che bằng đổi model. "
-    "Readiness trả degraded nếu database hoặc thư mục receipt không sẵn sàng mà không gọi provider. "
-    "EF Core và dotnet-ef đã được vá đồng bộ lên 8.0.31; vulnerability scan không còn advisory tại lần kiểm tra cuối.",
+    "Upload lưu PENDING rồi trả HTTP 202; worker claim bằng lease nên refresh hoặc restart không làm mất job. Worker backoff "
+    "5 đến 60 giây khi SQL tạm lỗi. Fallback mặc định tắt và chỉ chuyển một lần cho lỗi hạ tầng đủ điều kiện. `/healthz` "
+    "kiểm database, migration, storage, policy và cấu hình AI mà không gọi provider.",
 )
 
 add_heading(document, "5 Quyết định kiến trúc và phần cắt giảm")
-add_bullet(document, "Tách Qwen extraction và semantic validation khỏi PolicyDecisionEngine để đổi model mà không đổi quy tắc duyệt.")
-add_bullet(document, "Giữ AuditLogs theo sự kiện append-only ở tầng ứng dụng, nhưng UI gom một hồ sơ thành một timeline để tránh cảm giác lặp.")
-add_bullet(document, "Dùng DB-backed queue và lease cho upload; giữ gate riêng cho Verify và dùng RowVersion chống ghi đè cùng hồ sơ.")
-add_bullet(document, "Ghi ngữ cảnh người gửi, provider chính, provider phục vụ, fallback flag và mã lỗi trong hồ sơ/audit.")
-add_bullet(document, "Giữ Official Verify đúng năm ca; runner ngoài UI chạy gói 15/30 ca qua cùng upload endpoint và xuất evidence CSV/JSON.")
-add_bullet(document, "Giữ hosted Qwen 8B làm baseline nhờ benchmark cùng build đáp ứng demo; Ollama/Qwen 4B giữ tùy chọn local vì chậm trên RTX 3050 4 GB.")
-add_bullet(document, "Hoãn PDF nhiều trang, authentication theo role, tax lookup, antivirus, object storage và benchmark tập dữ liệu độc lập.")
+add_bullet(document, "Tách extraction, semantic validation và PolicyDecisionEngine để đổi model mà không đổi luật duyệt.")
+add_bullet(document, "Giữ Official Verify đúng năm ca; evaluator 15/30 nằm ngoài UI và đi qua cùng production endpoint.")
+add_bullet(document, "Chọn OpenRouter làm primary; giữ Ollama cho offline/manual vì còn missed escalation và chậm trên RTX 3050 4 GB.")
+add_bullet(document, "Hoãn PDF nhiều trang, authentication, tax lookup, antivirus và object storage sang scope production.")
 
 add_heading(document, "6 Bài học và bước tiếp theo")
 add_body(
     document,
-    "Lợi ích lớn nhất của AI là tăng tốc vòng lặp khám phá và kiểm thử, không phải thay người chịu trách nhiệm. "
-    "AURA có đường chạy localhost tái lập trong README. Pipeline mới cần được test lại với OpenRouter, Ollama và năm upload "
-    "đồng thời trước khi chốt số đo end-to-end. Gói Sprint 1 đã có video dưới ba phút, năm slide, Build Log, "
-    "năm ca Verify và runner cho mười lăm hoặc ba mươi ca tham chiếu. Bước tiếp theo là pilot trên dữ liệu độc lập, đo field accuracy, "
-    "over escalation, missed escalation và thời gian xử lý trước khi tuyên bố hiệu quả thực tế. "
-    "Ảnh upload được gửi qua OpenRouter/provider Qwen; dữ liệu cá nhân thật không được đưa vào Git.",
+    "Core workflow đã sẵn sàng để diễn tập. Các cổng còn mở là smoke Live URL sau hardening, holdout 10 đến 15 hóa đơn "
+    "đã ẩn danh, phản hồi của ba người dùng và ba lượt Verify dưới 90 giây. Dữ liệu cá nhân thật không được đưa vào Git.",
 )
 
 OUTPUT.parent.mkdir(parents=True, exist_ok=True)

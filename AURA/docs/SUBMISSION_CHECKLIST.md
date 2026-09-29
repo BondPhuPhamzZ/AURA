@@ -1,14 +1,15 @@
 # AURA — Checklist nộp bài
 
-Cập nhật: 27/09/2026. Trạng thái này là nguồn đối chiếu cuối; không điền số liệu hoặc URL chưa được xác minh.
+Cập nhật: 29/09/2026. Trạng thái này là nguồn đối chiếu cuối; không điền số liệu hoặc URL chưa được xác minh.
 
-## 1. Sáu hạng mục bắt buộc
+## 1. Hạng mục bàn giao
 
 | Hạng mục | Trạng thái | File/bằng chứng |
 |---|---|---|
 | Frontend/backend clone và chạy localhost | ☑ Có | README root, .NET 8, LocalDB/SQL Server, user-secrets và migration |
 | Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, 15/30 ca chạy ngoài UI bằng evaluator |
 | Public repository và lịch sử commit | ☑ Có | `https://github.com/BondPhuPhamzZ/AURA`; cần push commit chốt sau mỗi lần cập nhật hồ sơ |
+| Public Live URL | ☐ Cần smoke lại | URL Sprint 1 đã có; phải xác minh bản hardening, migration, storage sau recycle và một upload thật trước khi điền trạng thái hoàn tất |
 | Video demo tối đa 3 phút (BTC ghi Optional) | ☑ Đã liên kết | Link Google Drive ở README root |
 | Đúng 5 slide | ☑ Đã dựng | `submission/AURA_5_SLIDES.pptx` |
 | Build Log một trang Word | ☑ Đã dựng | `submission/AURA_BUILD_LOG.docx` |
@@ -19,7 +20,7 @@ Cập nhật: 27/09/2026. Trạng thái này là nguồn đối chiếu cuối; 
 - `README.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_AND_INTEGRATION_REPORT.md`.
 - `docs/`: Build Log nguồn, deployment, runbook, test cases, model selection, measurement plan.
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
-- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide và phản ánh 80 test cùng workflow hiện tại.
+- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide và phản ánh 88 test cùng workflow hiện tại.
 - `submission/AURA_BUILD_LOG.docx`: một trang.
 - `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.
 - 5 ảnh Verify trong `wwwroot/test_data/images`, manifest Verify và gói 15 ca BGK.
@@ -44,6 +45,6 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 2. API key đánh giá chỉ gửi riêng cho BTC; không đặt key thật trong Git, README, ảnh hoặc video.
 3. Trước mỗi bản bàn giao mới: quét secret, build/test, push commit chốt và xác minh repository public.
 4. Nếu có thay đổi đáng kể trong lúc chấm, tạo ticket/báo cáo tiến độ cho BTC; sửa tài liệu hoặc độ ổn định nhỏ có thể báo theo commit.
-5. Bằng chứng local ngày 27/09/2026: Ollama/Qwen3-VL-4B đạt 25/25 qua năm batch Verify liên tiếp; upload `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Ba batch có số đo latency chi tiết, hai batch bổ sung chỉ xác nhận quyết định.
-6. OpenRouter cùng build đạt 15/15 qua ba batch Verify và upload `HoaDon1.jpg` 3/3; adjusted P95 11,317 giây. Bằng chứng chi tiết nằm tại `docs/OPENROUTER_BENCHMARK_2026-09-27.md`.
-7. Benchmark dữ liệu thật độc lập, token/cost metadata, concurrency và 15 ca BGK live vẫn là bước tiếp theo; runner đã sẵn sàng nhưng chưa được chạy để tránh tiêu quota ngoài phiên đo.
+5. Baseline lặp ngày 27/09/2026 được giữ làm lịch sử: Ollama đạt 25/25 trên 5 fixture qua năm batch; OpenRouter đạt 15/15 qua ba batch và upload `HoaDon1.jpg` 3/3.
+6. Judge set ngày 29/09/2026 đã chạy thật với fallback tắt: OpenRouter 15/15 quyết định, 70/75 field, P95 16,459 giây; Ollama 14/15, 73/75 field, P95 58,318 giây và bỏ sót TK-12. OpenRouter concurrency smoke đạt 5/5, P95 17,072 giây. Xem `docs/LIVE_VALIDATION_2026-09-29.md`.
+7. Benchmark dữ liệu thật độc lập 10–15 ảnh, phản hồi ba người dùng và smoke Live URL sau hardening vẫn là các cổng chưa hoàn tất; không thay chúng bằng số liệu fixture tổng hợp.

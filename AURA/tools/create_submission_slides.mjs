@@ -81,7 +81,7 @@ function pill(slide, label, x, y, w, fill, color = C.bg) {
 }
 
 function title(slide, number, heading, subheading) {
-  text(slide, `0${number}`, 54, 38, 54, 34, 18, C.cyan, { bold: true });
+  text(slide, `0${number}`, 50, 38, 68, 34, 18, C.cyan, { bold: true });
   text(slide, heading, 112, 30, 1110, 50, 34, C.white, { bold: true });
   text(slide, subheading, 112, 82, 1090, 32, 17, C.muted);
   const line = slide.shapes.add({
@@ -93,9 +93,9 @@ function title(slide, number, heading, subheading) {
   return line;
 }
 
-function footer(slide, number, source = "AURA • Track A • 28/09/2026") {
+function footer(slide, number, source = "AURA • Track A • 29/09/2026") {
   text(slide, source, 54, 686, 950, 18, 12, C.muted);
-  text(slide, `${number}/5`, 1160, 684, 64, 20, 13, C.muted, { align: "right", bold: true });
+  text(slide, String(number), 1170, 684, 54, 20, 13, C.muted, { align: "right", bold: true });
 }
 
 function step(slide, n, label, x, y, w, accent, detail = "") {
@@ -203,7 +203,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 {
   const s = deck.slides.add();
   s.background.fill = C.bg;
-  title(s, 3, "Tác động phải đo được — không tự tuyên bố", "AURA phân biệt kết quả kỹ thuật đã xác minh với tác động vận hành cần pilot.");
+  title(s, 3, "Bằng chứng kỹ thuật và tác động cần đo", "Kết quả regression đã có; hiệu quả vận hành chỉ kết luận sau pilot độc lập.");
 
   shape(s, 54, 162, 560, 232, C.surface, "rounded-xl", C.red);
   pill(s, "TRƯỚC", 76, 182, 86, C.red);
@@ -217,9 +217,9 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   text(s, "Bằng chứng đã có", 54, 428, 250, 28, 20, C.white, { bold: true });
   const evidence = [
-    ["80/80", "test offline", C.blue],
-    ["15/15", "3 batch OpenRouter", C.green],
-    ["25/25", "5 batch Ollama", C.violet],
+    ["88/88", "test offline", C.blue],
+    ["15/15", "judge set OpenRouter", C.green],
+    ["14/15", "judge set Ollama", C.violet],
   ];
   evidence.forEach((e, i) => {
     const x = 54 + i * 185;
@@ -238,7 +238,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
   text(s, "Baseline và target chỉ điền sau khi có dữ liệu người dùng thật.", 635, 610, 589, 34, 15, C.amber, { align: "center", bold: true });
   footer(s, 3);
-  s.speakerNotes.textFrame.setText("Nguồn nội bộ ngày 28/09/2026: 80 test offline; benchmark model ngày 27/09 ghi OpenRouter 8B đạt 15/15 qua ba batch, adjusted P95 11,317 giây và Ollama 4B đạt 25/25 qua năm batch trên cùng 5 fixture tổng hợp. Không suy rộng thành accuracy thực tế.");
+  s.speakerNotes.textFrame.setText("Nguồn nội bộ ngày 29/09/2026: 88 test offline. Trên cùng judge set 15 ca và fallback tắt, OpenRouter 8B đạt 15/15 quyết định, 70/75 field, P95 16,459 giây; Ollama 4B đạt 14/15, 73/75 field, P95 58,318 giây và bỏ sót escalation TK-12. Đây là regression trên dữ liệu tổng hợp, không phải accuracy thực tế.");
 }
 
 // Slide 4
@@ -300,7 +300,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 157, 382, 242, C.surface2, "rounded-xl", C.green);
   text(s, "ĐÃ BÀN GIAO", 869, 180, 326, 24, 15, C.green, { bold: true });
-  const todo = ["DB-backed upload queue", "80 test • dependency sạch", "Evaluator 15/30 ngoài UI", "Fallback opt-in + audit"];
+  const todo = ["DB-backed upload queue", "88 test • dependency sạch", "Evaluator 15/30 ngoài UI", "Fallback opt-in + audit"];
   todo.forEach((t, i) => {
     pill(s, `${i + 1}`, 869, 225 + i * 40, 30, C.green);
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });

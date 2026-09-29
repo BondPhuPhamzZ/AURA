@@ -1,6 +1,6 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 1.5 — 28/09/2026
+Phiên bản: 1.6 — 29/09/2026
 Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
@@ -126,11 +126,11 @@ Cách này vừa giữ bằng chứng để truy vết/hoàn tác, vừa tránh 
 | Provider chính lỗi semantic/schema/request | Không fallback; fail-safe để tránh che lỗi dữ liệu/contract |
 | App restart khi job đang chạy | Lease hết hạn rồi worker reclaim; UI có thể tiếp tục poll bằng status URL |
 
-AURA có circuit breaker trong bộ nhớ theo instance. Sau ngưỡng lỗi hạ tầng liên tiếp, request mới dùng fallback trong thời gian cooldown; hết cooldown, provider chính được probe lại. Hệ thống không exponential backoff nhiều lần và không fallback cho mọi lỗi.
+AURA có circuit breaker trong bộ nhớ theo instance. Sau ngưỡng lỗi hạ tầng liên tiếp, request mới dùng fallback trong thời gian cooldown; hết cooldown, provider chính được probe lại. Hệ thống không fallback cho mọi lỗi. Riêng lỗi truy cập SQL của worker dùng exponential backoff có trần 60 giây để tránh bão log; đây là cơ chế phục hồi hàng đợi, không phải retry Vision AI.
 
 ## 9. Dữ liệu thật và dữ liệu mô phỏng
 
-- Chạy thật baseline: upload, OpenRouter/Qwen 8B, semantic validator, policy C#, SQL Server, audit, human decision và receipt retrieval. OpenRouter cùng build đạt 15/15 qua ba batch Verify và upload `HoaDon1.jpg` 3/3, adjusted P95 11,317 giây. Ollama/Qwen 4B local đạt 25/25 qua năm batch nhưng chậm hơn trên RTX 3050 4 GB. Cả hai chưa có benchmark dữ liệu thực độc lập.
+- Chạy thật baseline: upload, semantic validator, policy C#, SQL Server, audit, human decision và receipt retrieval. Trên judge set 15 ca với fallback tắt, OpenRouter/Qwen 8B đạt 15/15 quyết định, 70/75 field và P95 16,459 giây; Ollama/Qwen 4B local đạt 14/15, 73/75 field và P95 58,318 giây, đồng thời bỏ sót escalation TK-12. OpenRouter concurrency smoke 5 request hoàn tất 5/5 với P95 17,072 giây. Cả hai chưa có benchmark dữ liệu thật độc lập.
 - Mô phỏng: 30 ảnh tổng hợp sinh offline; 5 ảnh Verify và manifest 15 ca BGK được tuyển từ ngân hàng này.
 - Ground truth tổng hợp được sinh tất định bằng Python/Pillow và khóa trong manifest. Ảnh generative AI không được dùng làm nhãn chuẩn; hóa đơn thật đã ẩn danh chỉ nằm trong holdout cục bộ ngoài Git.
 - Không dùng hóa đơn cá nhân thật trong Git. Ảnh thật tùy chọn chỉ đặt tại `test_kit/local_real` và bị `.gitignore` loại trừ.

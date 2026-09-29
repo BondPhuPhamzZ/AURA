@@ -27,7 +27,7 @@ Lý do không chọn chỉ theo field exact: Ollama đạt 73/75 field, cao hơn
 | Over-escalation | 0 | 0 |
 | System error | 0 | 0 |
 | HTTP accepted P50 / P95 | 11 / 184 ms | 13 / 184 ms |
-| End-to-end P50 / P95 | 3.614 / 16.459 ms | 52.238 / 58.318 ms |
+| End-to-end P50 / P95 | 3,614 / 16,459 giây | 52,238 / 58,318 giây |
 
 ### Sai lệch field của OpenRouter
 
@@ -39,7 +39,7 @@ Các sai lệch này phải tiếp tục được giữ trong evidence; không s
 
 ### Lỗi an toàn còn lại của Ollama
 
-TK-12 hiển thị một line item 336.000 VND nhưng dòng `TỔNG THANH TOÁN` bị làm mờ. Ollama suy diễn tổng tiền từ line item và trả `AUTO_APPROVE`. Sau khi prompt được bổ sung quy tắc “không suy diễn tổng cuối từ line item/subtotal”, targeted regression vẫn trả `AUTO_APPROVE` sau 50.476 ms. Do đó:
+TK-12 hiển thị một line item 336.000 VND nhưng dòng `TỔNG THANH TOÁN` bị làm mờ. Ollama suy diễn tổng tiền từ line item và trả `AUTO_APPROVE`. Sau khi prompt được bổ sung quy tắc “không suy diễn tổng cuối từ line item/subtotal”, targeted regression vẫn trả `AUTO_APPROVE` sau 50,476 giây. Do đó:
 
 - không hard-code theo filename/case ID;
 - không dùng Ollama 4B hiện tại làm fallback tự động cho mọi trường hợp;
@@ -50,7 +50,7 @@ TK-12 hiển thị một line item 336.000 VND nhưng dòng `TỔNG THANH TOÁN`
 Concurrent smoke 5 upload trên OpenRouter hoàn tất 5/5:
 
 - HTTP accepted P95: 93 ms;
-- end-to-end P95: 17.072 ms;
+- end-to-end P95: 17,072 giây;
 - không system error.
 
 Kết quả này ủng hộ kịch bản 4–5 BGK cùng thao tác trong một phiên demo, nhưng chưa phải load test production. Ollama trên RTX 3050 Laptop 4 GB mất khoảng 44–58 giây cho một ca tuần tự; nhiều request đồng thời sẽ xếp hàng và có nguy cơ vượt 90 giây. Không trình bày Ollama laptop như concurrent capacity.

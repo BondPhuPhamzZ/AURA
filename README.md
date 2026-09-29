@@ -156,6 +156,7 @@ Run all 30 cases only after checking provider quota and cost. Keep fallback disa
 - [Optional Local Ollama Setup](AURA/docs/LOCAL_OLLAMA.md)
 - [Sprint 2 Implementation Progress](AURA/docs/SPRINT2_IMPLEMENTATION_PROGRESS_2026-09-28.md)
 - [Live Provider and UI Validation — 29/09/2026](AURA/docs/LIVE_VALIDATION_2026-09-29.md)
+- [Demo Readiness and Remaining Gates — 29/09/2026](AURA/docs/DEMO_READINESS_2026-09-29.md)
 
 ## Sprint 1 Limitations
 

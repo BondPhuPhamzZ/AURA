@@ -1,6 +1,6 @@
 # Tiến độ hardening sau feedback Sprint 1
 
-Ngày cập nhật: 28/09/2026
+Ngày cập nhật: 29/09/2026
 
 ## Kết luận hiện tại
 
@@ -40,20 +40,23 @@ Live validation ngày 29/09/2026 đã chốt thêm: OpenRouter đạt 15/15 quy�
 
 ### 4. Kiểm thử và công cụ vận hành
 
-- Automated tests tăng từ 70 lên 80; kết quả hiện tại: 80/80 pass.
+- Automated tests tăng từ 70 lên 88; kết quả hiện tại: 88/88 pass.
 - Build hiện tại: 0 warning, 0 error.
 - EF Core: migration và model snapshot đã được cập nhật cùng thay đổi schema; app smoke test đã truy vấn thành công các cột mới.
 - LocalDB đã áp migration thành công trong lần xác minh.
 - Thêm `tools/Invoke-ConcurrentUploadSmoke.ps1` để chạy 1-10 upload đồng thời, đo HTTP accepted P95, end-to-end P95, provider phục vụ, fallback và error code.
 - Test integrity vẫn khóa Verify Harness ở đúng 5 ca: 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`.
-- EF Core SQL Server/Tools và local `dotnet-ef` đã nâng cùng major lên 8.0.31. Build Release 0 warning/0 error, 80/80 test pass, không còn package bị NuGet vulnerability scan cảnh báo và EF không có pending model change.
+- EF Core SQL Server/Tools và local `dotnet-ef` đã nâng cùng major lên 8.0.31. Build Release 0 warning/0 error, 88/88 test pass, không còn package bị NuGet vulnerability scan cảnh báo và EF không có pending model change.
 - Thêm `tools/Invoke-ExtendedDatasetEvaluation.ps1` để chạy 15/30 ca qua upload endpoint mà không thêm nút UI. Runner xuất metadata, CSV, JSON và summary gồm decision/field accuracy, missed/over-escalation, system error, fallback và P50/P95.
 - Delay 4 giây của Official Verify chuyển thành `Verify:InterCaseDelayMs`; mặc định vẫn 4000 ms để không thay đổi baseline/quota behavior.
-- `/healthz` giờ kiểm tra thêm kết nối database và khả dụng của thư mục receipt; thiếu một trong hai sẽ trả `503 degraded` thay vì báo sẵn sàng giả. Endpoint không gọi AI provider nên không tiêu quota.
+- `/healthz` giờ kiểm tra thêm kết nối database, pending migration và khả dụng của thư mục receipt; thiếu một trong các cổng này sẽ trả `503 degraded` thay vì báo sẵn sàng giả. Endpoint không gọi AI provider nên không tiêu quota.
 - Extended evaluator đã chạy thật trên cùng 15 ca với fallback tắt: OpenRouter 15/15, Ollama 14/15. Runner hiện resolve expected facts từ source manifest và lưu hash để field exact không bị rỗng.
 - Concurrent smoke OpenRouter 5 request hoàn tất 5/5, HTTP accepted P95 93 ms và end-to-end P95 17,072 giây.
 - UI đã đối chiếu Linear design system: một shape token 6 px, palette/contrast gọn hơn và không tràn trang ở 1280, 768, 390 px; Console không có warning/error.
 - Workbook so sánh có raw rows, công thức, chart, phương pháp và giới hạn được tạo tại `D:\aura\compare_Provider\AURA_Provider_Comparison_2026-09-29.xlsx`.
+- Worker tăng backoff từ 5 giây đến trần 60 giây khi SQL tạm mất kết nối và giảm full-stack log lặp. Khi DB phục hồi, job còn nằm trong SQL và được tiếp tục xử lý.
+- Thêm `tools/Test-DemoReadiness.ps1`; script đã chạy thành công bằng Windows PowerShell 5.1, xác nhận đúng `AuraDb`, LocalDB, policy, storage, migration, provider và fallback mà không in secret.
+- Hàng đợi quản lý và Lịch sử hành vi hiển thị tên, mã và phòng ban người nộp thay vì nhãn ẩn danh cố định.
 
 ## Cấu hình khuyến nghị
 
@@ -92,12 +95,12 @@ Không bật Ollama fallback trên hosted server nếu Ollama chỉ chạy ở l
 | Auto-fallback Ollama trong demo | Chưa bật | Local 4B còn missed escalation TK-12 và không đủ concurrent capacity trên RTX 3050 4 GB |
 | Distributed queue/circuit breaker | Chưa triển khai | Bản demo một instance dùng SQL job state + circuit memory là đủ; scale-out cần Redis/queue service |
 | PDF/nhiều trang và antivirus | Chưa triển khai | Không thuộc baseline đã chốt và cần pipeline file riêng |
-| Đổi nền tảng cloud | Chưa thực hiện | Demo chung kết chạy trên laptop theo xác nhận BTC; deploy chỉ là tùy chọn |
+| Đổi nền tảng cloud | Chưa thực hiện | Demo chung kết chạy trên laptop theo xác nhận BTC; Live URL vẫn cần smoke riêng cho bản bàn giao, nhưng không nên đổi hạ tầng sát demo |
 
 ## Checklist người vận hành cần làm tiếp
 
-1. Pull commit mới và chạy `dotnet ef database update` trên đúng database demo.
-2. Chạy `dotnet build ../AURA.sln --no-restore` và `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore`; kỳ vọng 80/80. Không dùng `--no-build` nếu test project chưa vừa được build đúng configuration.
+1. Pull commit mới, chạy `.\tools\Test-DemoReadiness.ps1 -StartLocalDb -SkipHttp`, rồi `dotnet ef database update` trên đúng database demo.
+2. Chạy `dotnet build ../AURA.sln --no-restore` và `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore`; kỳ vọng 88/88. Không dùng `--no-build` nếu test project chưa vừa được build đúng configuration.
 3. Giữ fallback tắt, test một upload OpenRouter và một Verify 5 ca để tái xác nhận baseline.
 4. Mở Ollama, bật fallback, chủ động mô phỏng lỗi primary bằng một key/model test không hợp lệ chỉ trong database test; xác nhận audit provider. Không làm bước này trên database/video chính.
 5. Chạy concurrency smoke 5 request trên database riêng hoặc bản sao demo và ghi Accepted P95, End-to-end P95, error rate.
@@ -107,11 +110,11 @@ Không bật Ollama fallback trên hosted server nếu Ollama chỉ chạy ở l
 
 ## Tiêu chí hoàn tất trước demo
 
-- App khởi động sạch trên database đã migrate; `/healthz` trả `ok` với `databaseAvailable=true` và `storageAvailable=true`.
+- App khởi động sạch trên database đã migrate; `/healthz` trả `ok` với `databaseAvailable=true`, `databaseUpToDate=true`, `pendingMigrationCount=0` và `storageAvailable=true`.
 - Upload trả `202` nhanh và vẫn hoàn tất sau refresh.
 - Một lỗi provider không tạo PASS giả; fallback hoặc `ESCALATE_SYSTEM_ERROR` có audit rõ.
 - Verify đúng 5/5 trong cấu hình demo đã chốt.
 - Hai thao tác quản lý cùng hồ sơ không ghi đè im lặng.
 - Ảnh và audit vẫn mở sau restart app.
 - Fallback được bật/tắt bằng cấu hình, không sửa code sát giờ demo.
-- Slide, workflow, README, runbook và build log nêu cùng một pipeline và cùng mốc 80 tests.
+- Slide, workflow, README, runbook và build log nêu cùng một pipeline và cùng mốc 88 tests.

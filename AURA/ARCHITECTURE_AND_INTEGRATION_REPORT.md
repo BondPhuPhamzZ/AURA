@@ -2,7 +2,7 @@
 
 ## AURA Automated Underwriting and Reimbursement AI
 
-Cập nhật ngày 28/09/2026. Tài liệu mô tả baseline sau feedback Sprint 1 và phần hardening chuẩn bị Sprint 2. Cách đánh giá chuẩn là clone và chạy localhost theo README. OpenRouter vẫn là provider chính; Ollama là fallback local có kiểm soát và mặc định chưa bật.
+Cập nhật ngày 29/09/2026. Tài liệu mô tả baseline sau feedback Sprint 1 và phần hardening chuẩn bị Sprint 2. Cách đánh giá chuẩn là clone và chạy localhost theo README. OpenRouter vẫn là provider chính; Ollama là tùy chọn local/offline có kiểm soát và mặc định chưa bật auto-fallback.
 
 ## 1. Sơ đồ thành phần
 
@@ -24,7 +24,7 @@ AURA/
 │   ├── ReimbursementRepository.cs            # transaction hồ sơ và audit
 │   ├── AuditLogger.cs                        # ghi sự kiện
 │   ├── AuditTrailProjector.cs                # gom sự kiện thành timeline UI
-│   ├── ReceiptProcessingWorker.cs             # worker DB-backed xử lý upload nền
+│   ├── ReceiptProcessingWorker.cs             # worker DB-backed, lease và backoff lỗi DB
 │   ├── VisionCircuitBreaker.cs                # ngắt provider chính theo ngưỡng lỗi
 │   └── WorkflowOperationGate.cs               # chỉ chống chạy chồng Verify Harness
 ├── Data/                              # EF Core DbContext và migrations
@@ -32,7 +32,7 @@ AURA/
 ├── Views/                             # Razor UI nhân viên, quản lý, lịch sử
 ├── wwwroot/test_data/                 # 5 fixture được Verify chạy trực tiếp
 ├── test_kit/                          # ngân hàng 30 ca và gói BGK 15 ca
-├── tests/AURA.Tests/                  # 80 kiểm thử tự động offline
+├── tests/AURA.Tests/                  # 88 kiểm thử tự động offline
 ├── docs/                              # runbook, deploy, test, checklist
 ├── submission/                        # 5 slide, Build Log Word, workflow
 └── tools/                             # tái tạo fixture, chạy evaluator và sinh artifact
@@ -64,7 +64,7 @@ Qwen chỉ trích xuất dữ kiện nhìn thấy trong ảnh. Quyết định `
 | Route | Phương thức | Vai trò |
 |---|---|---|
 | `/` | GET | Dashboard nhân viên, quản lý và lịch sử |
-| `/healthz` | GET | Readiness: policy, cấu hình AI, kết nối DB và thư mục receipt; không gọi provider và không lộ API key |
+| `/healthz` | GET | Readiness: policy, cấu hình AI, kết nối DB, trạng thái migration và thư mục receipt; không gọi provider và không lộ API key |
 | `/Applicant/UploadReceipt` | POST | Kiểm file, lưu hồ sơ `PENDING`, trả `202 Accepted` và đánh thức worker |
 | `/Applicant/Status/{id}` | GET | Trả trạng thái `PENDING/PROCESSING/COMPLETED/FAILED` để UI poll |
 | `/Applicant/Receipt/{id}` | GET | Đọc ảnh từ storage riêng tư theo mã hồ sơ |
@@ -90,6 +90,8 @@ Các POST thay đổi trạng thái đều kiểm antiforgery token. Upload ch�
 8. Worker chạy `PolicyDecisionEngine`, commit kết quả, provider thực sự phục vụ và audit. UI poll mỗi giây trong phiên trình duyệt, lưu status URL trong `sessionStorage` và tự nối lại sau refresh.
 9. Nhân viên xác nhận chuyển tiếp. Quản lý đồng ý hoặc từ chối theo câu hỏi đã sinh; quyết định có thể hoàn tác.
 10. UI gom các audit event của cùng hồ sơ thành một timeline, tránh hiển thị các dòng trùng nghĩa.
+
+Nếu SQL Server tạm mất kết nối, worker tăng thời gian chờ theo cấp số nhân từ 5 giây đến tối đa 60 giây thay vì ghi full stack liên tục. Khi database phục hồi, worker tiếp tục lấy job từ trạng thái đã lưu; không cần tạo lại request.
 
 Upload, chuyển tiếp và quyết định quản lý không dùng khóa toàn cục. SQL Server `RowVersion` phát hiện hai thao tác cùng sửa một hồ sơ và trả conflict thay vì ghi đè. `WorkflowOperationGate` chỉ còn bảo vệ Verify Harness khỏi hai lượt 5 ca chạy chồng và phát sinh quota ngoài ý muốn.
 
@@ -155,6 +157,7 @@ Audit được ghi theo sự kiện để không mất dấu hành động. Giao
 | `Database__ApplyMigrationsOnStartup` | Bật/tắt migration khi khởi động |
 | `ReceiptProcessing__PollIntervalMs` | Chu kỳ DB recovery poll; signal nội bộ đánh thức worker ngay |
 | `ReceiptProcessing__LeaseSeconds` | Thời gian lease trước khi job gián đoạn được reclaim |
+| `ReceiptProcessing__FailureBackoffMaxSeconds` | Trần backoff khi worker không truy cập được database, mặc định 60 giây |
 | `Verify__InterCaseDelayMs` | Delay cấu hình giữa các fixture Verify, mặc định 4000 ms |
 
 Recycle application pool chỉ nạp lại biến môi trường hiện có. Không cần tải lại publish XML hoặc publish lại code nếu chỉ thay giá trị Pool Manager. SmarterASP.NET tiếp tục đặt `Vision__Provider=OpenRouter`; Ollama dành cho máy local.
@@ -162,11 +165,12 @@ Recycle application pool chỉ nạp lại biến môi trường hiện có. Kh�
 ## 10. Bằng chứng xác minh hiện tại
 
 - Build .NET 8 sạch, 0 warning và 0 error tại lần kiểm tra gần nhất.
-- 80 automated tests pass, gồm policy, workflow, audit, Verify/Test Kit integrity, hợp đồng OpenRouter/Ollama, semantic validation/repair và fallback/circuit breaker.
+- 88 automated tests pass, gồm policy, workflow, audit, Verify/Test Kit integrity, hợp đồng OpenRouter/Ollama, semantic validation/repair, fallback/circuit breaker và backoff worker.
 - Build sau hardening: 0 warning, 0 error; EF báo không có model change chưa migration. LocalDB đã áp migration thành công.
 - EF Core SQL Server/Tools và local `dotnet-ef` đã được vá đồng bộ lên 8.0.31; NuGet vulnerability scan không còn advisory trong app và test project tại thời điểm kiểm tra.
-- Runner đánh giá mở rộng đã qua kiểm tra cú pháp; chưa gọi 15/30 request thật sau thay đổi để tránh tiêu quota trước khi người vận hành chốt phiên đo.
-- Build cuối với Ollama/Qwen3-VL-4B Q4_K_M đạt 25/25 qua năm lượt Verify liên tiếp trên 5 fixture tổng hợp; ba lượt có đo mất khoảng 303–304 giây/batch trên RTX 3050 Laptop 4 GB. OpenRouter/Qwen3-VL-8B cùng build đạt 15/15 qua ba batch và upload `HoaDon1.jpg` 3/3; adjusted latency median 4,371 giây, P95 11,317 giây. Exact match năm field khóa là 72/75 do TC-04 lệch taxonomy nhưng không làm sai nhánh policy. Đây không phải accuracy trên dữ liệu thực; xem `docs/OPENROUTER_BENCHMARK_2026-09-27.md`.
+- Judge set mở rộng đã chạy thật trên cùng 15 ca và fallback tắt. OpenRouter/Qwen3-VL-8B đạt 15/15 quyết định, 70/75 field và P50/P95 end-to-end 3,614/16,459 giây. Ollama/Qwen3-VL-4B đạt 14/15 quyết định, 73/75 field và 52,238/58,318 giây; model bỏ sót escalation TK-12. Concurrent smoke OpenRouter 5 request hoàn tất 5/5 với P95 17,072 giây.
+- Baseline ngày 27/09 trên đúng 5 fixture vẫn được giữ như bằng chứng hồi quy lịch sử: Ollama đạt 25/25 qua năm batch và OpenRouter đạt 15/15 qua ba batch. Không dùng baseline lặp này để thay cho judge set hoặc accuracy trên dữ liệu thật. Xem `docs/LIVE_VALIDATION_2026-09-29.md`.
+- `tools/Test-DemoReadiness.ps1` đã xác nhận đúng `AuraDb`, LocalDB, policy, storage, cấu hình AI, migration và health trước khi demo mà không in secret.
 - Người dùng xác nhận production upload, AI extraction và audit hoạt động đúng sau khi cập nhật API key ở Pool Manager.
 - Video demo dưới ba phút đã được liên kết từ README; đường đánh giá tái lập cho BGK vẫn là localhost cùng test key được cấp riêng.
 
@@ -178,7 +182,7 @@ Kết quả fixture tổng hợp không phải accuracy trên tập hóa đơn �
 |---|---|
 | Tách extraction và policy | Có thể đổi model mà không đổi quy tắc duyệt; policy unit-test được |
 | Hosted Qwen 8B cho Sprint 1 | Triển khai nhanh và giữ baseline đang được chấm |
-| Adapter Ollama 4B tắt mặc định | Đã đạt cổng Verify tổng hợp 25/25 nhưng chậm trên RTX 3050 4 GB; OpenRouter cùng build nhanh hơn rõ rệt. Cả hai chưa có benchmark hóa đơn thực tế độc lập |
+| Adapter Ollama 4B tắt mặc định | Judge set đạt 14/15 và bỏ sót TK-12; P95 58,318 giây trên RTX 3050 4 GB. Giữ làm tùy chọn offline/manual, chưa đủ cơ sở auto-fallback toàn cục |
 | Semantic validation + một repair | Sửa lỗi đọc dấu hàng nghìn/gán nhầm identifier mà không nới policy hoặc dùng claimed amount để dẫn dắt OCR |
 | Fallback mặc định tắt, có allowlist và circuit breaker | Có đường dự phòng khi demo nhưng không đổi model cho lỗi semantic/contract; audit chỉ rõ provider quyết định |
 | Upload xử lý nền bằng DB state + lease | Request HTTP ngắn, chịu được refresh/restart và không khóa 4-5 người quan sát/thao tác |
@@ -188,4 +192,4 @@ Kết quả fixture tổng hợp không phải accuracy trên tập hóa đơn �
 | Audit event và timeline projection | Giữ dấu vết đầy đủ nhưng UI chỉ hiển thị một hồ sơ nhất quán |
 | Fixture tổng hợp tái lập | BGK có expected result rõ ràng mà không nhận dữ liệu cá nhân |
 
-Baseline chưa hỗ trợ PDF/nhiều trang, antivirus, tra cứu MST/e-invoice, tỷ giá, object storage hoặc authentication thực. Ngữ cảnh người gửi hiện là metadata demo, chưa phải danh tính đã xác thực. Image resize chưa bật vì cần benchmark lại độ chính xác OCR trước khi thay đổi pixel đầu vào. Xem thêm [workflow đầy đủ](submission/AURA_WORKFLOW_SPEC.md), [runbook](docs/RUNBOOK.md), [tiến độ hardening](docs/SPRINT2_IMPLEMENTATION_PROGRESS_2026-09-28.md) và [hướng dẫn deploy](docs/DEPLOYMENT.md).
+Baseline chưa hỗ trợ PDF/nhiều trang, antivirus, tra cứu MST/e-invoice, tỷ giá, object storage hoặc authentication thực. Ngữ cảnh người gửi hiện là metadata demo, chưa phải danh tính đã xác thực. Image resize chưa bật vì cần benchmark lại độ chính xác OCR trước khi thay đổi pixel đầu vào. Xem thêm [workflow đầy đủ](submission/AURA_WORKFLOW_SPEC.md), [runbook](docs/RUNBOOK.md), [tiến độ hardening](docs/SPRINT2_IMPLEMENTATION_PROGRESS_2026-09-28.md), [live validation](docs/LIVE_VALIDATION_2026-09-29.md) và [hướng dẫn deploy](docs/DEPLOYMENT.md).
