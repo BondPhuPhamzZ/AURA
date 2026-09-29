@@ -11,4 +11,7 @@ public sealed class ReceiptProcessingOptions
 
     [Range(30, 3600)]
     public int LeaseSeconds { get; set; } = 600;
+
+    [Range(5, 300)]
+    public int FailureBackoffMaxSeconds { get; set; } = 60;
 }

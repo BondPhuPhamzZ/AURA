@@ -32,12 +32,21 @@ public sealed class ReceiptProcessingWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var consecutiveFailureCount = 0;
         while (!stoppingToken.IsCancellationRequested)
         {
             var processedAny = false;
             try
             {
                 while (await ProcessNextAsync(stoppingToken)) processedAny = true;
+
+                if (consecutiveFailureCount > 0)
+                {
+                    _logger.LogInformation(
+                        "Receipt background processing recovered after {FailureCount} consecutive infrastructure failures.",
+                        consecutiveFailureCount);
+                    consecutiveFailureCount = 0;
+                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -45,7 +54,37 @@ public sealed class ReceiptProcessingWorker : BackgroundService
             }
             catch (Exception exception)
             {
-                _logger.LogError(exception, "Receipt background processing loop failed; pending jobs remain in the database.");
+                consecutiveFailureCount++;
+                var failureDelay = ReceiptProcessingBackoff.Calculate(
+                    consecutiveFailureCount,
+                    TimeSpan.FromMilliseconds(_options.PollIntervalMs),
+                    TimeSpan.FromSeconds(_options.FailureBackoffMaxSeconds));
+
+                if (consecutiveFailureCount == 1 || consecutiveFailureCount % 5 == 0)
+                {
+                    _logger.LogError(exception,
+                        "Receipt background processing is unavailable. Pending jobs remain durable in the database; " +
+                        "attempt {FailureCount}, retrying in {RetryDelaySeconds:F0}s.",
+                        consecutiveFailureCount, failureDelay.TotalSeconds);
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Receipt background processing remains unavailable ({ExceptionType}); " +
+                        "attempt {FailureCount}, retrying in {RetryDelaySeconds:F0}s.",
+                        exception.GetType().Name, consecutiveFailureCount, failureDelay.TotalSeconds);
+                }
+
+                try
+                {
+                    await Task.Delay(failureDelay, stoppingToken);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                continue;
             }
 
             if (!processedAny)

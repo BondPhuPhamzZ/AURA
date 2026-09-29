@@ -150,9 +150,15 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
     var policyAvailable = File.Exists(policyPath);
     var aiConfigured = useOllama || !string.IsNullOrWhiteSpace(openRouter.ApiKey);
     bool databaseAvailable;
+    var pendingMigrationCount = -1;
     try
     {
         databaseAvailable = await database.Database.CanConnectAsync(cancellationToken);
+        if (databaseAvailable)
+        {
+            pendingMigrationCount = (await database.Database
+                .GetPendingMigrationsAsync(cancellationToken)).Count();
+        }
     }
     catch
     {
@@ -160,7 +166,8 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
     }
 
     var storageAvailable = Directory.Exists(receiptStorageRoot);
-    var ready = policyAvailable && aiConfigured && databaseAvailable && storageAvailable;
+    var databaseUpToDate = databaseAvailable && pendingMigrationCount == 0;
+    var ready = policyAvailable && aiConfigured && databaseUpToDate && storageAvailable;
 
     return Results.Json(new
     {
@@ -169,6 +176,8 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
         aiConfigured,
         policyAvailable,
         databaseAvailable,
+        databaseUpToDate,
+        pendingMigrationCount = pendingMigrationCount < 0 ? (int?)null : pendingMigrationCount,
         storageAvailable,
         provider = useOllama ? VisionOptions.OllamaProvider : VisionOptions.OpenRouterProvider,
         model = useOllama ? ollama.Model : openRouter.Model,
