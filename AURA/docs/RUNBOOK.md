@@ -7,7 +7,7 @@
 - Local `dotnet-ef` 8.0.31 qua tool manifest
 - OpenRouter API key có quyền gọi model cấu hình trong `OpenRouter:Model`
 
-OpenRouter là provider mặc định cho Sprint 1. Cấu hình Ollama local tùy chọn nằm tại [`docs/LOCAL_OLLAMA.md`](LOCAL_OLLAMA.md); không cần cài Ollama để chạy baseline của BGK.
+OpenRouter là provider chính cho cấu hình demo hiện tại. Cấu hình Ollama local tùy chọn nằm tại [`docs/LOCAL_OLLAMA.md`](LOCAL_OLLAMA.md); không cần cài Ollama để chạy baseline của BGK và không bật auto-fallback khi benchmark.
 
 ## 2. Clone và cấu hình local
 
@@ -20,6 +20,7 @@ dotnet user-secrets set "Vision:Provider" "OpenRouter"
 dotnet user-secrets set "OpenRouter:ApiKey" "YOUR_OPENROUTER_KEY"
 dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
 dotnet user-secrets set "Vision:FallbackEnabled" "false"
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\mssqllocaldb;Database=AuraDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0"
 dotnet ef database update
 ```
 
@@ -35,6 +36,20 @@ dotnet run
 
 Không thêm `--no-build` vào lệnh test trừ khi test project vừa được build đúng configuration; nếu không, CLI có thể chạy assembly cũ và báo sai số lượng test.
 
+Trước khi mở AURA, kiểm tra cấu hình mà chưa gọi API AI:
+
+```powershell
+.\tools\Test-DemoReadiness.ps1 -StartLocalDb -SkipHttp
+```
+
+Sau khi `dotnet run` đã lắng nghe ở cổng 5000, mở PowerShell thứ hai và chạy cổng kiểm tra đầy đủ:
+
+```powershell
+.\tools\Test-DemoReadiness.ps1
+```
+
+Kết quả hợp lệ là `READY`, đúng database `AuraDb`, LocalDB running, health `ok`, `databaseUpToDate=true`, `pendingMigrationCount=0` và fallback tắt. Script không in API key hoặc toàn bộ connection string. Nếu LocalDB báo lỗi registry/automatic instance, dừng demo setup, đóng AURA/Visual Studio, khởi động lại Windows và chạy preflight trước; không tự xóa instance hoặc file `.mdf` khi chưa backup.
+
 Mở URL được in trong terminal. Không truy cập `/Verify` để tìm trang riêng; nút Verify nằm ngay trên trang chủ. `/Applicant` và `/Verify` chủ động chuyển về `/`.
 
 ## 4. Tái lập Verify
@@ -47,7 +62,7 @@ Mở URL được in trong terminal. Không truy cập `/Verify` để tìm tran
 
 Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_receipts.py --as-of-date 2026-09-21`. Script đồng thời sinh Test Kit v2 gồm 30 ca nhưng chỉ 5 ca đại diện được Verify gọi. Không đổi `as-of-date`, fixture hoặc expected sau khi chốt mà không cập nhật manifest, tài liệu và commit.
 
-Để bảo toàn credit: build + 80 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota.
+Để bảo toàn credit: build + 88 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota.
 
 Delay giữa các ca Verify được cấu hình bằng `Verify:InterCaseDelayMs`, mặc định 4000 ms để bảo vệ quota. Không đổi giá trị trong cùng một benchmark; luôn ghi giá trị này vào metadata phép đo.
 
@@ -82,8 +97,8 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 - Fallback mặc định tắt để benchmark không trộn provider. Khi demo cần đường dự phòng, bật `Vision:FallbackEnabled=true`, giữ `Vision:Provider=OpenRouter` và đặt `Vision:FallbackProvider=Ollama` sau khi smoke Ollama.
 - Fallback chỉ chạy một lần cho lỗi hạ tầng đủ điều kiện. Lỗi schema, semantic, truncated response hoặc invalid request vẫn chuyển kiểm tra thủ công.
 - Sau JSON Schema, backend kiểm tra ngữ nghĩa tiền VND, loại chứng từ và các identifier. Dữ kiện mâu thuẫn được đọc lại đúng một lần; vẫn sai thì chuyển `ESCALATE_FACT`, không tự đoán hoặc tự nhân số tiền.
-- `/healthz` chỉ đạt `ok` khi policy, cấu hình AI, database và thư mục receipt sẵn sàng; endpoint không gọi provider nên không thay cho một ảnh smoke test.
-- Build ngày 27/09/2026 đạt 25/25 qua năm batch Verify liên tiếp trên fixture tổng hợp bằng Ollama 4B; upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Ba batch có đo chi tiết mất khoảng 303-304 giây mỗi batch trên RTX 3050 Laptop 4 GB; hai batch xác nhận bổ sung chưa tổng hợp latency. Đây không phải accuracy trên tập hóa đơn thật độc lập.
+- `/healthz` chỉ đạt `ok` khi policy, cấu hình AI, database, migration và thư mục receipt sẵn sàng; endpoint không gọi provider nên không thay cho một ảnh smoke test.
+- Baseline năm fixture ngày 27/09/2026 từng đạt 25/25 bằng Ollama 4B. Trên judge set mở rộng 15 ca ngày 29/09/2026, Ollama đạt 14/15 và bỏ sót escalation TK-12, trong khi OpenRouter đạt 15/15. Vì vậy Ollama chỉ là đường offline/manual có giới hạn; không dùng kết quả năm fixture để tuyên bố độ chính xác thực tế hoặc bật auto-fallback toàn cục.
 - Xem hướng dẫn cài, giới hạn RAM và rollback tại `docs/LOCAL_OLLAMA.md`.
 
 ### Khi OpenRouter/Qwen trả lỗi

@@ -52,10 +52,10 @@ AURA does not fine-tune Qwen and does not give the model final decision authorit
 - JSON Schema structured output
 - Razor Views and the JavaScript Fetch API
 
-## Sprint 1 Verification
+## Current Verification Baseline
 
 - Build: **0 warnings, 0 errors**
-- Automated tests: **80/80 passed**
+- Automated tests: **88/88 passed**
 - Verify Harness: **5 smoke-test cases**
 - Evaluator reference pack: **15 test cases**
 - Extended evaluator: **15 or 30 cases through the production upload endpoint, without an extra UI button**
@@ -118,6 +118,21 @@ These tests do not call the paid AI API:
 ```powershell
 dotnet test tests\AURA.Tests\AURA.Tests.csproj
 ```
+
+Before starting the demo, run the read-only readiness gate. The first command may start the named LocalDB instance but does not call either AI provider:
+
+```powershell
+.\tools\Test-DemoReadiness.ps1 -StartLocalDb -SkipHttp
+dotnet run
+```
+
+In a second PowerShell window, verify the running application, database migration state, storage, policy, provider configuration, and fallback baseline:
+
+```powershell
+.\tools\Test-DemoReadiness.ps1
+```
+
+The expected result is `READY`, `AuraDb`, no pending migration, and fallback disabled. The current offline suite contains **88 tests**.
 
 ### Run the 15/30-case evaluation outside the UI
 
