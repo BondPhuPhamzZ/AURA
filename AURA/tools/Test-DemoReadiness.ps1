@@ -3,6 +3,7 @@ param(
     [string]$BaseUrl = "http://localhost:5000",
     [string]$ExpectedDatabase = "AuraDb",
     [switch]$StartLocalDb,
+    [switch]$DiagnoseLocalDb,
     [switch]$SkipHttp
 )
 
@@ -35,6 +36,61 @@ function Add-Failure([string]$Message) {
 function Add-Warning([string]$Message) {
     $warnings.Add($Message)
     Write-Check WARN $Message
+}
+
+function Invoke-NativeTool {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FilePath,
+        [string[]]$ArgumentList = @()
+    )
+
+    # Windows PowerShell 5.1 may turn a native program's stderr into a terminating
+    # NativeCommandError when the caller uses Stop. Capture the process result first
+    # so the readiness script can report one deterministic PASS/FAIL instead of aborting.
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $output = @(& $FilePath @ArgumentList 2>&1 | ForEach-Object { $_.ToString() })
+        $exitCode = $LASTEXITCODE
+        [pscustomobject]@{
+            ExitCode = $exitCode
+            Output = $output
+        }
+    }
+    catch {
+        [pscustomobject]@{
+            ExitCode = -1
+            Output = @($_.Exception.Message)
+        }
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+}
+
+function Write-LocalDbDiagnostics {
+    param([string]$InstanceName)
+
+    Write-Host ''
+    Write-Host 'LocalDB diagnostics (read-only)' -ForegroundColor Cyan
+    Write-Host "Windows user: $([System.Security.Principal.WindowsIdentity]::GetCurrent().Name)"
+    try {
+        $bootTime = (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
+        Write-Host "Last OS boot: $bootTime"
+    }
+    catch {
+        Write-Host "Last OS boot: unavailable ($($_.Exception.Message))"
+    }
+
+    $versions = Invoke-NativeTool -FilePath 'sqllocaldb' -ArgumentList @('versions')
+    Write-Host "Installed versions (exit $($versions.ExitCode)): $($versions.Output -join ' | ')"
+    $instances = Invoke-NativeTool -FilePath 'sqllocaldb' -ArgumentList @('info')
+    Write-Host "Visible instances (exit $($instances.ExitCode)): $($instances.Output -join ' | ')"
+    $details = Invoke-NativeTool -FilePath 'sqllocaldb' -ArgumentList @('info', $InstanceName)
+    Write-Host "Instance '$InstanceName' (exit $($details.ExitCode)): $($details.Output -join ' | ')"
+    Write-Host 'No registry key, LocalDB instance, MDF, or database was modified.'
+    Write-Host ''
 }
 
 Write-Host 'AURA Demo Readiness Check' -ForegroundColor Cyan
@@ -104,13 +160,29 @@ if ($usesLocalDb) {
         Add-Failure 'The connection string uses LocalDB, but sqllocaldb.exe is unavailable.'
     }
     else {
-        if ($StartLocalDb) {
-            & sqllocaldb start $localDbInstance | Out-Null
+        if ($DiagnoseLocalDb) {
+            Write-LocalDbDiagnostics -InstanceName $localDbInstance
         }
 
-        $instanceOutput = & sqllocaldb info $localDbInstance 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Add-Failure "Cannot access LocalDB '$localDbInstance': $($instanceOutput -join ' ')"
+        if ($StartLocalDb) {
+            $startResult = Invoke-NativeTool -FilePath 'sqllocaldb' -ArgumentList @('start', $localDbInstance)
+            if ($startResult.ExitCode -ne 0) {
+                Add-Failure "Cannot start LocalDB '$localDbInstance': $($startResult.Output -join ' ')"
+            }
+        }
+
+        $instanceResult = Invoke-NativeTool -FilePath 'sqllocaldb' -ArgumentList @('info', $localDbInstance)
+        $instanceOutput = $instanceResult.Output
+        $instanceText = $instanceOutput -join ' '
+        $instanceReportedError = $instanceText -match '(?i)failed because|unexpected error|localdb instance .* failed'
+        if ($instanceResult.ExitCode -ne 0 -or $instanceReportedError) {
+            $registryHint = if ($instanceText -match '(?i)registry configuration') {
+                ' This is a LocalDB user-instance registry/runtime problem, not proof that AuraDb data is corrupt. ' +
+                'Close stale dotnet/SQL processes, reboot once, and rerun with -StartLocalDb -DiagnoseLocalDb. ' +
+                'Do not delete the instance or MDF without a verified backup.'
+            }
+            else { '' }
+            Add-Failure "Cannot access LocalDB '$localDbInstance': $instanceText.$registryHint"
         }
         elseif (($instanceOutput -join "`n") -notmatch '(?im)^State:\s+Running\s*$') {
             Add-Failure "LocalDB '$localDbInstance' is not running. Run again with -StartLocalDb before AURA."
