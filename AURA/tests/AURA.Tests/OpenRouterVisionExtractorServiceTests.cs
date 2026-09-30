@@ -64,7 +64,10 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.Equal("json_schema", responseFormat.GetProperty("type").GetString());
             var jsonSchema = responseFormat.GetProperty("json_schema");
             Assert.True(jsonSchema.GetProperty("strict").GetBoolean());
-            Assert.False(jsonSchema.GetProperty("schema").GetProperty("additionalProperties").GetBoolean());
+            var schema = jsonSchema.GetProperty("schema");
+            Assert.False(schema.GetProperty("additionalProperties").GetBoolean());
+            Assert.True(schema.GetProperty("properties").TryGetProperty("receiptNumber", out _));
+            Assert.True(schema.GetProperty("properties").TryGetProperty("transactionReference", out _));
         }
         finally
         {

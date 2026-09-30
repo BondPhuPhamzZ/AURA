@@ -50,12 +50,17 @@ public static class PolicyDecisionEngine
         var isDigital = isEcommerce || isRideHailing ||
             ContainsAny(facts.DocumentType, "digital", "electronic", "e-invoice");
 
-        if (!isDigital && string.IsNullOrWhiteSpace(facts.InvoiceNumber))
-            factProblems.Add("thiếu số hóa đơn/biên nhận");
+        var hasPaperTraceableIdentifier = !string.IsNullOrWhiteSpace(facts.InvoiceNumber) ||
+            !string.IsNullOrWhiteSpace(facts.ReceiptNumber) ||
+            !string.IsNullOrWhiteSpace(facts.TransactionReference);
+        if (!isDigital && !hasPaperTraceableIdentifier)
+            factProblems.Add("thiếu số hóa đơn, số biên nhận hoặc mã giao dịch riêng của chứng từ");
 
         if (isEcommerce)
         {
             var hasTraceableIdentifier = !string.IsNullOrWhiteSpace(facts.InvoiceNumber) ||
+                !string.IsNullOrWhiteSpace(facts.ReceiptNumber) ||
+                !string.IsNullOrWhiteSpace(facts.TransactionReference) ||
                 !string.IsNullOrWhiteSpace(facts.OrderId) ||
                 !string.IsNullOrWhiteSpace(facts.BookingId) ||
                 !string.IsNullOrWhiteSpace(facts.ShippingTrackingCode);
@@ -79,7 +84,9 @@ public static class PolicyDecisionEngine
                 factProblems.Add("đơn hàng trực tuyến thiếu danh sách hàng hóa/dịch vụ để đối chiếu");
         }
         else if (isRideHailing && string.IsNullOrWhiteSpace(facts.BookingId) &&
-                 string.IsNullOrWhiteSpace(facts.InvoiceNumber))
+                 string.IsNullOrWhiteSpace(facts.InvoiceNumber) &&
+                 string.IsNullOrWhiteSpace(facts.ReceiptNumber) &&
+                 string.IsNullOrWhiteSpace(facts.TransactionReference))
         {
             factProblems.Add("thiếu mã chuyến đi/đặt chỗ hoặc số biên nhận để đối chiếu");
         }
@@ -123,18 +130,16 @@ public static class PolicyDecisionEngine
         if (criticalWarnings.Count > 0)
             factProblems.Add("ảnh có dấu hiệu cần xác minh: " + string.Join(", ", criticalWarnings));
 
+        var prohibitedItems = FindProhibitedItems(facts);
         if (factProblems.Count > 0)
         {
             var summary = string.Join("; ", factProblems);
+            if (prohibitedItems.Count > 0)
+                summary += $"; đồng thời phát hiện hạng mục cần kiểm tra policy: {string.Join(", ", prohibitedItems)}";
             return Fact("Không đủ dữ kiện đáng tin cậy: " + summary + ".",
                 $"Hồ sơ có vấn đề dữ kiện: {summary}. Quản lý có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]");
         }
 
-        var prohibitedItems = facts.LineItems
-            .Select(x => x.Description)
-            .Where(description => ProhibitedTerms.Any(term => ContainsAny(description, term)))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
         if (prohibitedItems.Count > 0)
         {
             var items = string.Join(", ", prohibitedItems);
@@ -163,6 +168,12 @@ public static class PolicyDecisionEngine
 
     private static bool ContainsAny(string? source, params string[] terms) =>
         !string.IsNullOrWhiteSpace(source) && terms.Any(term => source.Contains(term, StringComparison.OrdinalIgnoreCase));
+
+    private static List<string> FindProhibitedItems(ReceiptExtractionDto facts) => facts.LineItems
+        .Select(item => item.Description)
+        .Where(description => ProhibitedTerms.Any(term => ContainsAny(description, term)))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
 
     private static bool TryParseInvoiceDate(string? value, out DateTime date) =>
         DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date);

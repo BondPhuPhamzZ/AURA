@@ -26,6 +26,8 @@ namespace AURA.Models
         public string? ShippingProvider { get; set; }
         public string? OrderStatus { get; set; }
         public string? InvoiceNumber { get; set; }
+        public string? ReceiptNumber { get; set; }
+        public string? TransactionReference { get; set; }
         public string? InvoiceDate { get; set; }
         public string? TransactionDate { get; set; }
         public string? CompletionDate { get; set; }

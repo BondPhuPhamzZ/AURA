@@ -110,6 +110,46 @@ public sealed class PolicyDecisionEngineTests
     }
 
     [Fact]
+    public void Paper_receipt_can_use_a_dedicated_receipt_number()
+    {
+        var facts = ValidFacts();
+        facts.DocumentType = "RESTAURANT_BILL";
+        facts.TaxId = null;
+        facts.InvoiceNumber = null;
+        facts.ReceiptNumber = "RC-221196";
+
+        Assert.Equal("AUTO_APPROVE", Decide(facts).Status);
+    }
+
+    [Fact]
+    public void Paper_receipt_can_use_a_per_purchase_transaction_reference()
+    {
+        var facts = ValidFacts();
+        facts.DocumentType = "RETAIL_RECEIPT";
+        facts.TaxId = null;
+        facts.InvoiceNumber = null;
+        facts.TransactionReference = "CHECK-221196";
+
+        Assert.Equal("AUTO_APPROVE", Decide(facts).Status);
+    }
+
+    [Fact]
+    public void Shop_and_terminal_ids_do_not_replace_a_paper_transaction_reference()
+    {
+        var facts = ValidFacts();
+        facts.DocumentType = "RETAIL_RECEIPT";
+        facts.TaxId = null;
+        facts.InvoiceNumber = null;
+        facts.MerchantId = "SHOP-30496";
+        facts.TerminalId = "POS01";
+
+        var result = Decide(facts);
+
+        Assert.Equal("ESCALATE_FACT", result.Status);
+        Assert.Contains("mã giao dịch riêng", result.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Completed_ecommerce_order_can_use_shipping_tracking_code_as_traceable_identifier()
     {
         var facts = ValidEcommerceFacts();
@@ -176,7 +216,11 @@ public sealed class PolicyDecisionEngineTests
         facts.TotalAmount = 2_000_000;
         facts.LineItems = [new ReceiptLineItem { Description = "Tiger Beer", Amount = 2_000_000 }];
 
-        Assert.Equal("ESCALATE_FACT", Decide(facts, 2_000_000).Status);
+        var result = Decide(facts, 2_000_000);
+
+        Assert.Equal("ESCALATE_FACT", result.Status);
+        Assert.Contains("hạng mục cần kiểm tra policy", result.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Tiger Beer", result.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
     [Theory]

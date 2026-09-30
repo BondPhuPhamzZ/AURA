@@ -113,6 +113,39 @@ public sealed class ReceiptSemanticValidatorTests
             issue => issue.Contains("mã thừa", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void Removes_a_misplaced_order_id_after_transaction_reference_repair()
+    {
+        var facts = new ReceiptExtractionDto
+        {
+            DocumentType = "RESTAURANT_BILL",
+            TransactionReference = "221196",
+            OrderId = "221196"
+        };
+
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
+
+        Assert.Null(facts.OrderId);
+        Assert.Equal("221196", facts.TransactionReference);
+        Assert.Empty(ReceiptSemanticValidator.Validate(facts));
+    }
+
+    [Fact]
+    public void Duplicate_values_across_paper_identifier_fields_are_rejected()
+    {
+        var facts = new ReceiptExtractionDto
+        {
+            DocumentType = "RETAIL_RECEIPT",
+            ReceiptNumber = "RC-001",
+            TransactionReference = "RC-001"
+        };
+
+        var issues = ReceiptSemanticValidator.Validate(facts);
+
+        Assert.Contains(issues, issue => issue.Contains("receiptNumber", StringComparison.Ordinal) &&
+            issue.Contains("transactionReference", StringComparison.Ordinal));
+    }
+
     private static ReceiptExtractionDto FaultyOllamaTc01() => new()
     {
         DocumentType = "RIDE_HAILING",

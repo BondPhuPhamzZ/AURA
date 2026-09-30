@@ -59,6 +59,11 @@ internal static class ReceiptExtractionContract
               and the final payable row labelled `TỔNG THANH TOÁN`, `TỔNG CỘNG` or `THÀNH TIỀN`.
               When a clearly printed final total is visible, totalAmount must not be null and must not be
               confused with a line-item subtotal.
+            - Keep formal invoice numbers, receipt/bill numbers, and transaction references separate.
+              `Invoice No`/`Số hóa đơn` belongs in invoiceNumber; `Receipt No`/`Bill No`/`Số biên nhận`
+              belongs in receiptNumber; a per-purchase `Check`, `Transaction No`, `Trace`, `RRN` or
+              `Mã giao dịch` belongs in transactionReference. Shop/store ID, POS/register ID, terminal ID,
+              merchant ID, pager number, tax ID, invoice serial or form number are not transaction references.
             - If the final payable row itself is blurred, covered or cropped, set totalAmount to null and
               report that visual defect in warnings or suspiciousSignals. Never infer the final total from
               a line-item amount, subtotal or the user's claimed amount, even when the numbers look equal.
@@ -90,7 +95,8 @@ internal static class ReceiptExtractionContract
         additionalProperties = false,
         required = new[] { "documentType", "documentStatus", "merchantName", "taxId", "merchantId", "terminalId",
             "platformName", "orderId", "bookingId", "shippingTrackingCode", "shippingProvider", "orderStatus",
-            "invoiceNumber", "invoiceDate", "transactionDate", "completionDate", "invoiceTime", "currency",
+            "invoiceNumber", "receiptNumber", "transactionReference", "invoiceDate", "transactionDate",
+            "completionDate", "invoiceTime", "currency",
             "subtotal", "tax", "totalAmount", "lineItems", "missingFields", "warnings", "suspiciousSignals",
             "confidence" },
         properties = new Dictionary<string, object>
@@ -104,6 +110,7 @@ internal static class ReceiptExtractionContract
             ["platformName"] = NullableString(), ["orderId"] = NullableString(), ["bookingId"] = NullableString(),
             ["shippingTrackingCode"] = NullableString(), ["shippingProvider"] = NullableString(),
             ["orderStatus"] = NullableString(), ["invoiceNumber"] = NullableString(),
+            ["receiptNumber"] = NullableString(), ["transactionReference"] = NullableString(),
             ["invoiceDate"] = NullableString(), ["transactionDate"] = NullableString(),
             ["completionDate"] = NullableString(), ["invoiceTime"] = NullableString(),
             ["currency"] = NullableString(), ["subtotal"] = NullableMoneyNumber("subtotal"),

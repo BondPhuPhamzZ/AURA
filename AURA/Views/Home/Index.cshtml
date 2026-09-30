@@ -297,7 +297,8 @@
         const confidencePercent = Math.round(Number(facts.confidence || 0) * 100);
         confidence.className = 'badge facts-confidence-badge ' + (confidencePercent >= 70 ? 'bg-success' : 'bg-warning text-dark');
         confidence.textContent = `Tin cậy ${confidencePercent}%`;
-        const identifier = facts.invoiceNumber || facts.orderId || facts.bookingId || facts.shippingTrackingCode;
+        const identifier = facts.invoiceNumber || facts.receiptNumber || facts.transactionReference ||
+            facts.orderId || facts.bookingId || facts.shippingTrackingCode;
         const evidenceDate = facts.invoiceDate || facts.transactionDate || facts.completionDate;
         const items = Array.isArray(facts.lineItems) && facts.lineItems.length
             ? '<ul class="extracted-line-items">' + facts.lineItems.map(item =>
