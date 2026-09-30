@@ -1,6 +1,6 @@
 # AURA Receipt Evidence Extraction Contract
 
-Version: 1.5 - 2026-09-27
+Version: 1.6 - 2026-09-30
 Applies to: employee expense reimbursement in Vietnam  
 Policy owner: AURA demo team
 
@@ -40,8 +40,11 @@ Do not claim that an invoice is legally authentic. Vision can only report visibl
 - `shippingProvider`: visible logistics provider associated with the tracking code. Otherwise null.
 - `orderStatus`: visible order/payment/fulfilment status such as `COMPLETED`, `DELIVERED`, `PAID`, `PENDING`, `CANCELLED`, `REFUNDED`, `RETURNED`, or `UNKNOWN`.
 - A shipping tracking code is logistics evidence only. It never substitutes for a seller tax ID, never proves payment by itself, and never turns an order screen into a VAT invoice.
-- `invoiceNumber`: invoice/receipt number. Do not substitute serial, form number, tax authority code, or booking ID.
-- For `VAT_INVOICE`, `RETAIL_RECEIPT`, and `RESTAURANT_BILL`, a value visibly labelled `Số hóa đơn/biên nhận`, `Invoice No`, or `Receipt No` belongs only in `invoiceNumber`; do not duplicate it into `orderId`, `bookingId`, or `shippingTrackingCode`.
+- `invoiceNumber`: formal invoice number printed as `Số hóa đơn` or `Invoice No`. Do not substitute a receipt/check number, invoice serial, form number, tax authority code, or booking ID.
+- `receiptNumber`: receipt or bill number printed as `Số biên nhận`, `Receipt No`, `Bill No`, or an equivalent receipt label. Do not duplicate it into `invoiceNumber`, `orderId`, `bookingId`, or `shippingTrackingCode`.
+- `transactionReference`: a per-purchase reference printed as `Check`, `Transaction No`, `Transaction ID`, `Trace`, `RRN`, `Mã giao dịch`, or an equivalent label. Use it only when the label and layout show that the value identifies this transaction.
+- Shop/store ID, branch ID, POS/register ID, terminal ID, merchant ID, pager number, table number, tax ID, invoice serial, form number, phone number, and bank account are not transaction references. Keep MID/TID in `merchantId`/`terminalId`; otherwise do not promote these values into a traceable transaction field.
+- For `VAT_INVOICE`, `RETAIL_RECEIPT`, and `RESTAURANT_BILL`, do not place a paper-document identifier into `orderId`, `bookingId`, or `shippingTrackingCode`. If a label is ambiguous, return the corresponding identifier as null and add a warning instead of guessing.
 - `invoiceDate`: normalize an unambiguous printed invoice/receipt date to `YYYY-MM-DD`; otherwise null. Do not use delivery, signing, lookup, or payment dates unless explicitly the invoice/receipt date.
 - `transactionDate`: normalize the visible purchase/payment/order date for digital evidence to `YYYY-MM-DD`; otherwise null. Never copy a delivery-completion date into this field.
 - `completionDate`: normalize a visible delivery/service-completion date to `YYYY-MM-DD`; otherwise null. This is supporting evidence and is not automatically the transaction date.
@@ -69,7 +72,7 @@ This section gives context only; do not return a decision. The application uses 
 
 The application never asserts approval when a FACT issue exists. Employees only forward escalations; they never answer the approval question. Human managers receive a specific Vietnamese question and explicitly choose approve or reject for every escalation.
 
-For non-VAT evidence, the application requires a traceable identifier appropriate to the document: invoice/receipt number for paper retail or restaurant receipts, booking/receipt ID for ride-hailing, or order/booking/tracking/receipt ID for e-commerce. Tax ID and invoice number may legitimately be absent from e-commerce. A traceable identifier is not proof that the document is legally authentic. Digital evidence additionally needs visible merchant/platform context, completed/paid status, reliable transaction/payment date, currency, total and line items. A delivery date alone does not establish the purchase/payment date. Company accounting policy may still require a VAT invoice; Vision must not decide that legal requirement.
+For non-VAT evidence, the application requires a traceable identifier appropriate to the document: invoice number, receipt number, or a per-purchase transaction reference for paper retail/restaurant receipts; booking/receipt/transaction ID for ride-hailing; or order/booking/tracking/receipt/transaction ID for e-commerce. ShopID, POS/register, MID/TID and pager/table numbers do not satisfy this requirement. Tax ID and invoice number may legitimately be absent from e-commerce. A traceable identifier is not proof that the document is legally authentic. Digital evidence additionally needs visible merchant/platform context, completed/paid status, reliable transaction/payment date, currency, total and line items. A delivery date alone does not establish the purchase/payment date. Company accounting policy may still require a VAT invoice; Vision must not decide that legal requirement.
 
 ## 6. Output quality checklist
 

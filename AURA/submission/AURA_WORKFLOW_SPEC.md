@@ -1,6 +1,6 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 1.6 — 29/09/2026
+Phiên bản: 1.7 — 30/09/2026
 Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
@@ -43,10 +43,10 @@ flowchart LR
 7. Server commit hồ sơ `PENDING` cùng audit `AI_QUEUED`, trả `202 Accepted` và `statusUrl`; UI không giữ request HTTP trong lúc AI suy luận.
 8. Worker claim job bằng update có điều kiện, đặt lease và tăng attempt. DB là nguồn sự thật nên job còn lại sau refresh hoặc app restart.
 9. Qwen đọc ảnh và trả `ReceiptExtractionDto`. Khi bật fallback, chỉ lỗi hạ tầng trong allowlist mới chuyển một lần sang provider dự phòng; schema/semantic/request invalid không kích hoạt fallback.
-10. Backend kiểm tra semantic trước policy: VND phải là số nguyên đồng, document type phải phù hợp identifier, mã không được gán nhầm trường và line items phải đối chiếu được khi không có discount. Nếu mâu thuẫn, model đọc lại ảnh đúng một lần với lỗi cụ thể nhưng không nhận claimed amount; lỗi còn lại được gắn `ValidationIssues` để buộc `ESCALATE_FACT`.
+10. Backend kiểm tra semantic trước policy: VND phải là số nguyên đồng, document type phải phù hợp identifier, mã không được gán nhầm trường và line items phải đối chiếu được khi không có discount. `invoiceNumber`, `receiptNumber` và `transactionReference` được tách riêng; `ShopID`, POS/register, MID/TID, pager/table không được thay mã riêng của giao dịch. Nếu mâu thuẫn, model đọc lại ảnh đúng một lần với lỗi cụ thể nhưng không nhận claimed amount; lỗi còn lại được gắn `ValidationIssues` để buộc `ESCALATE_FACT`.
 11. Policy C# đối chiếu dữ kiện và số tiền khai báo:
    - dữ kiện đáng tin cậy, đúng policy và trong thẩm quyền → `AUTO_APPROVE`;
-   - thiếu/mâu thuẫn dữ kiện → `ESCALATE_FACT`;
+   - thiếu/mâu thuẫn dữ kiện → `ESCALATE_FACT`; nếu đồng thời có hạng mục cấm, lý do vẫn hiển thị policy finding thứ cấp để quản lý không bỏ sót;
    - ngoài chính sách → `ESCALATE_POLICY`;
    - vượt thẩm quyền → `ESCALATE_AUTHORITY`;
    - AI/provider lỗi → `ESCALATE_SYSTEM_ERROR`.
@@ -137,4 +137,4 @@ AURA có circuit breaker trong bộ nhớ theo instance. Sau ngưỡng lỗi h�
 
 ## 10. Giới hạn hiện tại
 
-Chưa có authentication/role thật, PDF/nhiều trang, antivirus, tax/e-invoice lookup, ngoại tệ, object storage, SignalR, immutable audit ở tầng database, distributed circuit breaker, rate limiting public endpoint và benchmark trên tập dữ liệu độc lập lớn. Ba trường người gửi là metadata demo, không phải danh tính đã xác thực. Image resize chưa bật trước khi có benchmark chứng minh không làm giảm khả năng đọc chữ nhỏ.
+Chưa có authentication/role thật, trường mục đích công tác/khách hàng/cost center để phân biệt một khoản cà phê cá nhân với khoản tiếp khách, PDF/nhiều trang, antivirus, tax/e-invoice lookup, ngoại tệ, object storage, SignalR, immutable audit ở tầng database, distributed circuit breaker, rate limiting public endpoint và benchmark trên tập dữ liệu độc lập lớn. Ba trường người gửi là metadata demo, không phải danh tính đã xác thực. Image resize chưa bật trước khi có benchmark chứng minh không làm giảm khả năng đọc chữ nhỏ. Hệ thống không tự suy “chi cá nhân” từ tên món nếu policy doanh nghiệp chưa cung cấp context và danh mục được duyệt.

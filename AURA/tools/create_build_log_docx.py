@@ -140,7 +140,7 @@ set_run_font(run, size=16, bold=True, color="000000")
 subtitle = document.add_paragraph()
 subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
 subtitle.paragraph_format.space_after = Pt(5)
-run = subtitle.add_run("Track A The Escalation Referee | 29 09 2026 | Pham Gia Phu")
+run = subtitle.add_run("Track A The Escalation Referee | 30 09 2026 | Pham Gia Phu")
 set_run_font(run, size=9.2, italic=True, color="555555")
 
 intro = document.add_paragraph()
@@ -206,7 +206,7 @@ evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
 headers = ("Build", "Test offline", "Dependency", "Evaluator")
-values = ("0 warning 0 error", "88 trên 88 pass", "Không còn advisory", "15 ca đã chạy thật")
+values = ("0 warning 0 error", "93 trên 93 pass", "Không có advisory", "15 ca đã chạy thật")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -244,12 +244,19 @@ add_body(
     "5 đến 60 giây khi SQL tạm lỗi. Fallback mặc định tắt và chỉ chuyển một lần cho lỗi hạ tầng đủ điều kiện. `/healthz` "
     "kiểm database, migration, storage, policy và cấu hình AI mà không gọi provider.",
 )
+add_body(
+    document,
+    "Contract ngày 30/09 tách số hóa đơn, số biên nhận và mã giao dịch. Check/Trace/RRN chỉ được dùng khi là mã riêng "
+    "của lần mua; ShopID, POS, MID/TID và pager không thay thế định danh. Nếu FACT và POLICY cùng tồn tại, FACT vẫn là "
+    "trạng thái chính nhưng lý do giữ policy finding thứ cấp để quản lý không bỏ sót.",
+)
 
 add_heading(document, "5 Quyết định kiến trúc và phần cắt giảm")
 add_bullet(document, "Tách extraction, semantic validation và PolicyDecisionEngine để đổi model mà không đổi luật duyệt.")
 add_bullet(document, "Giữ Official Verify đúng năm ca; evaluator 15/30 nằm ngoài UI và đi qua cùng production endpoint.")
 add_bullet(document, "Chọn OpenRouter làm primary; giữ Ollama cho offline/manual vì còn missed escalation và chậm trên RTX 3050 4 GB.")
 add_bullet(document, "Hoãn PDF nhiều trang, authentication, tax lookup, antivirus và object storage sang scope production.")
+add_bullet(document, "Giữ EF Core 8.0.31: NuGet không báo advisory; không nâng major .NET/EF sát ngày chốt.")
 
 add_heading(document, "6 Bài học và bước tiếp theo")
 add_body(

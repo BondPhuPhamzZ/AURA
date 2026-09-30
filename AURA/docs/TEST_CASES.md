@@ -40,7 +40,7 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P04 | Không đọc được total | ESCALATE_FACT | A |
 | P05 | Claimed amount lệch total | ESCALATE_FACT | A |
 | P06 | Thiếu merchant | ESCALATE_FACT | A |
-| P07 | Thiếu invoice number | ESCALATE_FACT | A |
+| P07 | Chứng từ giấy thiếu cả invoice number, receipt number và transaction reference | ESCALATE_FACT | A |
 | P08 | Hóa đơn GTGT thiếu seller tax ID | ESCALATE_FACT | A |
 | P09 | Ngoại tệ chưa có tỷ giá | ESCALATE_FACT | A |
 | P10 | Ngày không đúng ISO/không chắc chắn | ESCALATE_FACT | A |
@@ -56,7 +56,7 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P19 | Karaoke/entertainment | ESCALATE_POLICY | A |
 | P20 | Personal item | ESCALATE_POLICY | A |
 | P21 | Tổng 1.000.001 VND | ESCALATE_AUTHORITY | A |
-| P22 | Đồng thời mờ + bia + quá hạn mức | ESCALATE_FACT theo precedence | A |
+| P22 | Đồng thời mờ + bia + quá hạn mức | ESCALATE_FACT theo precedence; reason vẫn nêu policy finding thứ cấp | A |
 | P23 | JPG extension nhưng magic bytes sai | HTTP 400, không gọi AI | smoke |
 | P24 | POST Verify không CSRF | HTTP 400 | smoke |
 | P25 | BUSINESS_RULES qua static URL | HTTP 404 | smoke |
@@ -83,9 +83,13 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P46 | Đơn đã hoàn thành nhưng đồng thời REFUNDED/RETURNED | ESCALATE_FACT bất kể có tracking code | A |
 | P47 | Model đọc `295.199 đ` thành JSON number `295.199` thay vì `295199` | Phát hiện sai ngữ nghĩa; repair đúng một lần; không tự nhân tiền | A/V |
 | P48 | Model gọi đơn hàng giao qua SPX/GHN/GHTK/J&T là `RIDE_HAILING` | Phát hiện mâu thuẫn loại chứng từ và yêu cầu repair | A/V |
-| P49 | Model đưa số hóa đơn giấy vào `orderId` hoặc lặp cùng mã ở nhiều field | Repair/canonicalize về `invoiceNumber`; không giữ định danh số giả | A/V |
+| P49 | Model đưa định danh chứng từ giấy vào `orderId` hoặc lặp cùng mã ở nhiều field | Repair/canonicalize về đúng `invoiceNumber`, `receiptNumber` hoặc `transactionReference`; không giữ định danh số giả | A/V |
 | P50 | Repair vẫn còn mâu thuẫn ngữ nghĩa | `ESCALATE_FACT`, không AUTO_APPROVE và không gọi repair vô hạn | A |
 | P51 | E-commerce không có line items đáng tin cậy | `ESCALATE_FACT` | A |
+| P52 | Restaurant/retail receipt có `Receipt No`/`Bill No`, không có MST | `receiptNumber`; AUTO nếu các dữ kiện khác đạt | A |
+| P53 | Restaurant bill có `Check: 221196` là mã riêng của lần mua | `transactionReference`; AUTO nếu các dữ kiện khác đạt | A |
+| P54 | Receipt chỉ có ShopID + POS/register + pager/table | `ESCALATE_FACT`; các mã vận hành không thay định danh giao dịch | A |
+| P55 | Cùng mã bị gán đồng thời vào receiptNumber và transactionReference | Semantic issue, repair một lần; còn lặp thì `ESCALATE_FACT` | A/V |
 
 ## Ma trận human-in-the-loop
 

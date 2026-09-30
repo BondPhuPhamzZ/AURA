@@ -10,10 +10,11 @@
 - Tách extraction khỏi deterministic policy giúp kết quả giải thích và unit-test được.
 - Judge set mở rộng ngày 29/09 chạy đúng upload endpoint với fallback tắt. OpenRouter/Qwen3-VL-8B đạt 15/15 quyết định, 70/75 field và P50/P95 3,614/16,459 giây. Ollama/Qwen3-VL-4B đạt 14/15 quyết định, 73/75 field và 52,238/58,318 giây; model bỏ sót escalation TK-12. Baseline lặp trên 5 fixture ngày 27/09 được giữ như bằng chứng lịch sử, không dùng thay accuracy thực tế.
 - Concurrent smoke OpenRouter tiếp nhận và hoàn tất 5/5 request, HTTP accepted P95 93 ms và end-to-end P95 17,072 giây.
-- 88 automated tests bao phủ policy/workflow/audit, hợp đồng OpenRouter/Ollama, semantic validation/repair, fallback/circuit breaker, backoff worker và tính toàn vẹn Test Kit/manifest.
-- EF Core SQL Server/Tools và local `dotnet-ef` đã vá lên 8.0.31 trong cùng major. Sau restore: build Release 0 warning/0 error, 88/88 test pass, NuGet không còn báo package vulnerable và EF không có pending model change.
+- 93 automated tests bao phủ policy/workflow/audit, hợp đồng OpenRouter/Ollama, semantic validation/repair, định danh chứng từ giấy, fallback/circuit breaker, backoff worker và tính toàn vẹn Test Kit/manifest.
+- EF Core SQL Server/Tools và local `dotnet-ef` đã vá lên 8.0.31 trong cùng major. Sau hardening 30/09: build Release 0 warning/0 error, 93/93 test pass, NuGet không báo package vulnerable và EF không có pending model change.
 - Structured Output giảm parsing lỗi so với JSON tự do.
 - Backend phát hiện JSON đúng schema nhưng sai nghĩa như `295.199 đ -> 295.199`, `ECOMMERCE -> RIDE_HAILING`, hoặc số biên nhận bị gán vào `orderId`; model được đọc lại đúng một lần. Repair không nhận claimed amount và kết quả còn mâu thuẫn luôn đi `ESCALATE_FACT`.
+- Contract tách `invoiceNumber`, `receiptNumber` và `transactionReference`. Nhãn như `Check`, `Trace`, `RRN` có thể làm mã truy vết cho đúng giao dịch; ShopID, POS/register, MID/TID và pager/table không bao giờ thay thế được mã giao dịch. Khi FACT và POLICY cùng tồn tại, FACT vẫn là status chính nhưng reason hiển thị hạng mục policy thứ cấp.
 - Bản production trên SmarterASP.NET đã smoke thành công luồng upload, AI extraction và audit sau khi API key được cập nhật trong Pool Manager.
 - UI hiển thị facts AI theo ba cột; bảng chuyển tiếp riêng được hợp nhất vào bảng kết quả để tránh trùng nhưng vẫn phục hồi escalation sau reload.
 - Hồ sơ và audit AI được ghi trong cùng một `SaveChanges`; sau thao tác chuyển tiếp/quản lý, giao diện điều hướng toàn trang để dựng lại các bảng từ trạng thái database đã commit, tránh dữ liệu fragment cũ ghi đè nhau.
@@ -29,7 +30,7 @@
 - Test Kit v2 đã bổ sung mobile e-commerce, giấy in nhiệt, góc xoay, blur/crop và tiếng Việt có dấu; vẫn là dữ liệu tổng hợp nên không được xem là accuracy tổng quát.
 - Runner PowerShell chạy gói 15/30 ca qua đúng upload endpoint, không thêm nút UI, và lưu metadata/CSV/JSON để phép đo có thể audit. Gói 15 ca đã chạy thật cho cả hai provider; gói 30 ca chưa cần chạy trong phần trình bày.
 - Readiness `/healthz` kiểm tra policy, cấu hình AI, kết nối database, pending migration và thư mục receipt. Endpoint không gọi provider, nên không tiêu quota và vẫn cần một ảnh smoke test riêng.
-- `tools/Test-DemoReadiness.ps1` kiểm đúng database `AuraDb`, LocalDB, policy, storage, migration, provider và fallback trước demo mà không in secret.
+- `tools/Test-DemoReadiness.ps1` kiểm đúng database `AuraDb`, LocalDB, policy, storage, migration, provider và fallback trước demo mà không in secret. Chế độ `-DiagnoseLocalDb` ghi user, boot time khi có quyền, versions/instances/details và không sửa registry/MDF; wrapper native-command tránh PowerShell 5.1 dừng script vì stderr.
 
 ## Tính năng lớn nhất cắt giảm
 

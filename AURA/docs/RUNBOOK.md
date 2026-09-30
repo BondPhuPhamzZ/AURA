@@ -48,7 +48,15 @@ Sau khi `dotnet run` đã lắng nghe ở cổng 5000, mở PowerShell thứ hai
 .\tools\Test-DemoReadiness.ps1
 ```
 
-Kết quả hợp lệ là `READY`, đúng database `AuraDb`, LocalDB running, health `ok`, `databaseUpToDate=true`, `pendingMigrationCount=0` và fallback tắt. Script không in API key hoặc toàn bộ connection string. Nếu LocalDB báo lỗi registry/automatic instance, dừng demo setup, đóng AURA/Visual Studio, khởi động lại Windows và chạy preflight trước; không tự xóa instance hoặc file `.mdf` khi chưa backup.
+Kết quả hợp lệ là `READY`, đúng database `AuraDb`, LocalDB running, health `ok`, `databaseUpToDate=true`, `pendingMigrationCount=0` và fallback tắt. Script không in API key hoặc toàn bộ connection string.
+
+Nếu cần ghi bằng chứng LocalDB hoặc lỗi xuất hiện không ổn định, chạy lệnh read-only sau trong đúng Windows account dùng để demo:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb
+```
+
+`sqllocaldb` đôi khi trả exit code 0 nhưng nội dung vẫn báo `registry configuration error`; readiness vì vậy kiểm cả code và text. Nếu gặp lỗi này, đóng AURA/Visual Studio và các phiên test, reboot một lần rồi chạy lại lệnh trên. Việc app vừa chạy bình thường chỉ chứng minh phiên đó kết nối được, không phủ định lỗi user-instance từng xảy ra. Không xóa instance, registry key hoặc file `.mdf` khi chưa backup và chưa xác nhận đường dẫn database.
 
 Mở URL được in trong terminal. Không truy cập `/Verify` để tìm trang riêng; nút Verify nằm ngay trên trang chủ. `/Applicant` và `/Verify` chủ động chuyển về `/`.
 
@@ -62,7 +70,7 @@ Mở URL được in trong terminal. Không truy cập `/Verify` để tìm tran
 
 Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_receipts.py --as-of-date 2026-09-21`. Script đồng thời sinh Test Kit v2 gồm 30 ca nhưng chỉ 5 ca đại diện được Verify gọi. Không đổi `as-of-date`, fixture hoặc expected sau khi chốt mà không cập nhật manifest, tài liệu và commit.
 
-Để bảo toàn credit: build + 88 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota.
+Để bảo toàn credit: build + 93 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota.
 
 Delay giữa các ca Verify được cấu hình bằng `Verify:InterCaseDelayMs`, mặc định 4000 ms để bảo vệ quota. Không đổi giá trị trong cùng một benchmark; luôn ghi giá trị này vào metadata phép đo.
 
@@ -167,7 +175,7 @@ Khi deploy public, ứng dụng phải chạy sau HTTPS/reverse proxy. Container
 - Nhân viên có thể chuyển từng hồ sơ hoặc **Chuyển tiếp tất cả**; mỗi hồ sơ phải có audit `EMPLOYEE_FORWARDED_TO_MANAGER`.
 - Quản lý bấm **Đồng ý duyệt** hoặc **Từ chối duyệt**; kiểm tra toast và audit `MANAGER_YES`/`MANAGER_NO` chứa câu hỏi, câu trả lời và outcome.
 - Trạng thái quyết định và audit được lưu cùng một lần EF Core `SaveChanges`, tránh trạng thái đổi nhưng thiếu nhật ký.
-- Ảnh POS có MID/TID không được dùng thay số hóa đơn/biên nhận. Chỉ `VAT_INVOICE` bắt buộc seller tax ID; retail/restaurant/POS receipt có số biên nhận hợp lệ có thể không có MST. Ảnh hóa đơn nháp/chưa phát hành phải chuyển FACT.
+- Ảnh POS có MID/TID, ShopID, POS/register hoặc pager/table không được dùng thay mã riêng của giao dịch. Chỉ `VAT_INVOICE` bắt buộc seller tax ID; retail/restaurant/POS receipt có `invoiceNumber`, `receiptNumber` hoặc `transactionReference` hợp lệ có thể không có MST. Ảnh hóa đơn nháp/chưa phát hành phải chuyển FACT.
 - Ảnh e-commerce được phép thiếu MST/invoice number nếu có order/booking/tracking/receipt ID cùng trạng thái hoàn tất, ngày giao dịch/thanh toán, merchant, total, currency và line items đáng tin cậy. Ngày giao hàng không tự thay ngày giao dịch; mã vận chuyển không được gọi là MST hay hóa đơn thuế.
 - README có hướng dẫn localhost tái lập; Live URL chỉ cần điền vào form/video nếu nhóm tiếp tục công bố môi trường hosting tùy chọn.
 - API key/connection string không xuất hiện trong Git hoặc video.

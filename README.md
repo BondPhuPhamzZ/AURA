@@ -17,6 +17,7 @@ Qwen Vision, accessed through OpenRouter by default or optional local Ollama, ex
 - Read single-page JPG and PNG receipt images with Qwen Vision.
 - Return structured receipt facts using a JSON Schema contract.
 - Detect semantic inconsistencies and allow one targeted AI re-read before safe human escalation.
+- Distinguish formal invoice numbers, receipt/bill numbers, and per-purchase transaction references; store/POS/MID/TID/pager identifiers never satisfy transaction traceability.
 - Apply reimbursement rules through a deterministic C# policy engine.
 - Automatically approve clear, policy-compliant requests.
 - Escalate uncertain, exceptional, or unauthorized requests for human review.
@@ -55,7 +56,7 @@ AURA does not fine-tune Qwen and does not give the model final decision authorit
 ## Current Verification Baseline
 
 - Build: **0 warnings, 0 errors**
-- Automated tests: **88/88 passed**
+- Automated tests: **93/93 passed**
 - Verify Harness: **5 smoke-test cases**
 - Evaluator reference pack: **15 test cases**
 - Extended evaluator: **15 or 30 cases through the production upload endpoint, without an extra UI button**
@@ -132,7 +133,11 @@ In a second PowerShell window, verify the running application, database migratio
 .\tools\Test-DemoReadiness.ps1
 ```
 
-The expected result is `READY`, `AuraDb`, no pending migration, and fallback disabled. The current offline suite contains **88 tests**.
+The expected result is `READY`, `AuraDb`, no pending migration, and fallback disabled. The current offline suite contains **93 tests**. For intermittent LocalDB user-instance errors, collect read-only diagnostics without editing the registry or MDF:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb
+```
 
 ### Run the 15/30-case evaluation outside the UI
 
@@ -157,6 +162,7 @@ Run all 30 cases only after checking provider quota and cost. Keep fallback disa
 - [Sprint 2 Implementation Progress](AURA/docs/SPRINT2_IMPLEMENTATION_PROGRESS_2026-09-28.md)
 - [Live Provider and UI Validation — 29/09/2026](AURA/docs/LIVE_VALIDATION_2026-09-29.md)
 - [Demo Readiness and Remaining Gates — 29/09/2026](AURA/docs/DEMO_READINESS_2026-09-29.md)
+- [Logic, Evidence, LocalDB and Self-hosted VLM Plan — 30/09/2026](AURA/docs/LOGIC_EVIDENCE_AND_CLOUD_PLAN_2026-09-30.md)
 
 ## Sprint 1 Limitations
 

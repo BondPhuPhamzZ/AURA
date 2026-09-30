@@ -2,7 +2,7 @@
 
 ## Kết luận
 
-Core workflow đã đủ ổn định để tiếp tục kiểm thử thủ công trên laptop: database đã migrate, upload dùng hàng đợi bền vững, OpenRouter là provider chính, policy quyết định tất định, human review và audit có thể phục hồi sau refresh. Build hiện tại đạt 0 warning, 0 error và 88 trên 88 automated test.
+Core workflow đã đủ ổn định để tiếp tục kiểm thử thủ công trên laptop: database đã migrate, upload dùng hàng đợi bền vững, OpenRouter là provider chính, policy quyết định tất định, human review và audit có thể phục hồi sau refresh. Sau hardening định danh chứng từ ngày 30/09, build đạt 0 warning, 0 error và 93 trên 93 automated test.
 
 Project chưa được xem là hoàn tất cho bàn giao cuối. Bốn cổng còn mở là smoke Live URL sau hardening, holdout hóa đơn thật đã ẩn danh, phản hồi của ba người dùng và diễn tập có bấm giờ.
 
@@ -21,7 +21,7 @@ Project chưa được xem là hoàn tất cho bàn giao cuối. Bốn cổng c�
 | Cổng | Kết quả |
 |---|---|
 | Build | 0 warning, 0 error |
-| Automated tests | 88 trên 88 pass, không gọi API trả phí |
+| Automated tests | 93 trên 93 pass, không gọi API trả phí |
 | Local readiness | `AuraDb`, LocalDB, policy, storage, migration và health đều pass |
 | Judge set OpenRouter | 15 trên 15 quyết định, 70 trên 75 field, P95 16,459 giây |
 | Judge set Ollama | 14 trên 15 quyết định, 73 trên 75 field, P95 58,318 giây; bỏ sót TK-12 |
@@ -46,7 +46,7 @@ NuGet vulnerability scan hiện không phát hiện package dễ bị tấn côn
 2. Chạy `.\tools\Test-DemoReadiness.ps1 -StartLocalDb -SkipHttp`.
 3. Chạy `dotnet ef database update`.
 4. Chạy `dotnet build ..\AURA.sln --no-restore`.
-5. Chạy `dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore` và xác nhận 88 trên 88.
+5. Chạy `dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore` và xác nhận 93 trên 93.
 6. Chạy `dotnet run`.
 7. Ở PowerShell thứ hai, chạy `.\tools\Test-DemoReadiness.ps1` và chỉ tiếp tục khi kết quả là `READY`.
 8. Upload một ảnh tổng hợp bằng OpenRouter, refresh trong lúc xử lý và xác nhận trạng thái vẫn về `COMPLETED`.
@@ -66,7 +66,7 @@ NuGet vulnerability scan hiện không phát hiện package dễ bị tấn côn
 ### Hoàn tất cho Chung kết
 
 - Preflight trả `READY` trên laptop demo.
-- Build sạch và 88 trên 88 test pass.
+- Build sạch và 93 trên 93 test pass.
 - Official Verify đạt 5 trên 5 trong ba buổi diễn tập, mỗi lượt dưới 90 giây.
 - Một upload mới, forward, manager decision, Undo và audit chạy trọn luồng.
 - Năm upload OpenRouter đồng thời không có global 409 và đều đạt trạng thái cuối.
