@@ -123,17 +123,17 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj
 Before starting the demo, run the read-only readiness gate. The first command may start the named LocalDB instance but does not call either AI provider:
 
 ```powershell
-.\tools\Test-DemoReadiness.ps1 -StartLocalDb -SkipHttp
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb
 dotnet run
 ```
 
 In a second PowerShell window, verify the running application, database migration state, storage, policy, provider configuration, and fallback baseline:
 
 ```powershell
-.\tools\Test-DemoReadiness.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb
 ```
 
-The expected result is `READY`, `AuraDb`, no pending migration, and fallback disabled. The current offline suite contains **93 tests**. For intermittent LocalDB user-instance errors, collect read-only diagnostics without editing the registry or MDF:
+The full gate must return `READY: 0 failures, 0 warning(s)`, `AuraDb`, no pending migration, and fallback disabled. The current offline suite contains **93 tests**. For intermittent LocalDB user-instance errors, collect read-only diagnostics without editing the registry or MDF:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb
@@ -163,6 +163,7 @@ Run all 30 cases only after checking provider quota and cost. Keep fallback disa
 - [Live Provider and UI Validation — 29/09/2026](AURA/docs/LIVE_VALIDATION_2026-09-29.md)
 - [Demo Readiness and Remaining Gates — 29/09/2026](AURA/docs/DEMO_READINESS_2026-09-29.md)
 - [Logic, Evidence, LocalDB and Self-hosted VLM Plan — 30/09/2026](AURA/docs/LOGIC_EVIDENCE_AND_CLOUD_PLAN_2026-09-30.md)
+- [Final Demo Test Plan and Freeze Schedule — 01/10/2026](AURA/docs/FINAL_DEMO_TEST_PLAN_2026-10-01.md)
 
 ## Sprint 1 Limitations
 

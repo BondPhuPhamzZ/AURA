@@ -43,14 +43,14 @@ NuGet vulnerability scan hiện không phát hiện package dễ bị tấn côn
 ### Một lượt xác nhận local sau khi pull
 
 1. Mở PowerShell tại `D:\aura\AURA\AURA`.
-2. Chạy `.\tools\Test-DemoReadiness.ps1 -StartLocalDb -SkipHttp`.
-3. Chạy `dotnet ef database update`.
-4. Chạy `dotnet build ..\AURA.sln --no-restore`.
-5. Chạy `dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore` và xác nhận 93 trên 93.
+2. Chạy `powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb` và yêu cầu 0 failure; warning do `-SkipHttp` là mong đợi.
+3. Chạy `dotnet build .\AURA.csproj -c Release --no-restore`.
+4. Chạy `dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release --no-restore` và xác nhận 93 trên 93.
+5. Chạy `dotnet ef migrations has-pending-model-changes --project .\AURA.csproj --startup-project .\AURA.csproj --configuration Release --no-build`; chỉ chạy `dotnet ef database update` khi thực sự có migration mới.
 6. Chạy `dotnet run`.
-7. Ở PowerShell thứ hai, chạy `.\tools\Test-DemoReadiness.ps1` và chỉ tiếp tục khi kết quả là `READY`.
+7. Ở PowerShell thứ hai, chạy `powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb` và chỉ tiếp tục khi kết quả là `READY: 0 failures, 0 warning(s)`.
 8. Upload một ảnh tổng hợp bằng OpenRouter, refresh trong lúc xử lý và xác nhận trạng thái vẫn về `COMPLETED`.
-9. Chạy Verify đúng một lượt. Không cần chạy lại judge set 15 ca nếu code AI, policy và fixture không đổi.
+9. Sau hardening định danh 30/09, chạy lại Receipt No, Transaction Reference và negative ShopID/POS; sau đó chạy Verify ba lượt. Không cần chạy lại judge set 15 ca trong ngày demo nếu contract, model và policy không đổi thêm.
 10. Chuyển một hồ sơ, cho quản lý trả lời rồi Undo; xác nhận người nộp và timeline hiển thị đúng.
 
 ### Bằng chứng còn phải thu thập

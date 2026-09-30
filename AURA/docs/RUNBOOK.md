@@ -39,13 +39,13 @@ Không thêm `--no-build` vào lệnh test trừ khi test project vừa được
 Trước khi mở AURA, kiểm tra cấu hình mà chưa gọi API AI:
 
 ```powershell
-.\tools\Test-DemoReadiness.ps1 -StartLocalDb -SkipHttp
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb
 ```
 
 Sau khi `dotnet run` đã lắng nghe ở cổng 5000, mở PowerShell thứ hai và chạy cổng kiểm tra đầy đủ:
 
 ```powershell
-.\tools\Test-DemoReadiness.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb
 ```
 
 Kết quả hợp lệ là `READY`, đúng database `AuraDb`, LocalDB running, health `ok`, `databaseUpToDate=true`, `pendingMigrationCount=0` và fallback tắt. Script không in API key hoặc toàn bộ connection string.
@@ -57,6 +57,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadin
 ```
 
 `sqllocaldb` đôi khi trả exit code 0 nhưng nội dung vẫn báo `registry configuration error`; readiness vì vậy kiểm cả code và text. Nếu gặp lỗi này, đóng AURA/Visual Studio và các phiên test, reboot một lần rồi chạy lại lệnh trên. Việc app vừa chạy bình thường chỉ chứng minh phiên đó kết nối được, không phủ định lỗi user-instance từng xảy ra. Không xóa instance, registry key hoặc file `.mdf` khi chưa backup và chưa xác nhận đường dẫn database.
+
+Nếu lỗi chỉ xuất hiện trong execution context bị giới hạn nhưng Windows PowerShell tương tác của đúng tài khoản demo trả full preflight `READY: 0 failures, 0 warning(s)` sau reboot, lấy kết quả tương tác làm bằng chứng vận hành. Xem ma trận test và lịch freeze tại `docs/FINAL_DEMO_TEST_PLAN_2026-10-01.md`.
 
 Mở URL được in trong terminal. Không truy cập `/Verify` để tìm trang riêng; nút Verify nằm ngay trên trang chủ. `/Applicant` và `/Verify` chủ động chuyển về `/`.
 
