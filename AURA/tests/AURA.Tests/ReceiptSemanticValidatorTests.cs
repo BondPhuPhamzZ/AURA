@@ -73,7 +73,7 @@ public sealed class ReceiptSemanticValidatorTests
     }
 
     [Fact]
-    public void Detects_paper_receipt_identifier_assigned_to_order_id()
+    public void Detects_paper_receipt_fields_assigned_to_noncanonical_fields()
     {
         var facts = new ReceiptExtractionDto
         {
@@ -82,7 +82,8 @@ public sealed class ReceiptSemanticValidatorTests
             MerchantName = "Phở Hai Thiền",
             OrderId = "HD-260921-002",
             InvoiceNumber = null,
-            InvoiceDate = "2026-09-18",
+            InvoiceDate = null,
+            TransactionDate = "2026-09-18",
             Currency = "VND",
             TotalAmount = 88_000m,
             Confidence = 0.95,
@@ -92,6 +93,10 @@ public sealed class ReceiptSemanticValidatorTests
         var issues = ReceiptSemanticValidator.Validate(facts);
 
         Assert.Contains(issues, issue => issue.Contains("invoiceNumber", StringComparison.Ordinal));
+        Assert.Contains(issues, issue => issue.Contains("invoiceDate", StringComparison.Ordinal) &&
+            issue.Contains("transactionDate", StringComparison.Ordinal));
+        Assert.Contains("invoiceDate", ReceiptSemanticValidator.BuildRepairInstruction(issues),
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -102,12 +107,15 @@ public sealed class ReceiptSemanticValidatorTests
             DocumentType = "RETAIL_RECEIPT",
             InvoiceNumber = "HD-260921-002",
             OrderId = "HD-260921-002",
-            ShippingTrackingCode = "DIFFERENT-CODE"
+            ShippingTrackingCode = "DIFFERENT-CODE",
+            InvoiceDate = "2026-09-18",
+            TransactionDate = "2026-09-18"
         };
 
         ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
 
         Assert.Null(facts.OrderId);
+        Assert.Null(facts.TransactionDate);
         Assert.Equal("DIFFERENT-CODE", facts.ShippingTrackingCode);
         Assert.Contains(ReceiptSemanticValidator.Validate(facts),
             issue => issue.Contains("mã thừa", StringComparison.Ordinal));
@@ -137,13 +145,17 @@ public sealed class ReceiptSemanticValidatorTests
         {
             DocumentType = "RETAIL_RECEIPT",
             ReceiptNumber = "RC-001",
-            TransactionReference = "RC-001"
+            TransactionReference = "RC-001",
+            InvoiceDate = "2026-09-18",
+            TransactionDate = "2026-09-19"
         };
 
         var issues = ReceiptSemanticValidator.Validate(facts);
 
         Assert.Contains(issues, issue => issue.Contains("receiptNumber", StringComparison.Ordinal) &&
             issue.Contains("transactionReference", StringComparison.Ordinal));
+        Assert.Contains(issues, issue => issue.Contains("transactionDate", StringComparison.Ordinal) &&
+            issue.Contains("invoiceDate", StringComparison.Ordinal));
     }
 
     private static ReceiptExtractionDto FaultyOllamaTc01() => new()

@@ -144,6 +144,26 @@ public sealed class OllamaVisionExtractorServiceTests
             Assert.Equal("ECOMMERCE", result.DocumentType);
             Assert.Equal(295_199m, result.TotalAmount);
             Assert.Empty(result.ValidationIssues);
+
+            var dateAttempts = 0;
+            var dateHandler = new StubHandler(_ =>
+            {
+                dateAttempts++;
+                return Task.FromResult(ResponseFor(dateAttempts == 1
+                    ? MisplacedPaperDateJson
+                    : CorrectedPaperDateJson));
+            });
+            var dateService = CreateService(root, dateHandler);
+
+            var correctedDate = await dateService.ExtractFactsAsync(Path.Combine(root, "receipt.jpg"));
+
+            Assert.Equal(2, dateAttempts);
+            Assert.Equal("2026-09-29", correctedDate.InvoiceDate);
+            Assert.Null(correctedDate.TransactionDate);
+            Assert.Empty(correctedDate.ValidationIssues);
+            Assert.True(correctedDate.SemanticRepairApplied);
+            Assert.Contains(correctedDate.SemanticRepairIssues,
+                issue => issue.Contains("invoiceDate", StringComparison.Ordinal));
         }
         finally
         {
@@ -246,6 +266,28 @@ public sealed class OllamaVisionExtractorServiceTests
         "lineItems":[{"description":"Vợt bóng bàn","quantity":1,"unitPrice":292199,"amount":292199},
         {"description":"Bảo hiểm người tiêu dùng","quantity":1,"unitPrice":3000,"amount":3000}],
         "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
+        """;
+
+    private const string MisplacedPaperDateJson = """
+        {"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"HIGHLANDS COFFEE",
+        "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
+        "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
+        "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":null,
+        "transactionDate":"2026-09-29","completionDate":null,"invoiceTime":"13:52","currency":"VND",
+        "subtotal":59000,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
+        "quantity":1,"unitPrice":59000,"amount":59000}],"missingFields":[],"warnings":[],
+        "suspiciousSignals":[],"confidence":0.95}
+        """;
+
+    private const string CorrectedPaperDateJson = """
+        {"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"HIGHLANDS COFFEE",
+        "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
+        "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
+        "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":"2026-09-29",
+        "transactionDate":null,"completionDate":null,"invoiceTime":"13:52","currency":"VND",
+        "subtotal":59000,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
+        "quantity":1,"unitPrice":59000,"amount":59000}],"missingFields":[],"warnings":[],
+        "suspiciousSignals":[],"confidence":0.95}
         """;
 
     private static string CreateFixtureRoot()

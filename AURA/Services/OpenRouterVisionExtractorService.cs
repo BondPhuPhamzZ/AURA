@@ -51,6 +51,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             var repairInstruction = ReceiptSemanticValidator.BuildRepairInstruction(firstIssues);
             var repairedFacts = await RequestFactsWithMalformedRetryAsync(
                 BuildPayload(input, responseSchema, repairInstruction), cancellationToken);
+            ReceiptSemanticValidator.MarkRepairAttempt(repairedFacts, firstIssues);
             var remainingIssues = ReceiptSemanticValidator.Validate(repairedFacts);
             return remainingIssues.Count == 0
                 ? repairedFacts
@@ -60,6 +61,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         {
             _logger.LogWarning(exception,
                 "Qwen semantic repair failed; returning the first extraction marked for manual review.");
+            ReceiptSemanticValidator.MarkRepairAttempt(firstFacts, firstIssues);
             return ReceiptSemanticValidator.MarkUnresolved(firstFacts, firstIssues);
         }
     }

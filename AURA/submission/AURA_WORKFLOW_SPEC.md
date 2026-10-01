@@ -1,6 +1,6 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 1.7 — 30/09/2026
+Phiên bản: 1.8 — 01/10/2026
 Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
@@ -43,7 +43,7 @@ flowchart LR
 7. Server commit hồ sơ `PENDING` cùng audit `AI_QUEUED`, trả `202 Accepted` và `statusUrl`; UI không giữ request HTTP trong lúc AI suy luận.
 8. Worker claim job bằng update có điều kiện, đặt lease và tăng attempt. DB là nguồn sự thật nên job còn lại sau refresh hoặc app restart.
 9. Qwen đọc ảnh và trả `ReceiptExtractionDto`. Khi bật fallback, chỉ lỗi hạ tầng trong allowlist mới chuyển một lần sang provider dự phòng; schema/semantic/request invalid không kích hoạt fallback.
-10. Backend kiểm tra semantic trước policy: VND phải là số nguyên đồng, document type phải phù hợp identifier, mã không được gán nhầm trường và line items phải đối chiếu được khi không có discount. `invoiceNumber`, `receiptNumber` và `transactionReference` được tách riêng; `ShopID`, POS/register, MID/TID, pager/table không được thay mã riêng của giao dịch. Nếu mâu thuẫn, model đọc lại ảnh đúng một lần với lỗi cụ thể nhưng không nhận claimed amount; lỗi còn lại được gắn `ValidationIssues` để buộc `ESCALATE_FACT`.
+10. Backend kiểm tra semantic trước policy: VND phải là số nguyên đồng, document type phải phù hợp identifier, mã/ngày không được gán nhầm trường và line items phải đối chiếu được khi không có discount. `invoiceNumber`, `receiptNumber` và `transactionReference` được tách riêng; `ShopID`, POS/register, MID/TID, pager/table không được thay mã riêng của giao dịch. Với chứng từ giấy, ngày hóa đơn/biên nhận phải nằm ở `invoiceDate`; `transactionDate` chỉ dành cho bằng chứng số và `completionDate` không tự thay ngày hóa đơn. Nếu mâu thuẫn, model đọc lại ảnh đúng một lần với lỗi cụ thể nhưng không nhận claimed amount; facts lưu `SemanticRepairApplied`/lỗi ban đầu để truy vết, còn lỗi chưa giải quyết được gắn `ValidationIssues` để buộc `ESCALATE_FACT`.
 11. Policy C# đối chiếu dữ kiện và số tiền khai báo:
    - dữ kiện đáng tin cậy, đúng policy và trong thẩm quyền → `AUTO_APPROVE`;
    - thiếu/mâu thuẫn dữ kiện → `ESCALATE_FACT`; nếu đồng thời có hạng mục cấm, lý do vẫn hiển thị policy finding thứ cấp để quản lý không bỏ sót;

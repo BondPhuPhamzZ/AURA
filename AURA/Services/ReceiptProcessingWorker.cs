@@ -194,6 +194,8 @@ public sealed class ReceiptProcessingWorker : BackgroundService
                 $"DuplicateDetected={request.DuplicateDetected}; DuplicatePolicyEnabled={request.DuplicatePolicyEnabled}; " +
                 $"PrimaryProvider={request.PrimaryProvider}; ServedProvider={request.ServedProvider}; " +
                 $"FallbackUsed={request.FallbackUsed}; ProviderErrorCode={request.ProviderErrorCode}; " +
+                $"SemanticRepairApplied={extractedFacts?.SemanticRepairApplied ?? false}; " +
+                $"SemanticRepairIssueCount={extractedFacts?.SemanticRepairIssues.Count ?? 0}; " +
                 $"Reason={request.AiReasoning}; Latency={request.ProcessingLatencyMs}ms"
         });
         await db.SaveChangesAsync(cancellationToken);

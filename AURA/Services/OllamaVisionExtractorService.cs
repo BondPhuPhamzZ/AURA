@@ -45,6 +45,7 @@ public sealed class OllamaVisionExtractorService : IVisionExtractor
             var repairInstruction = ReceiptSemanticValidator.BuildRepairInstruction(firstIssues);
             var repairedFacts = await RequestFactsOnceAsync(
                 BuildPayload(input, schema, schemaJson, repairInstruction), cancellationToken);
+            ReceiptSemanticValidator.MarkRepairAttempt(repairedFacts, firstIssues);
             var remainingIssues = ReceiptSemanticValidator.Validate(repairedFacts);
             return remainingIssues.Count == 0
                 ? repairedFacts
@@ -56,6 +57,7 @@ public sealed class OllamaVisionExtractorService : IVisionExtractor
             // A failed optional repair is therefore a FACT escalation rather than a provider outage.
             _logger.LogWarning(exception,
                 "Ollama semantic repair failed; returning the first extraction marked for manual review.");
+            ReceiptSemanticValidator.MarkRepairAttempt(firstFacts, firstIssues);
             return ReceiptSemanticValidator.MarkUnresolved(firstFacts, firstIssues);
         }
     }

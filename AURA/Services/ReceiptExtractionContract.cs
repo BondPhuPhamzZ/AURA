@@ -85,6 +85,7 @@ internal static class ReceiptExtractionContract
         facts.Warnings ??= [];
         facts.SuspiciousSignals ??= [];
         facts.ValidationIssues ??= [];
+        facts.SemanticRepairIssues ??= [];
         facts.Confidence = Math.Clamp(facts.Confidence, 0, 1);
         return ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
     }

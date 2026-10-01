@@ -43,6 +43,7 @@ public static class ReceiptSemanticValidator
         }
 
         var isPaperDocument = IsPaperDocument(documentType);
+        AddDatePlacementIssues(issues, facts, isPaperDocument);
         if (isPaperDocument &&
             (!string.IsNullOrWhiteSpace(facts.OrderId) ||
              !string.IsNullOrWhiteSpace(facts.BookingId) ||
@@ -88,6 +89,12 @@ public static class ReceiptSemanticValidator
               Với RETAIL_RECEIPT hoặc RESTAURANT_BILL, "Số biên nhận"/"Receipt No"/"Bill No"
               phải đi vào receiptNumber. Mã giao dịch riêng cho lần mua như "Check", "Transaction No",
               "Trace", "RRN" hoặc "Mã giao dịch" phải đi vào transactionReference.
+            - Với VAT_INVOICE, RETAIL_RECEIPT hoặc RESTAURANT_BILL, ngày được in như ngày của
+              hóa đơn/biên nhận phải đi vào invoiceDate. transactionDate chỉ dùng cho ngày
+              mua/thanh toán/đặt hàng của chứng từ số như ECOMMERCE hoặc RIDE_HAILING.
+              Nếu ảnh chỉ cho thấy ngày hoàn tất/giao hàng thì giữ completionDate riêng, không
+              sao chép ngày đó sang invoiceDate. Chỉ chuyển một ngày sang invoiceDate khi nhãn
+              và bố cục trong ảnh chứng minh đó thực sự là ngày hóa đơn/biên nhận.
             - Shop/store ID, POS/register ID, terminal ID, merchant ID, pager number, tax ID,
               serial hóa đơn và mẫu số không được dùng làm transactionReference.
             - Không đặt các định danh chứng từ giấy vào orderId, bookingId hay shippingTrackingCode.
@@ -100,6 +107,16 @@ public static class ReceiptSemanticValidator
         IReadOnlyList<string> issues)
     {
         facts.ValidationIssues = issues.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return facts;
+    }
+
+    public static ReceiptExtractionDto MarkRepairAttempt(ReceiptExtractionDto facts,
+        IReadOnlyList<string> originalIssues)
+    {
+        facts.SemanticRepairApplied = true;
+        facts.SemanticRepairIssues = originalIssues
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
         return facts;
     }
 
@@ -120,7 +137,38 @@ public static class ReceiptSemanticValidator
         if (canonicalIdentifiers.Any(value => SameIdentifier(facts.BookingId, value))) facts.BookingId = null;
         if (canonicalIdentifiers.Any(value => SameIdentifier(facts.ShippingTrackingCode, value)))
             facts.ShippingTrackingCode = null;
+
+        // Structured-output models sometimes duplicate the same printed paper-receipt date
+        // into transactionDate. Once invoiceDate contains the identical canonical value,
+        // clearing the duplicate is lossless and keeps the persisted facts aligned with the
+        // field that the deterministic paper-document policy actually evaluates.
+        if (SameDate(facts.InvoiceDate, facts.TransactionDate)) facts.TransactionDate = null;
         return facts;
+    }
+
+    private static void AddDatePlacementIssues(List<string> issues, ReceiptExtractionDto facts,
+        bool isPaperDocument)
+    {
+        if (!isPaperDocument) return;
+
+        if (string.IsNullOrWhiteSpace(facts.InvoiceDate))
+        {
+            if (!string.IsNullOrWhiteSpace(facts.TransactionDate))
+            {
+                issues.Add("chứng từ giấy thiếu invoiceDate nhưng ngày nhìn thấy đang được gán vào transactionDate");
+            }
+            else if (!string.IsNullOrWhiteSpace(facts.CompletionDate))
+            {
+                issues.Add("chứng từ giấy thiếu invoiceDate; completionDate không thể thay cho ngày hóa đơn/biên nhận");
+            }
+
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(facts.TransactionDate))
+        {
+            issues.Add("chứng từ giấy còn chứa transactionDate khác invoiceDate; phải đọc lại nhãn ngày trong ảnh");
+        }
     }
 
     private static void AddFractionalVndIssue(List<string> issues, string field, decimal? value)
@@ -170,6 +218,10 @@ public static class ReceiptSemanticValidator
     private static bool SameIdentifier(string? left, string? right) =>
         !string.IsNullOrWhiteSpace(left) && !string.IsNullOrWhiteSpace(right) &&
         string.Equals(left.Trim(), right.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    private static bool SameDate(string? left, string? right) =>
+        !string.IsNullOrWhiteSpace(left) && !string.IsNullOrWhiteSpace(right) &&
+        string.Equals(left.Trim(), right.Trim(), StringComparison.Ordinal);
 
     private static bool ContainsAny(string? source, params string[] terms) =>
         !string.IsNullOrWhiteSpace(source) && terms.Any(term =>

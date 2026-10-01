@@ -1,6 +1,6 @@
 # Tiến độ hardening sau feedback Sprint 1
 
-Ngày cập nhật: 29/09/2026
+Ngày cập nhật: 01/10/2026
 
 ## Kết luận hiện tại
 
@@ -50,6 +50,7 @@ Live validation ngày 29/09/2026 đã chốt thêm: OpenRouter đạt 15/15 quy�
 - Thêm `tools/Invoke-ExtendedDatasetEvaluation.ps1` để chạy 15/30 ca qua upload endpoint mà không thêm nút UI. Runner xuất metadata, CSV, JSON và summary gồm decision/field accuracy, missed/over-escalation, system error, fallback và P50/P95.
 - Delay 4 giây của Official Verify chuyển thành `Verify:InterCaseDelayMs`; mặc định vẫn 4000 ms để không thay đổi baseline/quota behavior.
 - `/healthz` giờ kiểm tra thêm kết nối database, pending migration và khả dụng của thư mục receipt; thiếu một trong các cổng này sẽ trả `503 degraded` thay vì báo sẵn sàng giả. Endpoint không gọi AI provider nên không tiêu quota.
+- Semantic date repair ngày 01/10 khép khoảng lệch giữa UI và policy: paper receipt có `invoiceDate=null` nhưng `transactionDate` có giá trị không còn đi thẳng tới policy; cả OpenRouter và Ollama phải đọc lại đúng một lần. UI không còn dùng `transactionDate`/`completionDate` để hiển thị giả như ngày hóa đơn giấy và hiển thị `ValidationIssues` nếu repair vẫn sai. Test count giữ 93 bằng cách mở rộng các regression hiện hữu; build/test vẫn sạch.
 - Extended evaluator đã chạy thật trên cùng 15 ca với fallback tắt: OpenRouter 15/15, Ollama 14/15. Runner hiện resolve expected facts từ source manifest và lưu hash để field exact không bị rỗng.
 - Concurrent smoke OpenRouter 5 request hoàn tất 5/5, HTTP accepted P95 93 ms và end-to-end P95 17,072 giây.
 - UI đã đối chiếu Linear design system: một shape token 6 px, palette/contrast gọn hơn và không tràn trang ở 1280, 768, 390 px; Console không có warning/error.

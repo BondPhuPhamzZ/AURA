@@ -43,6 +43,11 @@ namespace AURA.Models
         // Added by the backend after structured output parsing. The model never supplies
         // this field; it records unresolved cross-field contradictions for the policy engine.
         public List<string> ValidationIssues { get; set; } = new List<string>();
+        // Backend-only observability. These fields are not part of the model response schema;
+        // they make a successful or failed one-shot semantic repair visible in status JSON,
+        // persisted facts and audit evidence.
+        public bool SemanticRepairApplied { get; set; }
+        public List<string> SemanticRepairIssues { get; set; } = new List<string>();
         public double Confidence { get; set; }
     }
 }

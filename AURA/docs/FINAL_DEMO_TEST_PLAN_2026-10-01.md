@@ -60,7 +60,7 @@ Invoke-RestMethod "http://localhost:5000/healthz" | ConvertTo-Json -Depth 5
 
 Kỳ vọng: `status=ok`, `databaseAvailable=true`, `databaseUpToDate=true`, `pendingMigrationCount=0`, `storageAvailable=true`, provider/model đúng và `fallbackEnabled=false`.
 
-## Ma trận test bắt buộc sau hardening định danh
+## Ma trận test bắt buộc sau hardening định danh và trường ngày
 
 | Nhóm | Số lượt | Kỳ vọng | Evidence tối thiểu |
 |---|---:|---|---|
@@ -68,12 +68,14 @@ Kỳ vọng: `status=ok`, `databaseAvailable=true`, `databaseUpToDate=true`, `pe
 | Receipt có Check, Trace, RRN hoặc Transaction No | 2 | `transactionReference` được điền; không gán vào ShopID/POS | Network response, facts JSON, UI, latency |
 | Negative chỉ có ShopID/POS/terminal | 2 | Không được dùng làm mã truy vết; `ESCALATE_FACT` | Reason, facts JSON, ảnh synthetic |
 | Official Verify 5 ca | 3 batch | Mỗi batch 3 AUTO, 1 FACT, 1 POLICY; 5/5 PASS; dưới 90 giây | Bảng đủ 5 dòng, total time, response |
-| Một hóa đơn thật đã ẩn danh | 3 lượt cùng ảnh | Decision và ba identifier ổn định | Consent/ẩn danh, expected khóa trước, actual, latency |
+| Một hóa đơn thật đã ẩn danh | 3 lượt cùng ảnh trên commit sau repair ngày | Decision, `invoiceDate` và ba identifier ổn định | Consent/ẩn danh, raw facts JSON, expected khóa trước, actual, latency |
 | Restart persistence | 1 lượt sau commit chốt | Cùng request ID, status, ảnh và audit còn sau restart | Before/after + full preflight |
 | Human review | 1 accept, 1 reject, 1 undo | State và audit đúng | Timeline trước/sau |
 | Concurrent smoke | 5 upload tổng hợp | Không global 409; cả 5 về trạng thái cuối | Accepted/final status và latency |
 
 Không dùng 93 automated tests để tuyên bố model đã đọc đúng 93 ảnh. Automated tests bảo vệ code; ma trận trên mới kiểm provider thật.
+
+Ca Highlands ngày 01/10 đã chứng minh model có thể đặt cùng ngày in trên phiếu vào `transactionDate` ở một lượt và `invoiceDate` ở lượt sau. Sau hardening, không trộn hai lượt cũ vào tỷ lệ pass của commit mới. Cổng đạt là ba upload mới liên tiếp đều có `invoiceDate=2026-09-29`, `transactionReference=221196`, decision `AUTO_APPROVE`, raw JSON lưu được và không có `ValidationIssues`/provider error.
 
 ## Những phần còn phải xem xét
 

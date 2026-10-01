@@ -16,7 +16,7 @@ Qwen Vision, accessed through OpenRouter by default or optional local Ollama, ex
 
 - Read single-page JPG and PNG receipt images with Qwen Vision.
 - Return structured receipt facts using a JSON Schema contract.
-- Detect semantic inconsistencies and allow one targeted AI re-read before safe human escalation.
+- Detect semantic inconsistencies—including paper dates placed in digital-only fields—and allow one targeted AI re-read before safe human escalation.
 - Distinguish formal invoice numbers, receipt/bill numbers, and per-purchase transaction references; store/POS/MID/TID/pager identifiers never satisfy transaction traceability.
 - Apply reimbursement rules through a deterministic C# policy engine.
 - Automatically approve clear, policy-compliant requests.
@@ -64,6 +64,8 @@ AURA does not fine-tune Qwen and does not give the model final decision authorit
 On 29 September 2026, the extended runner evaluated both providers on the same 15-case judge manifest with fallback disabled. OpenRouter passed **15/15 decisions**, recorded **70/75 field exact matches**, and measured end-to-end P50/P95 of **3.614/16.459 seconds**. Ollama passed **14/15 decisions**, recorded **73/75 fields**, and measured **52.238/58.318 seconds** on an RTX 3050 Laptop 4 GB; it incorrectly auto-approved TK-12, whose final payable row was blurred. A five-request OpenRouter concurrency smoke completed 5/5 with P95 **17.072 seconds**.
 
 These are controlled synthetic-regression results, not a production accuracy claim. OpenRouter remains the demo primary because it passes the safety gate and the latency/capacity target. Ollama remains an optional offline/manual fallback and should not be presented as automatic concurrent capacity until the TK-12 missed escalation is resolved on an independent holdout.
+
+On 1 October 2026, a repeated anonymized paper receipt exposed date-field variance: one response placed the printed receipt date only in `transactionDate`, while the next populated `invoiceDate`. The shared semantic contract now requires paper invoice/receipt dates in `invoiceDate`, performs at most one targeted repair on both providers, records repair metadata in facts/audit, and preserves `ESCALATE_FACT` when the ambiguity remains. Offline build and all 93 tests pass; three consecutive live re-validation uploads are still required before treating this fix as final provider evidence.
 
 ## Evaluation API Key
 
@@ -155,6 +157,7 @@ Run all 30 cases only after checking provider quota and cost. Keep fallback disa
 - [Business Rules](AURA/BUSINESS_RULES.md)
 - [Workflow Specification](AURA/submission/AURA_WORKFLOW_SPEC.md)
 - [Test Cases](AURA/docs/TEST_CASES.md)
+- [Semantic Date Repair — 01/10/2026](AURA/docs/SEMANTIC_DATE_REPAIR_2026-10-01.md)
 - [OpenRouter Benchmark — 27/09/2026](AURA/docs/OPENROUTER_BENCHMARK_2026-09-27.md)
 - [Dataset and Extended Evaluation Guide](AURA/docs/DATASET_EVALUATION_GUIDE.md)
 - [Deployment and Operations Runbook](AURA/docs/RUNBOOK.md)

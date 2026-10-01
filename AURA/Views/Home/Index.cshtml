@@ -299,12 +299,24 @@
         confidence.textContent = `Tin cậy ${confidencePercent}%`;
         const identifier = facts.invoiceNumber || facts.receiptNumber || facts.transactionReference ||
             facts.orderId || facts.bookingId || facts.shippingTrackingCode;
-        const evidenceDate = facts.invoiceDate || facts.transactionDate || facts.completionDate;
+        const normalizedDocumentType = String(facts.documentType || '').trim().toUpperCase();
+        const isDigitalEvidence = normalizedDocumentType === 'ECOMMERCE' ||
+            normalizedDocumentType === 'RIDE_HAILING' ||
+            normalizedDocumentType.includes('DIGITAL') ||
+            normalizedDocumentType.includes('ELECTRONIC') ||
+            normalizedDocumentType.includes('E-INVOICE');
+        const evidenceDate = isDigitalEvidence
+            ? (facts.transactionDate || facts.invoiceDate)
+            : facts.invoiceDate;
+        const evidenceDateLabel = isDigitalEvidence
+            ? 'Ngày giao dịch / thanh toán'
+            : 'Ngày hóa đơn / biên nhận';
         const items = Array.isArray(facts.lineItems) && facts.lineItems.length
             ? '<ul class="extracted-line-items">' + facts.lineItems.map(item =>
                 '<li><span>' + escapeHtml(displayFact(item.description)) + '</span><strong>' + escapeHtml(formatFactMoney(item.amount)) + '</strong></li>').join('') + '</ul>'
             : '<span class="fact-value missing">Không đọc được dòng hàng</span>';
-        const warnings = [...(facts.missingFields || []), ...(facts.warnings || []), ...(facts.suspiciousSignals || [])];
+        const warnings = [...(facts.missingFields || []), ...(facts.warnings || []),
+            ...(facts.suspiciousSignals || []), ...(facts.validationIssues || [])];
 
         body.className = 'extracted-facts-content';
         body.innerHTML =
@@ -313,10 +325,11 @@
                 '<div><dt>Đơn vị bán</dt><dd>' + escapeHtml(displayFact(facts.merchantName)) + '</dd></div>' +
                 '<div><dt>Số HĐ / mã truy vết</dt><dd>' + escapeHtml(displayFact(identifier)) + '</dd></div>' +
                 '<div><dt>Mã số thuế</dt><dd>' + escapeHtml(displayFact(facts.taxId)) + '</dd></div>' +
-                '<div><dt>Ngày chứng từ</dt><dd>' + escapeHtml(displayFact(evidenceDate)) + '</dd></div>' +
+                '<div><dt>' + escapeHtml(evidenceDateLabel) + '</dt><dd>' + escapeHtml(displayFact(evidenceDate)) + '</dd></div>' +
                 '<div><dt>Tổng tiền</dt><dd>' + escapeHtml(formatFactMoney(facts.totalAmount)) + '</dd></div>' +
                 '<div><dt>Tiền tệ</dt><dd>' + escapeHtml(displayFact(facts.currency)) + '</dd></div>' +
                 '<div><dt>Trạng thái</dt><dd>' + escapeHtml(displayFact(facts.documentStatus || facts.orderStatus)) + '</dd></div>' +
+                (facts.completionDate ? '<div><dt>Ngày hoàn tất (tham khảo)</dt><dd>' + escapeHtml(displayFact(facts.completionDate)) + '</dd></div>' : '') +
             '</dl>' +
             '<div class="extracted-items-block"><strong>Dòng hàng AI nhận diện</strong>' + items + '</div>' +
             (warnings.length ? '<div class="extracted-warning"><strong>Cần lưu ý:</strong> ' + escapeHtml(warnings.join('; ')) + '</div>' : '');

@@ -90,6 +90,9 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P53 | Restaurant bill có `Check: 221196` là mã riêng của lần mua | `transactionReference`; AUTO nếu các dữ kiện khác đạt | A |
 | P54 | Receipt chỉ có ShopID + POS/register + pager/table | `ESCALATE_FACT`; các mã vận hành không thay định danh giao dịch | A |
 | P55 | Cùng mã bị gán đồng thời vào receiptNumber và transactionReference | Semantic issue, repair một lần; còn lặp thì `ESCALATE_FACT` | A/V |
+| P56 | Paper receipt có `invoiceDate=null` nhưng model đặt ngày in trên phiếu vào `transactionDate` | Semantic repair đúng một lần; chỉ tiếp tục policy khi ngày được xác nhận ở `invoiceDate`, nếu không `ESCALATE_FACT` | A/V |
+| P57 | Paper receipt lặp cùng ngày ở `invoiceDate` và `transactionDate` | Chuẩn hóa lossless: giữ `invoiceDate`, xóa bản sao `transactionDate`; không gọi repair thừa | A |
+| P58 | Paper receipt có `invoiceDate` và `transactionDate` khác nhau | Semantic repair để đọc lại nhãn; còn khác nhau thì `ESCALATE_FACT` | A/V |
 
 ## Ma trận human-in-the-loop
 
