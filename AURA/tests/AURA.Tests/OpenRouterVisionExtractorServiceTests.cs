@@ -68,6 +68,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.False(schema.GetProperty("additionalProperties").GetBoolean());
             Assert.True(schema.GetProperty("properties").TryGetProperty("receiptNumber", out _));
             Assert.True(schema.GetProperty("properties").TryGetProperty("transactionReference", out _));
+            Assert.True(schema.GetProperty("properties").TryGetProperty("discountAmount", out _));
         }
         finally
         {
@@ -102,6 +103,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
                 invoiceTime = "10:30",
                 currency = "VND",
                 subtotal = 100000m,
+                discountAmount = (decimal?)null,
                 tax = 0m,
                 totalAmount = 100000m,
                 lineItems = new[] { new { description = "Văn phòng phẩm", quantity = 1m, unitPrice = 100000m, amount = 100000m } },
@@ -156,7 +158,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
                   "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":"PAID",
                   "invoiceNumber":"HD-002","invoiceDate":"2026-09-22","transactionDate":null,
                   "completionDate":null,"invoiceTime":"10:30","currency":"VND","subtotal":"88000",
-                  "tax":"0","totalAmount":"88000","lineItems":[{"description":"Phở bò","quantity":"1",
+                  "discountAmount":null,"tax":"0","totalAmount":"88000","lineItems":[{"description":"Phở bò","quantity":"1",
                   "unitPrice":"88000","amount":"88000"}],"missingFields":[],"warnings":[],
                   "suspiciousSignals":[],"confidence":"0.91","providerNote":"ignored safely"
                 }
@@ -203,7 +205,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
                 "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":"PAID",
                 "invoiceNumber":"HD-003","invoiceDate":"2026-09-22","transactionDate":null,
                 "completionDate":null,"invoiceTime":"10:30","currency":"VND","subtotal":100000,
-                "tax":0,"totalAmount":100000,"lineItems":[{"description":"Văn phòng phẩm","quantity":1,
+                "discountAmount":null,"tax":0,"totalAmount":100000,"lineItems":[{"description":"Văn phòng phẩm","quantity":1,
                 "unitPrice":100000,"amount":100000}],"missingFields":[],"warnings":[],
                 "suspiciousSignals":[],"confidence":0.95}
                 """;
@@ -308,6 +310,38 @@ public sealed class OpenRouterVisionExtractorServiceTests
                 issue => issue.Contains("invoiceDate", StringComparison.Ordinal));
             Assert.Contains("invoiceDate", repairRequestJson, StringComparison.Ordinal);
             Assert.Contains("transactionDate", repairRequestJson, StringComparison.Ordinal);
+
+            var discountAttempts = 0;
+            string? discountRepairRequestJson = null;
+            var discountHandler = new StubHandler(async request =>
+            {
+                discountAttempts++;
+                if (discountAttempts == 2)
+                    discountRepairRequestJson = await request.Content!.ReadAsStringAsync();
+                var content = discountAttempts == 1 ? VinamilkWithoutStructuredDiscountJson : VinamilkDiscountedJson;
+                var responseJson = JsonSerializer.Serialize(new
+                {
+                    choices = new[] { new { finish_reason = "stop", message = new { content } } }
+                });
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(responseJson, Encoding.UTF8, "application/json")
+                };
+            });
+            var discountService = new OpenRouterVisionExtractorService(
+                new HttpClient(discountHandler) { BaseAddress = new Uri(options.Value.BaseUrl) }, options,
+                new TestEnvironment(root), NullLogger<OpenRouterVisionExtractorService>.Instance);
+
+            var correctedDiscount = await discountService.ExtractFactsAsync(Path.Combine(root, "receipt.jpg"));
+
+            Assert.Equal(2, discountAttempts);
+            Assert.Equal(2_828m, correctedDiscount.DiscountAmount);
+            Assert.Equal(180_286m, correctedDiscount.TotalAmount);
+            Assert.Empty(correctedDiscount.ValidationIssues);
+            Assert.True(correctedDiscount.SemanticRepairApplied);
+            Assert.Contains(correctedDiscount.SemanticRepairIssues,
+                issue => issue.Contains("discountAmount", StringComparison.Ordinal));
+            Assert.Contains("discountAmount", discountRepairRequestJson, StringComparison.Ordinal);
         }
         finally
         {
@@ -321,7 +355,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
         "orderId":"SPX-VN2693231211394","bookingId":null,"shippingTrackingCode":"SPX-VN2693231211394",
         "shippingProvider":"SPX Instant","orderStatus":"COMPLETED","invoiceNumber":null,"invoiceDate":null,
         "transactionDate":"2026-09-18","completionDate":"2026-09-18","invoiceTime":"09:45",
-        "currency":"VND","subtotal":292.199,"tax":3.0,"totalAmount":295.199,
+        "currency":"VND","subtotal":292.199,"discountAmount":null,"tax":3.0,"totalAmount":295.199,
         "lineItems":[{"description":"Vợt bóng bàn","quantity":1,"unitPrice":292.199,"amount":292.199},
         {"description":"Bảo hiểm người tiêu dùng","quantity":1,"unitPrice":3.0,"amount":3.0}],
         "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
@@ -332,7 +366,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
         "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,"bookingId":null,
         "shippingTrackingCode":"SPX-VN2693231211394","shippingProvider":"SPX Instant","orderStatus":"COMPLETED",
         "invoiceNumber":null,"invoiceDate":null,"transactionDate":"2026-09-18","completionDate":"2026-09-18",
-        "invoiceTime":"09:45","currency":"VND","subtotal":295199,"tax":0,"totalAmount":295199,
+        "invoiceTime":"09:45","currency":"VND","subtotal":295199,"discountAmount":null,"tax":0,"totalAmount":295199,
         "lineItems":[{"description":"Vợt bóng bàn","quantity":1,"unitPrice":292199,"amount":292199},
         {"description":"Bảo hiểm người tiêu dùng","quantity":1,"unitPrice":3000,"amount":3000}],
         "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
@@ -344,7 +378,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
         "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
         "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":null,
         "transactionDate":"2026-09-29","completionDate":null,"invoiceTime":"13:52","currency":"VND",
-        "subtotal":59000,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
+        "subtotal":59000,"discountAmount":null,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
         "quantity":1,"unitPrice":59000,"amount":59000}],"missingFields":[],"warnings":[],
         "suspiciousSignals":[],"confidence":0.95}
         """;
@@ -355,9 +389,31 @@ public sealed class OpenRouterVisionExtractorServiceTests
         "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
         "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":"2026-09-29",
         "transactionDate":null,"completionDate":null,"invoiceTime":"13:52","currency":"VND",
-        "subtotal":59000,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
+        "subtotal":59000,"discountAmount":null,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
         "quantity":1,"unitPrice":59000,"amount":59000}],"missingFields":[],"warnings":[],
         "suspiciousSignals":[],"confidence":0.95}
+        """;
+
+    private const string VinamilkWithoutStructuredDiscountJson = """
+        {"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Vinamilk",
+        "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
+        "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
+        "invoiceNumber":null,"receiptNumber":"SAL.CH40411260922000147","transactionReference":null,
+        "invoiceDate":"2026-09-22","transactionDate":null,"completionDate":null,"invoiceTime":"17:31",
+        "currency":"VND","subtotal":183114,"discountAmount":null,"tax":0,"totalAmount":180286,
+        "lineItems":[{"description":"Sản phẩm sữa","quantity":1,"unitPrice":183114,"amount":183114}],
+        "missingFields":[],"warnings":["Có dòng giảm giá trên hóa đơn"],"suspiciousSignals":[],"confidence":0.95}
+        """;
+
+    private const string VinamilkDiscountedJson = """
+        {"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Vinamilk",
+        "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
+        "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
+        "invoiceNumber":null,"receiptNumber":"SAL.CH40411260922000147","transactionReference":null,
+        "invoiceDate":"2026-09-22","transactionDate":null,"completionDate":null,"invoiceTime":"17:31",
+        "currency":"VND","subtotal":183114,"discountAmount":2828,"tax":0,"totalAmount":180286,
+        "lineItems":[{"description":"Sản phẩm sữa","quantity":1,"unitPrice":183114,"amount":183114}],
+        "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
         """;
 
     private static string CreateFixtureRoot()

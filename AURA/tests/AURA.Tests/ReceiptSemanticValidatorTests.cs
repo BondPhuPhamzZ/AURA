@@ -158,6 +158,57 @@ public sealed class ReceiptSemanticValidatorTests
             issue.Contains("invoiceDate", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void Accepts_printed_receipt_discount_reconciled_to_final_payment()
+    {
+        var facts = VinamilkDiscountedReceipt();
+
+        Assert.Empty(ReceiptSemanticValidator.Validate(facts));
+        Assert.Equal("AUTO_APPROVE",
+            PolicyDecisionEngine.Evaluate(facts, 180_286m,
+                utcNow: new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc)).Status);
+
+        facts.Subtotal = 190_000m;
+        Assert.Contains(ReceiptSemanticValidator.Validate(facts),
+            issue => issue.Contains("subtotal", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Final_payment_not_pre_discount_subtotal_is_compared_with_the_claim()
+    {
+        var result = PolicyDecisionEngine.Evaluate(VinamilkDiscountedReceipt(), 183_114m,
+            utcNow: new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc));
+
+        Assert.Equal("ESCALATE_FACT", result.Status);
+        Assert.Contains("180,286", result.Reason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Discount_keyword_in_warning_does_not_bypass_structured_arithmetic()
+    {
+        var facts = VinamilkDiscountedReceipt();
+        facts.DiscountAmount = null;
+        facts.Warnings.Add("Hóa đơn có dòng giảm giá");
+
+        var issues = ReceiptSemanticValidator.Validate(facts);
+
+        Assert.Contains(issues, issue => issue.Contains("discountAmount", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(-2828, "không âm")]
+    [InlineData(200000, "vượt quá")]
+    [InlineData(2800, "không đối chiếu")]
+    [InlineData(2828.5, "phần thập phân")]
+    public void Rejects_invalid_or_unreconciled_vnd_discount(decimal discount, string expectedIssue)
+    {
+        var facts = VinamilkDiscountedReceipt();
+        facts.DiscountAmount = discount;
+
+        Assert.Contains(ReceiptSemanticValidator.Validate(facts),
+            issue => issue.Contains(expectedIssue, StringComparison.OrdinalIgnoreCase));
+    }
+
     private static ReceiptExtractionDto FaultyOllamaTc01() => new()
     {
         DocumentType = "RIDE_HAILING",
@@ -204,6 +255,26 @@ public sealed class ReceiptSemanticValidatorTests
         [
             new ReceiptLineItem { Description = "Vợt bóng bàn Double Fish 4A+", Amount = 292_199m },
             new ReceiptLineItem { Description = "Bảo hiểm người tiêu dùng", Amount = 3_000m }
+        ]
+    };
+
+    private static ReceiptExtractionDto VinamilkDiscountedReceipt() => new()
+    {
+        DocumentType = "RETAIL_RECEIPT",
+        DocumentStatus = "ISSUED",
+        MerchantName = "Vinamilk",
+        ReceiptNumber = "SAL.CH40411260922000147",
+        InvoiceDate = "2026-09-22",
+        InvoiceTime = "17:31",
+        Currency = "VND",
+        Subtotal = 183_114m,
+        DiscountAmount = 2_828m,
+        Tax = 0m,
+        TotalAmount = 180_286m,
+        Confidence = 0.95,
+        LineItems =
+        [
+            new ReceiptLineItem { Description = "Sản phẩm sữa", Amount = 183_114m }
         ]
     };
 }

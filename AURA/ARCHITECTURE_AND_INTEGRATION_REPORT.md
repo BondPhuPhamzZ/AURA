@@ -32,7 +32,7 @@ AURA/
 ├── Views/                             # Razor UI nhân viên, quản lý, lịch sử
 ├── wwwroot/test_data/                 # 5 fixture được Verify chạy trực tiếp
 ├── test_kit/                          # ngân hàng 30 ca và gói BGK 15 ca
-├── tests/AURA.Tests/                  # 93 kiểm thử tự động offline
+├── tests/AURA.Tests/                  # 100 kiểm thử tự động offline
 ├── docs/                              # runbook, deploy, test, checklist
 ├── submission/                        # 5 slide, Build Log Word, workflow
 └── tools/                             # tái tạo fixture, chạy evaluator và sinh artifact
@@ -85,7 +85,7 @@ Các POST thay đổi trạng thái đều kiểm antiforgery token. Upload ch�
 3. Server ghi hồ sơ `PENDING` cùng audit `AI_QUEUED`, trả HTTP `202` và status URL. Request HTTP không giữ kết nối trong lúc model suy luận.
 4. `ReceiptProcessingWorker` claim job bằng update có điều kiện, gắn lease và tăng số lần thử. Job tồn tại trong SQL Server nên app restart không làm mất hàng đợi; lease hết hạn cho phép worker lấy lại job bị gián đoạn.
 5. `ConfiguredVisionExtractor` gọi provider chính. Khi bật fallback, chỉ lỗi hạ tầng nằm trong allowlist mới được chuyển một lần sang provider dự phòng. Hai adapter dùng chung prompt, JSON Schema và parser qua `ReceiptExtractionContract`.
-6. `ReceiptSemanticValidator` kiểm ý nghĩa chéo: VND không được có phần thập phân, loại chứng từ phải phù hợp identifier, mã/ngày không được gán nhầm trường và line items phải đối chiếu được với tổng tiền khi không có discount. Chứng từ giấy dùng ba trường tách biệt `invoiceNumber`, `receiptNumber`, `transactionReference` và bắt buộc ngày hóa đơn/biên nhận nằm ở `invoiceDate`; `transactionDate` chỉ dành cho bằng chứng số. ShopID/POS/MID/TID/pager không được nâng thành mã giao dịch.
+6. `ReceiptSemanticValidator` kiểm ý nghĩa chéo: VND không được có phần thập phân, loại chứng từ phải phù hợp identifier, mã/ngày không được gán nhầm trường và line items phải đối chiếu với tổng thanh toán. Khoản giảm được in rõ đi vào `discountAmount` không âm và phải thỏa `subtotal + tax - discountAmount = totalAmount` hoặc biến thể subtotal đã gồm thuế; keyword trong warning không được bỏ qua arithmetic. Chứng từ giấy dùng ba trường tách biệt `invoiceNumber`, `receiptNumber`, `transactionReference` và bắt buộc ngày hóa đơn/biên nhận nằm ở `invoiceDate`; `transactionDate` chỉ dành cho bằng chứng số. ShopID/POS/MID/TID/pager không được nâng thành mã giao dịch.
 7. Nếu JSON đúng schema nhưng mâu thuẫn semantic, provider đọc lại ảnh đúng một lần với danh sách lỗi cụ thể. Repair không nhận số tiền khai báo và không tự chuyển ngày giao hàng/hoàn tất thành ngày hóa đơn. Backend gắn `SemanticRepairApplied` cùng danh sách lỗi ban đầu vào facts; nếu vẫn mâu thuẫn hoặc repair lỗi, `ValidationIssues` buộc policy chuyển `ESCALATE_FACT`.
 8. Worker chạy `PolicyDecisionEngine`, commit kết quả, provider thực sự phục vụ và audit cả việc repair/counter lỗi. UI poll mỗi giây trong phiên trình duyệt, lưu status URL trong `sessionStorage` và tự nối lại sau refresh.
 9. Nhân viên xác nhận chuyển tiếp. Quản lý đồng ý hoặc từ chối theo câu hỏi đã sinh; quyết định có thể hoàn tác.
@@ -165,8 +165,8 @@ Recycle application pool chỉ nạp lại biến môi trường hiện có. Kh�
 ## 10. Bằng chứng xác minh hiện tại
 
 - Build .NET 8 sạch, 0 warning và 0 error tại lần kiểm tra gần nhất.
-- 93 automated tests pass, gồm policy, workflow, audit, Verify/Test Kit integrity, hợp đồng OpenRouter/Ollama, semantic validation/repair, định danh chứng từ giấy, fallback/circuit breaker và backoff worker.
-- Regression ngày 01/10 tái hiện đúng ca Highlands: lần sai có `invoiceDate=null`, `transactionDate=2026-09-29`; lần đúng có `invoiceDate=2026-09-29`. Contract hiện phát hiện cách đặt ngày sai, repair tối đa một lần trên cả OpenRouter/Ollama, xóa bản sao ngày giấy trùng hoàn toàn và giữ `ESCALATE_FACT` nếu không sửa được. Build Release vẫn 0 warning/0 error và 93/93 test pass; live re-validation ba lượt là cổng tiếp theo, chưa được thay bằng test offline.
+- 100 automated tests pass, gồm policy, workflow, audit, Verify/Test Kit integrity, hợp đồng OpenRouter/Ollama, semantic validation/repair, định danh chứng từ giấy, đối chiếu giảm giá, fallback/circuit breaker và backoff worker.
+- Regression ngày 01/10 tái hiện đúng ca Highlands: lần sai có `invoiceDate=null`, `transactionDate=2026-09-29`; lần đúng có `invoiceDate=2026-09-29`. Contract hiện phát hiện cách đặt ngày sai, repair tối đa một lần trên cả OpenRouter/Ollama, xóa bản sao ngày giấy trùng hoàn toàn và giữ `ESCALATE_FACT` nếu không sửa được. Checkpoint riêng của sửa ngày đạt 93/93 test; sau hardening giảm giá, baseline hiện tại đạt 100/100 và có cổng live re-validation riêng.
 - Build sau hardening: 0 warning, 0 error; EF báo không có model change chưa migration. LocalDB đã áp migration thành công.
 - EF Core SQL Server/Tools và local `dotnet-ef` đã được vá đồng bộ lên 8.0.31; NuGet vulnerability scan không còn advisory trong app và test project tại thời điểm kiểm tra.
 - Judge set mở rộng đã chạy thật trên cùng 15 ca và fallback tắt. OpenRouter/Qwen3-VL-8B đạt 15/15 quyết định, 70/75 field và P50/P95 end-to-end 3,614/16,459 giây. Ollama/Qwen3-VL-4B đạt 14/15 quyết định, 73/75 field và 52,238/58,318 giây; model bỏ sót escalation TK-12. Concurrent smoke OpenRouter 5 request hoàn tất 5/5 với P95 17,072 giây.

@@ -34,6 +34,7 @@ namespace AURA.Models
         public string? InvoiceTime { get; set; }
         public string? Currency { get; set; }
         public decimal? Subtotal { get; set; }
+        public decimal? DiscountAmount { get; set; }
         public decimal? Tax { get; set; }
         public decimal? TotalAmount { get; set; }
         public List<ReceiptLineItem> LineItems { get; set; } = new List<ReceiptLineItem>();

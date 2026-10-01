@@ -215,7 +215,7 @@ public sealed class OllamaVisionExtractorServiceTests
             "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":"PAID",
             "invoiceNumber":"HD-LOCAL-001","invoiceDate":"2026-09-26","transactionDate":null,
             "completionDate":null,"invoiceTime":"09:30","currency":"VND","subtotal":100000,
-            "tax":0,"totalAmount":100000,"lineItems":[{"description":"Stationery","quantity":1,
+            "discountAmount":null,"tax":0,"totalAmount":100000,"lineItems":[{"description":"Stationery","quantity":1,
             "unitPrice":100000,"amount":100000}],"missingFields":[],"warnings":[],
             "suspiciousSignals":[],"confidence":0.94}
             """;
@@ -251,7 +251,7 @@ public sealed class OllamaVisionExtractorServiceTests
         "orderId":"SPX-VN2693231211394","bookingId":null,"shippingTrackingCode":"SPX-VN2693231211394",
         "shippingProvider":"SPX Instant","orderStatus":"COMPLETED","invoiceNumber":null,"invoiceDate":null,
         "transactionDate":"2026-09-18","completionDate":"2026-09-18","invoiceTime":"09:45",
-        "currency":"VND","subtotal":292.199,"tax":3.0,"totalAmount":295.199,
+        "currency":"VND","subtotal":292.199,"discountAmount":null,"tax":3.0,"totalAmount":295.199,
         "lineItems":[{"description":"Vợt bóng bàn","quantity":1,"unitPrice":292.199,"amount":292.199},
         {"description":"Bảo hiểm người tiêu dùng","quantity":1,"unitPrice":3.0,"amount":3.0}],
         "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
@@ -262,7 +262,7 @@ public sealed class OllamaVisionExtractorServiceTests
         "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,"bookingId":null,
         "shippingTrackingCode":"SPX-VN2693231211394","shippingProvider":"SPX Instant","orderStatus":"COMPLETED",
         "invoiceNumber":null,"invoiceDate":null,"transactionDate":"2026-09-18","completionDate":"2026-09-18",
-        "invoiceTime":"09:45","currency":"VND","subtotal":295199,"tax":0,"totalAmount":295199,
+        "invoiceTime":"09:45","currency":"VND","subtotal":295199,"discountAmount":null,"tax":0,"totalAmount":295199,
         "lineItems":[{"description":"Vợt bóng bàn","quantity":1,"unitPrice":292199,"amount":292199},
         {"description":"Bảo hiểm người tiêu dùng","quantity":1,"unitPrice":3000,"amount":3000}],
         "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
@@ -274,7 +274,7 @@ public sealed class OllamaVisionExtractorServiceTests
         "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
         "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":null,
         "transactionDate":"2026-09-29","completionDate":null,"invoiceTime":"13:52","currency":"VND",
-        "subtotal":59000,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
+        "subtotal":59000,"discountAmount":null,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
         "quantity":1,"unitPrice":59000,"amount":59000}],"missingFields":[],"warnings":[],
         "suspiciousSignals":[],"confidence":0.95}
         """;
@@ -285,7 +285,7 @@ public sealed class OllamaVisionExtractorServiceTests
         "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
         "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":"2026-09-29",
         "transactionDate":null,"completionDate":null,"invoiceTime":"13:52","currency":"VND",
-        "subtotal":59000,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
+        "subtotal":59000,"discountAmount":null,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
         "quantity":1,"unitPrice":59000,"amount":59000}],"missingFields":[],"warnings":[],
         "suspiciousSignals":[],"confidence":0.95}
         """;

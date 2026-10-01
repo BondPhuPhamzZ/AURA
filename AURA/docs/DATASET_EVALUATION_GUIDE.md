@@ -1,6 +1,6 @@
 # Hướng dẫn bộ dữ liệu và đánh giá mở rộng
 
-Cập nhật ngày 28/09/2026. Official Verify Harness vẫn giữ nguyên đúng 5 ca mà BTC đã biết. Bộ 15/30 ca là phép đánh giá nội bộ chạy ngoài giao diện, không tạo thêm nút và không thay đổi expected result của Verify.
+Cập nhật ngày 01/10/2026. Official Verify Harness vẫn giữ nguyên đúng 5 ca mà BTC đã biết. Bộ 15/30 ca là phép đánh giá nội bộ chạy ngoài giao diện, không tạo thêm nút và không thay đổi expected result của Verify.
 
 ## 1. Chiến lược dữ liệu
 
@@ -71,7 +71,7 @@ Mức tối thiểu trước demo là 10–15 ảnh được phép dùng và ch�
 - mã ca và tên file ẩn danh;
 - số tiền khai báo;
 - expected status;
-- document type, merchant, amount, date và identifier;
+- document type, merchant, subtotal, receipt-level discount, final payable amount, date và identifier;
 - lý do escalation;
 - người gán nhãn và bất đồng nếu có.
 

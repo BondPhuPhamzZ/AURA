@@ -63,7 +63,7 @@ UI chỉ giải thích dữ kiện; quyền quyết định vẫn thuộc `Polic
 - Ollama adapter: cùng contract và cùng kết quả kiểm soát.
 - Validator: phát hiện paper date ở trường số, phát hiện hai ngày khác nhau và canonicalize bản sao giống hệt.
 - Release build: 0 warning, 0 error.
-- Automated tests: 93/93 pass.
+- Automated tests tại checkpoint sửa ngày: 93/93 pass. Baseline hiện tại sau hardening giảm giá: 100/100 pass.
 - EF model check: không có thay đổi model chưa migration.
 
 ## 6. Cổng live re-validation

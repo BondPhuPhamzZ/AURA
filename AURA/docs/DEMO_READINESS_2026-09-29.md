@@ -2,7 +2,7 @@
 
 ## Kết luận
 
-Core workflow đã đủ ổn định để tiếp tục kiểm thử thủ công trên laptop: database đã migrate, upload dùng hàng đợi bền vững, OpenRouter là provider chính, policy quyết định tất định, human review và audit có thể phục hồi sau refresh. Sau hardening định danh chứng từ ngày 30/09, build đạt 0 warning, 0 error và 93 trên 93 automated test.
+Core workflow đã đủ ổn định để tiếp tục kiểm thử thủ công trên laptop: database đã migrate, upload dùng hàng đợi bền vững, OpenRouter là provider chính, policy quyết định tất định, human review và audit có thể phục hồi sau refresh. Sau hardening định danh và đối chiếu giảm giá, build đạt 0 warning, 0 error và 100 trên 100 automated test.
 
 Project chưa được xem là hoàn tất cho bàn giao cuối. Bốn cổng còn mở là smoke Live URL sau hardening, holdout hóa đơn thật đã ẩn danh, phản hồi của ba người dùng và diễn tập có bấm giờ.
 
@@ -21,7 +21,7 @@ Project chưa được xem là hoàn tất cho bàn giao cuối. Bốn cổng c�
 | Cổng | Kết quả |
 |---|---|
 | Build | 0 warning, 0 error |
-| Automated tests | 93 trên 93 pass, không gọi API trả phí |
+| Automated tests | 100 trên 100 pass, không gọi API trả phí |
 | Local readiness | `AuraDb`, LocalDB, policy, storage, migration và health đều pass |
 | Judge set OpenRouter | 15 trên 15 quyết định, 70 trên 75 field, P95 16,459 giây |
 | Judge set Ollama | 14 trên 15 quyết định, 73 trên 75 field, P95 58,318 giây; bỏ sót TK-12 |
@@ -45,7 +45,7 @@ NuGet vulnerability scan hiện không phát hiện package dễ bị tấn côn
 1. Mở PowerShell tại `D:\aura\AURA\AURA`.
 2. Chạy `powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb` và yêu cầu 0 failure; warning do `-SkipHttp` là mong đợi.
 3. Chạy `dotnet build .\AURA.csproj -c Release --no-restore`.
-4. Chạy `dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release --no-restore` và xác nhận 93 trên 93.
+4. Chạy `dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release --no-restore` và xác nhận 100 trên 100.
 5. Chạy `dotnet ef migrations has-pending-model-changes --project .\AURA.csproj --startup-project .\AURA.csproj --configuration Release --no-build`; chỉ chạy `dotnet ef database update` khi thực sự có migration mới.
 6. Chạy `dotnet run`.
 7. Ở PowerShell thứ hai, chạy `powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb` và chỉ tiếp tục khi kết quả là `READY: 0 failures, 0 warning(s)`.
@@ -66,7 +66,7 @@ NuGet vulnerability scan hiện không phát hiện package dễ bị tấn côn
 ### Hoàn tất cho Chung kết
 
 - Preflight trả `READY` trên laptop demo.
-- Build sạch và 93 trên 93 test pass.
+- Build sạch và 100 trên 100 test pass.
 - Official Verify đạt 5 trên 5 trong ba buổi diễn tập, mỗi lượt dưới 90 giây.
 - Một upload mới, forward, manager decision, Undo và audit chạy trọn luồng.
 - Năm upload OpenRouter đồng thời không có global 409 và đều đạt trạng thái cuối.

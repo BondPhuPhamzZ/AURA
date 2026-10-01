@@ -1,6 +1,6 @@
 # AURA Test Matrix
 
-Mốc cập nhật: 28/09/2026. Ký hiệu: `A` đã tự động hóa bằng xUnit; `V` nằm trong Verify Vision; `R` chạy bằng evaluator ngoài UI; `P` backlog mở rộng, chưa tuyên bố đã đạt.
+Mốc cập nhật: 01/10/2026. Ký hiệu: `A` đã tự động hóa bằng xUnit; `V` nằm trong Verify Vision; `R` chạy bằng evaluator ngoài UI; `P` backlog mở rộng, chưa tuyên bố đã đạt.
 
 ## Verify một nút
 
@@ -93,6 +93,12 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P56 | Paper receipt có `invoiceDate=null` nhưng model đặt ngày in trên phiếu vào `transactionDate` | Semantic repair đúng một lần; chỉ tiếp tục policy khi ngày được xác nhận ở `invoiceDate`, nếu không `ESCALATE_FACT` | A/V |
 | P57 | Paper receipt lặp cùng ngày ở `invoiceDate` và `transactionDate` | Chuẩn hóa lossless: giữ `invoiceDate`, xóa bản sao `transactionDate`; không gọi repair thừa | A |
 | P58 | Paper receipt có `invoiceDate` và `transactionDate` khác nhau | Semantic repair để đọc lại nhãn; còn khác nhau thì `ESCALATE_FACT` | A/V |
+| P59 | Receipt in `183.114 - 2.828 = 180.286`, claim `180.286` | `discountAmount=2828`; AUTO nếu các dữ kiện khác đạt | A/V |
+| P60 | Cùng receipt nhưng claim `183.114` trước giảm | `ESCALATE_FACT` vì claimed amount không bằng final payable | A |
+| P61 | Warning chứa “giảm giá/voucher” nhưng thiếu `discountAmount` và line total lệch | Không bypass arithmetic; semantic repair một lần rồi FACT nếu chưa sửa | A |
+| P62 | `discountAmount` âm, vượt số trước giảm hoặc phép tính vẫn sai | Semantic issue; không AUTO_APPROVE | A |
+| P63 | `discountAmount` có phần lẻ với VND | Semantic issue; repair hoặc FACT | A |
+| P64 | Receipt không có khoản giảm được in rõ | `discountAmount=null`; không tự suy ra từ chênh lệch hoặc claimed amount | A/V |
 
 ## Ma trận human-in-the-loop
 

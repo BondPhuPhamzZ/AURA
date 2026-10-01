@@ -140,7 +140,7 @@ set_run_font(run, size=16, bold=True, color="000000")
 subtitle = document.add_paragraph()
 subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
 subtitle.paragraph_format.space_after = Pt(5)
-run = subtitle.add_run("Track A The Escalation Referee | 30 09 2026 | Pham Gia Phu")
+run = subtitle.add_run("Track A The Escalation Referee | 01 10 2026 | Pham Gia Phu")
 set_run_font(run, size=9.2, italic=True, color="555555")
 
 intro = document.add_paragraph()
@@ -164,7 +164,8 @@ add_heading(document, "2 Hành trình xây dựng và các lần AI sai")
 add_body(
     document,
     "Gemini Free Tier từng gặp 429; model slug sai gây 404; Qwen có lúc trả JSON lệch schema hoặc đọc 295.199 VND "
-    "sai đơn vị. Các lỗi này dẫn tới cấu hình provider rõ ràng, parser giới hạn, semantic validation và đúng một lượt repair. "
+    "sai đơn vị. Ca Vinamilk đọc đúng 183.114 trừ 2.828 bằng 180.286 nhưng schema cũ không có trường giảm giá. "
+    "Các lỗi này dẫn tới cấu hình provider rõ ràng, parser giới hạn, discountAmount có cấu trúc, semantic validation và đúng một lượt repair. "
     "Kết quả còn mâu thuẫn luôn chuyển người xử lý.",
 )
 
@@ -206,7 +207,7 @@ evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
 headers = ("Build", "Test offline", "Dependency", "Evaluator")
-values = ("0 warning 0 error", "93 trên 93 pass", "Không có advisory", "15 ca đã chạy thật")
+values = ("0 warning 0 error", "100 trên 100 pass", "Không có advisory", "15 ca đã chạy thật")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -249,6 +250,12 @@ add_body(
     "Contract ngày 30/09 tách số hóa đơn, số biên nhận và mã giao dịch. Check/Trace/RRN chỉ được dùng khi là mã riêng "
     "của lần mua; ShopID, POS, MID/TID và pager không thay thế định danh. Nếu FACT và POLICY cùng tồn tại, FACT vẫn là "
     "trạng thái chính nhưng lý do giữ policy finding thứ cấp để quản lý không bỏ sót.",
+)
+add_body(
+    document,
+    "Contract ngày 01/10 thêm discountAmount cho khoản giảm được in rõ. Backend đối chiếu subtotal cộng thuế trừ giảm giá "
+    "với tổng thanh toán, không suy ra từ claimed amount và không cho keyword trong warning bỏ qua arithmetic. Vì vậy số nhân viên "
+    "khai được so với số thực trả sau giảm; mâu thuẫn còn lại vẫn đi ESCALATE_FACT.",
 )
 
 add_heading(document, "5 Quyết định kiến trúc và phần cắt giảm")

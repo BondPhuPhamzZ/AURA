@@ -56,9 +56,17 @@ internal static class ReceiptExtractionContract
               precedence over `giao hàng thành công`/`completed`; set documentStatus and orderStatus to
               the corresponding RETURNED, REFUNDED or CANCELLED state and never mark that document COMPLETED.
             - On VAT invoices and receipts, actively read the seller name, tax ID, invoice/receipt number
-              and the final payable row labelled `TỔNG THANH TOÁN`, `TỔNG CỘNG` or `THÀNH TIỀN`.
+              and the final payable row labelled `TỔNG THANH TOÁN`, `TỔNG CỘNG`, `THÀNH TIỀN`,
+              `THANH TOÁN` or `SỐ TIỀN PHẢI THU`.
               When a clearly printed final total is visible, totalAmount must not be null and must not be
               confused with a line-item subtotal.
+            - If the receipt prints a receipt-level `GIẢM GIÁ`, `CHIẾT KHẤU`, `VOUCHER`, `KHUYẾN MÃI`
+              or equivalent reduction, put its absolute non-negative value in discountAmount. For example,
+              a printed `-2.828` VND reduction becomes discountAmount=2828, not -2828. Do not infer a
+              discount only from the difference between subtotal and totalAmount or from the claimed amount.
+              totalAmount remains the final amount actually payable after the visible reduction. When
+              subtotal + tax - discountAmount reconciles to totalAmount, do not report that expected
+              difference as a warning or suspicious signal.
             - Keep formal invoice numbers, receipt/bill numbers, and transaction references separate.
               `Invoice No`/`Số hóa đơn` belongs in invoiceNumber; `Receipt No`/`Bill No`/`Số biên nhận`
               belongs in receiptNumber; a per-purchase `Check`, `Transaction No`, `Trace`, `RRN` or
@@ -98,7 +106,7 @@ internal static class ReceiptExtractionContract
             "platformName", "orderId", "bookingId", "shippingTrackingCode", "shippingProvider", "orderStatus",
             "invoiceNumber", "receiptNumber", "transactionReference", "invoiceDate", "transactionDate",
             "completionDate", "invoiceTime", "currency",
-            "subtotal", "tax", "totalAmount", "lineItems", "missingFields", "warnings", "suspiciousSignals",
+            "subtotal", "discountAmount", "tax", "totalAmount", "lineItems", "missingFields", "warnings", "suspiciousSignals",
             "confidence" },
         properties = new Dictionary<string, object>
         {
@@ -115,6 +123,7 @@ internal static class ReceiptExtractionContract
             ["invoiceDate"] = NullableString(), ["transactionDate"] = NullableString(),
             ["completionDate"] = NullableString(), ["invoiceTime"] = NullableString(),
             ["currency"] = NullableString(), ["subtotal"] = NullableMoneyNumber("subtotal"),
+            ["discountAmount"] = NullableMoneyNumber("receipt-level discount as a non-negative absolute value"),
             ["tax"] = NullableMoneyNumber("tax"),
             ["totalAmount"] = NullableMoneyNumber("final amount actually paid"),
             ["lineItems"] = new

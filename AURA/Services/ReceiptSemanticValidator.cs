@@ -25,6 +25,7 @@ public static class ReceiptSemanticValidator
         if (string.Equals(facts.Currency, "VND", StringComparison.OrdinalIgnoreCase))
         {
             AddFractionalVndIssue(issues, "subtotal", facts.Subtotal);
+            AddFractionalVndIssue(issues, "discountAmount", facts.DiscountAmount);
             AddFractionalVndIssue(issues, "tax", facts.Tax);
             AddFractionalVndIssue(issues, "totalAmount", facts.TotalAmount);
 
@@ -98,6 +99,11 @@ public static class ReceiptSemanticValidator
             - Shop/store ID, POS/register ID, terminal ID, merchant ID, pager number, tax ID,
               serial hóa đơn và mẫu số không được dùng làm transactionReference.
             - Không đặt các định danh chứng từ giấy vào orderId, bookingId hay shippingTrackingCode.
+            - Nếu ảnh in rõ `Giảm giá`, `Chiết khấu`, `Voucher`, `Khuyến mãi` hoặc một khoản giảm
+              tương đương ở cấp toàn hóa đơn, đặt trị tuyệt đối không âm vào discountAmount.
+              Ví dụ `-2.828` VND phải là discountAmount=2828. Không suy ra discountAmount chỉ từ
+              chênh lệch số học. totalAmount phải là số cuối cùng thực trả và phép tính phải đối chiếu
+              được theo subtotal + tax - discountAmount = totalAmount (hoặc subtotal đã gồm thuế).
             - Không suy đoán từ tên file, kết quả mong đợi hoặc số tiền người dùng khai báo.
             - Chỉ trả về một JSON object đúng schema, không thêm Markdown hay giải thích.
             """;
@@ -179,23 +185,44 @@ public static class ReceiptSemanticValidator
 
     private static void AddLineTotalIssueWhenUnambiguous(List<string> issues, ReceiptExtractionDto facts)
     {
+        if (facts.DiscountAmount is < 0)
+            issues.Add($"discountAmount={facts.DiscountAmount.Value} phải là trị tuyệt đối không âm");
+
         if (!facts.TotalAmount.HasValue || facts.LineItems.Count == 0 ||
             facts.LineItems.Any(item => !item.Amount.HasValue))
-            return;
-
-        // Discounts/vouchers legitimately make the item sum differ from the final amount.
-        // Only flag arithmetic when the model did not report such an adjustment.
-        if (facts.Warnings.Any(warning => ContainsAny(warning, "discount", "voucher", "giảm giá", "khuyến mãi")))
             return;
 
         var lineTotal = facts.LineItems.Sum(item => item.Amount!.Value);
         var total = facts.TotalAmount.Value;
         var subtotalMatchesLines = facts.Subtotal.HasValue && AreEqual(lineTotal, facts.Subtotal.Value);
+        var baseAmount = facts.Subtotal ?? lineTotal;
+
+        if (facts.DiscountAmount.HasValue)
+        {
+            if (facts.Subtotal.HasValue && !subtotalMatchesLines)
+                issues.Add($"tổng lineItems={lineTotal} không đối chiếu được với subtotal={facts.Subtotal.Value}");
+
+            var discount = facts.DiscountAmount.Value;
+            var tax = facts.Tax.GetValueOrDefault();
+            if (discount > baseAmount + Math.Max(0, tax))
+                issues.Add($"discountAmount={discount} vượt quá giá trị trước giảm giá={baseAmount + Math.Max(0, tax)}");
+
+            var subtotalAlreadyIncludesTax = baseAmount - discount;
+            var taxAddedAfterSubtotal = baseAmount + tax - discount;
+            if (discount < 0 ||
+                (!AreEqual(subtotalAlreadyIncludesTax, total) && !AreEqual(taxAddedAfterSubtotal, total)))
+            {
+                issues.Add($"subtotal/lineItems={baseAmount}, tax={tax}, discountAmount={discount} không đối chiếu được với totalAmount={total}");
+            }
+
+            return;
+        }
+
         var subtotalAndTaxMatchTotal = subtotalMatchesLines &&
             (!facts.Tax.HasValue || AreEqual(facts.Subtotal!.Value + facts.Tax.Value, total));
 
         if (!AreEqual(lineTotal, total) && !subtotalAndTaxMatchTotal)
-            issues.Add($"tổng lineItems={lineTotal} không đối chiếu được với totalAmount={total}");
+            issues.Add($"tổng lineItems={lineTotal} không đối chiếu được với totalAmount={total}; hãy đọc discountAmount từ khoản giảm giá/chiết khấu/voucher nếu ảnh có in rõ");
     }
 
     private static bool AreEqual(decimal left, decimal right) => Math.Abs(left - right) <= 0.01m;
