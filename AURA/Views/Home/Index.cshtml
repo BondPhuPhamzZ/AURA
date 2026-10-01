@@ -327,7 +327,7 @@
                 '<div><dt>Mã số thuế</dt><dd>' + escapeHtml(displayFact(facts.taxId)) + '</dd></div>' +
                 '<div><dt>' + escapeHtml(evidenceDateLabel) + '</dt><dd>' + escapeHtml(displayFact(evidenceDate)) + '</dd></div>' +
                 (facts.subtotal != null ? '<div><dt>Tạm tính</dt><dd>' + escapeHtml(formatFactMoney(facts.subtotal)) + '</dd></div>' : '') +
-                (facts.discountAmount != null ? '<div><dt>Giảm giá / chiết khấu</dt><dd>-' + escapeHtml(formatFactMoney(Math.abs(Number(facts.discountAmount)))) + '</dd></div>' : '') +
+                (facts.discountAmount != null && Number(facts.discountAmount) > 0 ? '<div><dt>Giảm giá / chiết khấu</dt><dd>-' + escapeHtml(formatFactMoney(Number(facts.discountAmount))) + '</dd></div>' : '') +
                 (facts.tax != null && Number(facts.tax) !== 0 ? '<div><dt>Thuế</dt><dd>' + escapeHtml(formatFactMoney(facts.tax)) + '</dd></div>' : '') +
                 '<div><dt>Tổng thanh toán</dt><dd>' + escapeHtml(formatFactMoney(facts.totalAmount)) + '</dd></div>' +
                 '<div><dt>Tiền tệ</dt><dd>' + escapeHtml(displayFact(facts.currency)) + '</dd></div>' +

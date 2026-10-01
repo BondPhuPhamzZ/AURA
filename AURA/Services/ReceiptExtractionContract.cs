@@ -64,6 +64,7 @@ internal static class ReceiptExtractionContract
               or equivalent reduction, put its absolute non-negative value in discountAmount. For example,
               a printed `-2.828` VND reduction becomes discountAmount=2828, not -2828. Do not infer a
               discount only from the difference between subtotal and totalAmount or from the claimed amount.
+              When no receipt-level reduction is visibly printed, set discountAmount to null rather than 0.
               totalAmount remains the final amount actually payable after the visible reduction. When
               subtotal + tax - discountAmount reconciles to totalAmount, do not report that expected
               difference as a warning or suspicious signal.
