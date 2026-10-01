@@ -74,7 +74,7 @@ Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_rec
 
 Để bảo toàn credit: build + 100 automated test offline trước, deploy, chạy đúng một ảnh smoke test, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota.
 
-Sau thay đổi contract giảm giá, làm theo cổng `docs/RECEIPT_DISCOUNT_RECONCILIATION_2026-10-01.md`. Không reset database và không chạy migration vì `discountAmount` nằm trong facts JSON hiện có.
+Sau thay đổi contract giảm giá và postfix live fix, làm theo cổng `docs/LIVE_POSTFIX_INCIDENT_2026-10-01.md`. Không reset database và không chạy migration vì facts vẫn nằm trong JSON hiện có; restart queue phải dùng chính DB cũ để chứng minh độ bền.
 
 Delay giữa các ca Verify được cấu hình bằng `Verify:InterCaseDelayMs`, mặc định 4000 ms để bảo vệ quota. Không đổi giá trị trong cùng một benchmark; luôn ghi giá trị này vào metadata phép đo.
 

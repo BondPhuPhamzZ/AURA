@@ -90,15 +90,17 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P53 | Restaurant bill có `Check: 221196` là mã riêng của lần mua | `transactionReference`; AUTO nếu các dữ kiện khác đạt | A |
 | P54 | Receipt chỉ có ShopID + POS/register + pager/table | `ESCALATE_FACT`; các mã vận hành không thay định danh giao dịch | A |
 | P55 | Cùng mã bị gán đồng thời vào receiptNumber và transactionReference | Semantic issue, repair một lần; còn lặp thì `ESCALATE_FACT` | A/V |
-| P56 | Paper receipt có `invoiceDate=null` nhưng model đặt ngày in trên phiếu vào `transactionDate` | Semantic repair đúng một lần; chỉ tiếp tục policy khi ngày được xác nhận ở `invoiceDate`, nếu không `ESCALATE_FACT` | A/V |
+| P56 | Paper receipt có `invoiceDate=null` nhưng một ngày mua/giao dịch hợp lệ ở `transactionDate` | Chuẩn hóa lossless sang ngày chứng từ canonical; không gọi AI repair và không lấy `completionDate` thay thế | A/V |
 | P57 | Paper receipt lặp cùng ngày ở `invoiceDate` và `transactionDate` | Chuẩn hóa lossless: giữ `invoiceDate`, xóa bản sao `transactionDate`; không gọi repair thừa | A |
-| P58 | Paper receipt có `invoiceDate` và `transactionDate` khác nhau | Semantic repair để đọc lại nhãn; còn khác nhau thì `ESCALATE_FACT` | A/V |
+| P58 | Paper receipt có `invoiceDate` và `transactionDate` khác nhau nhưng cả hai có nhãn hợp lệ | Giữ cả hai; policy giấy dùng `invoiceDate`, không escalation chỉ vì có ngày giao dịch hỗ trợ | A/V |
 | P59 | Receipt in `183.114 - 2.828 = 180.286`, claim `180.286` | `discountAmount=2828`; AUTO nếu các dữ kiện khác đạt | A/V |
 | P60 | Cùng receipt nhưng claim `183.114` trước giảm | `ESCALATE_FACT` vì claimed amount không bằng final payable | A |
 | P61 | Warning chứa “giảm giá/voucher” nhưng thiếu `discountAmount` và line total lệch | Không bypass arithmetic; semantic repair một lần rồi FACT nếu chưa sửa | A |
 | P62 | `discountAmount` âm, vượt số trước giảm hoặc phép tính vẫn sai | Semantic issue; không AUTO_APPROVE | A |
 | P63 | `discountAmount` có phần lẻ với VND | Semantic issue; repair hoặc FACT | A |
 | P64 | Receipt không có khoản giảm được in rõ | `discountAmount=null`; không tự suy ra từ chênh lệch hoặc claimed amount | A/V |
+| P65 | Model gán điểm/tích lũy `1000` thành discount trong khi `lineItems=subtotal=total=59000`, tax=0 | Bỏ riêng discount không tác động, lưu warning audit; không sửa tổng tiền và không false escalation | A/V |
+| P66 | Queue hoàn tất escalation sau khi trang đã load hoặc sau app/browser restart | Bảng nhân viên tự refresh từ DB trong tối đa 10 giây; không cần chạy ca mới để “đánh thức” hàng chờ | V |
 
 ## Ma trận human-in-the-loop
 

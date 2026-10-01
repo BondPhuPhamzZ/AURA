@@ -16,8 +16,8 @@ Qwen Vision, accessed through OpenRouter by default or optional local Ollama, ex
 
 - Read single-page JPG and PNG receipt images with Qwen Vision.
 - Return structured receipt facts using a JSON Schema contract.
-- Detect semantic inconsistencies—including paper dates placed in digital-only fields—and allow one targeted AI re-read before safe human escalation.
-- Extract printed receipt-level discounts into `discountAmount` and reconcile subtotal, tax, discount, and final payable amount before policy evaluation.
+- Losslessly canonicalize a sole printed paper purchase/transaction date while never promoting a delivery/completion date; reserve one targeted AI re-read for genuine remaining inconsistencies.
+- Extract printed receipt-level discounts into `discountAmount`, ignore non-monetary loyalty/identifier values, and reconcile subtotal, tax, discount, line items, and final payable amount before policy evaluation.
 - Distinguish formal invoice numbers, receipt/bill numbers, and per-purchase transaction references; store/POS/MID/TID/pager identifiers never satisfy transaction traceability.
 - Apply reimbursement rules through a deterministic C# policy engine.
 - Automatically approve clear, policy-compliant requests.
@@ -26,6 +26,7 @@ Qwen Vision, accessed through OpenRouter by default or optional local Ollama, ex
 - Record the request lifecycle in an audit trail.
 - Run a five-case Verify Harness through the real application pipeline.
 - Accept receipt uploads quickly, process AI work in a durable database-backed queue, and resume status polling after a page refresh.
+- Refresh the employee escalation queue from the database every five seconds and show an explicit accessible progress notice while AI work is pending.
 - Optionally fail over once to Ollama for eligible infrastructure failures, with provider and error metadata in the audit trail.
 - Prevent stale updates from overwriting another reviewer action through SQL row-version checks.
 
@@ -57,7 +58,7 @@ AURA does not fine-tune Qwen and does not give the model final decision authorit
 ## Current Verification Baseline
 
 - Build: **0 warnings, 0 errors**
-- Automated tests: **100/100 passed**
+- Automated tests: **102/102 passed**
 - Verify Harness: **5 smoke-test cases**
 - Evaluator reference pack: **15 test cases**
 - Extended evaluator: **15 or 30 cases through the production upload endpoint, without an extra UI button**
@@ -66,9 +67,9 @@ On 29 September 2026, the extended runner evaluated both providers on the same 1
 
 These are controlled synthetic-regression results, not a production accuracy claim. OpenRouter remains the demo primary because it passes the safety gate and the latency/capacity target. Ollama remains an optional offline/manual fallback and should not be presented as automatic concurrent capacity until the TK-12 missed escalation is resolved on an independent holdout.
 
-On 1 October 2026, a repeated anonymized paper receipt exposed date-field variance: one response placed the printed receipt date only in `transactionDate`, while the next populated `invoiceDate`. The shared semantic contract now requires paper invoice/receipt dates in `invoiceDate`, performs at most one targeted repair on both providers, records repair metadata in facts/audit, and preserves `ESCALATE_FACT` when the ambiguity remains. Three consecutive live re-validation uploads subsequently returned a consistent `AUTO_APPROVE` with the canonical date and identifier.
+On 1 October 2026, repeated anonymized paper receipts exposed date-field variance: valid printed purchase dates sometimes appeared only in `transactionDate`. The shared semantic contract now losslessly moves that sole existing paper date to canonical `invoiceDate` without an extra provider call, never promotes `completionDate`, and keeps targeted repair plus `ESCALATE_FACT` for genuine unresolved contradictions.
 
-A Vinamilk receipt then exposed a separate contract gap: the model read `183.114 - 2.828 = 180.286` correctly, but the old schema had no structured discount field. AURA now stores the printed reduction in `discountAmount`, validates the final-payable equation, compares the employee claim with the post-discount total, and no longer accepts a warning keyword as a substitute for arithmetic evidence. Offline build and all 100 tests pass; the post-fix live evidence gate is documented separately.
+A Vinamilk receipt then exposed a separate contract gap: the model read `183.114 - 2.828 = 180.286` correctly, but the old schema had no structured discount field. AURA now stores the printed reduction in `discountAmount`, validates the final-payable equation, compares the employee claim with the post-discount total, and no longer accepts a warning keyword as a substitute for arithmetic evidence. A Highlands postfix run also showed a loyalty value misclassified as a discount; the backend now clears it only when line items, subtotal, tax and final total independently prove that it has no monetary effect. Offline build and all 102 tests pass; the post-fix live evidence gate is documented separately.
 
 ## Evaluation API Key
 
@@ -138,7 +139,7 @@ In a second PowerShell window, verify the running application, database migratio
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb
 ```
 
-The full gate must return `READY: 0 failures, 0 warning(s)`, `AuraDb`, no pending migration, and fallback disabled. The current offline suite contains **100 tests**. For intermittent LocalDB user-instance errors, collect read-only diagnostics without editing the registry or MDF:
+The full gate must return `READY: 0 failures, 0 warning(s)`, `AuraDb`, no pending migration, and fallback disabled. The current offline suite contains **102 tests**. For intermittent LocalDB user-instance errors, collect read-only diagnostics without editing the registry or MDF:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb

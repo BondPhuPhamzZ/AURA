@@ -32,7 +32,7 @@ dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release --no-restore
 dotnet ef migrations has-pending-model-changes --project .\AURA.csproj --startup-project .\AURA.csproj --configuration Release --no-build
 ```
 
-Kỳ vọng: build `0 warning, 0 error`; test `100/100`; EF báo không có model change chưa migration. Thay đổi `discountAmount` nằm trong facts JSON nên không tạo migration. Chỉ chạy `dotnet ef database update` khi source thực sự có migration mới hoặc health báo pending migration; không dùng lệnh này như thao tác reset.
+Kỳ vọng: build `0 warning, 0 error`; test `102/102`; EF báo không có model change chưa migration. Thay đổi facts/queue UI không tạo migration. Chỉ chạy `dotnet ef database update` khi source thực sự có migration mới hoặc health báo pending migration; không dùng lệnh này như thao tác reset.
 
 ### Chạy app và full preflight
 
@@ -75,7 +75,7 @@ Kỳ vọng: `status=ok`, `databaseAvailable=true`, `databaseUpToDate=true`, `pe
 
 Không dùng 100 automated tests để tuyên bố model đã đọc đúng 100 ảnh. Automated tests bảo vệ code; ma trận trên mới kiểm provider thật.
 
-Sau hardening giảm giá, chạy thêm cổng trong `RECEIPT_DISCOUNT_RECONCILIATION_2026-10-01.md`: một receipt không giảm giá, Vinamilk ba lượt với tổng sau giảm, một negative dùng tổng trước giảm và ba batch Verify. Không trộn evidence trước khi schema có `discountAmount` vào tỷ lệ pass sau sửa.
+Sau hardening giảm giá và postfix live fix, chạy cổng trong `LIVE_POSTFIX_INCIDENT_2026-10-01.md`: Highlands ba lượt, Vinamilk ba lượt với tổng sau giảm, một negative dùng tổng trước giảm, ba batch Verify và một restart queue không cần ca mới để đánh thức. Không trộn evidence của commit `29257c3` vào tỷ lệ pass sau sửa.
 
 Ca Highlands ngày 01/10 đã chứng minh model có thể đặt cùng ngày in trên phiếu vào `transactionDate` ở một lượt và `invoiceDate` ở lượt sau. Sau hardening, không trộn hai lượt cũ vào tỷ lệ pass của commit mới. Cổng đạt là ba upload mới liên tiếp đều có `invoiceDate=2026-09-29`, `transactionReference=221196`, decision `AUTO_APPROVE`, raw JSON lưu được và không có `ValidationIssues`/provider error.
 

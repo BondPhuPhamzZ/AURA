@@ -40,17 +40,17 @@ Live validation ngày 29/09/2026 đã chốt thêm: OpenRouter đạt 15/15 quy�
 
 ### 4. Kiểm thử và công cụ vận hành
 
-- Automated tests tăng từ 70 lên 88 trong hardening Sprint 2, lên 93 sau hardening định danh chứng từ giấy và lên 100 sau đối chiếu giảm giá có cấu trúc; kết quả hiện tại: 100/100 pass.
+- Automated tests tăng từ 70 lên 88 trong hardening Sprint 2, lên 93 sau hardening định danh chứng từ giấy, 100 sau đối chiếu giảm giá và 102 sau postfix live regressions; kết quả hiện tại: 102/102 pass.
 - Build hiện tại: 0 warning, 0 error.
 - EF Core: migration và model snapshot đã được cập nhật cùng thay đổi schema; app smoke test đã truy vấn thành công các cột mới.
 - LocalDB đã áp migration thành công trong lần xác minh.
 - Thêm `tools/Invoke-ConcurrentUploadSmoke.ps1` để chạy 1-10 upload đồng thời, đo HTTP accepted P95, end-to-end P95, provider phục vụ, fallback và error code.
 - Test integrity vẫn khóa Verify Harness ở đúng 5 ca: 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`.
-- EF Core SQL Server/Tools và local `dotnet-ef` đã nâng cùng major lên 8.0.31. Build Release 0 warning/0 error, 100/100 test pass, không có package bị NuGet vulnerability scan cảnh báo và EF không có pending model change.
+- EF Core SQL Server/Tools và local `dotnet-ef` đã nâng cùng major lên 8.0.31. Build Release 0 warning/0 error, 102/102 test pass, không có package bị NuGet vulnerability scan cảnh báo và EF không có pending model change.
 - Thêm `tools/Invoke-ExtendedDatasetEvaluation.ps1` để chạy 15/30 ca qua upload endpoint mà không thêm nút UI. Runner xuất metadata, CSV, JSON và summary gồm decision/field accuracy, missed/over-escalation, system error, fallback và P50/P95.
 - Delay 4 giây của Official Verify chuyển thành `Verify:InterCaseDelayMs`; mặc định vẫn 4000 ms để không thay đổi baseline/quota behavior.
 - `/healthz` giờ kiểm tra thêm kết nối database, pending migration và khả dụng của thư mục receipt; thiếu một trong các cổng này sẽ trả `503 degraded` thay vì báo sẵn sàng giả. Endpoint không gọi AI provider nên không tiêu quota.
-- Semantic date repair ngày 01/10 khép khoảng lệch giữa UI và policy: paper receipt có `invoiceDate=null` nhưng `transactionDate` có giá trị không còn đi thẳng tới policy; cả OpenRouter và Ollama phải đọc lại đúng một lần. UI không còn dùng `transactionDate`/`completionDate` để hiển thị giả như ngày hóa đơn giấy và hiển thị `ValidationIssues` nếu repair vẫn sai. Test count giữ 93 bằng cách mở rộng các regression hiện hữu; build/test vẫn sạch.
+- Postfix live review ngày 01/10 thay strict semantic date repair bằng lossless canonicalization: paper receipt có `invoiceDate=null` và một `transactionDate` hợp lệ được chuẩn hóa mà không tốn lượt AI thứ hai; `completionDate` vẫn không được nâng. UI và policy cùng dùng ngày chứng từ canonical. Highlands-style điểm `1000` bị nhận nhầm discount chỉ được bỏ khi ba tổng độc lập đã bằng nhau; Vinamilk `2828` vẫn giữ. Bảng escalation tự đồng bộ DB mỗi 5 giây và có progress notice rõ ràng.
 - Extended evaluator đã chạy thật trên cùng 15 ca với fallback tắt: OpenRouter 15/15, Ollama 14/15. Runner hiện resolve expected facts từ source manifest và lưu hash để field exact không bị rỗng.
 - Concurrent smoke OpenRouter 5 request hoàn tất 5/5, HTTP accepted P95 93 ms và end-to-end P95 17,072 giây.
 - UI đã đối chiếu Linear design system: một shape token 6 px, palette/contrast gọn hơn và không tràn trang ở 1280, 768, 390 px; Console không có warning/error.
@@ -101,7 +101,7 @@ Không bật Ollama fallback trên hosted server nếu Ollama chỉ chạy ở l
 ## Checklist người vận hành cần làm tiếp
 
 1. Pull commit mới, chạy `.\tools\Test-DemoReadiness.ps1 -StartLocalDb -SkipHttp`, rồi `dotnet ef database update` trên đúng database demo.
-2. Chạy `dotnet build ../AURA.sln --no-restore` và `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore`; kỳ vọng 100/100. Không dùng `--no-build` nếu test project chưa vừa được build đúng configuration.
+2. Chạy `dotnet build ../AURA.sln --no-restore` và `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore`; kỳ vọng 102/102. Không dùng `--no-build` nếu test project chưa vừa được build đúng configuration.
 3. Giữ fallback tắt, test một upload OpenRouter và một Verify 5 ca để tái xác nhận baseline.
 4. Mở Ollama, bật fallback, chủ động mô phỏng lỗi primary bằng một key/model test không hợp lệ chỉ trong database test; xác nhận audit provider. Không làm bước này trên database/video chính.
 5. Chạy concurrency smoke 5 request trên database riêng hoặc bản sao demo và ghi Accepted P95, End-to-end P95, error rate.
@@ -118,4 +118,4 @@ Không bật Ollama fallback trên hosted server nếu Ollama chỉ chạy ở l
 - Hai thao tác quản lý cùng hồ sơ không ghi đè im lặng.
 - Ảnh và audit vẫn mở sau restart app.
 - Fallback được bật/tắt bằng cấu hình, không sửa code sát giờ demo.
-- Slide, workflow, README, runbook và build log nêu cùng một pipeline và cùng mốc 100 tests. Mốc 88/93 chỉ còn xuất hiện khi mô tả lịch sử của các đợt hardening trước.
+- Slide, workflow, README, runbook và build log nêu cùng một pipeline và cùng mốc 102 tests. Mốc 88/93/100 chỉ còn xuất hiện khi mô tả lịch sử của các đợt hardening trước.

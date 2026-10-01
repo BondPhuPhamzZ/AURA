@@ -207,7 +207,7 @@ evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
 headers = ("Build", "Test offline", "Dependency", "Evaluator")
-values = ("0 warning 0 error", "100 trên 100 pass", "Không có advisory", "15 ca đã chạy thật")
+values = ("0 warning 0 error", "102 trên 102 pass", "Không có advisory", "15 ca đã chạy thật")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)

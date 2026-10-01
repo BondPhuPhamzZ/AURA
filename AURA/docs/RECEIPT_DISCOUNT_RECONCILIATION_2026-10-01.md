@@ -8,6 +8,8 @@ Ca Vinamilk không phải lỗi đọc chữ hoặc đọc số. Kết quả tr�
 
 Contract hiện bổ sung `discountAmount`. Đây là trị tuyệt đối không âm của khoản giảm giá, chiết khấu, voucher hoặc khuyến mãi được in rõ ở cấp toàn hóa đơn. Model không được suy ra trường này chỉ từ chênh lệch số học hoặc số tiền người dùng khai báo.
 
+Postfix live smoke sau đó phát hiện một nhánh khác: Highlands có `sum(lineItems)=subtotal=totalAmount=59000`, nhưng model gán một số `1000` không tác động thành `discountAmount`. Đây không phải giảm giá có thể đối chiếu. Contract hiện loại rõ điểm/tích lũy, số dư điểm, mã hoặc phần trăm voucher, tiền khách đưa, tiền thừa, số lượng và mã terminal/khách hàng. Backend chỉ bỏ giá trị không tác động khi cả ba cách tính tổng độc lập đã bằng nhau và thuế bằng 0; warning vẫn lưu giá trị bị bỏ để audit. Vinamilk `183114 - 2828 = 180286` không thỏa điều kiện bỏ và vẫn được giữ nguyên.
+
 ## Quy tắc số học
 
 Backend chỉ chấp nhận một trong các quan hệ có bằng chứng cấu trúc:
@@ -46,12 +48,13 @@ Qwen chỉ trích xuất dữ kiện. `ReceiptSemanticValidator` kiểm phép t�
 - Semantic repair: hướng dẫn đọc lại khoản giảm được in rõ, không nhận claimed amount.
 - UI: hiển thị tạm tính, giảm giá hoặc chiết khấu, thuế và tổng thanh toán theo từng dòng.
 - Business rules: thống nhất cách hiểu subtotal, receipt-level discount và final payable.
+- Canonicalizer: loại một `discountAmount` không có base trước giảm riêng chỉ khi `lineItems = subtotal = totalAmount` và tax bằng 0; không suy ra hoặc sửa `totalAmount`.
 
 Không cần EF migration. Facts được lưu trong cột JSON hiện có nên JSON cũ không có `discountAmount` vẫn deserialize thành null.
 
 ## Kiểm thử offline
 
-Suite hiện có 100 test và không gọi API trả phí. Các regression mới bảo vệ:
+Suite hiện có 102 test và không gọi API trả phí. Các regression mới bảo vệ:
 
 - đúng phép tính Vinamilk và quyết định theo tổng sau giảm;
 - claimed amount dùng giá trước giảm phải bị từ chối tự động;
@@ -59,6 +62,7 @@ Suite hiện có 100 test và không gọi API trả phí. Các regression mới
 - giảm giá âm, vượt giá trị nền, sai phép tính hoặc có phần lẻ VND;
 - OpenRouter one-repair nhận lỗi thiếu `discountAmount` và trả facts hợp lệ;
 - OpenRouter và Ollama đều nhận schema chung có trường mới.
+- Highlands-style non-impacting discount bị bỏ có audit warning, còn khoản Vinamilk hợp lệ được giữ.
 
 ## Cổng kiểm thử provider thật
 
@@ -80,7 +84,7 @@ Mỗi run lưu ảnh đầu vào đã ẩn danh, claimed amount, ảnh UI cuối
 
 Điều kiện đạt:
 
-1. Một hóa đơn không có giảm giá vẫn ra đúng quyết định và `discountAmount=null`.
+1. Highlands không có giảm giá chạy lại ba lượt: `AUTO_APPROVE`, `discountAmount=null`, không có `ValidationIssues`. Warning chuẩn hóa có thể tồn tại nếu model vẫn đề xuất số `1000` không tác động.
 2. Vinamilk chạy ba lượt với claimed amount `180286`: cả ba `AUTO_APPROVE`, `discountAmount=2828`, `totalAmount=180286`, không có `ValidationIssues`.
 3. Vinamilk chạy một lượt với claimed amount `183114`: `ESCALATE_FACT` vì amount mismatch.
 4. Verify Harness chạy ba batch: mỗi batch 5/5 PASS với phân bố 3 AUTO, 1 FACT, 1 POLICY.
@@ -88,3 +92,5 @@ Mỗi run lưu ảnh đầu vào đã ẩn danh, claimed amount, ảnh UI cuối
 6. Manager accept, reject và undo tạo timeline đúng.
 
 `semanticRepairApplied=false` ở ca Vinamilk là first-pass tốt. `true` vẫn là kết quả hợp lệ nếu repair chỉ chạy một lần, final facts đúng, `ValidationIssues` rỗng và decision đúng. Không dùng riêng cờ này làm tiêu chí pass/fail.
+
+Evidence của commit `29257c3` tại `05_discount_reconciliation_postfix` là incident evidence, chưa phải post-fix pass: hai `statusUrl.txt` được lưu khi còn `PENDING`, và UI cuối cho thấy date-placement false escalation; Highlands còn có non-impacting `discountAmount=1000`. Thực hiện gate mới theo `LIVE_POSTFIX_INCIDENT_2026-10-01.md` trên commit chứa bản sửa này.
