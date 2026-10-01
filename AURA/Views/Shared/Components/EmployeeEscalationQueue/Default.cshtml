@@ -12,7 +12,7 @@ else
 {
     @foreach (var item in Model)
     {
-        <tr data-case-id="@item.Id">
+        <tr data-case-id="@item.Id" data-can-forward="true" data-row-source="persisted-escalation">
             <td data-label="Mã hồ sơ" class="cell-code">@item.Id[..Math.Min(8, item.Id.Length)]</td>
             <td data-label="Ảnh">
                 <a class="receipt-preview-link" href="@item.ImageUrl" target="_blank" rel="noopener">

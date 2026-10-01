@@ -99,10 +99,12 @@ public static class PolicyDecisionEngine
                 ? "không xác định được tiền tệ"
                 : $"tiền tệ {facts.Currency} chưa có tỷ giá/quy tắc quy đổi");
 
-        var evidenceDate = isDigital && !string.IsNullOrWhiteSpace(facts.TransactionDate)
-            ? facts.TransactionDate
-            : facts.InvoiceDate;
-        var evidenceDateLabel = isDigital ? "ngày giao dịch/thanh toán" : "ngày hóa đơn";
+        var evidenceDate = isDigital
+            ? facts.TransactionDate ?? facts.InvoiceDate
+            : facts.InvoiceDate ?? facts.TransactionDate;
+        var evidenceDateLabel = isDigital
+            ? "ngày giao dịch/thanh toán"
+            : "ngày hóa đơn/biên nhận/giao dịch";
         if (!TryParseInvoiceDate(evidenceDate, out var invoiceDate))
             factProblems.Add($"thiếu hoặc không đọc được {evidenceDateLabel} theo định dạng YYYY-MM-DD");
         else

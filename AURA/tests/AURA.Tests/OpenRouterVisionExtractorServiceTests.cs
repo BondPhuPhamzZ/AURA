@@ -280,11 +280,10 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.Empty(result.ValidationIssues);
 
             var dateAttempts = 0;
-            string? repairRequestJson = null;
             var dateHandler = new StubHandler(async request =>
             {
                 dateAttempts++;
-                if (dateAttempts == 2) repairRequestJson = await request.Content!.ReadAsStringAsync();
+                _ = await request.Content!.ReadAsStringAsync();
                 var content = dateAttempts == 1 ? MisplacedPaperDateJson : CorrectedPaperDateJson;
                 var responseJson = JsonSerializer.Serialize(new
                 {
@@ -301,15 +300,12 @@ public sealed class OpenRouterVisionExtractorServiceTests
 
             var correctedDate = await dateService.ExtractFactsAsync(Path.Combine(root, "receipt.jpg"));
 
-            Assert.Equal(2, dateAttempts);
+            Assert.Equal(1, dateAttempts);
             Assert.Equal("2026-09-29", correctedDate.InvoiceDate);
             Assert.Null(correctedDate.TransactionDate);
             Assert.Empty(correctedDate.ValidationIssues);
-            Assert.True(correctedDate.SemanticRepairApplied);
-            Assert.Contains(correctedDate.SemanticRepairIssues,
-                issue => issue.Contains("invoiceDate", StringComparison.Ordinal));
-            Assert.Contains("invoiceDate", repairRequestJson, StringComparison.Ordinal);
-            Assert.Contains("transactionDate", repairRequestJson, StringComparison.Ordinal);
+            Assert.False(correctedDate.SemanticRepairApplied);
+            Assert.Empty(correctedDate.SemanticRepairIssues);
 
             var discountAttempts = 0;
             string? discountRepairRequestJson = null;

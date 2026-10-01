@@ -107,6 +107,16 @@
                 <button type="button" class="button-ghost-sm history-button" onclick="navigateToTab('audit')">Xem lịch sử hành vi</button>
             </div>
         </div>
+
+        <div id="analysisProgressNotice" class="analysis-progress-notice" role="status"
+             aria-live="polite" aria-busy="false" hidden>
+            <span class="analysis-progress-spinner" aria-hidden="true"></span>
+            <div>
+                <strong id="analysisProgressTitle">AI đang xử lý hồ sơ</strong>
+                <span id="analysisProgressDetail">Bảng sẽ tự cập nhật, không cần tải lại trang.</span>
+            </div>
+            <span id="analysisProgressElapsed" class="analysis-progress-elapsed"></span>
+        </div>
         
         <p class="table-caption">
             Ca tự động duyệt được ghi thẳng vào lịch sử. Ca cần xử lý được giữ tại đây cho tới khi nhân viên chuyển tiếp. <strong>Kỳ vọng/Đối chiếu</strong> chỉ dùng trong lượt Verify có nhãn sẵn.
@@ -171,6 +181,37 @@
         border-radius: 6px;
         width: 80%;
     }
+    .analysis-progress-notice {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 14px 0 10px;
+        padding: 12px 14px;
+        border: 1px solid var(--colors-border);
+        border-radius: 6px;
+        background: var(--colors-surface-soft);
+        color: var(--colors-ink);
+    }
+    .analysis-progress-notice[hidden] { display: none; }
+    .analysis-progress-notice > div { display: grid; gap: 2px; min-width: 0; }
+    .analysis-progress-notice strong { font-size: 0.9rem; }
+    .analysis-progress-notice span:not(.analysis-progress-spinner) { color: var(--colors-ink-subtle); font-size: 0.82rem; }
+    .analysis-progress-spinner {
+        width: 16px;
+        height: 16px;
+        flex: 0 0 16px;
+        border: 2px solid rgba(255,255,255,.22);
+        border-top-color: var(--colors-primary);
+        border-radius: 50%;
+        animation: analysis-spin .8s linear infinite;
+    }
+    .analysis-progress-elapsed { margin-left: auto; white-space: nowrap; }
+    .analysis-progress-notice.is-complete .analysis-progress-spinner,
+    .analysis-progress-notice.is-error .analysis-progress-spinner { animation: none; border-radius: 6px; }
+    .analysis-progress-notice.is-complete .analysis-progress-spinner { border-color: var(--bs-success); background: var(--bs-success); }
+    .analysis-progress-notice.is-error .analysis-progress-spinner { border-color: var(--bs-danger); background: var(--bs-danger); }
+    @@keyframes analysis-spin { to { transform: rotate(360deg); } }
+    @@media (max-width: 640px) { .analysis-progress-elapsed { display: none; } }
 </style>
 
 <script>
@@ -186,6 +227,15 @@
     const amountRawInput = document.getElementById('claimedAmount');
     const maxUploadBytes = @((long)ReceiptStorage.Value.MaxFileSizeMb * 1024L * 1024L);
     const maxUploadMegabytes = @ReceiptStorage.Value.MaxFileSizeMb;
+    const resultsBody = document.getElementById('resultsBody');
+    const emptyResultsRow = '<tr><td colspan="8" class="text-center empty-state">Không có hồ sơ nào đang chờ chuyển tiếp. Ca tự động duyệt đã được ghi thẳng vào lịch sử.</td></tr>';
+    let currentAnalysisItems = [];
+    let processingPlaceholderRows = 0;
+    let persistedEscalationRows = Array.from(resultsBody.querySelectorAll('tr[data-case-id]'))
+        .map(row => ({ caseId: row.dataset.caseId, html: row.outerHTML }));
+    let queueRefreshInFlight = false;
+    let analysisProgressStartedAt = null;
+    let analysisProgressTimer = null;
     let localPreviewUrl = null;
 
     function syncClaimedAmount() {
@@ -307,10 +357,10 @@
             normalizedDocumentType.includes('E-INVOICE');
         const evidenceDate = isDigitalEvidence
             ? (facts.transactionDate || facts.invoiceDate)
-            : facts.invoiceDate;
+            : (facts.invoiceDate || facts.transactionDate);
         const evidenceDateLabel = isDigitalEvidence
             ? 'Ngày giao dịch / thanh toán'
-            : 'Ngày hóa đơn / biên nhận';
+            : 'Ngày chứng từ / giao dịch';
         const items = Array.isArray(facts.lineItems) && facts.lineItems.length
             ? '<ul class="extracted-line-items">' + facts.lineItems.map(item =>
                 '<li><span>' + escapeHtml(displayFact(item.description)) + '</span><strong>' + escapeHtml(formatFactMoney(item.amount)) + '</strong></li>').join('') + '</ul>'
@@ -403,7 +453,8 @@
             : escapeHtml(item.image);
         const handoffText = item.canForward ? (item.handoffPrompt || '') : (item.question || '');
 
-        return '<tr>' +
+        return '<tr data-case-id="' + escapeHtml(item.caseId || '') + '" data-can-forward="' +
+            (item.canForward ? 'true' : 'false') + '" data-row-source="current-analysis">' +
             '<td data-label="Mã hồ sơ" class="cell-code">' + escapeHtml(item.caseId ? item.caseId.substring(0,8) : '') + '</td>' +
             '<td data-label="Ảnh">' + receipt + '</td>' +
             '<td data-label="Kỳ vọng">' + expectedBadge + '</td>' +
@@ -425,27 +476,95 @@
         return String(value == null ? '' : value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
 
+    function renderResultsTable() {
+        const currentIds = new Set(currentAnalysisItems
+            .map(item => item?.caseId)
+            .filter(Boolean));
+        const currentHtml = currentAnalysisItems.map(renderResultRow).join('');
+        const placeholderHtml = Array.from({ length: processingPlaceholderRows }, getSkeletonRow).join('');
+        const persistedHtml = persistedEscalationRows
+            .filter(row => row.caseId && !currentIds.has(row.caseId))
+            .map(row => row.html)
+            .join('');
+
+        resultsBody.innerHTML = currentHtml + placeholderHtml + persistedHtml || emptyResultsRow;
+        updatePendingEscalationSummary();
+    }
+
+    function setCurrentAnalysisItems(items) {
+        currentAnalysisItems = (Array.isArray(items) ? items : [items]).filter(Boolean);
+        processingPlaceholderRows = 0;
+        renderResultsTable();
+    }
+
+    async function refreshEmployeeEscalationQueue() {
+        if (queueRefreshInFlight) return;
+        queueRefreshInFlight = true;
+        try {
+            const response = await fetch('@Url.Action("EmployeeEscalations", "Home")', { cache: 'no-store' });
+            if (!response.ok) return;
+            const container = document.createElement('tbody');
+            container.innerHTML = await response.text();
+            if (container.querySelector('td.text-danger')) return;
+            persistedEscalationRows = Array.from(container.querySelectorAll('tr[data-case-id]'))
+                .map(row => ({ caseId: row.dataset.caseId, html: row.outerHTML }));
+            renderResultsTable();
+        } catch {
+            // A transient queue-refresh failure must not erase the last known rows.
+        } finally {
+            queueRefreshInFlight = false;
+        }
+    }
+
+    function beginAnalysisProgress(title, detail) {
+        const notice = document.getElementById('analysisProgressNotice');
+        notice.hidden = false;
+        notice.classList.remove('is-complete', 'is-error');
+        notice.setAttribute('aria-busy', 'true');
+        document.getElementById('analysisProgressTitle').textContent = title;
+        document.getElementById('analysisProgressDetail').textContent = detail;
+        analysisProgressStartedAt = Date.now();
+        clearInterval(analysisProgressTimer);
+        const updateElapsed = () => {
+            const seconds = Math.max(0, Math.floor((Date.now() - analysisProgressStartedAt) / 1000));
+            document.getElementById('analysisProgressElapsed').textContent = `Đã chờ ${seconds}s`;
+        };
+        updateElapsed();
+        analysisProgressTimer = setInterval(updateElapsed, 1000);
+    }
+
+    function finishAnalysisProgress(title, detail, isError = false) {
+        clearInterval(analysisProgressTimer);
+        analysisProgressTimer = null;
+        const notice = document.getElementById('analysisProgressNotice');
+        notice.hidden = false;
+        notice.classList.toggle('is-complete', !isError);
+        notice.classList.toggle('is-error', isError);
+        notice.setAttribute('aria-busy', 'false');
+        document.getElementById('analysisProgressTitle').textContent = title;
+        document.getElementById('analysisProgressDetail').textContent = detail;
+        document.getElementById('analysisProgressElapsed').textContent = '';
+    }
+
     function updateAnalysisSummary(items) {
         const rows = Array.isArray(items) ? items : [items];
         const approved = rows.filter(item => item?.actual === 'AUTO_APPROVE').length;
         const escalated = rows.filter(item => item?.actual?.startsWith('ESCALATE_')).length;
-        const summary = document.getElementById('analysisSummary');
-        summary.innerHTML = '<span class="summary-approved">' + approved + ' tự động duyệt</span>' +
-            '<span class="summary-escalated">' + escalated + ' cần chuyển tiếp</span>';
+        updatePendingEscalationSummary();
         showToast(`Đã phân tích ${rows.length} hồ sơ: ${approved} tự động duyệt, ${escalated} cần chuyển tiếp.`,
             escalated > 0 ? 'warning' : 'success');
     }
 
     function updatePendingEscalationSummary() {
-        const pendingCount = document.querySelectorAll('#resultsBody tr[data-case-id]').length;
+        const approvedCount = currentAnalysisItems.filter(item => item?.actual === 'AUTO_APPROVE').length;
+        const pendingCount = document.querySelectorAll('#resultsBody tr[data-can-forward="true"]').length;
         const summary = document.getElementById('analysisSummary');
-        let escalatedChip = summary.querySelector('.summary-escalated');
-        if (!escalatedChip) {
-            escalatedChip = document.createElement('span');
-            escalatedChip.className = 'summary-escalated';
-            summary.appendChild(escalatedChip);
+        if (approvedCount === 0 && pendingCount === 0 && currentAnalysisItems.length === 0 && processingPlaceholderRows === 0) {
+            summary.innerHTML = '<span class="summary-placeholder">Chưa có lượt phân tích mới.</span>';
+            return;
         }
-        escalatedChip.textContent = pendingCount + ' đang chờ chuyển tiếp';
+        summary.innerHTML = '<span class="summary-approved">' + approvedCount + ' tự động duyệt trong lượt hiện tại</span>' +
+            '<span class="summary-escalated">' + pendingCount + ' đang chờ chuyển tiếp</span>';
     }
 
     async function readJsonResponse(response, context) {
@@ -548,9 +667,12 @@
         btn.disabled = true;
         btnText.innerText = 'Đang xử lý...';
         renderExtractedFactsLoading('AI đang đọc và đối chiếu nội dung hóa đơn…');
-        
-        // Keep the operator at the upload workspace; update only the dependent fragments.
-        document.getElementById('resultsBody').innerHTML = getSkeletonRow();
+        beginAnalysisProgress('AI đang tiếp nhận hóa đơn',
+            'Ảnh sẽ được lưu trước, sau đó xử lý bằng hàng đợi bền vững. Bảng tự cập nhật, không cần tải lại trang.');
+
+        currentAnalysisItems = [];
+        processingPlaceholderRows = 1;
+        renderResultsTable();
 
         const form = document.getElementById('uploadForm');
         const formData = new FormData(form);
@@ -564,13 +686,13 @@
             });
 
             const data = await readJsonResponse(response, 'Tải lên hóa đơn');
-            document.getElementById('resultsBody').innerHTML = renderResultRow(data);
+            setCurrentAnalysisItems(data);
             sessionStorage.setItem('aura.pendingReceipt', JSON.stringify({ caseId: data.caseId, statusUrl: data.statusUrl }));
             btn.disabled = false;
             btnText.innerText = originalText;
             showToast('Đã ghi nhận hồ sơ. AI đang xử lý nền; bạn có thể tiếp tục thao tác.', 'success');
             const completed = await pollReceiptStatus(data.statusUrl);
-            document.getElementById('resultsBody').innerHTML = renderResultRow(completed);
+            setCurrentAnalysisItems(completed);
             sessionStorage.removeItem('aura.pendingReceipt');
             if (completed.facts) renderExtractedFacts(completed.facts);
             else renderExtractedFactsUnavailable('AI chưa trả về dữ liệu trích xuất; hồ sơ đã được chuyển sang kiểm tra thủ công.');
@@ -578,9 +700,16 @@
                 showToast('Ảnh này đã từng được dùng; hệ thống vẫn xử lý vì đang bật chế độ kiểm thử.', 'warning');
             }
             updateAnalysisSummary(completed);
+            finishAnalysisProgress('AI đã hoàn tất thẩm định',
+                completed.canForward
+                    ? 'Hồ sơ cần nhân viên chuyển tiếp để quản lý xem xét.'
+                    : 'Kết quả đã được lưu vào lịch sử hành vi.');
+            await refreshEmployeeEscalationQueue();
         } catch(e) {
-            document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Có lỗi hệ thống: ' + escapeHtml(e.message) + '</td></tr>';
+            processingPlaceholderRows = 0;
+            renderResultsTable();
             renderExtractedFactsUnavailable('Không nhận được nội dung từ AI: ' + e.message);
+            finishAnalysisProgress('Không thể hoàn tất thẩm định', e.message, true);
         } finally {
             btn.disabled = false;
             btnText.innerText = originalText;
@@ -592,7 +721,7 @@
         for (let attempt = 0; attempt < 900; attempt++) {
             const response = await fetch(statusUrl, { cache: 'no-store' });
             const item = await readJsonResponse(response, 'Theo dõi trạng thái AI');
-            document.getElementById('resultsBody').innerHTML = renderResultRow(item);
+            setCurrentAnalysisItems(item);
             if (item.processingState === 'COMPLETED' || item.processingState === 'FAILED') return item;
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
@@ -604,13 +733,19 @@
         if (!raw) return;
         try {
             const pending = JSON.parse(raw);
+            beginAnalysisProgress('Đang khôi phục hồ sơ chưa hoàn tất',
+                'Hàng đợi vẫn chạy trong nền; bảng sẽ tự cập nhật khi có kết quả.');
             const completed = await pollReceiptStatus(pending.statusUrl);
             sessionStorage.removeItem('aura.pendingReceipt');
-            document.getElementById('resultsBody').innerHTML = renderResultRow(completed);
+            setCurrentAnalysisItems(completed);
             if (completed.facts) renderExtractedFacts(completed.facts);
             updateAnalysisSummary(completed);
+            finishAnalysisProgress('Đã khôi phục kết quả thẩm định',
+                completed.canForward ? 'Hồ sơ đang chờ chuyển tiếp.' : 'Kết quả đã được lưu vào lịch sử hành vi.');
+            await refreshEmployeeEscalationQueue();
         } catch (error) {
             showToast('Không thể khôi phục trạng thái xử lý: ' + error.message, 'warning');
+            finishAnalysisProgress('Không thể khôi phục trạng thái', error.message, true);
         }
     }
     
@@ -623,13 +758,11 @@
         btn.disabled = true;
         btnText.innerText = 'Đang chạy 5 hóa đơn...';
         renderExtractedFactsLoading('AI đang lần lượt xử lý 5 ca Verify Harness…');
-        
-        // Show 5 skeleton rows
-        let skeletonHtml = '';
-        for(let i=0; i<5; i++) {
-            skeletonHtml += getSkeletonRow();
-        }
-        document.getElementById('resultsBody').innerHTML = skeletonHtml;
+        beginAnalysisProgress('Verify Harness đang chạy 5 ca',
+            'Các ca được xử lý tuần tự để hạn chế rate limit. Bảng sẽ cập nhật sau khi cả batch hoàn tất.');
+        currentAnalysisItems = [];
+        processingPlaceholderRows = 5;
+        renderResultsTable();
         
         const dummyForm = document.getElementById('verifyFormDummy');
         const formData = new FormData(dummyForm);
@@ -643,15 +776,13 @@
             const data = await readJsonResponse(response, 'Verify Harness');
             
             if (data.error) {
-                document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Lỗi: ' + escapeHtml(data.error) + '</td></tr>';
+                processingPlaceholderRows = 0;
+                renderResultsTable();
+                finishAnalysisProgress('Verify Harness không hoàn tất', data.error, true);
                 return;
             }
 
-            let html = '';
-            data.forEach(item => {
-                html += renderResultRow(item);
-            });
-            document.getElementById('resultsBody').innerHTML = html;
+            setCurrentAnalysisItems(data);
             const firstExtractedResult = data.find(item => item?.facts);
             if (firstExtractedResult) {
                 renderExtractedFacts(firstExtractedResult.facts);
@@ -660,10 +791,15 @@
                 showToast('Không có nội dung AI nào được trả về trong lượt Verify này.', 'warning');
             }
             updateAnalysisSummary(data);
+            finishAnalysisProgress('Verify Harness đã hoàn tất',
+                'Kết quả Expected/Actual đã được lưu; các ca escalation vẫn ở bảng cho tới khi chuyển tiếp.');
+            await refreshEmployeeEscalationQueue();
             scrollToResults();
         } catch(e) {
-            document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="text-danger text-center">Có lỗi xảy ra: ' + escapeHtml(e.message) + '</td></tr>';
+            processingPlaceholderRows = 0;
+            renderResultsTable();
             renderExtractedFactsUnavailable('Verify Harness không nhận được nội dung từ AI: ' + e.message);
+            finishAnalysisProgress('Verify Harness không hoàn tất', e.message, true);
             scrollToResults();
         } finally {
             btn.disabled = false;
@@ -690,6 +826,11 @@
         }
     });
 
-    updatePendingEscalationSummary();
+    renderResultsTable();
+    refreshEmployeeEscalationQueue();
+    setInterval(refreshEmployeeEscalationQueue, 5000);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) refreshEmployeeEscalationQueue();
+    });
     resumePendingReceipt();
 </script>

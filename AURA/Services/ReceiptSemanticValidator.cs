@@ -90,12 +90,11 @@ public static class ReceiptSemanticValidator
               Với RETAIL_RECEIPT hoặc RESTAURANT_BILL, "Số biên nhận"/"Receipt No"/"Bill No"
               phải đi vào receiptNumber. Mã giao dịch riêng cho lần mua như "Check", "Transaction No",
               "Trace", "RRN" hoặc "Mã giao dịch" phải đi vào transactionReference.
-            - Với VAT_INVOICE, RETAIL_RECEIPT hoặc RESTAURANT_BILL, ngày được in như ngày của
-              hóa đơn/biên nhận phải đi vào invoiceDate. transactionDate chỉ dùng cho ngày
-              mua/thanh toán/đặt hàng của chứng từ số như ECOMMERCE hoặc RIDE_HAILING.
+            - Với VAT_INVOICE, RETAIL_RECEIPT hoặc RESTAURANT_BILL, ngày có nhãn hóa đơn/biên nhận
+              đi vào invoiceDate. Nếu chứng từ giấy chỉ in ngày mua/giao dịch/thanh toán thì có thể
+              đặt ngày đó vào transactionDate; backend sẽ chuẩn hóa thành ngày chứng từ để kiểm policy.
               Nếu ảnh chỉ cho thấy ngày hoàn tất/giao hàng thì giữ completionDate riêng, không
-              sao chép ngày đó sang invoiceDate. Chỉ chuyển một ngày sang invoiceDate khi nhãn
-              và bố cục trong ảnh chứng minh đó thực sự là ngày hóa đơn/biên nhận.
+              sao chép ngày đó sang invoiceDate hoặc transactionDate.
             - Shop/store ID, POS/register ID, terminal ID, merchant ID, pager number, tax ID,
               serial hóa đơn và mẫu số không được dùng làm transactionReference.
             - Không đặt các định danh chứng từ giấy vào orderId, bookingId hay shippingTrackingCode.
@@ -104,6 +103,9 @@ public static class ReceiptSemanticValidator
               Ví dụ `-2.828` VND phải là discountAmount=2828. Không suy ra discountAmount chỉ từ
               chênh lệch số học. totalAmount phải là số cuối cùng thực trả và phép tính phải đối chiếu
               được theo subtotal + tax - discountAmount = totalAmount (hoặc subtotal đã gồm thuế).
+              Điểm/tích lũy, số dư điểm, mã hoặc phần trăm voucher, tiền khách đưa, tiền thừa,
+              số lượng và mã terminal/khách hàng không phải discountAmount. Nếu lineItems, subtotal
+              và totalAmount đã bằng nhau thì không gán một số rời rạc thành discountAmount.
             - Không suy đoán từ tên file, kết quả mong đợi hoặc số tiền người dùng khai báo.
             - Chỉ trả về một JSON object đúng schema, không thêm Markdown hay giải thích.
             """;
@@ -130,7 +132,10 @@ public static class ReceiptSemanticValidator
     {
         var documentType = facts.DocumentType?.Trim().ToUpperInvariant();
         if (!IsPaperDocument(documentType))
+        {
+            NormalizeNonImpactingDiscount(facts);
             return facts;
+        }
 
         // A correction response may keep a previously misplaced value after filling a
         // canonical paper identifier. Removing exact duplicates is lossless and never
@@ -144,11 +149,22 @@ public static class ReceiptSemanticValidator
         if (canonicalIdentifiers.Any(value => SameIdentifier(facts.ShippingTrackingCode, value)))
             facts.ShippingTrackingCode = null;
 
-        // Structured-output models sometimes duplicate the same printed paper-receipt date
-        // into transactionDate. Once invoiceDate contains the identical canonical value,
-        // clearing the duplicate is lossless and keeps the persisted facts aligned with the
-        // field that the deterministic paper-document policy actually evaluates.
-        if (SameDate(facts.InvoiceDate, facts.TransactionDate)) facts.TransactionDate = null;
+        // A paper receipt can label its only date as either the receipt date or the transaction
+        // date. Both describe the purchase event that the reimbursement policy must age-check.
+        // Promoting the sole transaction date to the canonical paper evidence date is a lossless
+        // field normalization; it does not invent a date or copy a delivery/completion date.
+        if (string.IsNullOrWhiteSpace(facts.InvoiceDate) &&
+            !string.IsNullOrWhiteSpace(facts.TransactionDate))
+        {
+            facts.InvoiceDate = facts.TransactionDate;
+            facts.TransactionDate = null;
+        }
+        else if (SameDate(facts.InvoiceDate, facts.TransactionDate))
+        {
+            facts.TransactionDate = null;
+        }
+
+        NormalizeNonImpactingDiscount(facts);
         return facts;
     }
 
@@ -159,22 +175,37 @@ public static class ReceiptSemanticValidator
 
         if (string.IsNullOrWhiteSpace(facts.InvoiceDate))
         {
-            if (!string.IsNullOrWhiteSpace(facts.TransactionDate))
-            {
-                issues.Add("chứng từ giấy thiếu invoiceDate nhưng ngày nhìn thấy đang được gán vào transactionDate");
-            }
-            else if (!string.IsNullOrWhiteSpace(facts.CompletionDate))
+            if (!string.IsNullOrWhiteSpace(facts.CompletionDate))
             {
                 issues.Add("chứng từ giấy thiếu invoiceDate; completionDate không thể thay cho ngày hóa đơn/biên nhận");
             }
 
             return;
         }
+    }
 
-        if (!string.IsNullOrWhiteSpace(facts.TransactionDate))
+    private static void NormalizeNonImpactingDiscount(ReceiptExtractionDto facts)
+    {
+        if (facts.DiscountAmount is null or <= 0 ||
+            !facts.Subtotal.HasValue || !facts.TotalAmount.HasValue ||
+            facts.LineItems.Count == 0 || facts.LineItems.Any(item => !item.Amount.HasValue) ||
+            facts.Tax.GetValueOrDefault() != 0)
         {
-            issues.Add("chứng từ giấy còn chứa transactionDate khác invoiceDate; phải đọc lại nhãn ngày trong ảnh");
+            return;
         }
+
+        var lineTotal = facts.LineItems.Sum(item => item.Amount!.Value);
+        if (!AreEqual(lineTotal, facts.Subtotal.Value) ||
+            !AreEqual(facts.Subtotal.Value, facts.TotalAmount.Value))
+        {
+            return;
+        }
+
+        var ignoredValue = facts.DiscountAmount.Value;
+        facts.DiscountAmount = null;
+        facts.Warnings.Add(
+            $"Bỏ qua discountAmount={ignoredValue} vì tổng dòng hàng, tạm tính và tổng thanh toán đều bằng " +
+            $"{facts.TotalAmount.Value}; không có giá trước giảm riêng để đối chiếu.");
     }
 
     private static void AddFractionalVndIssue(List<string> issues, string field, decimal? value)

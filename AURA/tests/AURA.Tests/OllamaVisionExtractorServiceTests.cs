@@ -157,13 +157,12 @@ public sealed class OllamaVisionExtractorServiceTests
 
             var correctedDate = await dateService.ExtractFactsAsync(Path.Combine(root, "receipt.jpg"));
 
-            Assert.Equal(2, dateAttempts);
+            Assert.Equal(1, dateAttempts);
             Assert.Equal("2026-09-29", correctedDate.InvoiceDate);
             Assert.Null(correctedDate.TransactionDate);
             Assert.Empty(correctedDate.ValidationIssues);
-            Assert.True(correctedDate.SemanticRepairApplied);
-            Assert.Contains(correctedDate.SemanticRepairIssues,
-                issue => issue.Contains("invoiceDate", StringComparison.Ordinal));
+            Assert.False(correctedDate.SemanticRepairApplied);
+            Assert.Empty(correctedDate.SemanticRepairIssues);
         }
         finally
         {

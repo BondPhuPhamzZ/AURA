@@ -73,7 +73,7 @@ public sealed class ReceiptSemanticValidatorTests
     }
 
     [Fact]
-    public void Detects_paper_receipt_fields_assigned_to_noncanonical_fields()
+    public void Normalizes_a_paper_transaction_date_without_inventing_new_evidence()
     {
         var facts = new ReceiptExtractionDto
         {
@@ -90,13 +90,13 @@ public sealed class ReceiptSemanticValidatorTests
             LineItems = [new ReceiptLineItem { Description = "Phở bò tái", Amount = 88_000m }]
         };
 
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
         var issues = ReceiptSemanticValidator.Validate(facts);
 
         Assert.Contains(issues, issue => issue.Contains("invoiceNumber", StringComparison.Ordinal));
-        Assert.Contains(issues, issue => issue.Contains("invoiceDate", StringComparison.Ordinal) &&
-            issue.Contains("transactionDate", StringComparison.Ordinal));
-        Assert.Contains("invoiceDate", ReceiptSemanticValidator.BuildRepairInstruction(issues),
-            StringComparison.Ordinal);
+        Assert.Equal("2026-09-18", facts.InvoiceDate);
+        Assert.Null(facts.TransactionDate);
+        Assert.DoesNotContain(issues, issue => issue.Contains("Date", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -154,8 +154,53 @@ public sealed class ReceiptSemanticValidatorTests
 
         Assert.Contains(issues, issue => issue.Contains("receiptNumber", StringComparison.Ordinal) &&
             issue.Contains("transactionReference", StringComparison.Ordinal));
-        Assert.Contains(issues, issue => issue.Contains("transactionDate", StringComparison.Ordinal) &&
-            issue.Contains("invoiceDate", StringComparison.Ordinal));
+        Assert.DoesNotContain(issues, issue => issue.Contains("Date", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Removes_a_nonimpacting_discount_when_three_independent_totals_already_match()
+    {
+        var facts = new ReceiptExtractionDto
+        {
+            DocumentType = "RETAIL_RECEIPT",
+            DocumentStatus = "ISSUED",
+            MerchantName = "Highlands Coffee",
+            TransactionReference = "221196",
+            TransactionDate = "2026-09-29",
+            InvoiceTime = "13:52",
+            Currency = "VND",
+            Subtotal = 59_000m,
+            DiscountAmount = 1_000m,
+            Tax = 0m,
+            TotalAmount = 59_000m,
+            Confidence = 0.95,
+            LineItems = [new ReceiptLineItem { Description = "Đồ uống", Amount = 59_000m }]
+        };
+
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
+
+        Assert.Equal("2026-09-29", facts.InvoiceDate);
+        Assert.Null(facts.TransactionDate);
+        Assert.Null(facts.DiscountAmount);
+        Assert.Contains(facts.Warnings,
+            warning => warning.Contains("không có giá trước giảm", StringComparison.Ordinal));
+        Assert.Empty(ReceiptSemanticValidator.Validate(facts));
+        Assert.Equal("AUTO_APPROVE",
+            PolicyDecisionEngine.Evaluate(facts, 59_000m,
+                utcNow: new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc)).Status);
+    }
+
+    [Fact]
+    public void Keeps_a_reconciled_receipt_discount_and_distinct_final_payment()
+    {
+        var facts = VinamilkDiscountedReceipt();
+
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
+
+        Assert.Equal(2_828m, facts.DiscountAmount);
+        Assert.DoesNotContain(facts.Warnings,
+            warning => warning.Contains("không có giá trước giảm", StringComparison.Ordinal));
+        Assert.Empty(ReceiptSemanticValidator.Validate(facts));
     }
 
     [Fact]
