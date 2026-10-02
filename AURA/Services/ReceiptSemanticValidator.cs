@@ -44,6 +44,11 @@ public static class ReceiptSemanticValidator
         }
 
         var isPaperDocument = IsPaperDocument(documentType);
+        if (isPaperDocument && facts.LineItems.Count == 0)
+        {
+            issues.Add("chứng từ giấy thiếu lineItems nên chưa thể kiểm tra hàng hóa/dịch vụ theo policy");
+        }
+
         AddDatePlacementIssues(issues, facts, isPaperDocument);
         if (isPaperDocument &&
             (!string.IsNullOrWhiteSpace(facts.OrderId) ||
@@ -98,6 +103,9 @@ public static class ReceiptSemanticValidator
             - Shop/store ID, POS/register ID, terminal ID, merchant ID, pager number, tax ID,
               serial hóa đơn và mẫu số không được dùng làm transactionReference.
             - Không đặt các định danh chứng từ giấy vào orderId, bookingId hay shippingTrackingCode.
+            - Chứng từ giấy chỉ đủ dữ kiện để xét policy khi đọc được ít nhất một hàng hóa/dịch vụ
+              đã mua. Nếu vùng chi tiết món hàng bị che, mờ hoặc không đọc được, không được suy đoán:
+              giữ lineItems rỗng, thêm `lineItems` vào missingFields và mô tả nguyên nhân trong warnings.
             - Nếu ảnh in rõ `Giảm giá`, `Chiết khấu`, `Voucher`, `Khuyến mãi` hoặc một khoản giảm
               tương đương ở cấp toàn hóa đơn, đặt trị tuyệt đối không âm vào discountAmount.
               Ví dụ `-2.828` VND phải là discountAmount=2828. Không suy ra discountAmount chỉ từ
@@ -115,6 +123,15 @@ public static class ReceiptSemanticValidator
         IReadOnlyList<string> issues)
     {
         facts.ValidationIssues = issues.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+        if (issues.Any(issue => issue.Contains("thiếu lineItems", StringComparison.OrdinalIgnoreCase)))
+        {
+            AddDistinct(facts.MissingFields, "lineItems");
+            AddDistinct(facts.Warnings,
+                "Không đọc được danh sách hàng hóa/dịch vụ; cần người kiểm tra trước khi đối chiếu policy.");
+            facts.Confidence = Math.Min(facts.Confidence, 0.69);
+        }
+
         return facts;
     }
 
@@ -257,6 +274,12 @@ public static class ReceiptSemanticValidator
     }
 
     private static bool AreEqual(decimal left, decimal right) => Math.Abs(left - right) <= 0.01m;
+
+    private static void AddDistinct(ICollection<string> values, string value)
+    {
+        if (!values.Contains(value, StringComparer.OrdinalIgnoreCase))
+            values.Add(value);
+    }
 
     private static bool IsPaperDocument(string? documentType) =>
         documentType is "VAT_INVOICE" or "RETAIL_RECEIPT" or "RESTAURANT_BILL";

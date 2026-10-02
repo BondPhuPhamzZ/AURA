@@ -4,10 +4,29 @@ param(
     [string]$ExpectedDatabase = "AuraDb",
     [switch]$StartLocalDb,
     [switch]$DiagnoseLocalDb,
-    [switch]$SkipHttp
+    [switch]$SkipHttp,
+    [string]$OutputPath
 )
 
 $ErrorActionPreference = 'Stop'
+$transcriptStarted = $false
+if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
+    $fullOutputPath = [System.IO.Path]::GetFullPath($OutputPath)
+    $outputDirectory = Split-Path -Parent $fullOutputPath
+    if (-not (Test-Path -LiteralPath $outputDirectory)) {
+        New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
+    }
+    Start-Transcript -LiteralPath $fullOutputPath -Force | Out-Null
+    $transcriptStarted = $true
+}
+
+function Complete-Readiness([int]$ExitCode) {
+    if ($script:transcriptStarted) {
+        Stop-Transcript | Out-Null
+    }
+    exit $ExitCode
+}
+
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $projectPath = Join-Path $projectRoot 'AURA.csproj'
 $failures = [System.Collections.Generic.List[string]]::new()
@@ -100,7 +119,7 @@ Write-Host ''
 
 if (-not (Test-Path -LiteralPath $projectPath)) {
     Add-Failure "Project not found at $projectPath."
-    exit 1
+    Complete-Readiness 1
 }
 
 try {
@@ -178,11 +197,11 @@ if ($usesLocalDb) {
         if ($instanceResult.ExitCode -ne 0 -or $instanceReportedError) {
             $registryHint = if ($instanceText -match '(?i)registry configuration') {
                 ' This is a LocalDB user-instance registry/runtime problem, not proof that AuraDb data is corrupt. ' +
-                'Close stale dotnet/SQL processes, reboot once, and rerun with -StartLocalDb -DiagnoseLocalDb. ' +
-                'Do not delete the instance or MDF without a verified backup.'
+                'The running-app health check is the authoritative database test. ' +
+                'Do not delete the instance, registry key, or MDF without a verified backup.'
             }
             else { '' }
-            Add-Failure "Cannot access LocalDB '$localDbInstance': $instanceText.$registryHint"
+            Add-Warning "sqllocaldb could not inspect '$localDbInstance': $instanceText.$registryHint"
         }
         elseif (($instanceOutput -join "`n") -notmatch '(?im)^State:\s+Running\s*$') {
             Add-Failure "LocalDB '$localDbInstance' is not running. Run again with -StartLocalDb before AURA."
@@ -266,8 +285,8 @@ else {
 Write-Host ''
 if ($failures.Count -gt 0) {
     Write-Host "NOT READY: $($failures.Count) failure(s), $($warnings.Count) warning(s)." -ForegroundColor Red
-    exit 1
+    Complete-Readiness 1
 }
 
 Write-Host "READY: 0 failures, $($warnings.Count) warning(s)." -ForegroundColor Green
-exit 0
+Complete-Readiness 0

@@ -39,26 +39,26 @@ Không thêm `--no-build` vào lệnh test trừ khi test project vừa được
 Trước khi mở AURA, kiểm tra cấu hình mà chưa gọi API AI:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb -OutputPath "D:\aura\demo_evidence\00_preflight\preflight-before-app.txt"
 ```
 
 Sau khi `dotnet run` đã lắng nghe ở cổng 5000, mở PowerShell thứ hai và chạy cổng kiểm tra đầy đủ:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb -OutputPath "D:\aura\demo_evidence\00_preflight\preflight-running-app.txt"
 ```
 
-Kết quả hợp lệ là `READY`, đúng database `AuraDb`, LocalDB running, health `ok`, `databaseUpToDate=true`, `pendingMigrationCount=0` và fallback tắt. Script không in API key hoặc toàn bộ connection string.
+`-OutputPath` tự tạo thư mục cha và transcript nên không cần khai báo `$evidenceRoot`, không cần `Tee-Object`, và tránh PowerShell hiển thị error record đỏ chỉ vì stderr của native tool. Kết quả chạy app hợp lệ là `READY`, đúng database `AuraDb`, health `ok`, `databaseAvailable=true`, `databaseUpToDate=true`, `pendingMigrationCount=0` và fallback tắt. Script không in API key hoặc toàn bộ connection string.
 
 Nếu cần ghi bằng chứng LocalDB hoặc lỗi xuất hiện không ổn định, chạy lệnh read-only sau trong đúng Windows account dùng để demo:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb -OutputPath "D:\aura\demo_evidence\00_preflight\localdb-diagnostics.txt"
 ```
 
-`sqllocaldb` đôi khi trả exit code 0 nhưng nội dung vẫn báo `registry configuration error`; readiness vì vậy kiểm cả code và text. Nếu gặp lỗi này, đóng AURA/Visual Studio và các phiên test, reboot một lần rồi chạy lại lệnh trên. Việc app vừa chạy bình thường chỉ chứng minh phiên đó kết nối được, không phủ định lỗi user-instance từng xảy ra. Không xóa instance, registry key hoặc file `.mdf` khi chưa backup và chưa xác nhận đường dẫn database.
+`sqllocaldb` đôi khi trả exit code 0 nhưng nội dung vẫn báo `registry configuration error`; readiness kiểm cả code và text nhưng xem lỗi inspect này là **warning chẩn đoán**, không phải bằng chứng dữ liệu hỏng. Bài kiểm tra có thẩm quyền khi app đang chạy là `/healthz`: nếu `databaseAvailable=true`, `databaseUpToDate=true`, `pendingMigrationCount=0` thì LocalDB đang phục vụ AURA dù lệnh inspect registry cảnh báo. Nếu health không xác nhận được database, đó mới là blocker. Không xóa instance, registry key hoặc file `.mdf` khi chưa backup và chưa xác nhận đường dẫn database.
 
-Nếu lỗi chỉ xuất hiện trong execution context bị giới hạn nhưng Windows PowerShell tương tác của đúng tài khoản demo trả full preflight `READY: 0 failures, 0 warning(s)` sau reboot, lấy kết quả tương tác làm bằng chứng vận hành. Xem ma trận test và lịch freeze tại `docs/FINAL_DEMO_TEST_PLAN_2026-10-01.md`.
+Nếu warning chỉ xuất hiện trong execution context bị giới hạn nhưng full preflight vẫn có `0 failures` và health xác nhận database, lưu cả warning lẫn health làm bằng chứng minh bạch; không cố sửa registry sát giờ demo. Xem ma trận test và lịch freeze tại `docs/FINAL_DEMO_TEST_PLAN_2026-10-01.md`.
 
 Mở URL được in trong terminal. Không truy cập `/Verify` để tìm trang riêng; nút Verify nằm ngay trên trang chủ. `/Applicant` và `/Verify` chủ động chuyển về `/`.
 
@@ -109,6 +109,7 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 - Fallback mặc định tắt để benchmark không trộn provider. Khi demo cần đường dự phòng, bật `Vision:FallbackEnabled=true`, giữ `Vision:Provider=OpenRouter` và đặt `Vision:FallbackProvider=Ollama` sau khi smoke Ollama.
 - Fallback chỉ chạy một lần cho lỗi hạ tầng đủ điều kiện. Lỗi schema, semantic, truncated response hoặc invalid request vẫn chuyển kiểm tra thủ công.
 - Sau JSON Schema, backend kiểm tra ngữ nghĩa tiền VND, loại chứng từ và các identifier. Dữ kiện mâu thuẫn được đọc lại đúng một lần; vẫn sai thì chuyển `ESCALATE_FACT`, không tự đoán hoặc tự nhân số tiền.
+- Hóa đơn giấy phải có ít nhất một hàng hóa/dịch vụ đọc được mới có thể tự duyệt. Nếu vùng món hàng bị che, cắt, mờ hoặc model trả `lineItems=[]`, backend repair đúng một lần rồi fail-safe `ESCALATE_FACT`; không được suy ra “không có hạng mục cấm”.
 - `/healthz` chỉ đạt `ok` khi policy, cấu hình AI, database, migration và thư mục receipt sẵn sàng; endpoint không gọi provider nên không thay cho một ảnh smoke test.
 - Baseline năm fixture ngày 27/09/2026 từng đạt 25/25 bằng Ollama 4B. Trên judge set mở rộng 15 ca ngày 29/09/2026, Ollama đạt 14/15 và bỏ sót escalation TK-12, trong khi OpenRouter đạt 15/15. Vì vậy Ollama chỉ là đường offline/manual có giới hạn; không dùng kết quả năm fixture để tuyên bố độ chính xác thực tế hoặc bật auto-fallback toàn cục.
 - Xem hướng dẫn cài, giới hạn RAM và rollback tại `docs/LOCAL_OLLAMA.md`.

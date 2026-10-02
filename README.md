@@ -18,6 +18,7 @@ Qwen Vision, accessed through OpenRouter by default or optional local Ollama, ex
 - Return structured receipt facts using a JSON Schema contract.
 - Losslessly canonicalize a sole printed paper purchase/transaction date while never promoting a delivery/completion date; reserve one targeted AI re-read for genuine remaining inconsistencies.
 - Extract printed receipt-level discounts into `discountAmount`, ignore non-monetary loyalty/identifier values, and reconcile subtotal, tax, discount, line items, and final payable amount before policy evaluation.
+- Fail safe when a paper receipt's purchased-item area is obscured or unreadable: an empty `lineItems` result is repaired once and then routed to `ESCALATE_FACT`, never treated as proof that no prohibited item exists.
 - Distinguish formal invoice numbers, receipt/bill numbers, and per-purchase transaction references; store/POS/MID/TID/pager identifiers never satisfy transaction traceability.
 - Apply reimbursement rules through a deterministic C# policy engine.
 - Automatically approve clear, policy-compliant requests.
@@ -70,6 +71,8 @@ These are controlled synthetic-regression results, not a production accuracy cla
 On 1 October 2026, repeated anonymized paper receipts exposed date-field variance: valid printed purchase dates sometimes appeared only in `transactionDate`. The shared semantic contract now losslessly moves that sole existing paper date to canonical `invoiceDate` without an extra provider call, never promotes `completionDate`, and keeps targeted repair plus `ESCALATE_FACT` for genuine unresolved contradictions.
 
 A Vinamilk receipt then exposed a separate contract gap: the model read `183.114 - 2.828 = 180.286` correctly, but the old schema had no structured discount field. AURA now stores the printed reduction in `discountAmount`, validates the final-payable equation, compares the employee claim with the post-discount total, and no longer accepts a warning keyword as a substitute for arithmetic evidence. A Highlands postfix run also showed a loyalty value misclassified as a discount; the backend now clears it only when line items, subtotal, tax and final total independently prove that it has no monetary effect. Offline build and all 102 tests pass; the post-fix live evidence gate is documented separately.
+
+On 2 October 2026, a real Phê La receipt exposed a safety gap: merchant, date, identifier and total were readable, but the item area was obscured and the old build still auto-approved with `lineItems=[]`. AURA now treats missing paper-receipt items as critical evidence loss, attempts one targeted re-read, then adds an explicit missing field/warning, caps confidence at 0.69 and escalates to a human. The original run remains regression evidence, not a successful approval sample.
 
 ## Evaluation API Key
 
@@ -129,20 +132,20 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj
 Before starting the demo, run the read-only readiness gate. The first command may start the named LocalDB instance but does not call either AI provider:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb -OutputPath "D:\aura\demo_evidence\00_preflight\preflight-before-app.txt"
 dotnet run
 ```
 
 In a second PowerShell window, verify the running application, database migration state, storage, policy, provider configuration, and fallback baseline:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb -OutputPath "D:\aura\demo_evidence\00_preflight\preflight-running-app.txt"
 ```
 
-The full gate must return `READY: 0 failures, 0 warning(s)`, `AuraDb`, no pending migration, and fallback disabled. The current offline suite contains **102 tests**. For intermittent LocalDB user-instance errors, collect read-only diagnostics without editing the registry or MDF:
+The full gate must return `READY: 0 failures`, `AuraDb`, health `status=ok`, `databaseAvailable=true`, no pending migration, and fallback disabled. A `sqllocaldb info` registry warning is diagnostic only when the running-app health check proves the database is available and current; do not delete registry keys or MDF files to silence it. The current offline suite contains **102 tests**. `-OutputPath` creates the evidence directory and transcript, so no `$evidenceRoot` variable or `Tee-Object` pipeline is required.
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb -OutputPath "D:\aura\demo_evidence\00_preflight\localdb-diagnostics.txt"
 ```
 
 ### Run the 15/30-case evaluation outside the UI
@@ -163,6 +166,7 @@ Run all 30 cases only after checking provider quota and cost. Keep fallback disa
 - [Test Cases](AURA/docs/TEST_CASES.md)
 - [Semantic Date Repair — 01/10/2026](AURA/docs/SEMANTIC_DATE_REPAIR_2026-10-01.md)
 - [Receipt Discount Reconciliation — 01/10/2026](AURA/docs/RECEIPT_DISCOUNT_RECONCILIATION_2026-10-01.md)
+- [Paper Receipt Line-item Safety Guard — 02/10/2026](AURA/docs/PAPER_RECEIPT_LINE_ITEM_GUARD_2026-10-02.md)
 - [OpenRouter Benchmark — 27/09/2026](AURA/docs/OPENROUTER_BENCHMARK_2026-09-27.md)
 - [Dataset and Extended Evaluation Guide](AURA/docs/DATASET_EVALUATION_GUIDE.md)
 - [Deployment and Operations Runbook](AURA/docs/RUNBOOK.md)

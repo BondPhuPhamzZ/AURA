@@ -183,6 +183,7 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
         model = useOllama ? ollama.Model : openRouter.Model,
         processingMode = "durable-background-queue",
         fallbackEnabled = vision.FallbackEnabled,
+        configuredFallbackProvider = vision.FallbackProvider,
         fallbackProvider = vision.FallbackEnabled ? vision.FallbackProvider : null,
         timestamp = DateTimeOffset.UtcNow
     }, statusCode: ready ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable);

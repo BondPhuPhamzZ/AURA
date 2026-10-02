@@ -8,7 +8,7 @@ Mục tiêu: hoàn tất thay đổi kỹ thuật và bằng chứng trước 06
 
 Core workflow đủ điều kiện để tiếp tục kiểm thử. Không cần reset database, đổi LocalDB instance, nâng package hoặc bật fallback. Cổng quan trọng nhất còn thiếu là chạy lại provider thật sau khi JSON Schema tách `invoiceNumber`, `receiptNumber` và `transactionReference`.
 
-Lỗi LocalDB registry chỉ được xem là đã khép lại khi lệnh full preflight chạy trong đúng Windows account dùng để demo kết thúc bằng `READY: 0 failures, 0 warning(s)` sau một lần reboot. Việc upload từng chạy được là bằng chứng tốt nhưng chưa thay thế preflight. Ngược lại, lỗi chỉ xuất hiện trong Codex sandbox không phủ định kết quả READY từ PowerShell tương tác của người dùng.
+Lỗi `sqllocaldb info`/registry là tín hiệu chẩn đoán, không tự nó chứng minh database hỏng. Cổng vận hành có thẩm quyền là full preflight khi app chạy: `READY: 0 failures`, health `status=ok`, `databaseAvailable=true`, `databaseUpToDate=true` và không có migration tồn. Một warning registry được chấp nhận nếu các điều kiện này đều pass và được lưu nguyên văn; không sửa/xóa registry hoặc MDF sát giờ demo.
 
 ## Lệnh chuẩn không xuống dòng
 
@@ -18,10 +18,10 @@ Tất cả lệnh dưới đây chạy trong Windows PowerShell, không cần Ru
 
 ```powershell
 cd D:\aura\AURA\AURA
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb -OutputPath "D:\aura\demo_evidence\00_preflight\preflight-before-app.txt"
 ```
 
-Kết quả chấp nhận được ở bước này là `0 failures` và đúng một warning vì chủ động bỏ qua HTTP. Nếu có registry failure, dừng tại đây, đóng AURA/Visual Studio/SSMS, reboot một lần và chạy lại. Không xóa instance, registry hoặc MDF.
+Kết quả chấp nhận được ở bước này là `0 failures`; warning `-SkipHttp` là bắt buộc và có thể có thêm warning do `sqllocaldb` không inspect được registry. Đây mới là precheck trước app; full health ở bước dưới mới quyết định database có dùng được hay không.
 
 ### Xác minh offline sau khi source thay đổi
 
@@ -47,10 +47,10 @@ PowerShell thứ hai, sau khi thấy `Now listening on: http://localhost:5000`:
 
 ```powershell
 cd D:\aura\AURA\AURA
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb -OutputPath "D:\aura\demo_evidence\00_preflight\preflight-running-app.txt"
 ```
 
-Chỉ bắt đầu demo AI khi kết quả là `READY: 0 failures, 0 warning(s)`.
+Chỉ bắt đầu demo AI khi kết quả là `READY: 0 failures` và các dòng health xác nhận database, migration, storage, policy và provider đều pass. Warning registry inspect có thể giữ nguyên nếu health database pass; warning khác phải được giải thích trước khi demo.
 
 ### Health check độc lập
 
@@ -72,6 +72,7 @@ Kỳ vọng: `status=ok`, `databaseAvailable=true`, `databaseUpToDate=true`, `pe
 | Restart persistence | 1 lượt sau commit chốt | Cùng request ID, status, ảnh và audit còn sau restart | Before/after + full preflight |
 | Human review | 1 accept, 1 reject, 1 undo | State và audit đúng | Timeline trước/sau |
 | Concurrent smoke | 5 upload tổng hợp | Không global 409; cả 5 về trạng thái cuối | Accepted/final status và latency |
+| Receipt che/mờ toàn bộ vùng món hàng | 1 lượt sau guard | `ESCALATE_FACT`; `lineItems` nằm trong missing fields; tuyệt đối không AUTO | Ảnh, final JSON, repair metadata, reason |
 
 Không dùng 100 automated tests để tuyên bố model đã đọc đúng 100 ảnh. Automated tests bảo vệ code; ma trận trên mới kiểm provider thật.
 
@@ -131,4 +132,4 @@ Authentication/RBAC production, object storage/retention hoàn chỉnh, antiviru
 
 ## Go no go ngày demo
 
-GO khi full preflight 0/0, health `ok`, một smoke đạt trạng thái cuối, fallback tắt, OpenRouter credit/mạng ổn và evidence dự phòng mở được. NO GO cho live AI nếu registry/full preflight fail, health 503, migration pending, provider 401/402/429 chưa xử lý hoặc request trước còn PENDING/PROCESSING.
+GO khi full preflight 0 failure, health `ok`, database/migration/storage pass, một smoke đạt trạng thái cuối, fallback tắt, OpenRouter credit/mạng ổn và evidence dự phòng mở được. Warning registry inspect không phải NO GO nếu health database pass. NO GO cho live AI nếu full preflight có failure, health 503, database unavailable, migration pending, provider 401/402/429 chưa xử lý hoặc request trước còn PENDING/PROCESSING.

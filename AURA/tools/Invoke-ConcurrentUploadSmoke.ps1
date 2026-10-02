@@ -9,13 +9,23 @@ param(
     [int]$Copies = 5,
 
     [Parameter()]
-    [ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })]
-    [string]$ImagePath = (Join-Path $PSScriptRoot '..\wwwroot\test_data\images\HoaDon1.jpg'),
+    [string]$ImagePath,
 
     [Parameter()]
     [ValidateRange(1, 1000000000)]
     [decimal]$ClaimedAmount = 295199
 )
+
+$scriptDirectory = $PSScriptRoot
+if ([string]::IsNullOrWhiteSpace($scriptDirectory)) {
+    $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+}
+if ([string]::IsNullOrWhiteSpace($ImagePath)) {
+    $ImagePath = Join-Path $scriptDirectory '..\wwwroot\test_data\images\HoaDon1.jpg'
+}
+if (-not (Test-Path -LiteralPath $ImagePath -PathType Leaf)) {
+    throw "Không tìm thấy ảnh smoke test tại '$ImagePath'. Truyền -ImagePath bằng đường dẫn tuyệt đối hoặc chạy script từ repository AURA."
+}
 
 $resolvedImage = (Resolve-Path -LiteralPath $ImagePath).Path
 $normalizedBaseUrl = $BaseUrl.TrimEnd('/')

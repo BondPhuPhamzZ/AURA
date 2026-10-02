@@ -44,6 +44,12 @@ public static class PolicyDecisionEngine
         if (string.IsNullOrWhiteSpace(facts.MerchantName))
             factProblems.Add("thiếu tên đơn vị bán hàng");
 
+        // The policy cannot conclude that a receipt contains no prohibited item when
+        // no purchased item/service was extracted. Semantic validation normally catches
+        // this and allows one targeted re-read; this check keeps direct policy calls fail-safe.
+        if (facts.LineItems.Count == 0 && facts.ValidationIssues.Count == 0)
+            factProblems.Add("không đọc được danh sách hàng hóa/dịch vụ để kiểm tra policy");
+
         var isEcommerce = ContainsAny(facts.DocumentType, "ecommerce", "e-commerce", "online order");
         var isRideHailing = ContainsAny(facts.DocumentType, "ride_hailing", "ride-hailing", "ride hailing");
         var isVatInvoice = ContainsAny(facts.DocumentType, "vat_invoice", "vat invoice", "hóa đơn giá trị gia tăng");
@@ -80,7 +86,7 @@ public static class PolicyDecisionEngine
                 factProblems.Add($"đơn hàng trực tuyến chưa có trạng thái hoàn tất đáng tin cậy ({facts.OrderStatus})");
             }
 
-            if (facts.LineItems.Count == 0)
+            if (facts.LineItems.Count == 0 && facts.ValidationIssues.Count > 0)
                 factProblems.Add("đơn hàng trực tuyến thiếu danh sách hàng hóa/dịch vụ để đối chiếu");
         }
         else if (isRideHailing && string.IsNullOrWhiteSpace(facts.BookingId) &&

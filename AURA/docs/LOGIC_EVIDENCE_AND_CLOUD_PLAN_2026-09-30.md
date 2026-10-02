@@ -62,7 +62,7 @@ Không sửa expected của Official Verify. Nếu actual thay đổi, dừng v�
 Lỗi LocalDB là lỗi theo Windows user-instance/runtime, có thể biến mất sau reboot hoặc chỉ xuất hiện khi tiến trình stale còn giữ trạng thái. `dotnet run` thành công trong một phiên không chứng minh registry luôn khỏe. Kiểm tra bằng một lệnh duy nhất:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb -OutputPath "D:\aura\demo_evidence\00_preflight\preflight-before-app.txt"
 ```
 
 Script in user, version, instance list và instance details; không in credentials và không sửa registry/MDF. Gate hợp lệ là `READY`. Nếu output chứa registry error dù exit code bằng 0, coi là `NOT READY`, reboot một lần, kiểm lại và lưu ảnh trước/sau. Chỉ cân nhắc repair instance sau khi đã backup database và xác định đúng file.

@@ -5,12 +5,10 @@ param(
     [string]$BaseUrl = 'http://localhost:5000',
 
     [Parameter()]
-    [ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })]
-    [string]$ManifestPath = (Join-Path $PSScriptRoot '..\test_kit\judge-manifest.json'),
+    [string]$ManifestPath,
 
     [Parameter()]
-    [ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })]
-    [string]$ImagesDirectory = (Join-Path $PSScriptRoot '..\test_kit\images'),
+    [string]$ImagesDirectory,
 
     [Parameter()]
     [ValidateRange(1, 30)]
@@ -30,6 +28,23 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+$scriptDirectory = $PSScriptRoot
+if ([string]::IsNullOrWhiteSpace($scriptDirectory)) {
+    $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+}
+if ([string]::IsNullOrWhiteSpace($ManifestPath)) {
+    $ManifestPath = Join-Path $scriptDirectory '..\test_kit\judge-manifest.json'
+}
+if ([string]::IsNullOrWhiteSpace($ImagesDirectory)) {
+    $ImagesDirectory = Join-Path $scriptDirectory '..\test_kit\images'
+}
+if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
+    throw "Không tìm thấy manifest tại '$ManifestPath'. Truyền -ManifestPath bằng đường dẫn file hợp lệ."
+}
+if (-not (Test-Path -LiteralPath $ImagesDirectory -PathType Container)) {
+    throw "Không tìm thấy thư mục ảnh tại '$ImagesDirectory'. Truyền -ImagesDirectory bằng đường dẫn thư mục hợp lệ."
+}
 
 function Get-CaseValue {
     param(
@@ -73,7 +88,7 @@ function Convert-ComparableValue {
     return ([string]$Value).Trim()
 }
 
-$projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+$projectRoot = (Resolve-Path -LiteralPath (Join-Path $scriptDirectory '..')).Path
 $resolvedManifest = (Resolve-Path -LiteralPath $ManifestPath).Path
 $resolvedImages = (Resolve-Path -LiteralPath $ImagesDirectory).Path
 $normalizedBaseUrl = $BaseUrl.TrimEnd('/')

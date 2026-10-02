@@ -60,16 +60,42 @@ public sealed class ReceiptSemanticValidatorTests
     }
 
     [Fact]
-    public void Ecommerce_without_line_items_is_not_auto_approved()
+    public void Receipts_without_line_items_are_not_auto_approved()
     {
-        var facts = CorrectedTc01();
-        facts.LineItems = [];
+        var ecommerceFacts = CorrectedTc01();
+        ecommerceFacts.LineItems = [];
 
-        var result = PolicyDecisionEngine.Evaluate(facts, 295_199m,
+        var ecommerceResult = PolicyDecisionEngine.Evaluate(ecommerceFacts, 295_199m,
             utcNow: new DateTime(2026, 9, 20, 0, 0, 0, DateTimeKind.Utc));
 
-        Assert.Equal("ESCALATE_FACT", result.Status);
-        Assert.Contains("danh sách hàng hóa", result.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("ESCALATE_FACT", ecommerceResult.Status);
+        Assert.Contains("danh sách hàng hóa", ecommerceResult.Reason, StringComparison.OrdinalIgnoreCase);
+
+        var paperFacts = new ReceiptExtractionDto
+        {
+            DocumentType = "RESTAURANT_BILL",
+            DocumentStatus = "COMPLETED",
+            MerchantName = "Phê La",
+            ReceiptNumber = "020056",
+            InvoiceDate = "2026-10-02",
+            Currency = "VND",
+            TotalAmount = 69_000m,
+            Confidence = 0.95,
+            LineItems = []
+        };
+        var semanticIssues = ReceiptSemanticValidator.Validate(paperFacts);
+
+        Assert.Contains(semanticIssues, issue => issue.Contains("lineItems", StringComparison.Ordinal));
+        ReceiptSemanticValidator.MarkUnresolved(paperFacts, semanticIssues);
+        Assert.Contains("lineItems", paperFacts.MissingFields);
+        Assert.Contains(paperFacts.Warnings,
+            warning => warning.Contains("người kiểm tra", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(0.69, paperFacts.Confidence);
+        var paperResult = PolicyDecisionEngine.Evaluate(paperFacts, 69_000m,
+            utcNow: new DateTime(2026, 10, 2, 0, 0, 0, DateTimeKind.Utc));
+
+        Assert.Equal("ESCALATE_FACT", paperResult.Status);
+        Assert.Contains("policy", paperResult.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -128,7 +154,8 @@ public sealed class ReceiptSemanticValidatorTests
         {
             DocumentType = "RESTAURANT_BILL",
             TransactionReference = "221196",
-            OrderId = "221196"
+            OrderId = "221196",
+            LineItems = [new ReceiptLineItem { Description = "Đồ uống", Amount = 59_000m }]
         };
 
         ReceiptSemanticValidator.NormalizeCanonicalFields(facts);

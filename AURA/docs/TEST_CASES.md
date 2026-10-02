@@ -100,6 +100,7 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P63 | `discountAmount` có phần lẻ với VND | Semantic issue; repair hoặc FACT | A |
 | P64 | Receipt không có khoản giảm được in rõ | `discountAmount=null`; không tự suy ra từ chênh lệch hoặc claimed amount | A/V |
 | P65 | Model gán điểm/tích lũy `1000` thành discount trong khi `lineItems=subtotal=total=59000`, tax=0 | Bỏ riêng discount không tác động, lưu warning audit; không sửa tổng tiền và không false escalation | A/V |
+| P66 | Hóa đơn giấy đọc được merchant/date/id/total nhưng vùng hàng hóa bị che hoặc model trả `lineItems=[]` | Repair đúng một lần; nếu vẫn rỗng thì missing `lineItems`, confidence tối đa 0.69 và `ESCALATE_FACT` | A/V |
 | P66 | Queue hoàn tất escalation sau khi trang đã load hoặc sau app/browser restart | Bảng nhân viên tự refresh từ DB trong tối đa 10 giây; không cần chạy ca mới để “đánh thức” hàng chờ | V |
 
 ## Ma trận human-in-the-loop
