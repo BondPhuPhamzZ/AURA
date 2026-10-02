@@ -27,6 +27,9 @@ Project chưa được xem là hoàn tất cho bàn giao cuối. Bốn cổng c�
 | Judge set Ollama | 14 trên 15 quyết định, 73 trên 75 field, P95 58,318 giây; bỏ sót TK-12 |
 | OpenRouter concurrency smoke | 5 trên 5 hoàn tất, P95 17,072 giây |
 | Official Verify | Vẫn đúng 5 fixture và expected result BTC đã biết |
+| Post-fix guard 02/10 | Phê La FACT, Vinamilk AUTO, Official Verify 5/5 |
+| Restart/human flow 02/10 | Status, ảnh, audit còn sau restart; YES/NO/UNDO có audit |
+| Concurrent smoke sau guard | 5 trên 5 hoàn tất; accepted P95 530 ms; end-to-end P95 39,380 giây |
 
 Các số judge set dùng dữ liệu tổng hợp có nhãn. Chúng chứng minh regression và khả năng tái lập, không chứng minh accuracy production.
 

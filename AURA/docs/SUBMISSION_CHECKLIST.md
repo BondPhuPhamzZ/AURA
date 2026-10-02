@@ -1,6 +1,6 @@
 # AURA — Checklist nộp bài
 
-Cập nhật: 30/09/2026. Trạng thái này là nguồn đối chiếu cuối; không điền số liệu hoặc URL chưa được xác minh.
+Cập nhật: 02/10/2026. Trạng thái này là nguồn đối chiếu cuối; không điền số liệu hoặc URL chưa được xác minh.
 
 ## 1. Hạng mục bàn giao
 
@@ -48,3 +48,5 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 5. Baseline lặp ngày 27/09/2026 được giữ làm lịch sử: Ollama đạt 25/25 trên 5 fixture qua năm batch; OpenRouter đạt 15/15 qua ba batch và upload `HoaDon1.jpg` 3/3.
 6. Judge set ngày 29/09/2026 đã chạy thật với fallback tắt: OpenRouter 15/15 quyết định, 70/75 field, P95 16,459 giây; Ollama 14/15, 73/75 field, P95 58,318 giây và bỏ sót TK-12. OpenRouter concurrency smoke đạt 5/5, P95 17,072 giây. Xem `docs/LIVE_VALIDATION_2026-09-29.md`.
 7. Benchmark dữ liệu thật độc lập 10–15 ảnh, phản hồi ba người dùng và smoke Live URL sau hardening vẫn là các cổng chưa hoàn tất; không thay chúng bằng số liệu fixture tổng hợp.
+8. Post-fix gate ngày 02/10 đã xác minh Phê La bị che vùng món đi `ESCALATE_FACT`, Vinamilk đủ bảy dòng hàng vẫn `AUTO_APPROVE`, Official Verify 5/5, restart giữ status/ảnh/audit, manager YES/NO/UNDO có audit và concurrent smoke 5/5 với accepted P95 530 ms, end-to-end P95 39,380 giây.
+9. Hướng dẫn BGK chạy local nằm tại `docs/JUDGE_LOCAL_SETUP.md`; báo cáo tiến độ và ranh giới claim nằm tại `docs/PROGRESS_REPORT_2026-10-02.md`.

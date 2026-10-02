@@ -1,7 +1,7 @@
 # AURA Final Demo Test Plan
 
-Cập nhật: 01/10/2026  
-Baseline đã push: `master` tại `d4816f7` trước khi tài liệu kế hoạch này được chốt.  
+Cập nhật: 02/10/2026
+Baseline kỹ thuật đã push trước vòng đồng bộ tài liệu này: `master` tại `80522f8`.
 Mục tiêu: hoàn tất thay đổi kỹ thuật và bằng chứng trước 06/10, dành trọn 07–10/10 để review source, luyện nói và diễn tập.
 
 ## Kết luận vận hành
@@ -74,7 +74,7 @@ Kỳ vọng: `status=ok`, `databaseAvailable=true`, `databaseUpToDate=true`, `pe
 | Concurrent smoke | 5 upload tổng hợp | Không global 409; cả 5 về trạng thái cuối | Accepted/final status và latency |
 | Receipt che/mờ toàn bộ vùng món hàng | 1 lượt sau guard | `ESCALATE_FACT`; `lineItems` nằm trong missing fields; tuyệt đối không AUTO | Ảnh, final JSON, repair metadata, reason |
 
-Không dùng 100 automated tests để tuyên bố model đã đọc đúng 100 ảnh. Automated tests bảo vệ code; ma trận trên mới kiểm provider thật.
+Không dùng 102 automated tests để tuyên bố model đã đọc đúng 102 ảnh. Automated tests bảo vệ code; ma trận trên mới kiểm provider thật.
 
 Sau hardening giảm giá và postfix live fix, chạy cổng trong `LIVE_POSTFIX_INCIDENT_2026-10-01.md`: Highlands ba lượt, Vinamilk ba lượt với tổng sau giảm, một negative dùng tổng trước giảm, ba batch Verify và một restart queue không cần ca mới để đánh thức. Không trộn evidence của commit `29257c3` vào tỷ lệ pass sau sửa.
 

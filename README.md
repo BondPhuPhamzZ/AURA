@@ -91,6 +91,8 @@ dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
 
 Requirements: Windows, .NET 8 SDK (8.0.425 recommended), and SQL Server LocalDB or SQL Server.
 
+For a first-time setup with expected output and troubleshooting, follow the [step-by-step judge setup guide](AURA/docs/JUDGE_LOCAL_SETUP.md). Ollama is optional and is not required for the OpenRouter baseline.
+
 ```powershell
 git clone https://github.com/BondPhuPhamzZ/AURA.git
 cd AURA\AURA
@@ -178,6 +180,8 @@ Run all 30 cases only after checking provider quota and cost. Keep fallback disa
 - [Demo Readiness and Remaining Gates — 29/09/2026](AURA/docs/DEMO_READINESS_2026-09-29.md)
 - [Logic, Evidence, LocalDB and Self-hosted VLM Plan — 30/09/2026](AURA/docs/LOGIC_EVIDENCE_AND_CLOUD_PLAN_2026-09-30.md)
 - [Final Demo Test Plan and Freeze Schedule — 01/10/2026](AURA/docs/FINAL_DEMO_TEST_PLAN_2026-10-01.md)
+- [Progress Report and Verified Baseline — 02/10/2026](AURA/docs/PROGRESS_REPORT_2026-10-02.md)
+- [Step-by-step Judge Local Setup](AURA/docs/JUDGE_LOCAL_SETUP.md)
 
 ## Sprint 1 Limitations
 
