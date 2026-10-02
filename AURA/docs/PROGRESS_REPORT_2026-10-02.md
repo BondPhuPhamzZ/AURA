@@ -61,10 +61,14 @@ Baseline hiện tại đủ điều kiện để tiếp tục diễn tập Chung
 | Restart persistence | Pass | Status, facts, ảnh receipt và audit còn sau restart |
 | Human workflow | Pass | Có bằng chứng YES, NO và UNDO trong audit |
 | Concurrent smoke sau guard | 5/5 hoàn tất | Accepted P95 530 ms; end-to-end P95 39.380 s; dưới 90 s |
+| Receipt thật bổ sung | 3/3 đúng nhánh | Oppa AUTO có repair; Texas AUTO không repair; Phê La che món FACT |
+| Fallback regression cô lập | 1/1 hoàn tất | OpenRouter `AI_NOT_CONFIGURED` → Ollama; E2E 84.425 ms; audit provider đúng |
 | Judge set lịch sử OpenRouter | 15/15 decision, 70/75 field | Synthetic regression trước các guard mới; không phải production accuracy |
 | Judge set lịch sử Ollama | 14/15 decision, 73/75 field | Có missed escalation TK-12; chưa đạt safety gate để làm primary |
 
 `semanticRepairApplied=false` trên một ca đúng ngay lượt đầu là tín hiệu tốt, nhưng không phải điều kiện pass bắt buộc. Một ca có repair vẫn pass nếu chỉ repair tối đa một lần, facts cuối nhất quán, validation issues rỗng và decision khớp ground truth.
+
+Ba receipt thật mới là development validation, không phải blind holdout. Đặc biệt Texas còn QR/reference thanh toán nên chỉ giữ cục bộ; không đưa ảnh gốc vào Git hoặc slide công khai.
 
 ## 4. Mức độ ảnh hưởng của thay đổi
 

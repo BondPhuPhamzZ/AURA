@@ -1,6 +1,6 @@
 # Deploy AURA và xác minh Live URL
 
-Live URL đã dùng để smoke Sprint 1: `https://bondphupham-001-site1.ltempurl.com/`. BTC xác nhận phần trình diễn Chung kết chạy trên laptop cá nhân, nhưng brief vẫn yêu cầu đường truy cập công khai cho bản bàn giao. Vì vậy localhost là đường demo chính; Live URL là cổng bàn giao riêng và phải được smoke lại sau mỗi bản hardening. Hosting trial có thể chậm hoặc gián đoạn nên không dùng nó làm đường trình diễn duy nhất.
+Live URL đã dùng để smoke Sprint 1: `https://bondphupham-001-site1.ltempurl.com/`. BTC xác nhận phần trình diễn Chung kết chạy trên laptop cá nhân, nhưng brief vẫn yêu cầu đường truy cập công khai cho bản bàn giao. Vì vậy localhost là đường demo chính; Live URL là cổng bàn giao riêng và phải được smoke lại sau mỗi bản hardening. Hosting trial có thể chậm hoặc gián đoạn nên không dùng nó làm đường trình diễn duy nhất. Quyết định nền tảng, lộ trình 15 ngày và điều kiện mượn GPU nằm tại [`DEPLOYMENT_DECISION_2026-10-02.md`](DEPLOYMENT_DECISION_2026-10-02.md).
 
 ## Trang index mặc định của SmarterASP.NET
 
@@ -31,7 +31,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Kỳ vọng hiện tại: preflight trả `READY: 0 failures`, build 0 warning/error và 102/102 test pass. Warning do `-SkipHttp` là mong đợi; warning registry inspect chỉ là chẩn đoán và phải được đối chiếu bằng full `/healthz` sau khi app chạy. EF Core/dotnet-ef được pin ở 8.0.31. Chạy thêm `dotnet list AURA.csproj package --vulnerable --include-transitive`; ngày 30/09/2026 không có vulnerable package theo NuGet sources đã cấu hình. Không nâng EF Core 8 lên 10 trước demo vì đó là thay đổi major/target framework, không phải bản vá tại chỗ. Không cần gọi API AI ở bước này.
+Kỳ vọng hiện tại: preflight trả `READY: 0 failures`, build 0 warning/error và 102/102 test pass. Warning do `-SkipHttp` là mong đợi; warning registry inspect chỉ là chẩn đoán và phải được đối chiếu bằng full `/healthz` sau khi app chạy. EF Core/dotnet-ef được pin ở 8.0.31. Chạy thêm `dotnet list AURA.csproj package --vulnerable --include-transitive` cho cả app và test project; lượt quét 02/10/2026 không có vulnerable package theo NuGet sources đã cấu hình. Không nâng EF Core 8 lên 10 trước demo vì đó là thay đổi major/target framework, không phải bản vá tại chỗ. Không cần gọi API AI ở bước này.
 
 3. Trong Visual Studio, mở `AURA.csproj` và chọn **Publish → Folder** hoặc **Publish → Web Deploy**. Target framework là `net8.0`, cấu hình `Release`.
 
@@ -103,6 +103,8 @@ Thực hiện theo thứ tự để không tốn quota vô ích:
 Chỉ bật stdout startup log khi cần chẩn đoán, tải log về rồi tắt lại để tránh đầy storage hoặc lộ cấu hình.
 
 Hosted deployment không thể gọi Ollama trên laptop qua `127.0.0.1`; loopback khi đó là chính server hosting. Chỉ bật fallback Ollama nếu model chạy trên cùng server hoặc một endpoint HTTPS riêng đã được bảo vệ. Bản demo trên máy cá nhân có thể bật fallback vì ASP.NET và Ollama cùng máy.
+
+Implementation hiện tại cho phép `Ollama:BaseUrl` là HTTPS từ xa nhưng chưa có cấu hình bearer/API-key riêng cho Ollama. Vì vậy **không public trực tiếp cổng 11434** và không trỏ production AURA tới một endpoint Ollama Internet chưa có lớp bảo vệ. POC GPU phải dùng private network/VPN hoặc reverse proxy có TLS, xác thực, rate limit và log đã che dữ liệu; nếu proxy bắt bearer token thì cần bổ sung hỗ trợ header trong app rồi regression lại trước khi dùng.
 
 ## 7. Vì sao không chọn Render Free cho bản nộp
 

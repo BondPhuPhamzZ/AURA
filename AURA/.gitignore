@@ -1,6 +1,7 @@
 # Runtime receipt evidence is retained by the deployed instance, never committed.
 App_Data/receipts/*
 !App_Data/receipts/.gitkeep
+App_Data/fallback-evidence-*/
 
 # Build, IDE, publish and local runtime output.
 bin/

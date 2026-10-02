@@ -181,6 +181,9 @@ Run all 30 cases only after checking provider quota and cost. Keep fallback disa
 - [Logic, Evidence, LocalDB and Self-hosted VLM Plan — 30/09/2026](AURA/docs/LOGIC_EVIDENCE_AND_CLOUD_PLAN_2026-09-30.md)
 - [Final Demo Test Plan and Freeze Schedule — 01/10/2026](AURA/docs/FINAL_DEMO_TEST_PLAN_2026-10-01.md)
 - [Progress Report and Verified Baseline — 02/10/2026](AURA/docs/PROGRESS_REPORT_2026-10-02.md)
+- [Real-receipt Development Validation — 02/10/2026](AURA/docs/REAL_RECEIPT_VALIDATION_2026-10-02.md)
+- [OpenRouter → Ollama Fallback Regression — 02/10/2026](AURA/docs/FALLBACK_REGRESSION_2026-10-02.md)
+- [Demo, Live URL and Self-hosted VLM Decision — 02/10/2026](AURA/docs/DEPLOYMENT_DECISION_2026-10-02.md)
 - [Step-by-step Judge Local Setup](AURA/docs/JUDGE_LOCAL_SETUP.md)
 
 ## Sprint 1 Limitations

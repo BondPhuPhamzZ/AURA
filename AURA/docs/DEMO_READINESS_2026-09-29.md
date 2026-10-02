@@ -30,12 +30,14 @@ Project chưa được xem là hoàn tất cho bàn giao cuối. Bốn cổng c�
 | Post-fix guard 02/10 | Phê La FACT, Vinamilk AUTO, Official Verify 5/5 |
 | Restart/human flow 02/10 | Status, ảnh, audit còn sau restart; YES/NO/UNDO có audit |
 | Concurrent smoke sau guard | 5 trên 5 hoàn tất; accepted P95 530 ms; end-to-end P95 39,380 giây |
+| Real development validation 02/10 | Oppa AUTO có repair; Texas AUTO không repair; Phê La che món FACT; cả ba có final JSON |
+| Fallback live regression cô lập | OpenRouter lỗi `AI_NOT_CONFIGURED` → Ollama; `FallbackUsed=true`; 1/1 complete; E2E 84,425 giây |
 
 Các số judge set dùng dữ liệu tổng hợp có nhãn. Chúng chứng minh regression và khả năng tái lập, không chứng minh accuracy production.
 
 ## Quyết định provider
 
-Giữ OpenRouter làm primary cho demo. Model này không bỏ sót escalation trong judge set và đáp ứng mục tiêu 90 giây tốt hơn trên máy hiện tại. Giữ Ollama làm đường offline hoặc thao tác thủ công có giới hạn; chưa bật auto-fallback toàn cục vì Ollama tự duyệt sai TK-12 và không đủ công suất cho 4 đến 5 request đồng thời trên RTX 3050 Laptop 4 GB.
+Giữ OpenRouter làm primary cho demo. Model này không bỏ sót escalation trong judge set và đáp ứng mục tiêu 90 giây tốt hơn trên máy hiện tại. Fallback live 1/1 đã chứng minh đường chuyển sang Ollama hoạt động, nhưng mất 84,425 giây end-to-end ngay trên một ca. Giữ Ollama làm đường offline hoặc thao tác thủ công có giới hạn; chưa bật auto-fallback toàn cục vì Ollama tự duyệt sai TK-12 và không đủ công suất cho 4 đến 5 request đồng thời trên RTX 3050 Laptop 4 GB.
 
 Không tự nâng package hoặc đổi model sát ngày demo. Project target .NET 8 nhưng máy hiện chỉ có SDK 9.0.312. Cấu hình này đã build được; chỉ thêm `global.json` pin SDK 8 sau khi cài đúng SDK 8 trên máy demo và chạy lại toàn bộ cổng kiểm thử.
 

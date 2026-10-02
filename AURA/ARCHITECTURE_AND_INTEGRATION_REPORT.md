@@ -2,7 +2,7 @@
 
 ## AURA Automated Underwriting and Reimbursement AI
 
-Cập nhật ngày 01/10/2026. Tài liệu mô tả baseline sau feedback Sprint 1 và phần hardening chuẩn bị Sprint 2. Cách đánh giá chuẩn là clone và chạy localhost theo README. OpenRouter vẫn là provider chính; Ollama là tùy chọn local/offline có kiểm soát và mặc định chưa bật auto-fallback.
+Cập nhật ngày 02/10/2026. Tài liệu mô tả baseline sau feedback Sprint 1 và phần hardening chuẩn bị Sprint 2. Cách đánh giá chuẩn là clone và chạy localhost theo README. OpenRouter vẫn là provider chính; Ollama là tùy chọn local/offline có kiểm soát và mặc định chưa bật auto-fallback.
 
 ## 1. Sơ đồ thành phần
 
@@ -170,6 +170,7 @@ Recycle application pool chỉ nạp lại biến môi trường hiện có. Kh�
 - Build sau hardening: 0 warning, 0 error; EF báo không có model change chưa migration. LocalDB đã áp migration thành công.
 - EF Core SQL Server/Tools và local `dotnet-ef` đã được vá đồng bộ lên 8.0.31; NuGet vulnerability scan không còn advisory trong app và test project tại thời điểm kiểm tra.
 - Judge set mở rộng đã chạy thật trên cùng 15 ca và fallback tắt. OpenRouter/Qwen3-VL-8B đạt 15/15 quyết định, 70/75 field và P50/P95 end-to-end 3,614/16,459 giây. Ollama/Qwen3-VL-4B đạt 14/15 quyết định, 73/75 field và 52,238/58,318 giây; model bỏ sót escalation TK-12. Concurrent smoke lịch sử OpenRouter 5 request hoàn tất 5/5 với P95 17,072 giây. Sau guard dòng hàng ngày 02/10, một concurrent smoke mới tiếp tục hoàn tất 5/5 với accepted P95 530 ms và end-to-end P95 39,380 giây; Phê La fail-safe FACT, Vinamilk positive AUTO, Official Verify 5/5 và restart persistence đều pass.
+- Development validation cùng ngày bổ sung Oppa AUTO có repair, Texas AUTO không repair và Phê La che món FACT. Một fallback regression dùng database test riêng cũng xác minh primary OpenRouter lỗi `AI_NOT_CONFIGURED` được chuyển đúng một lần sang Ollama, audit provider đúng và hoàn tất sau 84,425 giây E2E. Fallback vẫn tắt trong baseline vì đây mới là một ca và Ollama còn missed escalation TK-12.
 - Baseline ngày 27/09 trên đúng 5 fixture vẫn được giữ như bằng chứng hồi quy lịch sử: Ollama đạt 25/25 qua năm batch và OpenRouter đạt 15/15 qua ba batch. Không dùng baseline lặp này để thay cho judge set hoặc accuracy trên dữ liệu thật. Xem `docs/LIVE_VALIDATION_2026-09-29.md`.
 - `tools/Test-DemoReadiness.ps1` kiểm đúng `AuraDb`, LocalDB, policy, storage, cấu hình AI, migration và health trước khi demo mà không in secret. Script kiểm cả exit code lẫn nội dung lỗi của `sqllocaldb` vì công cụ có thể trả code 0 dù registry user-instance bị lỗi; `-DiagnoseLocalDb` chỉ thu thập thông tin read-only.
 - Người dùng xác nhận production upload, AI extraction và audit hoạt động đúng sau khi cập nhật API key ở Pool Manager.
