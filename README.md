@@ -8,7 +8,8 @@ Qwen Vision, accessed through OpenRouter by default or optional local Ollama, ex
 
 | Item | Link |
 | --- | --- |
-| Demo video & API Key | [Watch the demo & Get API Key](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
+| Demo video | [Watch the AURA demo](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
+| Evaluator credentials | Supplied privately to the organizers; never published in Git, screenshots, video, or a public Drive file |
 | Presentation | [Download AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES.pptx) |
 | Build Log | [Download AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.docx) |
 
@@ -58,6 +59,8 @@ AURA does not fine-tune Qwen and does not give the model final decision authorit
 
 ## Current Verification Baseline
 
+Last fully verified on 2 October 2026; the remaining Sprint 2 gates are a locked independent holdout, three real-user sessions, a final Live URL smoke if the URL remains in the submission, and three timed dress rehearsals.
+
 - Build: **0 warnings, 0 errors**
 - Automated tests: **102/102 passed**
 - Verify Harness: **5 smoke-test cases**
@@ -76,9 +79,13 @@ On 2 October 2026, a real Phê La receipt exposed a safety gap: merchant, date, 
 
 The live post-fix gate subsequently passed: Phê La returned `ESCALATE_FACT`, the official Verify batch passed 5/5, a fully readable Vinamilk receipt remained `AUTO_APPROVE`, status/images/audit survived restart, and a five-upload concurrent smoke completed 5/5 with 530 ms acceptance P95 and 39.380 s end-to-end P95. These results close the targeted regression; they do not replace a diverse, consented real-receipt holdout.
 
+Additional development validation on 2 October 2026 covered three distinct outcomes: Oppa was `AUTO_APPROVE` after one successful semantic repair in 13.899 s, Texas was `AUTO_APPROVE` without repair in 6.391 s, and a Phê La receipt with its purchased-item region obscured remained fail-safe `ESCALATE_FACT` in 20.734 s. These are consented development samples, not a blind accuracy set; the original images remain outside Git.
+
+An isolated fallback regression also verified the real OpenRouter-to-Ollama path: the primary was intentionally made unavailable inside the test process, Ollama served the request, audit metadata recorded `FallbackUsed=true` and `AI_NOT_CONFIGURED`, and the case completed in 84.425 s end-to-end. This proves provider switching and traceability only. The demo baseline still keeps fallback disabled because the local 4B model missed TK-12 in the locked judge set and has no concurrent-capacity evidence on the 4 GB laptop GPU.
+
 ## Evaluation API Key
 
-An evaluator-only OpenRouter key is provided to the organizers through a private channel (The API key is attached in the same folder containing the video). No active API key is stored in this repository, README, source code, screenshots, or demo video.
+An evaluator-only OpenRouter key is provided to the organizers only through an organizer-approved private channel. No active API key is stored in this repository, README, source code, screenshots, or demo video. Do not place the key in the public demo Drive folder.
 
 After receiving the evaluation key, replace the placeholder in the command below. .NET User Secrets stores the value outside the repository:
 
@@ -124,6 +131,13 @@ dotnet user-secrets set "Vision:FallbackProvider" "Ollama"
 ```
 
 Fallback only applies to eligible infrastructure failures such as timeout, 429, provider outage, auth/credit failure, or local Ollama unavailability. Schema, semantic, truncated-response, and invalid-request failures do not switch models. Keep fallback disabled when benchmarking one provider in isolation.
+
+After a fallback-only rehearsal, restore the official demo baseline before the next run:
+
+```powershell
+dotnet user-secrets set "Vision:Provider" "OpenRouter"
+dotnet user-secrets set "Vision:FallbackEnabled" "false"
+```
 
 ### Run the Automated Tests
 
@@ -184,6 +198,7 @@ Run all 30 cases only after checking provider quota and cost. Keep fallback disa
 - [Real-receipt Development Validation — 02/10/2026](AURA/docs/REAL_RECEIPT_VALIDATION_2026-10-02.md)
 - [OpenRouter → Ollama Fallback Regression — 02/10/2026](AURA/docs/FALLBACK_REGRESSION_2026-10-02.md)
 - [Demo, Live URL and Self-hosted VLM Decision — 02/10/2026](AURA/docs/DEPLOYMENT_DECISION_2026-10-02.md)
+- [Next Implementation Roadmap and Acceptance Gates — 03/10/2026](AURA/docs/NEXT_IMPLEMENTATION_ROADMAP_2026-10-03.md)
 - [Step-by-step Judge Local Setup](AURA/docs/JUDGE_LOCAL_SETUP.md)
 
 ## Sprint 1 Limitations

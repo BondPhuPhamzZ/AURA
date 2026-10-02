@@ -4,9 +4,11 @@ Cập nhật: 02/10/2026
 Baseline kỹ thuật đã push trước vòng đồng bộ tài liệu này: `master` tại `80522f8`.
 Mục tiêu: hoàn tất thay đổi kỹ thuật và bằng chứng trước 06/10, dành trọn 07–10/10 để review source, luyện nói và diễn tập.
 
+> Trạng thái 03/10: các gate identifier/date/discount/line-item, Verify, restart, human action và concurrency bên dưới đã hoàn tất. Kế hoạch còn hiệu lực được chốt tại [`NEXT_IMPLEMENTATION_ROADMAP_2026-10-03.md`](NEXT_IMPLEMENTATION_ROADMAP_2026-10-03.md): blind holdout, ba người dùng thật, Live URL smoke và ba dress rehearsal.
+
 ## Kết luận vận hành
 
-Core workflow đủ điều kiện để tiếp tục kiểm thử. Không cần reset database, đổi LocalDB instance, nâng package hoặc bật fallback. Cổng quan trọng nhất còn thiếu là chạy lại provider thật sau khi JSON Schema tách `invoiceNumber`, `receiptNumber` và `transactionReference`.
+Core workflow đủ điều kiện để freeze và diễn tập. Không cần reset database, đổi LocalDB instance, nâng package hoặc bật fallback. Provider thật đã được revalidate sau khi tách `invoiceNumber`, `receiptNumber` và `transactionReference`; receipt thật mới, Official Verify, restart, human audit, concurrency và fallback functional path đều đã có evidence. Cổng còn thiếu là validation độc lập và vận hành cuối, không phải thêm logic đọc hóa đơn không có cơ sở.
 
 Lỗi `sqllocaldb info`/registry là tín hiệu chẩn đoán, không tự nó chứng minh database hỏng. Cổng vận hành có thẩm quyền là full preflight khi app chạy: `READY: 0 failures`, health `status=ok`, `databaseAvailable=true`, `databaseUpToDate=true` và không có migration tồn. Một warning registry được chấp nhận nếu các điều kiện này đều pass và được lưu nguyên văn; không sửa/xóa registry hoặc MDF sát giờ demo.
 
@@ -84,12 +86,12 @@ Ca Highlands ngày 01/10 đã chứng minh model có thể đặt cùng ngày in
 
 ### Bắt buộc trước 06/10
 
-1. Live re-validation ba loại identifier trên OpenRouter.
-2. Official Verify ba lượt sau schema mới.
-3. Một restart persistence sau commit chốt và full preflight sau reboot.
-4. Hai nhánh manager, Undo và audit.
-5. Một concurrent smoke năm upload nếu muốn chứng minh tình huống nhiều BGK.
-6. Khóa evidence theo commit, provider, model, fallback, timestamp và expected/actual.
+1. ~~Live re-validation ba loại identifier trên OpenRouter.~~ Hoàn thành.
+2. ~~Official Verify ba lượt sau schema mới.~~ Hoàn thành.
+3. ~~Một restart persistence sau commit chốt và full preflight sau reboot.~~ Hoàn thành.
+4. ~~Hai nhánh manager, Undo và audit.~~ Hoàn thành.
+5. ~~Một concurrent smoke năm upload.~~ Hoàn thành 5/5, P95 E2E 39,380 giây.
+6. Tiếp tục khóa mọi evidence mới theo commit, provider, model, fallback, timestamp và expected/actual.
 
 ### Nên hoàn tất nếu có dữ liệu
 

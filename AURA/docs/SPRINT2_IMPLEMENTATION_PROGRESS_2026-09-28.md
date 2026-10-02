@@ -56,7 +56,7 @@ Live validation ngày 29/09/2026 đã chốt thêm: OpenRouter đạt 15/15 quy�
 - Extended evaluator đã chạy thật trên cùng 15 ca với fallback tắt: OpenRouter 15/15, Ollama 14/15. Runner hiện resolve expected facts từ source manifest và lưu hash để field exact không bị rỗng.
 - Concurrent smoke OpenRouter 5 request hoàn tất 5/5, HTTP accepted P95 93 ms và end-to-end P95 17,072 giây.
 - UI đã đối chiếu Linear design system: một shape token 6 px, palette/contrast gọn hơn và không tràn trang ở 1280, 768, 390 px; Console không có warning/error.
-- Workbook so sánh có raw rows, công thức, chart, phương pháp và giới hạn được tạo tại `D:\aura\compare_Provider\AURA_Provider_Comparison_2026-09-29.xlsx`.
+- Workbook so sánh cá nhân có raw rows, công thức, chart, phương pháp và giới hạn được lưu tại `D:\aura\phan_bien\benchmarks\provider\AURA_Provider_Comparison_2026-09-29.xlsx`.
 - Worker tăng backoff từ 5 giây đến trần 60 giây khi SQL tạm mất kết nối và giảm full-stack log lặp. Khi DB phục hồi, job còn nằm trong SQL và được tiếp tục xử lý.
 - Thêm `tools/Test-DemoReadiness.ps1`; script đã chạy thành công bằng Windows PowerShell 5.1, xác nhận đúng `AuraDb`, LocalDB, policy, storage, migration, provider và fallback mà không in secret.
 - Hàng đợi quản lý và Lịch sử hành vi hiển thị tên, mã và phòng ban người nộp thay vì nhãn ẩn danh cố định.

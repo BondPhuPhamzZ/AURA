@@ -86,7 +86,7 @@ Browser automation không thể tự gắn file vì extension CocCoc/ChatGPT ch�
 - OpenRouter: `test_kit/results/openrouter-final-20260929` (local, Git-ignored).
 - Ollama full: `test_kit/results/ollama-final-20260928` (local, Git-ignored).
 - Ollama TK-12 regression: `test_kit/results/ollama-regression-tk12-20260929` (local, Git-ignored).
-- Workbook: `D:\aura\compare_Provider\AURA_Provider_Comparison_2026-09-29.xlsx`.
+- Workbook cá nhân: `D:\aura\phan_bien\benchmarks\provider\AURA_Provider_Comparison_2026-09-29.xlsx`.
 - Automated tests không gọi API trả phí; Verify và extended evaluator có gọi provider thật.
 
 ## 8. Quyết định và bước tiếp theo
