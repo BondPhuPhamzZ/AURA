@@ -89,7 +89,7 @@ $jobs = 1..$Copies | ForEach-Object {
 }
 
 try {
-    $results = $jobs | Wait-Job | Receive-Job | Sort-Object Sequence
+    $results = @($jobs | Wait-Job | Receive-Job | Sort-Object Sequence)
     $results | Format-Table -AutoSize
     $acceptedP95 = ($results.HttpAcceptedMs | Sort-Object)[[Math]::Ceiling($results.Count * 0.95) - 1]
     $endToEndP95 = ($results.EndToEndMs | Sort-Object)[[Math]::Ceiling($results.Count * 0.95) - 1]
