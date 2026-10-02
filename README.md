@@ -74,6 +74,8 @@ A Vinamilk receipt then exposed a separate contract gap: the model read `183.114
 
 On 2 October 2026, a real Phê La receipt exposed a safety gap: merchant, date, identifier and total were readable, but the item area was obscured and the old build still auto-approved with `lineItems=[]`. AURA now treats missing paper-receipt items as critical evidence loss, attempts one targeted re-read, then adds an explicit missing field/warning, caps confidence at 0.69 and escalates to a human. The original run remains regression evidence, not a successful approval sample.
 
+The live post-fix gate subsequently passed: Phê La returned `ESCALATE_FACT`, the official Verify batch passed 5/5, a fully readable Vinamilk receipt remained `AUTO_APPROVE`, status/images/audit survived restart, and a five-upload concurrent smoke completed 5/5 with 530 ms acceptance P95 and 39.380 s end-to-end P95. These results close the targeted regression; they do not replace a diverse, consented real-receipt holdout.
+
 ## Evaluation API Key
 
 An evaluator-only OpenRouter key is provided to the organizers through a private channel (The API key is attached in the same folder containing the video). No active API key is stored in this repository, README, source code, screenshots, or demo video.

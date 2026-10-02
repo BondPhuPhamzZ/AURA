@@ -40,10 +40,10 @@ if ([string]::IsNullOrWhiteSpace($ImagesDirectory)) {
     $ImagesDirectory = Join-Path $scriptDirectory '..\test_kit\images'
 }
 if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
-    throw "Không tìm thấy manifest tại '$ManifestPath'. Truyền -ManifestPath bằng đường dẫn file hợp lệ."
+    throw "Manifest not found at '$ManifestPath'. Pass -ManifestPath with a valid file path."
 }
 if (-not (Test-Path -LiteralPath $ImagesDirectory -PathType Container)) {
-    throw "Không tìm thấy thư mục ảnh tại '$ImagesDirectory'. Truyền -ImagesDirectory bằng đường dẫn thư mục hợp lệ."
+    throw "Image directory not found at '$ImagesDirectory'. Pass -ImagesDirectory with a valid directory path."
 }
 
 function Get-CaseValue {
@@ -102,7 +102,7 @@ New-Item -ItemType Directory -Force -Path $resolvedOutput | Out-Null
 
 $manifest = Get-Content -Raw -LiteralPath $resolvedManifest | ConvertFrom-Json
 $manifestCases = @($(if ($null -ne $manifest.PSObject.Properties['cases']) { $manifest.cases } else { $manifest }))
-if ($manifestCases.Count -eq 0) { throw 'Manifest không có test case.' }
+if ($manifestCases.Count -eq 0) { throw 'The manifest contains no test cases.' }
 
 $sourceManifestPath = $null
 $sourceManifestSha256 = $null
@@ -130,7 +130,7 @@ if ($null -ne $sourceManifestProperty -and -not [string]::IsNullOrWhiteSpace([st
 
 $selectedCases = @($manifestCases | Select-Object -First $MaxCases)
 if ($selectedCases.Count -lt $MaxCases) {
-    Write-Warning "Manifest chỉ có $($selectedCases.Count) ca; MaxCases=$MaxCases."
+    Write-Warning "The manifest contains only $($selectedCases.Count) cases; MaxCases=$MaxCases."
 }
 
 Add-Type -AssemblyName System.Net.Http
@@ -145,7 +145,7 @@ $results = [Collections.Generic.List[object]]::new()
 try {
     $homeHtml = $client.GetStringAsync("$normalizedBaseUrl/").GetAwaiter().GetResult()
     $tokenMatch = [regex]::Match($homeHtml, 'name="__RequestVerificationToken"[^>]*value="([^"]+)"')
-    if (-not $tokenMatch.Success) { throw 'Không tìm thấy antiforgery token trên trang chủ.' }
+    if (-not $tokenMatch.Success) { throw 'Antiforgery token was not found on the home page.' }
     $antiforgeryToken = $tokenMatch.Groups[1].Value
 
     $healthJson = $client.GetStringAsync("$normalizedBaseUrl/healthz").GetAwaiter().GetResult()
@@ -165,7 +165,7 @@ try {
 
         if (-not $imagePath.StartsWith($resolvedImages, [StringComparison]::OrdinalIgnoreCase) -or
             -not (Test-Path -LiteralPath $imagePath -PathType Leaf)) {
-            throw "Không tìm thấy ảnh hợp lệ cho $caseId`: $fileName"
+            throw "No valid image was found for $caseId`: $fileName"
         }
 
         if ($index -gt 0 -and $InterCaseDelaySeconds -gt 0) {
@@ -195,7 +195,7 @@ try {
                 $acceptedMs = $clock.ElapsedMilliseconds
                 $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
                 if ([int]$response.StatusCode -ne 202) {
-                    throw "Expected HTTP 202, nhận HTTP $([int]$response.StatusCode): $body"
+                    throw "Expected HTTP 202, received HTTP $([int]$response.StatusCode): $body"
                 }
                 $accepted = $body | ConvertFrom-Json
             }
@@ -206,7 +206,7 @@ try {
             $deadline = [DateTimeOffset]::UtcNow.AddMinutes($CaseTimeoutMinutes)
             do {
                 if ([DateTimeOffset]::UtcNow -ge $deadline) {
-                    throw "Quá thời gian chờ $CaseTimeoutMinutes phút."
+                    throw "Timed out after $CaseTimeoutMinutes minute(s)."
                 }
                 Start-Sleep -Milliseconds 500
                 $statusJson = $client.GetStringAsync("$normalizedBaseUrl$($accepted.statusUrl)").GetAwaiter().GetResult()

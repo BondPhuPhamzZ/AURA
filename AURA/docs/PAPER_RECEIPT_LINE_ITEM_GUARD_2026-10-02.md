@@ -28,6 +28,8 @@ Sau khi dừng app cũ và chạy build mới:
 
 Nếu model đọc ra tên món từ vùng thật sự nhìn thấy được ở một ảnh khác, `lineItems` không rỗng và policy có thể tiếp tục. Guard không ép mọi receipt phải FACT; nó chỉ chặn kết luận không có mặt hàng cấm khi evidence món hàng hoàn toàn vắng mặt.
 
-## Phạm vi evidence
+## Kết quả live re-validation
 
-Evidence hiện có chứng minh upload `202`, queue hoàn tất, provider OpenRouter, audit, latency và việc mô hình từng fail-open. Nó chưa chứng minh guard live cho tới khi app được restart bằng source mới và ca Phê La được chạy lại. Automated test 102/102 bảo vệ code path nhưng không thay thế lượt provider thật này.
+Ca hậu sửa `6f51c0a38b3b42809f7d974b2e6db40d` đã chạy thật qua OpenRouter và trả `ESCALATE_FACT` đúng kỳ vọng: `lineItems=[]`, `missingFields=["lineItems"]`, warning rõ ràng, `semanticRepairApplied=true`, confidence `0.69`, AI latency `8.307 ms` và end-to-end `9.128 ms`. Ca trước sửa `685a88abd8a8428690f6f3b44f125a68` vẫn tồn tại độc lập dưới dạng historical incident; restart không thay đổi quyết định cũ.
+
+Regression sau guard cũng đạt: Official Verify 5/5 đúng expected, Vinamilk có bảy dòng hàng vẫn `AUTO_APPROVE`, restart giữ status/facts/ảnh/audit và concurrent smoke hoàn tất 5/5 với P95 end-to-end `39.380 ms`. Automated test 102/102 tiếp tục bảo vệ code path; real holdout đa dạng vẫn là cổng riêng trước tuyên bố production accuracy.

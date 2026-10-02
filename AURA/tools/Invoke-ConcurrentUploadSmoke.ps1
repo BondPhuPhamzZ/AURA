@@ -24,7 +24,7 @@ if ([string]::IsNullOrWhiteSpace($ImagePath)) {
     $ImagePath = Join-Path $scriptDirectory '..\wwwroot\test_data\images\HoaDon1.jpg'
 }
 if (-not (Test-Path -LiteralPath $ImagePath -PathType Leaf)) {
-    throw "Không tìm thấy ảnh smoke test tại '$ImagePath'. Truyền -ImagePath bằng đường dẫn tuyệt đối hoặc chạy script từ repository AURA."
+    throw "Smoke-test image not found at '$ImagePath'. Pass an absolute -ImagePath or run the script from the AURA repository."
 }
 
 $resolvedImage = (Resolve-Path -LiteralPath $ImagePath).Path
@@ -43,7 +43,7 @@ $jobs = 1..$Copies | ForEach-Object {
         try {
             $html = $client.GetStringAsync("$RootUrl/").GetAwaiter().GetResult()
             $tokenMatch = [regex]::Match($html, 'name="__RequestVerificationToken"[^>]*value="([^"]+)"')
-            if (-not $tokenMatch.Success) { throw 'Không tìm thấy antiforgery token trên trang chủ.' }
+            if (-not $tokenMatch.Success) { throw 'Antiforgery token was not found on the home page.' }
 
             $multipart = [System.Net.Http.MultipartFormDataContent]::new()
             $bytes = [System.IO.File]::ReadAllBytes($ReceiptPath)
@@ -52,7 +52,9 @@ $jobs = 1..$Copies | ForEach-Object {
             $multipart.Add($fileContent, 'receiptFile', [System.IO.Path]::GetFileName($ReceiptPath))
             $multipart.Add([System.Net.Http.StringContent]::new([string]$Amount), 'claimedAmount')
             $multipart.Add([System.Net.Http.StringContent]::new("LOAD-$Sequence"), 'submitterCode')
-            $multipart.Add([System.Net.Http.StringContent]::new("Người kiểm thử $Sequence"), 'submitterDisplayName')
+            # Keep persisted runner identities ASCII-only. Windows PowerShell 5.1 can
+            # decode UTF-8-without-BOM script literals as ANSI and persist mojibake.
+            $multipart.Add([System.Net.Http.StringContent]::new("Load tester $Sequence"), 'submitterDisplayName')
             $multipart.Add([System.Net.Http.StringContent]::new('Concurrent smoke'), 'submitterDepartment')
             $multipart.Add([System.Net.Http.StringContent]::new($tokenMatch.Groups[1].Value), '__RequestVerificationToken')
 
