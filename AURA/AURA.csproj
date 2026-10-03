@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>08f53e32-7807-49ad-95ed-4c2f1cef5c44</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <!-- Never let generated/local evaluation folders become publish inputs. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);publish\**;.tmp\**;test_kit\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +23,8 @@
     <Compile Remove="tests\**\*.cs" />
     <Content Remove="tests\**\*" />
     <None Remove="tests\**\*" />
+    <Content Update="appsettings.Development.json"
+             CopyToPublishDirectory="Never" />
   </ItemGroup>
 
   <!-- The vision extractor reads this policy at runtime. Keep it beside AURA.dll

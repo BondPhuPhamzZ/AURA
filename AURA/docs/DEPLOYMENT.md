@@ -8,6 +8,18 @@ Nếu cùng một URL lúc hiện AURA, lúc hiện trang `Dear customer`, websi
 
 Sau khi publish, website root phải chứa trực tiếp `web.config`, `AURA.dll`, `AURA.deps.json`, `AURA.runtimeconfig.json` và `wwwroot/`. Không để các file này nằm thêm một cấp trong thư mục `publish/`.
 
+Luôn publish vào một thư mục mới nằm ngoài project. Không dùng `-o .\publish`: output cũ nằm trong project có thể bị MSBuild thu lại làm input và tạo `publish\publish` hoặc đường dẫn stale. Ví dụ PowerShell an toàn:
+
+```powershell
+$shortCommit = (git rev-parse --short HEAD).Trim()
+$publishRoot = "D:\aura\deploy_artifacts\AURA-$shortCommit"
+if (Test-Path -LiteralPath $publishRoot) { throw "Artifact đã tồn tại: $publishRoot. Hãy dùng tên mới; không ghi đè artifact đã kiểm thử." }
+New-Item -ItemType Directory -Path $publishRoot | Out-Null
+dotnet publish .\AURA.csproj -c Release -o $publishRoot --no-restore
+```
+
+Artifact production không được có thư mục `publish`, `.tmp`, `test_kit` hoặc `appsettings.Development.json`. Verify Harness vẫn lấy đúng năm fixture tổng hợp trong `wwwroot/test_data`.
+
 ## Thứ tự smoke test production
 
 1. Mở `/healthz` trong cửa sổ ẩn danh và xác nhận HTTP 200, `status: ok`, `aiConfigured: true`, `policyAvailable: true`, `databaseAvailable: true`, `databaseUpToDate: true`, `pendingMigrationCount: 0` và `storageAvailable: true`.
