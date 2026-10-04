@@ -57,7 +57,7 @@ Nếu một cổng fail, vẫn demo localhost và mô tả Live URL là staging 
 
 ## Lộ trình an toàn trước ngày chốt
 
-1. Freeze code baseline; chạy build, 102 test, preflight và ba dress rehearsal local.
+1. Freeze code baseline; chạy build, 108 test, preflight và ba dress rehearsal local.
 2. Hoàn tất blind holdout 10–15 ảnh đa merchant, khóa ground truth/hash trước lượt đầu.
 3. Smoke lại SmarterASP.NET đúng checklist; chỉ giữ link trong submission nếu pass.
 4. Thu feedback ba người dùng khi doanh nghiệp kết nối; ghi task completion, hiểu decision, thời gian và lỗi UX.

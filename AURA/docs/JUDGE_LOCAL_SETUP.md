@@ -93,7 +93,7 @@ dotnet build ..\AURA.sln -c Release --no-restore
 dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release --no-restore
 ```
 
-Baseline ngày 02/10/2026 phải đạt build 0 warning/0 error và 102/102 test pass. Automated tests không gọi OpenRouter và không tốn credit.
+Candidate ngày 04/10/2026 phải đạt build 0 warning/0 error và 108/108 test pass. Automated tests không gọi OpenRouter và không tốn credit.
 
 ## 8. Chạy AURA
 

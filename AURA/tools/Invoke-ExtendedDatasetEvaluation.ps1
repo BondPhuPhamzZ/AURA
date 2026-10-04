@@ -133,6 +133,41 @@ if ($selectedCases.Count -lt $MaxCases) {
     Write-Warning "The manifest contains only $($selectedCases.Count) cases; MaxCases=$MaxCases."
 }
 
+# Validate every selected image, including an optional locked SHA-256, before
+# the first request can reach the application or AI provider. This prevents a
+# partially executed holdout when files were renamed or edited after labeling.
+$validatedImages = @{}
+foreach ($selectedCase in $selectedCases) {
+    $selectedCaseId = [string](Get-CaseValue $selectedCase @('id'))
+    $selectedFileName = [string](Get-CaseValue $selectedCase @('fileName', 'file_name'))
+    if ([string]::IsNullOrWhiteSpace($selectedCaseId) -or $validatedImages.ContainsKey($selectedCaseId)) {
+        throw "Every selected case must have a unique non-empty id. Invalid id: '$selectedCaseId'."
+    }
+
+    $selectedImagePath = [IO.Path]::GetFullPath((Join-Path $resolvedImages ([IO.Path]::GetFileName($selectedFileName))))
+    if (-not $selectedImagePath.StartsWith($resolvedImages, [StringComparison]::OrdinalIgnoreCase) -or
+        -not (Test-Path -LiteralPath $selectedImagePath -PathType Leaf)) {
+        throw "No valid image was found for $selectedCaseId`: $selectedFileName"
+    }
+
+    $actualImageSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $selectedImagePath).Hash.ToUpperInvariant()
+    $expectedImageSha256 = [string](Get-CaseValue $selectedCase @('sha256', 'imageSha256', 'image_sha256') '')
+    if (-not [string]::IsNullOrWhiteSpace($expectedImageSha256)) {
+        $expectedImageSha256 = $expectedImageSha256.Trim().ToUpperInvariant()
+        if ($expectedImageSha256 -notmatch '^[0-9A-F]{64}$') {
+            throw "Invalid SHA-256 in manifest for $selectedCaseId."
+        }
+        if ($actualImageSha256 -ne $expectedImageSha256) {
+            throw "Image SHA-256 mismatch for $selectedCaseId`: expected $expectedImageSha256, actual $actualImageSha256. No request was sent."
+        }
+    }
+
+    $validatedImages[$selectedCaseId] = [pscustomobject]@{
+        Path = $selectedImagePath
+        Sha256 = $actualImageSha256
+    }
+}
+
 Add-Type -AssemblyName System.Net.Http
 $handler = [Net.Http.HttpClientHandler]::new()
 $handler.CookieContainer = [Net.CookieContainer]::new()
@@ -161,12 +196,8 @@ try {
         if ($null -eq $expectedFacts -and $sourceCasesById.ContainsKey($caseId)) {
             $expectedFacts = Get-CaseValue $sourceCasesById[$caseId] @('expectedFacts', 'expected_facts')
         }
-        $imagePath = [IO.Path]::GetFullPath((Join-Path $resolvedImages ([IO.Path]::GetFileName($fileName))))
-
-        if (-not $imagePath.StartsWith($resolvedImages, [StringComparison]::OrdinalIgnoreCase) -or
-            -not (Test-Path -LiteralPath $imagePath -PathType Leaf)) {
-            throw "No valid image was found for $caseId`: $fileName"
-        }
+        $imagePath = $validatedImages[$caseId].Path
+        $imageSha256 = $validatedImages[$caseId].Sha256
 
         if ($index -gt 0 -and $InterCaseDelaySeconds -gt 0) {
             Start-Sleep -Seconds $InterCaseDelaySeconds
@@ -241,6 +272,7 @@ try {
             DatasetCaseId = $caseId
             RequestId = $(if ($null -ne $status) { $status.caseId } else { $null })
             FileName = $fileName
+            ImageSha256 = $imageSha256
             Expected = $expectedStatus
             Actual = $actualStatus
             Pass = $decisionCorrect
@@ -305,6 +337,9 @@ try {
         SourceManifestPath = $sourceManifestPath
         SourceManifestSha256 = $sourceManifestSha256
         ImagesDirectory = $resolvedImages
+        ImageHashes = @($validatedImages.GetEnumerator() | Sort-Object Name | ForEach-Object {
+            [pscustomobject]@{ CaseId = $_.Name; Sha256 = $_.Value.Sha256 }
+        })
         RequestedMaxCases = $MaxCases
         InterCaseDelaySeconds = $InterCaseDelaySeconds
         Health = $health

@@ -34,7 +34,7 @@ dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release --no-restore
 dotnet ef migrations has-pending-model-changes --project .\AURA.csproj --startup-project .\AURA.csproj --configuration Release --no-build
 ```
 
-Kỳ vọng: build `0 warning, 0 error`; test `102/102`; EF báo không có model change chưa migration. Thay đổi facts/queue UI không tạo migration. Chỉ chạy `dotnet ef database update` khi source thực sự có migration mới hoặc health báo pending migration; không dùng lệnh này như thao tác reset.
+Kỳ vọng candidate hiện tại: build `0 warning, 0 error`; test `108/108`; EF báo không có model change chưa migration. Thay đổi tab UI không tạo migration. Chỉ chạy `dotnet ef database update` khi source thực sự có migration mới hoặc health báo pending migration; không dùng lệnh này như thao tác reset.
 
 ### Chạy app và full preflight
 
@@ -76,7 +76,7 @@ Kỳ vọng: `status=ok`, `databaseAvailable=true`, `databaseUpToDate=true`, `pe
 | Concurrent smoke | 5 upload tổng hợp | Không global 409; cả 5 về trạng thái cuối | Accepted/final status và latency |
 | Receipt che/mờ toàn bộ vùng món hàng | 1 lượt sau guard | `ESCALATE_FACT`; `lineItems` nằm trong missing fields; tuyệt đối không AUTO | Ảnh, final JSON, repair metadata, reason |
 
-Không dùng 102 automated tests để tuyên bố model đã đọc đúng 102 ảnh. Automated tests bảo vệ code; ma trận trên mới kiểm provider thật.
+Không dùng 108 automated tests để tuyên bố model đã đọc đúng 108 ảnh. Automated tests bảo vệ code; ma trận trên mới kiểm provider thật.
 
 Sau hardening giảm giá và postfix live fix, chạy cổng trong `LIVE_POSTFIX_INCIDENT_2026-10-01.md`: Highlands ba lượt, Vinamilk ba lượt với tổng sau giảm, một negative dùng tổng trước giảm, ba batch Verify và một restart queue không cần ca mới để đánh thức. Không trộn evidence của commit `29257c3` vào tỷ lệ pass sau sửa.
 

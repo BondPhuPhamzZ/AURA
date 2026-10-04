@@ -41,7 +41,7 @@ cd D:\aura\AURA\AURA
 dotnet test .\tests\AURA.Tests\AURA.Tests.csproj --configuration Release
 ```
 
-Kỳ vọng hiện tại: 102/102 pass, không gọi API trả phí.
+Kỳ vọng candidate hiện tại: 108/108 pass, không gọi API trả phí.
 
 ## Test thật bắt buộc sau thay đổi schema
 
@@ -115,4 +115,4 @@ GCP G2/L4 có 24 GB VRAM và phù hợp inference, nhưng cần billing, GPU quo
 
 ## Definition of done trước 15 10
 
-Core demo được chốt khi 102/102 offline test pass, OpenRouter qua cổng postfix Highlands/Vinamilk, Official Verify 5/5 ba rehearsal, LocalDB preflight ổn định sau reboot, restart queue tự hiển thị không cần ca mới và slide/script dùng đúng commit chốt. Cloud self-host không phải blocker; chỉ đưa vào demo nếu hoàn tất toàn bộ gate trên trước freeze ít nhất 48 giờ.
+Core demo được chốt khi 108/108 offline test pass, OpenRouter qua cổng postfix Highlands/Vinamilk, Official Verify 5/5 ba rehearsal, LocalDB preflight ổn định sau reboot, restart queue tự hiển thị không cần ca mới và slide/script dùng đúng commit chốt. Cloud self-host không phải blocker; chỉ đưa vào demo nếu hoàn tất toàn bộ gate trên trước freeze ít nhất 48 giờ.

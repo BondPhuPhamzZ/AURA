@@ -40,7 +40,7 @@ Key capabilities:
 Last full validation: 2 October 2026.
 
 - Build: **0 warnings, 0 errors**.
-- Automated tests: **102/102 passed**; they do not call the paid AI API.
+- Automated tests: **108/108 passed**; they do not call the paid AI API.
 - Official Verify Harness: **5/5** with the expected 3 approve / 2 escalate split.
 - Locked synthetic judge set: OpenRouter **15/15 decisions**, Ollama **14/15**; Ollama missed escalation TK-12.
 - OpenRouter concurrency smoke: **5/5 completed**, post-guard end-to-end P95 **39.380 seconds**.
@@ -126,7 +126,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore
 dotnet ef migrations has-pending-model-changes --no-build
 ```
 
-Expected: build 0 warnings/errors, 102/102 tests passed, and no model change pending migration.
+Expected: build 0 warnings/errors, 108/108 tests passed, and no model change pending migration.
 
 Stop the app with `Ctrl+C`. No database reset or LocalDB deletion is required.
 

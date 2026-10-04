@@ -1,6 +1,6 @@
 # AURA - Next implementation roadmap and acceptance gates
 
-Cập nhật: 03/10/2026. Mục tiêu là chốt MVP có bằng chứng trước 10/10, khóa bài nộp ngày 15/10 và demo ngày 17/10. Roadmap này ưu tiên yêu cầu của Track A, feedback Sprint 1 và thông điệp seminar: scope trước, MVP thật, đo được tác động và kể được câu chuyện doanh nghiệp.
+Cập nhật trạng thái: 04/10/2026. Mục tiêu là chốt MVP có bằng chứng trước 10/10, khóa bài nộp ngày 15/10 và demo ngày 17/10. Audit deployment mới nhất: [`LIVE_DEPLOYMENT_EVIDENCE_AUDIT_2026-10-04.md`](LIVE_DEPLOYMENT_EVIDENCE_AUDIT_2026-10-04.md).
 
 ## 1. Trạng thái so với feedback Sprint 1
 
@@ -14,7 +14,7 @@ Cập nhật: 03/10/2026. Mục tiêu là chốt MVP có bằng chứng trước
 | Fallback OpenRouter -> Ollama | Hoàn thành về chức năng, chưa bật mặc định | Live regression 1/1; audit provider đúng; E2E 84,425 s |
 | Đo trên tập độc lập | Chưa hoàn tất | Judge 15 là synthetic locked set; receipt thật hiện là development samples |
 | Ba người dùng thực tế | Chưa hoàn tất | Đang chờ kết nối/đồng thuận |
-| Live URL sau hardening | Cần smoke lại | URL Sprint 1 không thay thế smoke của revision cuối |
+| Live URL sau hardening | Conditional pass | Health/DB/storage/Verify/workflow đạt trên `8ebe18c8`; còn deploy/recheck bản vá tab, AUTO + FACT smoke độc lập, mobile/recycle |
 
 ## 2. Traceability với yêu cầu Track A
 
@@ -29,7 +29,7 @@ Cập nhật: 03/10/2026. Mục tiêu là chốt MVP có bằng chứng trước
 | Verify một thao tác, 3 auto + 2 escalate | Đạt và không thay expected | Ba dress rehearsal 5/5 dưới 90 s |
 | Nhận input mới, không hard-code | Đạt về pipeline | Test 5 ca unseen hoặc holdout khóa trước |
 | Audit, can thiệp, dừng/undo | Đạt | Rehearsal YES/NO/UNDO có timeline |
-| Live URL | Đã có lịch sử Sprint 1 | Smoke revision cuối nếu còn đưa URL vào submission |
+| Live URL | Đã chạy hardening smoke, chưa final GO | Đóng các khoảng trống trong audit 04/10 và smoke lại commit candidate |
 | Accuracy trên tập độc lập | Chưa đạt đầy đủ | Khóa ground truth/hash trước khi chạy |
 | Ít nhất 3 người dùng thực tế | Chưa đạt | Có danh tính/chức danh và phản hồi do chính họ viết |
 | Điều chỉnh threshold từ feedback | Chưa triển khai | Chỉ làm calibration có governance; không tự sửa policy online |
@@ -148,4 +148,4 @@ Pitch phải bắt đầu từ vấn đề và tác động, không bắt đầu
 
 ## 8. Definition of done
 
-MVP sẵn sàng Chung kết khi 102/102 test pass, build sạch, bốn gate P0 hoàn tất, Verify không đổi 3/2, không có P0/P1 crash blocker, evidence liên kết commit/provider/model/timestamp, ảnh thật không lộ PII và người trình bày tự giải thích được toàn bộ luồng. Production readiness là một mốc khác và không được tuyên bố ở giai đoạn này.
+MVP sẵn sàng Chung kết khi suite candidate hiện tại 108/108 pass, build sạch, bốn gate P0 hoàn tất, Verify không đổi 3/2, không có P0/P1 crash blocker, evidence liên kết commit/provider/model/timestamp, ảnh thật không lộ PII và người trình bày tự giải thích được toàn bộ luồng. Production readiness là một mốc khác và không được tuyên bố ở giai đoạn này.

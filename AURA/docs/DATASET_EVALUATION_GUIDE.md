@@ -77,6 +77,10 @@ Mức tối thiểu trước demo là 10–15 ảnh được phép dùng và ch�
 
 Kết quả 15 ca chỉ là bằng chứng định hướng cho demo. Không tuyên bố accuracy production từ mẫu nhỏ. Mục tiêu 100 ảnh trong `MEASUREMENT_PLAN.md` vẫn là cổng cho đánh giá đáng tin cậy hơn sau hackathon.
 
+Dùng `test_kit/holdout-manifest.template.json` làm cấu trúc tham khảo rồi sao chép ra thư mục private ngoài Git. Manifest chính thức phải điền SHA-256 64 ký tự cho từng ảnh. Runner xác minh toàn bộ hash **trước request đầu tiên**; chỉ cần một file lệch hash thì lượt chạy dừng và không gửi ảnh nào tới provider. Results và metadata cũng ghi lại hash thực tế để nối ground truth với đúng input.
+
+Ảnh đã được dùng để sửa prompt/policy hoặc phân tích lỗi, chẳng hạn development receipt, không còn là blind holdout. Giữ chúng ở regression set và thay bằng ảnh unseen. Không đưa manifest thật, consent hoặc ảnh gốc vào Git.
+
 ## 7. Cổng chấp nhận
 
 - Không missed escalation trong các ca rủi ro khóa.

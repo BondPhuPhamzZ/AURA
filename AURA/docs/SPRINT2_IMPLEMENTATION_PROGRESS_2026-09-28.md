@@ -40,13 +40,13 @@ Live validation ngày 29/09/2026 đã chốt thêm: OpenRouter đạt 15/15 quy�
 
 ### 4. Kiểm thử và công cụ vận hành
 
-- Automated tests tăng từ 70 lên 88 trong hardening Sprint 2, lên 93 sau hardening định danh chứng từ giấy, 100 sau đối chiếu giảm giá và 102 sau postfix live regressions; kết quả hiện tại: 102/102 pass.
+- Automated tests tăng từ 70 lên 88 trong hardening Sprint 2, lên 93 sau hardening định danh chứng từ giấy, 100 sau đối chiếu giảm giá, 102 sau postfix live regressions và 108 sau regression initial-tab; kết quả candidate hiện tại: 108/108 pass.
 - Build hiện tại: 0 warning, 0 error.
 - EF Core: migration và model snapshot đã được cập nhật cùng thay đổi schema; app smoke test đã truy vấn thành công các cột mới.
 - LocalDB đã áp migration thành công trong lần xác minh.
 - Thêm `tools/Invoke-ConcurrentUploadSmoke.ps1` để chạy 1-10 upload đồng thời, đo HTTP accepted P95, end-to-end P95, provider phục vụ, fallback và error code.
 - Test integrity vẫn khóa Verify Harness ở đúng 5 ca: 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`.
-- EF Core SQL Server/Tools và local `dotnet-ef` đã nâng cùng major lên 8.0.31. Build Release 0 warning/0 error, 102/102 test pass, không có package bị NuGet vulnerability scan cảnh báo và EF không có pending model change.
+- EF Core SQL Server/Tools và local `dotnet-ef` đã nâng cùng major lên 8.0.31. Build Release 0 warning/0 error, 108/108 test pass, không có package bị NuGet vulnerability scan cảnh báo và EF không có pending model change.
 - Thêm `tools/Invoke-ExtendedDatasetEvaluation.ps1` để chạy 15/30 ca qua upload endpoint mà không thêm nút UI. Runner xuất metadata, CSV, JSON và summary gồm decision/field accuracy, missed/over-escalation, system error, fallback và P50/P95.
 - Delay 4 giây của Official Verify chuyển thành `Verify:InterCaseDelayMs`; mặc định vẫn 4000 ms để không thay đổi baseline/quota behavior.
 - `/healthz` giờ kiểm tra thêm kết nối database, pending migration và khả dụng của thư mục receipt; thiếu một trong các cổng này sẽ trả `503 degraded` thay vì báo sẵn sàng giả. Endpoint không gọi AI provider nên không tiêu quota.
@@ -103,7 +103,7 @@ Không bật Ollama fallback trên hosted server nếu Ollama chỉ chạy ở l
 ## Checklist người vận hành cần làm tiếp
 
 1. Pull commit mới, chạy `.\tools\Test-DemoReadiness.ps1 -StartLocalDb -SkipHttp`, rồi `dotnet ef database update` trên đúng database demo.
-2. Chạy `dotnet build ../AURA.sln --no-restore` và `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore`; kỳ vọng 102/102. Không dùng `--no-build` nếu test project chưa vừa được build đúng configuration.
+2. Chạy `dotnet build ../AURA.sln --no-restore` và `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore`; kỳ vọng 108/108. Không dùng `--no-build` nếu test project chưa vừa được build đúng configuration.
 3. Giữ fallback tắt, test một upload OpenRouter và một Verify 5 ca để tái xác nhận baseline.
 4. Mở Ollama, bật fallback, chủ động mô phỏng lỗi primary bằng một key/model test không hợp lệ chỉ trong database test; xác nhận audit provider. Không làm bước này trên database/video chính.
 5. Chạy concurrency smoke 5 request trên database riêng hoặc bản sao demo và ghi Accepted P95, End-to-end P95, error rate.
@@ -120,4 +120,4 @@ Không bật Ollama fallback trên hosted server nếu Ollama chỉ chạy ở l
 - Hai thao tác quản lý cùng hồ sơ không ghi đè im lặng.
 - Ảnh và audit vẫn mở sau restart app.
 - Fallback được bật/tắt bằng cấu hình, không sửa code sát giờ demo.
-- Slide, workflow, README, runbook và build log nêu cùng một pipeline và cùng mốc 102 tests. Mốc 88/93/100 chỉ còn xuất hiện khi mô tả lịch sử của các đợt hardening trước.
+- README, workflow, runbook và build log dùng mốc candidate 108 tests. Slide artifact được refresh đúng một lần sau feature freeze; các mốc 88/93/100/102 chỉ dùng để mô tả lịch sử hardening.

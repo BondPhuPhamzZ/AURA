@@ -1,0 +1,40 @@
+{
+  "version": "blind-holdout-15-v1",
+  "description": "LOCAL-ONLY TEMPLATE. Copy outside Git, label and hash before the first provider call.",
+  "datasetType": "mixed-real-and-synthetic-blind-holdout",
+  "policyVersion": "BUSINESS_RULES.md@COMMIT_SHA",
+  "lockedAtUtc": null,
+  "labelReview": {
+    "primaryReviewer": null,
+    "secondaryReviewer": null,
+    "disagreementsResolved": false
+  },
+  "cases": [
+    {
+      "id": "BH-01",
+      "fileName": "anonymous-receipt-01.jpg",
+      "sha256": "REPLACE_WITH_64_HEX_CHARACTERS",
+      "sourceType": "real",
+      "consentReference": "LOCAL_PRIVATE_REFERENCE",
+      "redactionStatus": "reviewed",
+      "usedForPromptOrPolicyDevelopment": false,
+      "claimedAmount": 0,
+      "expectedStatus": "AUTO_APPROVE",
+      "category": "routine",
+      "labelRationale": "REPLACE_BEFORE_LOCK",
+      "expectedFacts": {
+        "documentType": null,
+        "merchantName": null,
+        "receiptNumber": null,
+        "transactionReference": null,
+        "invoiceDate": null,
+        "transactionDate": null,
+        "currency": "VND",
+        "subtotal": null,
+        "discountAmount": null,
+        "tax": null,
+        "totalAmount": null
+      }
+    }
+  ]
+}

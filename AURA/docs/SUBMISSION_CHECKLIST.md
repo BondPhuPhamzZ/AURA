@@ -1,6 +1,6 @@
 # AURA — Checklist nộp bài
 
-Cập nhật: 02/10/2026. Trạng thái này là nguồn đối chiếu cuối; không điền số liệu hoặc URL chưa được xác minh.
+Cập nhật: 04/10/2026. Trạng thái này là nguồn đối chiếu cuối; không điền số liệu hoặc URL chưa được xác minh. Audit live chi tiết nằm tại `docs/LIVE_DEPLOYMENT_EVIDENCE_AUDIT_2026-10-04.md`.
 
 ## 1. Hạng mục bàn giao
 
@@ -9,7 +9,7 @@ Cập nhật: 02/10/2026. Trạng thái này là nguồn đối chiếu cuối; 
 | Frontend/backend clone và chạy localhost | ☑ Có | README root, .NET 8, LocalDB/SQL Server, user-secrets và migration |
 | Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, 15/30 ca chạy ngoài UI bằng evaluator |
 | Public repository và lịch sử commit | ☑ Có | `https://github.com/BondPhuPhamzZ/AURA`; cần push commit chốt sau mỗi lần cập nhật hồ sơ |
-| Public Live URL | ☐ Cần smoke lại | URL Sprint 1 đã có; phải xác minh bản hardening, migration, storage sau recycle và một upload thật trước khi điền trạng thái hoàn tất |
+| Public Live URL | ◐ Conditional pass | Health/DB/storage/Verify/workflow đạt trên commit `8ebe18c8`; còn deploy bản vá tab, AUTO + FACT smoke độc lập, mobile và recycle evidence trước khi public README |
 | Video demo tối đa 3 phút (BTC ghi Optional) | ☑ Đã liên kết | Link Google Drive ở README root |
 | Đúng 5 slide | ☑ Đã dựng | `submission/AURA_5_SLIDES.pptx` |
 | Build Log một trang Word | ☑ Đã dựng | `submission/AURA_BUILD_LOG.docx` |
@@ -20,7 +20,7 @@ Cập nhật: 02/10/2026. Trạng thái này là nguồn đối chiếu cuối; 
 - `README.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_AND_INTEGRATION_REPORT.md`.
 - `docs/`: Build Log nguồn, deployment, runbook, test cases, model selection, measurement plan.
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
-- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide và phản ánh 102 test cùng workflow hiện tại.
+- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; phải refresh mốc test/evidence một lần sau feature freeze (candidate hiện tại 108/108).
 - `submission/AURA_BUILD_LOG.docx`: một trang.
 - `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.
 - 5 ảnh Verify trong `wwwroot/test_data/images`, manifest Verify và gói 15 ca BGK.
@@ -51,3 +51,5 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 8. Post-fix gate ngày 02/10 đã xác minh Phê La bị che vùng món đi `ESCALATE_FACT`, Vinamilk đủ bảy dòng hàng vẫn `AUTO_APPROVE`, Official Verify 5/5, restart giữ status/ảnh/audit, manager YES/NO/UNDO có audit và concurrent smoke 5/5 với accepted P95 530 ms, end-to-end P95 39,380 giây.
 9. Hướng dẫn BGK chạy local nằm tại `docs/JUDGE_LOCAL_SETUP.md`; báo cáo tiến độ và ranh giới claim nằm tại `docs/PROGRESS_REPORT_2026-10-02.md`.
 10. Development validation bổ sung và fallback live regression nằm tại `docs/REAL_RECEIPT_VALIDATION_2026-10-02.md` và `docs/FALLBACK_REGRESSION_2026-10-02.md`. Ảnh thật/PII vẫn nằm ngoài Git; fallback baseline vẫn tắt.
+11. Live audit ngày 04/10 xác nhận Verify 5/5, security-negative và external HTTP pass; phát hiện `04_auto_smoke`/`05_fail_safe_smoke` là cùng một POLICY request nên không được tính thành hai gate. Candidate sửa first-paint tab đạt 108/108 test và phải deploy/recheck trước final go/no-go.
+12. Holdout hiện có tám file candidate nhưng Vinamilk không còn blind; Katinat phải xác minh lịch sử đã chạy hay chưa. Chỉ khóa manifest khi đủ đúng 15 ảnh unseen, consent/redaction/ground truth và SHA-256.
