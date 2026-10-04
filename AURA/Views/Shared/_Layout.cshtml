@@ -1,4 +1,7 @@
 ﻿<!DOCTYPE html>
+@{
+    var initialTab = ViewData["InitialTab"] as string ?? "applicant";
+}
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
@@ -18,9 +21,9 @@
         <div class="header-actions">
             <!-- ZERO LOGIN TABS -->
             <div class="top-tabs">
-                <button class="nav-link active" onclick="navigateToTab('applicant')" id="btn-tab-applicant">Cửa sổ nhân viên</button>
-                <button class="nav-link" onclick="navigateToTab('reviewer')" id="btn-tab-reviewer">Cửa sổ quản lý</button>
-                <button class="nav-link" onclick="navigateToTab('audit')" id="btn-tab-audit">Lịch sử hành vi</button>
+                <button class="nav-link @(initialTab == "applicant" ? "active" : null)" onclick="navigateToTab('applicant')" id="btn-tab-applicant">Cửa sổ nhân viên</button>
+                <button class="nav-link @(initialTab == "reviewer" ? "active" : null)" onclick="navigateToTab('reviewer')" id="btn-tab-reviewer">Cửa sổ quản lý</button>
+                <button class="nav-link @(initialTab == "audit" ? "active" : null)" onclick="navigateToTab('audit')" id="btn-tab-audit">Lịch sử hành vi</button>
             </div>
             
             

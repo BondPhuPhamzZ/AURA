@@ -14,8 +14,16 @@ public class HomeController : Controller
         _logger = logger;
     }
 
-    public IActionResult Index()
+    public IActionResult Index(string? tab)
     {
+        var initialTab = tab?.Trim().ToLowerInvariant() switch
+        {
+            "reviewer" => "reviewer",
+            "audit" => "audit",
+            _ => "applicant"
+        };
+
+        ViewData["InitialTab"] = initialTab;
         return View();
     }
 

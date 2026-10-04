@@ -4,9 +4,15 @@
 @using AURA.Options
 @using Microsoft.Extensions.Options
 @inject IOptions<ReceiptStorageOptions> ReceiptStorage
+@{
+    var initialTab = ViewData["InitialTab"] as string ?? "applicant";
+    var applicantDisplay = initialTab == "applicant" ? "block" : "none";
+    var reviewerDisplay = initialTab == "reviewer" ? "block" : "none";
+    var auditDisplay = initialTab == "audit" ? "block" : "none";
+}
 
 <!-- Tab Applicant / Tester -->
-<div class="tab-content-pane feature-card active" id="pane-applicant" style="padding: 24px;">
+<div class="tab-content-pane feature-card @(initialTab == "applicant" ? "active" : null)" id="pane-applicant" style="padding: 24px; display: @applicantDisplay;">
     
     <!-- Hướng dẫn & Verify Harness (Top Section) -->
     <div class="section-heading-row verify-heading-row">
@@ -144,12 +150,12 @@
 </div>
 
 <!-- Tab Reviewer -->
-<div class="tab-content-pane feature-card" id="pane-reviewer" style="display: none;">
+<div class="tab-content-pane feature-card @(initialTab == "reviewer" ? "active" : null)" id="pane-reviewer" style="display: @reviewerDisplay;">
     <div id="reviewerQueueHost">@await Component.InvokeAsync("EscalationQueue")</div>
 </div>
 
 <!-- Tab Audit Log -->
-<div class="tab-content-pane feature-card" id="pane-audit" style="display: none;">
+<div class="tab-content-pane feature-card @(initialTab == "audit" ? "active" : null)" id="pane-audit" style="display: @auditDisplay;">
     <div id="auditTrailHost">@await Component.InvokeAsync("AuditLogQueue")</div>
 </div>
 
