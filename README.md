@@ -37,17 +37,18 @@ Key capabilities:
 
 ## Verified baseline
 
-Last full validation: 2 October 2026.
+Last full validation: 4 October 2026 on candidate `c42c5ef`.
 
 - Build: **0 warnings, 0 errors**.
 - Automated tests: **108/108 passed**; they do not call the paid AI API.
 - Official Verify Harness: **5/5** with the expected 3 approve / 2 escalate split.
 - Locked synthetic judge set: OpenRouter **15/15 decisions**, Ollama **14/15**; Ollama missed escalation TK-12.
-- OpenRouter concurrency smoke: **5/5 completed**, post-guard end-to-end P95 **39.380 seconds**.
+- SmartASP postfix gate: health/DB/storage/migration, upload security, initial-tab rendering, independent AUTO/FACT smoke, Verify, human workflow and persistence passed.
+- Live concurrency: **2/2 + 5/5 completed**; end-to-end P95 **20.941 / 23.290 seconds**. The accepted timer includes antiforgery GET/setup/network, so it is not a pure POST SLO.
 - Real-receipt development checks cover approval with repair, approval without repair, and fail-safe escalation for obscured line items.
 - Isolated OpenRouter-to-Ollama fallback passed 1/1, but took **84.425 seconds**. Fallback therefore remains disabled in the official demo baseline.
 
-These are regression results, not a claim of production accuracy. Independent holdout testing and three real-user sessions remain Sprint 2 gates.
+These are regression/staging results, not a claim of production accuracy. Final gates remain a locked 15-case blind holdout, three real-user sessions, manual mobile/4G/no-flash evidence and three timed rehearsals. Recheck health and smoke immediately before publishing or demonstrating the live URL.
 
 ## Run locally
 
@@ -137,6 +138,8 @@ Stop the app with `Ctrl+C`. No database reset or LocalDB deletion is required.
 - [Business rules](AURA/BUSINESS_RULES.md)
 - [Workflow specification](AURA/submission/AURA_WORKFLOW_SPEC.md)
 - [Dataset and extended evaluation](AURA/docs/DATASET_EVALUATION_GUIDE.md)
+- [Current verified status](AURA/docs/CURRENT_PROJECT_STATUS_2026-10-05.md)
+- [Blind holdout locking guide](AURA/docs/HOLDOUT_LOCKING_GUIDE_2026-10-05.md)
 - [Optional local Ollama setup](AURA/docs/LOCAL_OLLAMA.md)
 - [Deployment decision](AURA/docs/DEPLOYMENT_DECISION_2026-10-02.md)
 - [Current roadmap and acceptance gates](AURA/docs/NEXT_IMPLEMENTATION_ROADMAP_2026-10-03.md)

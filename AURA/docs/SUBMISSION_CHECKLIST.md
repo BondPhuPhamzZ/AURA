@@ -1,6 +1,6 @@
 # AURA — Checklist nộp bài
 
-Cập nhật: 04/10/2026. Trạng thái này là nguồn đối chiếu cuối; không điền số liệu hoặc URL chưa được xác minh. Audit live chi tiết nằm tại `docs/LIVE_DEPLOYMENT_EVIDENCE_AUDIT_2026-10-04.md`.
+Cập nhật: 05/10/2026. Trạng thái chuẩn nằm tại `docs/CURRENT_PROJECT_STATUS_2026-10-05.md`; không điền số liệu hoặc URL chưa được xác minh. Audit live chi tiết nằm tại `docs/LIVE_DEPLOYMENT_EVIDENCE_AUDIT_2026-10-04.md`.
 
 ## 1. Hạng mục bàn giao
 
@@ -9,7 +9,7 @@ Cập nhật: 04/10/2026. Trạng thái này là nguồn đối chiếu cuối; 
 | Frontend/backend clone và chạy localhost | ☑ Có | README root, .NET 8, LocalDB/SQL Server, user-secrets và migration |
 | Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, 15/30 ca chạy ngoài UI bằng evaluator |
 | Public repository và lịch sử commit | ☑ Có | `https://github.com/BondPhuPhamzZ/AURA`; cần push commit chốt sau mỗi lần cập nhật hồ sơ |
-| Public Live URL | ◐ Conditional pass | Health/DB/storage/Verify/workflow đạt trên commit `8ebe18c8`; còn deploy bản vá tab, AUTO + FACT smoke độc lập, mobile và recycle evidence trước khi public README |
+| Public Live URL | ◐ Technical pass, chưa public | Commit `c42c5ef`: health/DB/storage/tab/AUTO/FACT/Verify/workflow/persistence/concurrency pass; còn manual mobile/4G/no-flash, holdout, users và rehearsal |
 | Video demo tối đa 3 phút (BTC ghi Optional) | ☑ Đã liên kết | Link Google Drive ở README root |
 | Đúng 5 slide | ☑ Đã dựng | `submission/AURA_5_SLIDES.pptx` |
 | Build Log một trang Word | ☑ Đã dựng | `submission/AURA_BUILD_LOG.docx` |
@@ -49,7 +49,7 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 6. Judge set ngày 29/09/2026 đã chạy thật với fallback tắt: OpenRouter 15/15 quyết định, 70/75 field, P95 16,459 giây; Ollama 14/15, 73/75 field, P95 58,318 giây và bỏ sót TK-12. OpenRouter concurrency smoke đạt 5/5, P95 17,072 giây. Xem `docs/LIVE_VALIDATION_2026-09-29.md`.
 7. Benchmark dữ liệu thật độc lập 10–15 ảnh, phản hồi ba người dùng và smoke Live URL sau hardening vẫn là các cổng chưa hoàn tất; không thay chúng bằng số liệu fixture tổng hợp.
 8. Post-fix gate ngày 02/10 đã xác minh Phê La bị che vùng món đi `ESCALATE_FACT`, Vinamilk đủ bảy dòng hàng vẫn `AUTO_APPROVE`, Official Verify 5/5, restart giữ status/ảnh/audit, manager YES/NO/UNDO có audit và concurrent smoke 5/5 với accepted P95 530 ms, end-to-end P95 39,380 giây.
-9. Hướng dẫn BGK chạy local nằm tại `docs/JUDGE_LOCAL_SETUP.md`; báo cáo tiến độ và ranh giới claim nằm tại `docs/PROGRESS_REPORT_2026-10-02.md`.
+9. Hướng dẫn BGK chạy local nằm tại `docs/JUDGE_LOCAL_SETUP.md`; báo cáo tiến độ và ranh giới claim hiện hành nằm tại `docs/PROGRESS_REPORT_2026-10-05.md` và `docs/CURRENT_PROJECT_STATUS_2026-10-05.md`.
 10. Development validation bổ sung và fallback live regression nằm tại `docs/REAL_RECEIPT_VALIDATION_2026-10-02.md` và `docs/FALLBACK_REGRESSION_2026-10-02.md`. Ảnh thật/PII vẫn nằm ngoài Git; fallback baseline vẫn tắt.
-11. Live audit ngày 04/10 xác nhận Verify 5/5, security-negative và external HTTP pass; phát hiện `04_auto_smoke`/`05_fail_safe_smoke` là cùng một POLICY request nên không được tính thành hai gate. Candidate sửa first-paint tab đạt 108/108 test và phải deploy/recheck trước final go/no-go.
-12. Holdout hiện có tám file candidate nhưng Vinamilk không còn blind; Katinat phải xác minh lịch sử đã chạy hay chưa. Chỉ khóa manifest khi đủ đúng 15 ảnh unseen, consent/redaction/ground truth và SHA-256.
+11. Evidence postfix ngày 04/10 trên `c42c5ef` đã đóng initial-tab, AUTO/FACT độc lập, Verify, workflow, persistence và concurrency. Mobile 390 px vẫn partial; manual 4G/no-flash còn cần xác nhận.
+12. Holdout folder hiện có chín file nhưng inventory cũ chỉ ghi tám và không khớp tên. Vinamilk không còn blind; Katinat phải xác minh lịch sử. Tạo lại inventory và chỉ khóa manifest khi đủ đúng 15 ảnh eligible, consent/redaction/ground truth và SHA-256.

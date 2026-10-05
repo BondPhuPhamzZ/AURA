@@ -1,12 +1,15 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { Presentation, PresentationFile } from "@oai/artifact-tool";
 
-const { SKILL_DIR, TMP_DIR, WORKSPACE_DIR, FINAL_PPTX, RUNTIME_PYTHON } = process.env;
-for (const [name, value] of Object.entries({ SKILL_DIR, TMP_DIR, WORKSPACE_DIR, FINAL_PPTX, RUNTIME_PYTHON })) {
+const { SKILL_DIR, TMP_DIR, WORKSPACE_DIR, FINAL_PPTX, RUNTIME_PYTHON, NODE_MODULES_DIR } = process.env;
+for (const [name, value] of Object.entries({ SKILL_DIR, TMP_DIR, WORKSPACE_DIR, FINAL_PPTX, RUNTIME_PYTHON, NODE_MODULES_DIR })) {
   if (!value || !path.isAbsolute(value)) throw new Error(`${name} must be an absolute path`);
 }
+
+const { Presentation, PresentationFile } = await import(
+  pathToFileURL(path.join(NODE_MODULES_DIR, "@oai/artifact-tool/dist/artifact_tool.mjs")).href,
+);
 
 const { resolvePresentationFont, finalizePresentation } = await import(
   pathToFileURL(path.join(SKILL_DIR, "container_tools/artifact_tool_utils.mjs")).href,
@@ -93,7 +96,7 @@ function title(slide, number, heading, subheading) {
   return line;
 }
 
-function footer(slide, number, source = "AURA • Track A • 01/10/2026") {
+function footer(slide, number, source = "AURA • Track A • 05/10/2026") {
   text(slide, source, 54, 686, 950, 18, 12, C.muted);
   text(slide, String(number), 1170, 684, 54, 20, 13, C.muted, { align: "right", bold: true });
 }
@@ -218,8 +221,8 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   text(s, "Bằng chứng đã có", 54, 428, 250, 28, 20, C.white, { bold: true });
   const evidence = [
     ["108/108", "test offline", C.blue],
-    ["15/15", "judge set OpenRouter", C.green],
-    ["14/15", "judge set Ollama", C.violet],
+    ["5/5", "Verify live", C.green],
+    ["7/7", "concurrent live", C.violet],
   ];
   evidence.forEach((e, i) => {
     const x = 54 + i * 185;
@@ -238,7 +241,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
   text(s, "Baseline và target chỉ điền sau khi có dữ liệu người dùng thật.", 635, 610, 589, 34, 15, C.amber, { align: "center", bold: true });
   footer(s, 3);
-  s.speakerNotes.textFrame.setText("Nguồn nội bộ cập nhật ngày 04/10/2026: 108 test offline. Trên cùng judge set 15 ca và fallback tắt, OpenRouter 8B đạt 15/15 quyết định, 70/75 field, P95 16,459 giây; Ollama 4B đạt 14/15, 73/75 field, P95 58,318 giây và bỏ sót escalation TK-12. Live deployment đã pass health/DB/storage/Verify nhưng blind holdout và user sessions vẫn là gate. Đây là regression trên dữ liệu tổng hợp, không phải accuracy thực tế.");
+  s.speakerNotes.textFrame.setText("Nguồn cập nhật 05/10/2026: baseline c42c5ef có 108/108 test offline. Evidence SmartASP ngày 04/10 đạt Verify 5/5 và concurrent 2/2 + 5/5. Trên judge set tổng hợp 15 ca, fallback tắt: OpenRouter 15/15 quyết định, 70/75 field, P95 16,459 giây; Ollama 14/15, 73/75 field, P95 58,318 giây và bỏ sót escalation TK-12. Blind holdout và ba user session vẫn là gate; đây không phải accuracy production.");
 }
 
 // Slide 4
@@ -308,7 +311,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 424, 382, 153, "#342334", "rounded-xl", C.red);
   text(s, "CHƯA CÓ TRONG BASELINE", 869, 447, 326, 24, 15, C.red, { bold: true });
-  text(s, "PDF/nhiều trang • authentication\ntax lookup • object storage\nbenchmark dữ liệu độc lập", 869, 487, 326, 72, 17, C.white, { bold: true });
+  text(s, "Holdout 15 ca • 3 người dùng\nmobile 390 px • PDF/nhiều trang\nauthentication • object storage", 869, 487, 326, 72, 16, C.white, { bold: true });
 
   text(s, "Verify vẫn đúng 5 ca BTC; runner mở rộng không làm rối dashboard.", 842, 601, 382, 44, 14, C.amber, { align: "center", bold: true });
   footer(s, 5, "AURA • Giới hạn hiện tại, không phải lời hứa marketing");

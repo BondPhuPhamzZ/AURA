@@ -1,6 +1,6 @@
 # AURA - Next implementation roadmap and acceptance gates
 
-Cập nhật trạng thái: 04/10/2026. Mục tiêu là chốt MVP có bằng chứng trước 10/10, khóa bài nộp ngày 15/10 và demo ngày 17/10. Audit deployment mới nhất: [`LIVE_DEPLOYMENT_EVIDENCE_AUDIT_2026-10-04.md`](LIVE_DEPLOYMENT_EVIDENCE_AUDIT_2026-10-04.md).
+Cập nhật trạng thái: 05/10/2026. Mục tiêu là chốt MVP có bằng chứng trước 10/10, khóa bài nộp ngày 15/10 và demo ngày 17/10. Trạng thái chuẩn: [`CURRENT_PROJECT_STATUS_2026-10-05.md`](CURRENT_PROJECT_STATUS_2026-10-05.md); audit deployment: [`LIVE_DEPLOYMENT_EVIDENCE_AUDIT_2026-10-04.md`](LIVE_DEPLOYMENT_EVIDENCE_AUDIT_2026-10-04.md).
 
 ## 1. Trạng thái so với feedback Sprint 1
 
@@ -14,7 +14,7 @@ Cập nhật trạng thái: 04/10/2026. Mục tiêu là chốt MVP có bằng ch
 | Fallback OpenRouter -> Ollama | Hoàn thành về chức năng, chưa bật mặc định | Live regression 1/1; audit provider đúng; E2E 84,425 s |
 | Đo trên tập độc lập | Chưa hoàn tất | Judge 15 là synthetic locked set; receipt thật hiện là development samples |
 | Ba người dùng thực tế | Chưa hoàn tất | Đang chờ kết nối/đồng thuận |
-| Live URL sau hardening | Conditional pass | Health/DB/storage/Verify/workflow đạt trên `8ebe18c8`; còn deploy/recheck bản vá tab, AUTO + FACT smoke độc lập, mobile/recycle |
+| Live URL sau hardening | Technical pass, final conditional | `c42c5ef`: health/DB/storage, tab, AUTO/FACT, Verify, workflow, recycle/persistence và concurrency pass; mobile 390 px + manual 4G/no-flash còn mở |
 
 ## 2. Traceability với yêu cầu Track A
 
@@ -29,7 +29,7 @@ Cập nhật trạng thái: 04/10/2026. Mục tiêu là chốt MVP có bằng ch
 | Verify một thao tác, 3 auto + 2 escalate | Đạt và không thay expected | Ba dress rehearsal 5/5 dưới 90 s |
 | Nhận input mới, không hard-code | Đạt về pipeline | Test 5 ca unseen hoặc holdout khóa trước |
 | Audit, can thiệp, dừng/undo | Đạt | Rehearsal YES/NO/UNDO có timeline |
-| Live URL | Đã chạy hardening smoke, chưa final GO | Đóng các khoảng trống trong audit 04/10 và smoke lại commit candidate |
+| Live URL | Automated technical gate pass, chưa final GO | Manual mobile/4G/no-flash, holdout, users và rehearsal |
 | Accuracy trên tập độc lập | Chưa đạt đầy đủ | Khóa ground truth/hash trước khi chạy |
 | Ít nhất 3 người dùng thực tế | Chưa đạt | Có danh tính/chức danh và phản hồi do chính họ viết |
 | Điều chỉnh threshold từ feedback | Chưa triển khai | Chỉ làm calibration có governance; không tự sửa policy online |
@@ -124,7 +124,7 @@ Các mục này tăng production readiness nhưng không nên đánh đổi hold
 
 | Ngày | Việc chính | Điều kiện kết thúc |
 |---|---|---|
-| 03-05/10 | Khóa holdout/consent/ground truth; chuẩn bị user protocol | Manifest có hash, không còn nhãn sau khi xem output |
+| 05-06/10 | Chốt 15 ảnh eligible, consent/redaction/ground truth; chuẩn bị user protocol | Manifest có hash, không còn nhãn sau khi xem output |
 | 06-07/10 | Chạy holdout một lượt và phân tích lỗi | Có metrics + mismatch report trung thực |
 | 08-09/10 | Ba user sessions và một cải tiến nhỏ | Có feedback gốc, before/after và regression |
 | 10/10 | Feature freeze; smoke Live URL | Không P0 mở; URL có quyết định go/no-go |

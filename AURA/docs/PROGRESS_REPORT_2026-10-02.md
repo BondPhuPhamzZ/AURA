@@ -1,5 +1,7 @@
 # Báo cáo tiến độ AURA ngày 02 10 2026
 
+> **Historical snapshot:** trạng thái hiện hành và nội dung check-in mới nằm tại [`CURRENT_PROJECT_STATUS_2026-10-05.md`](CURRENT_PROJECT_STATUS_2026-10-05.md) và [`PROGRESS_REPORT_2026-10-05.md`](PROGRESS_REPORT_2026-10-05.md).
+
 ## 1. Kết luận hiện tại
 
 AURA đã hoàn thành vertical slice dùng để trình diễn: người dùng tải ảnh chứng từ, server trả `202 Accepted`, job được lưu trong SQL và xử lý nền, Vision AI trích xuất dữ kiện, semantic validator kiểm tra và sửa đúng một lần khi cần, `PolicyDecisionEngine` C# tạo quyết định tất định, ngoại lệ đi qua nhân viên và quản lý, còn toàn bộ hành động được ghi audit.

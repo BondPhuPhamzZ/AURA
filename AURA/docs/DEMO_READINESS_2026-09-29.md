@@ -1,5 +1,7 @@
 # Trạng thái sẵn sàng demo ngày 29 09 2026
 
+> **Historical snapshot:** dùng [`CURRENT_PROJECT_STATUS_2026-10-05.md`](CURRENT_PROJECT_STATUS_2026-10-05.md) và [`NEXT_IMPLEMENTATION_ROADMAP_2026-10-03.md`](NEXT_IMPLEMENTATION_ROADMAP_2026-10-03.md) cho gate hiện hành.
+
 ## Kết luận
 
 Core workflow đã đủ ổn định để tiếp tục kiểm thử thủ công trên laptop: database đã migrate, upload dùng hàng đợi bền vững, OpenRouter là provider chính, policy quyết định tất định, human review và audit có thể phục hồi sau refresh. Sau hardening định danh, đối chiếu giảm giá và chuẩn hóa ngày chứng từ, build đạt 0 warning, 0 error và 102 trên 102 automated test.

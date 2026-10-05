@@ -4,7 +4,7 @@ Cập nhật: 02/10/2026
 Baseline kỹ thuật đã push trước vòng đồng bộ tài liệu này: `master` tại `80522f8`.
 Mục tiêu: hoàn tất thay đổi kỹ thuật và bằng chứng trước 06/10, dành trọn 07–10/10 để review source, luyện nói và diễn tập.
 
-> Trạng thái 03/10: các gate identifier/date/discount/line-item, Verify, restart, human action và concurrency bên dưới đã hoàn tất. Kế hoạch còn hiệu lực được chốt tại [`NEXT_IMPLEMENTATION_ROADMAP_2026-10-03.md`](NEXT_IMPLEMENTATION_ROADMAP_2026-10-03.md): blind holdout, ba người dùng thật, Live URL smoke và ba dress rehearsal.
+> Trạng thái 05/10: deployment postfix `c42c5ef` đã đóng automated technical gate. Kế hoạch còn hiệu lực được chốt tại [`CURRENT_PROJECT_STATUS_2026-10-05.md`](CURRENT_PROJECT_STATUS_2026-10-05.md): blind holdout 15, ba người dùng thật, manual mobile/4G/no-flash và ba dress rehearsal.
 
 ## Kết luận vận hành
 

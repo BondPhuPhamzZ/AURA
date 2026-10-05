@@ -140,7 +140,7 @@ set_run_font(run, size=16, bold=True, color="000000")
 subtitle = document.add_paragraph()
 subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
 subtitle.paragraph_format.space_after = Pt(5)
-run = subtitle.add_run("Track A The Escalation Referee | 01 10 2026 | Pham Gia Phu")
+run = subtitle.add_run("Track A The Escalation Referee | 05 10 2026 | Pham Gia Phu")
 set_run_font(run, size=9.2, italic=True, color="555555")
 
 intro = document.add_paragraph()
@@ -207,7 +207,7 @@ evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
 headers = ("Build", "Test offline", "Dependency", "Evaluator")
-values = ("0 warning 0 error", "102 trên 102 pass", "Không có advisory", "15 ca đã chạy thật")
+values = ("0 warning 0 error", "108 trên 108 pass", "EF model sạch", "Verify live 5 trên 5")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -268,8 +268,9 @@ add_bullet(document, "Giữ EF Core 8.0.31: NuGet không báo advisory; không n
 add_heading(document, "6 Bài học và bước tiếp theo")
 add_body(
     document,
-    "Core workflow đã sẵn sàng để diễn tập. Các cổng còn mở là smoke Live URL sau hardening, holdout 10 đến 15 hóa đơn "
-    "đã ẩn danh, phản hồi của ba người dùng và ba lượt Verify dưới 90 giây. Dữ liệu cá nhân thật không được đưa vào Git.",
+    "Deployment postfix c42c5ef đã pass health, security, AUTO/FACT smoke, Verify 5 trên 5, human workflow, persistence "
+    "và concurrency 2 cộng 5 request. Các cổng còn mở là blind holdout đúng 15 ca đã khóa trước request đầu tiên, phản hồi "
+    "của ba người dùng, manual mobile/4G/no-flash và ba dress rehearsal. Dữ liệu cá nhân thật không được đưa vào Git.",
 )
 
 OUTPUT.parent.mkdir(parents=True, exist_ok=True)

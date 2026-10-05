@@ -1,6 +1,6 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 1.8 — 01/10/2026
+Phiên bản: 1.9 — 05/10/2026
 Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
@@ -133,6 +133,7 @@ AURA có circuit breaker trong bộ nhớ theo instance. Sau ngưỡng lỗi h�
 - Chạy thật baseline: upload, semantic validator, policy C#, SQL Server, audit, human decision và receipt retrieval. Trên judge set 15 ca với fallback tắt, OpenRouter/Qwen 8B đạt 15/15 quyết định, 70/75 field và P95 16,459 giây; Ollama/Qwen 4B local đạt 14/15, 73/75 field và P95 58,318 giây, đồng thời bỏ sót escalation TK-12. OpenRouter concurrency smoke 5 request hoàn tất 5/5 với P95 17,072 giây. Cả hai chưa có benchmark dữ liệu thật độc lập.
 - Cổng regression sau guard ngày 02/10: Phê La bị che vùng món trả `ESCALATE_FACT`; Vinamilk đủ bảy dòng hàng và phép tính giảm giá trả `AUTO_APPROVE`; Official Verify 5/5; restart giữ status/facts/ảnh/audit; manager YES/NO/UNDO có audit; concurrent smoke hoàn tất 5/5 với accepted P95 530 ms và end-to-end P95 39,380 giây. Đây vẫn là evidence phạm vi nhỏ, không thay holdout thực tế đa dạng.
 - Development validation bổ sung: Oppa `AUTO_APPROVE` sau một repair, Texas `AUTO_APPROVE` không repair và Phê La che món `ESCALATE_FACT`. Fallback regression bằng DB riêng xác minh `OpenRouter → Ollama`, `FallbackUsed=true`, E2E 84,425 giây. Hai nhóm này là evidence kỹ thuật, không thay blind holdout hoặc safety gate Ollama.
+- Deployment postfix trên `c42c5ef` đóng automated technical gate: health/DB/storage/migration, initial-tab, security-negative, AUTO + FACT smoke độc lập, Verify 5/5, human workflow, persistence và 2 + 5 concurrent request pass. Mobile 390 px vẫn partial; blind holdout, ba user session, manual 4G/no-flash và rehearsal vẫn là final gate.
 - Mô phỏng: 30 ảnh tổng hợp sinh offline; 5 ảnh Verify và manifest 15 ca BGK được tuyển từ ngân hàng này.
 - Ground truth tổng hợp được sinh tất định bằng Python/Pillow và khóa trong manifest. Ảnh generative AI không được dùng làm nhãn chuẩn; hóa đơn thật đã ẩn danh chỉ nằm trong holdout cục bộ ngoài Git.
 - Không dùng hóa đơn cá nhân thật trong Git. Ảnh thật tùy chọn chỉ đặt tại `test_kit/local_real` và bị `.gitignore` loại trừ.

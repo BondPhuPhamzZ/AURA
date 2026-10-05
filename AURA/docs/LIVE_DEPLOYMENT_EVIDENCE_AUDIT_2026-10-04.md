@@ -1,14 +1,36 @@
 # AURA - Live deployment evidence audit
 
-Cập nhật: 04/10/2026. Phạm vi kiểm tra là `12_smarterasp_final_2026-10-03`, live URL SmartASP và cấu trúc sơ bộ của `09_blind_holdout_2026-10-04`. Ảnh hóa đơn thật vẫn ở ngoài Git.
+Cập nhật: 05/10/2026. Phạm vi hiện hành là `13_smarterasp_postfix_c42c5ef_2026-10-04`; phần audit `12_smarterasp_final_2026-10-03` bên dưới được giữ làm lịch sử trước bản vá. Ảnh hóa đơn thật vẫn ở ngoài Git.
 
 ## 1. Kết luận ngắn
 
-Live deployment đang hoạt động: health HTTP 200/status `ok`, database đã cập nhật, storage khả dụng, OpenRouter được cấu hình và fallback tắt. Official Verify đạt 5/5 với đúng 3 `AUTO_APPROVE`, 1 `ESCALATE_FACT`, 1 `ESCALATE_POLICY`. Manager YES/NO/UNDO và audit có bằng chứng tốt.
+Live deployment trên commit `c42c5ef` đã đạt automated technical gate với cảnh báo hiệu năng: health/DB/storage/migration pass, first-paint tab đúng, security-negative pass, AUTO và FACT fail-safe smoke độc lập pass, Official Verify 5/5, human workflow/audit pass, persistence sau recycle pass và concurrency hoàn tất 2/2 + 5/5 request.
 
-Tuy nhiên **chưa ký FINAL GO**. Bốn khoảng trống còn lại là: smoke AUTO độc lập, smoke fail-safe FACT độc lập, bằng chứng mobile/recycle thật và chạy blind holdout đã khóa. Ba phiên người dùng thật vẫn là gate riêng theo brief/seminar.
+Tuy nhiên **chưa ký FINAL GO**. Còn bằng chứng điện thoại thật/4G và xác nhận không nháy tab bằng mắt, blind holdout 15 ca đã khóa, ba phiên người dùng thật và ba dress rehearsal trên commit freeze. Live URL chỉ được công bố sau lần health/smoke cuối vì availability có thể thay đổi ngoài source code.
 
-## 2. Audit từng folder live
+## 2. Evidence postfix trên `c42c5ef`
+
+Nguồn máy đọc: `13_smarterasp_postfix_c42c5ef_2026-10-04/10_final_go_no_go/automated-gate-summary.json`.
+
+| Gate | Kết quả | Ghi chú |
+|---|---|---|
+| Release/build/test/EF | PASS | Build sạch, 108/108 test, EF model clean |
+| Health trước/sau | PASS | Hai checkpoint health hợp lệ |
+| Initial tab rendering | PASS | Bản vá không render Upload trước tab đích |
+| Upload + HTTP security | PASS | File giả signature/quá 5 MB và endpoint âm bị chặn |
+| AUTO smoke | PASS | Request/evidence độc lập |
+| FACT fail-safe smoke | PASS | Request/evidence độc lập |
+| Official Verify | PASS | Đúng 3 AUTO + 1 FACT + 1 POLICY |
+| Human workflow | PASS | Forward, YES/NO/UNDO và audit |
+| Post-recycle persistence | PASS | Status/ảnh/audit còn |
+| Concurrency | PASS có cảnh báo | 2/2 E2E P95 20,941 s; 5/5 E2E P95 23,290 s. Accepted clock gồm antiforgery GET, setup và network, không phải POST-only SLO |
+| Mobile | PARTIAL | Core render; navigation chưa vừa 390 px, Audit còn cuộn ngang |
+
+Các mục thủ công còn thiếu: ảnh/timestamp recycle Pool, điện thoại thật trên mạng ngoài, video/click xác nhận không nháy Upload sau YES/NO/UNDO, holdout, user sessions và rehearsals.
+
+## 3. Audit lịch sử của folder 12
+
+### 3.1 Audit từng folder live
 
 | Folder | Đánh giá | Kết luận/evidence còn thiếu |
 |---|---|---|
@@ -27,7 +49,7 @@ Tuy nhiên **chưa ký FINAL GO**. Bốn khoảng trống còn lại là: smoke 
 
 Không dùng cùng một request/file evidence để chứng minh hai hành vi khác nhau. Có thể tái sử dụng ảnh fixture, nhưng mỗi test phải có request ID, timestamp, expected purpose và final JSON riêng.
 
-## 3. Nguyên nhân và bản vá lỗi nháy tab
+## 4. Nguyên nhân và bản vá lỗi nháy tab
 
 Trước bản vá, HTML luôn render Upload và nút Applicant ở trạng thái active. JavaScript chỉ đọc `?tab=reviewer` hoặc `?tab=audit` ở cuối trang, sau first paint mới ẩn Upload và hiện tab đích. Vì vậy người dùng thấy Upload nháy trong một khoảnh khắc sau manager action.
 
@@ -40,17 +62,17 @@ Bản vá ngày 04/10:
 
 Sau khi deploy commit mới, chỉ cần recheck targeted: manager YES/NO, UNDO và mở trực tiếp `/?tab=reviewer`, `/?tab=audit`; không cần tiêu quota chạy lại toàn bộ logic AI chỉ vì thay đổi này.
 
-## 4. Blind holdout hiện tại
+## 5. Blind holdout hiện tại
 
-Inventory sơ bộ ghi nhận 8 ảnh và SHA-256 tại `01_candidates_private/preliminary-hash-inventory-8-of-15.json`. File này có trạng thái `PRELIMINARY_NOT_LOCKED`: nó không thay thế consent, redaction review hoặc ground truth.
+Thư mục `02_selected_images` hiện có 9 file, nhưng inventory sơ bộ `preliminary-hash-inventory-8-of-15.json` chỉ ghi 8 và dùng hai tên cũ không còn khớp (`Katinat.jpg`, `Vinamilk.jpg` thay vì `NewKatinat.jpg`, `NewVinamilk.jpg`); `SachNhanVan.jpg` chưa có trong inventory. File inventory có trạng thái `PRELIMINARY_NOT_LOCKED`: không thay consent, redaction review hoặc ground truth và phải được tạo lại sau khi chốt đúng 15 ảnh.
 
 Không thể coi đủ 8/15 một cách máy móc:
 
-- `Vinamilk.jpg` đã được dùng nhiều lần để phát triển/kiểm tra discount và line-item guard, vì vậy phải loại khỏi blind holdout và chỉ giữ ở development regression;
-- người kiểm thử đã mô tả Katinat là smoke input. Nếu ảnh này từng được gửi provider, cũng phải loại khỏi blind holdout. Evidence live hiện lại chứa `TK-05-policy-beer.jpg`, nên phải đối chiếu lịch sử trước khi quyết định;
+- `NewVinamilk.jpg`/Vinamilk đã được dùng nhiều lần để phát triển/kiểm tra discount và line-item guard, vì vậy phải loại khỏi blind holdout và chỉ giữ ở development regression;
+- người kiểm thử đã mô tả Katinat là smoke input. Nếu `NewKatinat.jpg` từng được gửi provider, cũng phải loại khỏi blind holdout;
 - sáu ảnh còn lại mới chỉ là candidate cho tới khi xác nhận quyền sử dụng, ẩn danh và ground truth trước lần gọi model đầu tiên.
 
-Do đó cần thêm **ít nhất 9 ảnh unseen** nếu loại cả Vinamilk và Katinat; cần 8 nếu xác minh được Katinat chưa từng chạy. Không gửi bất kỳ candidate nào cho AURA/OpenRouter trước khi manifest được khóa.
+Sau khi loại Vinamilk, tối đa còn 8 candidate; nếu Katinat đã chạy thì tối đa còn 7. Vì vậy cần thêm ít nhất 7 ảnh eligible, hoặc 8 nếu Katinat không còn blind; con số thực tế có thể cao hơn nếu consent/redaction/label review loại thêm ảnh. Không gửi bất kỳ candidate nào cho AURA/OpenRouter trước khi manifest được khóa.
 
 Cấu trúc local khuyến nghị:
 
@@ -68,19 +90,16 @@ Cấu trúc local khuyến nghị:
 
 Sao chép `test_kit/holdout-manifest.template.json` ra folder local, không sửa template trong Git thành dữ liệu thật. Mỗi ca phải có claimed amount, expected status/facts, rationale, SHA-256, consent reference, redaction status và xác nhận chưa dùng để tune. Hai người review nhãn khi có thể. `Invoke-ExtendedDatasetEvaluation.ps1` hiện xác minh toàn bộ SHA-256 trước request đầu tiên và ghi hash vào results/metadata.
 
-## 5. Thứ tự đóng các gate
+## 6. Thứ tự đóng các gate
 
-1. Commit/push và deploy bản vá tab; cập nhật release metadata theo commit mới.
-2. Targeted UX smoke: reviewer/audit không nháy Upload.
-3. Tạo một AUTO smoke độc lập và một FACT fail-safe độc lập; lưu pending/final JSON, request ID, ảnh UI và expected rationale.
-4. Bổ sung hai screenshot phone viewport và một recycle Pool thật với timestamp trước/sau, health, status/receipt/audit.
-5. Nếu cần claim live concurrency, chạy 2 trước rồi 5 synthetic request bằng runner; đây là nhiều client đồng thời, không phải chọn nhiều ảnh trong form.
-6. Hoàn tất 15 ảnh unseen, consent/redaction và khóa manifest/hash; chạy OpenRouter đúng một lượt, fallback false.
-7. Thực hiện ba user sessions, chọn một cải tiến nhỏ truy vết được từ feedback, rồi regression.
-8. Ba dress rehearsal trên commit freeze; lúc đó mới quay video cuối, điền `11_final_go_no_go` và public live URL trong README.
+1. Bổ sung screenshot điện thoại thật/4G và video/click xác nhận reviewer/audit không nháy Upload; lưu timestamp recycle Pool nếu chưa có ảnh quản trị.
+2. Tạo lại inventory sau khi chốt đúng 15 ảnh eligible; consent/redaction, label review và khóa manifest/hash trước request đầu tiên.
+3. Chạy OpenRouter đúng một official run, fallback false; giữ mọi mismatch.
+4. Thực hiện ba user sessions, chọn một cải tiến nhỏ truy vết được từ feedback, rồi regression.
+5. Ba dress rehearsal trên commit freeze; lúc đó mới quay video cuối, điền `11_final_go_no_go` và public live URL trong README.
 
 GPU BTC là POC sau các gate trên, không phải blocker của MVP. Chuẩn bị trước Docker/runtime, model+quantization, prompt/schema, synthetic manifest, lệnh đo 1/2/5 concurrency, VRAM/P50/P95 và yêu cầu TLS/auth/private network; không đưa receipt thật lên GPU mượn ở lượt đầu.
 
-## 6. Nội dung báo cáo tiến độ ngắn
+## 7. Nội dung báo cáo tiến độ ngắn
 
-> Ngày 04/10, em đã hoàn tất smoke deployment SmartASP: health HTTP 200/status ok, database không còn pending migration, storage và OpenRouter sẵn sàng, fallback tắt. Official Verify đạt 5/5 đúng 3 auto/2 escalate; manager YES/NO/UNDO và audit hoạt động. Security-negative bổ sung xác nhận ảnh giả chữ ký và file vượt 5 MB đều bị chặn HTTP 400 trước storage/queue/AI; client mạng độc lập gọi health ba lần đều thành công. Em cũng xác định lỗi nháy Upload khi chuyển Manager/Audit là first-paint UI và đã sửa server-render tab, build sạch, 108/108 regression pass. Qua audit evidence, hai folder AUTO/fail-safe cũ thực chất là cùng một POLICY request nên em chưa dùng chúng để claim hai gate riêng. Việc tiếp theo là deploy commit mới, bổ sung AUTO + FACT smoke độc lập, mobile/recycle evidence, khóa blind holdout 15 ca và tổ chức ba phiên người dùng thật trước khi ký final go/no-go và public live URL.
+> Ngày 04/10, em đã deploy và tái kiểm bản vá `c42c5ef`: health/DB/storage/migration, security-negative, first-paint tab, AUTO smoke, FACT fail-safe smoke, Official Verify 5/5, human workflow/audit, persistence sau recycle và concurrency 2 + 5 request đều đạt; build sạch và 108/108 regression pass. Mobile core render được nhưng navigation 390 px và Audit horizontal scroll còn cần hoàn thiện. Đây là technical staging evidence, chưa phải production accuracy. Việc tiếp theo là khóa blind holdout 15 ca trước request đầu tiên, tổ chức ba user session, bổ sung manual mobile/4G/no-flash evidence và chạy ba dress rehearsal trước final go/no-go/public live URL.
