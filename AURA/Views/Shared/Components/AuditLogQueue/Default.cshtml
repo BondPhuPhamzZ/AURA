@@ -43,7 +43,7 @@
     else
     {
         <div class="table-responsive-aura table-scroll-area audit-scroll-area">
-            <table class="table-aura audit-table">
+            <table class="table-aura audit-table responsive-cards">
                 <colgroup>
                     <col class="audit-col-time" />
                     <col class="audit-col-id" />
@@ -73,15 +73,15 @@
                         var actionLabel = ActionLabel(entry.Log.Action);
                         var localTimestamp = entry.Log.Timestamp.ToLocalTime();
                         <tr class="audit-data-row" data-audit-date="@localTimestamp.ToString("yyyy-MM-dd")">
-                            <td class="audit-time-cell">
+                            <td data-label="Thời gian" class="audit-time-cell">
                                 <time datetime="@entry.Log.Timestamp.ToString("O")">
                                     <span>@localTimestamp.ToString("dd/MM/yyyy")</span>
                                     <small>@localTimestamp.ToString("HH:mm:ss")</small>
                                 </time>
                             </td>
-                            <td class="cell-code">@entry.Log.RequestId[..Math.Min(8, entry.Log.RequestId.Length)]</td>
-                            <td><span class="badge bg-secondary audit-action-badge" title="Mã thao tác: @entry.Log.Action">@actionLabel</span></td>
-                            <td>
+                            <td data-label="Mã đơn" class="cell-code">@entry.Log.RequestId[..Math.Min(8, entry.Log.RequestId.Length)]</td>
+                            <td data-label="Thao tác cuối"><span class="badge bg-secondary audit-action-badge" title="Mã thao tác: @entry.Log.Action">@actionLabel</span></td>
+                            <td data-label="Trạng thái hiện tại">
                                 @if (request is not null)
                                 {
                                     var badgeClass = request.Status == "AUTO_APPROVE" ? "bg-success"
@@ -96,7 +96,7 @@
                                     <span class="text-muted">Không còn hồ sơ</span>
                                 }
                             </td>
-                            <td>
+                            <td data-label="Dữ liệu đầu vào">
                                 @if (request is not null && !string.IsNullOrWhiteSpace(request.ImageUrl))
                                 {
                                     <a href="@request.ImageUrl" target="_blank" rel="noopener">@request.OriginalFileName</a>
@@ -111,7 +111,7 @@
                                     <span class="text-muted">Không khả dụng</span>
                                 }
                             </td>
-                            <td>
+                            <td data-label="Chi tiết / Lý do">
                                 <details class="audit-details">
                                     <summary>
                                         <span class="audit-details-preview">
@@ -146,7 +146,7 @@
                                     </ol>
                                 </details>
                             </td>
-                            <td>
+                            <td data-label="Can thiệp">
                                 @if (request is not null && entry.Log.Action is "MANAGER_YES" or "MANAGER_NO"
                                     && AURA.Services.EscalationWorkflow.CanUndo(request.Status) && request.ManagerAnswer is not null)
                                 {

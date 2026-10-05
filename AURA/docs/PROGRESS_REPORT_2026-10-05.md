@@ -8,9 +8,11 @@ Sprint 2 — chốt deployment candidate và chuẩn bị blind holdout/user val
 
 Đội đã hoàn thiện MVP xử lý hoàn ứng theo kiến trúc AI đọc dữ kiện, policy C# quyết định và con người xử lý ngoại lệ. Upload trả HTTP 202 và được xử lý bằng hàng đợi SQL có lease/reclaim; trạng thái, ảnh và audit tồn tại qua refresh/recycle. Hệ thống có semantic validation, tối đa một repair, đối chiếu ngày/identifier/tổng sau giảm giá, fail-safe khi vùng món bị che, chuyển tiếp cho quản lý và YES/NO/UNDO có audit.
 
-Baseline `c42c5ef` build 0 warning/0 error, 108/108 automated tests pass và không có pending EF model change. Deployment SmartASP sau bản vá đạt health/DB/storage/migration, security-negative, AUTO smoke, FACT fail-safe smoke, Verify 5/5 đúng 3 auto/2 escalate, human workflow, persistence và concurrent smoke 2 + 5 request. OpenRouter tiếp tục là primary; Ollama fallback đã chứng minh 1/1 nhưng mặc định tắt do latency và một missed escalation trên judge set.
+Baseline `49071c4` cùng cập nhật responsive ngày 05/10 build 0 warning/0 error, 108/108 automated tests pass. Deployment SmartASP sau bản vá đạt health/DB/storage/migration, security-negative, AUTO smoke, FACT fail-safe smoke, Verify 5/5 đúng 3 auto/2 escalate, human workflow, persistence và concurrent smoke 2 + 5 request. OpenRouter tiếp tục là primary; Ollama fallback đã chứng minh 1/1 nhưng mặc định tắt do latency và một missed escalation trên judge set.
 
-Đội đã tạo quy trình holdout có kiểm hash trước request đầu tiên. Tập candidate hiện chưa được chạy chính thức vì inventory chưa đồng bộ với 9 file hiện có và một số ảnh đã dùng trong development phải loại. Việc tiếp theo là thu thập đủ 15 ảnh eligible, consent/redaction, khóa claimed amount/expected decision/expected facts/SHA-256, chạy một lượt OpenRouter, thực hiện ba user session và ba dress rehearsal.
+Đội đã tạo quy trình holdout có kiểm hash trước request đầu tiên và ma trận 15 ca chi tiết theo 5 AUTO/4 FACT/3 POLICY/3 AUTHORITY. Tập private hiện có 12 candidate, chưa chạy model; đối chiếu hash không tìm thấy bản byte-identical trong evidence cũ. Hai receipt Vinamilk/Katinat mới vẫn có thể là holdout vì khác giao dịch; điều kiện là chính ảnh/giao dịch đó chưa từng được model xử lý hoặc dùng để tune. UI mobile đã chuyển header thành 3 tab vừa màn hình, form thành một cột, bảng kết quả/quản lý/audit thành card, đổi tên mặc định thành Gia Phú và đồng bộ màu input. Browser local xác nhận không tràn ngang ở 360/390/1440 px; Audit 148 dòng render dạng card ở 360 px.
+
+Việc tiếp theo là phân loại 12 candidate theo ma trận, thu thập thêm số candidate còn thiếu theo **coverage thực tế** (không mặc định chỉ thiếu 3), consent/redaction, khóa claimed amount/expected decision/expected facts/SHA-256, chạy một lượt OpenRouter, thực hiện ba user session và ba dress rehearsal.
 
 ## Link GitHub
 
@@ -18,7 +20,7 @@ https://github.com/BondPhuPhamzZ/AURA
 
 ## Khó khăn / cần hỗ trợ
 
-Cần hỗ trợ kết nối ba người dùng thực tế từng nộp hoặc duyệt hoàn ứng để thực hiện usability session và xác nhận feedback. Nếu BTC hỗ trợ GPU, đội cần lịch/cấu hình sớm để chuẩn bị POC Ollama bằng synthetic data; GPU không phải blocker của MVP. Mobile layout 390 px và Audit horizontal scroll còn là UX gap nhỏ; chưa ảnh hưởng logic quyết định nhưng cần xử lý/ghi evidence trước khi public live URL.
+Cần hỗ trợ kết nối ba người dùng thực tế từng nộp hoặc duyệt hoàn ứng để thực hiện usability session và xác nhận feedback. Nếu BTC hỗ trợ GPU, đội cần lịch/cấu hình sớm để chuẩn bị POC Ollama bằng synthetic data; GPU không phải blocker của MVP. Responsive local đã pass; còn thiếu publish lại SmartASP và evidence điện thoại thật/4G trước khi public live URL.
 
 ## Ranh giới claim
 

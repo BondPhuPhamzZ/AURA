@@ -87,7 +87,7 @@ Che tên người, số điện thoại, email, địa chỉ cá nhân, số th�
 
 ### Bước 3 — Chốt ma trận 15 ca
 
-Khuyến nghị 5 AUTO, 4 FACT, 3 POLICY, 3 AUTHORITY; ưu tiên đa merchant/layout/ánh sáng/identifier. Đây là mục tiêu coverage, không được bẻ nhãn của ảnh để ép đủ quota. Nếu thiếu một nhánh, thu thập thêm ảnh hoặc dùng synthetic case và khai báo `sourceType` trung thực.
+Khuyến nghị 5 AUTO, 4 FACT, 3 POLICY, 3 AUTHORITY; ưu tiên đa merchant/layout/ánh sáng/identifier. Đây là mục tiêu coverage, không được bẻ nhãn của ảnh để ép đủ quota. Nếu thiếu một nhánh, thu thập thêm ảnh hoặc dùng synthetic case và khai báo `sourceType` trung thực. Checklist chi tiết cho từng BH-01…BH-15 nằm tại [`HOLDOUT_MATRIX_15_CASES_2026-10-05.md`](HOLDOUT_MATRIX_15_CASES_2026-10-05.md).
 
 ### Bước 4 — Tạo inventory mới
 

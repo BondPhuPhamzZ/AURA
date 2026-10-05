@@ -21,7 +21,7 @@ Live URL được xác minh trong evidence ngày 04/10. Trước khi công bố 
 
 | Hạng mục | Kết quả |
 |---|---|
-| Source revision | `master` / `c42c5ef` |
+| Source revision | baseline `master` / `49071c4`; responsive/holdout update đang được xác minh trong working tree ngày 05/10 |
 | Release build | 0 warning, 0 error |
 | Automated tests | 108/108 pass, offline, không gọi API trả phí |
 | EF model | Không có pending model change |
@@ -67,24 +67,23 @@ Nguồn: `D:\aura\demo_evidence\13_smarterasp_postfix_c42c5ef_2026-10-04\10_fina
 - Human workflow: pass.
 - Persistence sau recycle: pass.
 - Concurrency: pass 2/2 và 5/5, có performance warning vì accepted clock bao gồm GET antiforgery, tạo job và network, không phải SLO POST thuần.
-- Mobile: partial; core render được nhưng navigation chưa vừa 390 px và Audit cần cuộn ngang.
+- Mobile: responsive UI đã được chỉnh ở source ngày 05/10 (header 3 tab, form một cột, bảng dạng card, touch target và input nhân viên). Browser local xác nhận ở 360/390/1440 px không có horizontal page overflow; Audit 148 dòng render dạng card ở 360 px. Còn phải xác nhận trên điện thoại thật/4G sau publish.
 
 Các bằng chứng thủ công còn phải bổ sung: ảnh/timestamp recycle Pool, điện thoại thật qua 4G/5G, quan sát không còn nháy Upload sau YES/NO/UNDO, holdout, ba user session và ba rehearsal.
 
 ## 5. Holdout hiện tại
 
-`D:\aura\demo_evidence\09_blind_holdout_2026-10-04\02_selected_images` hiện chứa 9 file, nhưng inventory cũ ghi 8 và không còn khớp tên/tập file. Tập này đang là **candidate, chưa locked**.
+`D:\aura\demo_evidence\09_blind_holdout_2026-10-04\02_selected_images` hiện chứa 12 file; inventory cũ không còn khớp và phải tạo lại sau khi chốt redaction/tên file. Tập này đang là **candidate, chưa locked**.
 
-- `NewVinamilk.jpg`/Vinamilk đã dùng để phát triển discount/line-item guard: không còn blind, chuyển sang regression set.
-- `NewKatinat.jpg` chỉ được giữ nếu xác minh chưa từng gửi model; nếu đã dùng smoke thì loại khỏi blind set.
-- `SachNhanVan.jpg` chưa có trong inventory cũ.
+- Người dùng xác nhận `NewVinamilk.jpg` và `NewKatinat.jpg` là giao dịch mới, khác dữ liệu regression cũ. Hai file được giữ làm candidate nếu chính file/giao dịch này chưa từng gửi AURA/OpenRouter/Ollama và chưa dùng để tune; trùng merchant không tự làm mất tính blind.
+- Đối chiếu SHA-256 ngày 05/10 không tìm thấy file byte-identical của 12 candidate trong các thư mục evidence cũ. Kết quả này không phát hiện được ảnh cùng giao dịch đã crop/che QR/nén lại, nên vẫn cần xác nhận provenance của con người.
 - Những ảnh còn lại chỉ hợp lệ sau khi có quyền sử dụng, redaction review và ground truth độc lập.
 
-Không chạy official holdout cho tới khi đúng 15 ảnh eligible, tên file ổn định và manifest đã khóa. Xem [`HOLDOUT_LOCKING_GUIDE_2026-10-05.md`](HOLDOUT_LOCKING_GUIDE_2026-10-05.md).
+Không chạy official holdout cho tới khi đúng 15 ảnh eligible, tên file ổn định và manifest đã khóa. Xem [`HOLDOUT_LOCKING_GUIDE_2026-10-05.md`](HOLDOUT_LOCKING_GUIDE_2026-10-05.md) và [`HOLDOUT_MATRIX_15_CASES_2026-10-05.md`](HOLDOUT_MATRIX_15_CASES_2026-10-05.md).
 
 ## 6. Thứ tự công việc tiếp theo
 
-1. Phân loại 9 candidate; loại mọi ảnh đã dùng để tune/test và mọi ảnh thiếu quyền sử dụng.
+1. Phân loại 12 candidate theo BH-01…BH-15; loại mọi ảnh đã dùng để tune/test và mọi ảnh thiếu quyền sử dụng.
 2. Thu thập đủ 15 ảnh eligible, ẩn danh xong mới tính SHA-256.
 3. Hai người review claimed amount, expected status, expected facts và rationale; xử lý bất đồng trước khi chạy.
 4. Khóa manifest, manifest hash, commit/policy version và thời điểm khóa.

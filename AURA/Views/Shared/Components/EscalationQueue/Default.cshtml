@@ -16,7 +16,7 @@
         else
         {
         <div class="table-responsive-aura table-scroll-area">
-            <table class="table-aura manager-table">
+            <table class="table-aura manager-table responsive-cards">
                 <thead>
                     <tr>
                         <th>Mã Đơn</th>
@@ -32,27 +32,27 @@
                     {
                         var choices = AURA.Services.EscalationWorkflow.ExplainChoices(item.Status);
                         <tr>
-                            <td style="font-family: monospace;">@item.Id.Substring(0, 8)...</td>
-                            <td>
+                            <td data-label="Mã đơn" style="font-family: monospace;">@item.Id.Substring(0, 8)...</td>
+                            <td data-label="Nhân viên">
                                 <div class="manager-submitter">
                                     <strong>@item.SubmitterDisplayName</strong>
                                     <span>@item.SubmitterCode</span>
                                     <small>@item.SubmitterDepartment</small>
                                 </div>
                             </td>
-                            <td style="font-weight: 500;">@item.ClaimedAmount.ToString("N0") VND</td>
-                            <td class="manager-reason-column">
+                            <td data-label="Số tiền" style="font-weight: 500;">@item.ClaimedAmount.ToString("N0") VND</td>
+                            <td data-label="Lý do từ AI" class="manager-reason-column">
                                 <span class="badge bg-warning text-dark">@item.Status</span><br />
                                 <span class="manager-ai-reason">@item.AiReasoning</span><br />
                                 <small class="manager-question">@item.ManagerQuestion</small>
                             </td>
-                            <td>
+                            <td data-label="Chứng từ">
                                 <a class="receipt-preview-link" href="@item.ImageUrl" target="_blank" rel="noopener">
                                     <img class="receipt-thumbnail receipt-thumbnail-large" src="@item.ImageUrl" alt="Ảnh chứng từ @item.OriginalFileName" loading="lazy" />
                                     <span>Xem hóa đơn</span>
                                 </a>
                             </td>
-                            <td class="manager-action-column">
+                            <td data-label="Hành động" class="manager-action-column">
                                 <form asp-controller="Reviewer" asp-action="EscalateAction" method="post" class="d-inline js-workflow-form">
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="decision" value="YES" />

@@ -318,6 +318,46 @@ main {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
+.submitter-context-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid #2f3b52;
+    border-radius: 6px;
+    background: linear-gradient(145deg, rgba(23, 32, 51, 0.9), rgba(15, 23, 42, 0.72));
+}
+
+.submitter-field {
+    min-width: 0;
+}
+
+.submitter-field .form-label {
+    margin-bottom: 7px;
+    color: #cbd5e1;
+    font-size: 0.82rem;
+}
+
+.submitter-input.form-control {
+    min-height: 44px;
+    border: 1px solid #475569;
+    background-color: #111827;
+    color: var(--colors-ink);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.submitter-input.form-control:hover {
+    border-color: #64748b;
+}
+
+.submitter-input.form-control:focus {
+    border-color: #60a5fa;
+    background-color: #172033;
+    color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22);
+}
+
 /* Dropzone */
 .upload-workspace {
     display: grid;
@@ -1232,6 +1272,10 @@ main {
         width: 100%;
     }
 
+    .aura-logo {
+        max-width: 100%;
+    }
+
     .top-tabs .nav-link {
         flex: 0 0 auto;
         white-space: nowrap;
@@ -1296,6 +1340,14 @@ main {
         margin-left: 0;
         padding-bottom: 0;
     }
+
+    .submitter-context-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .submitter-field:last-child {
+        grid-column: 1 / -1;
+    }
 }
 
 @media (max-width: 1100px) and (min-width: 901px) {
@@ -1314,21 +1366,109 @@ main {
         display: none;
     }
 
+    .aura-header {
+        padding: 10px;
+        gap: 10px;
+    }
+
     .top-tabs {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         overflow: visible;
     }
 
     .top-tabs .nav-link {
         width: 100%;
         min-height: 44px;
-        padding-inline: 8px;
+        padding: 7px 5px;
+        font-size: 0.76rem;
+        line-height: 1.25;
         white-space: normal;
     }
 
     .top-tabs .nav-link:last-child {
-        grid-column: 1 / -1;
+        grid-column: auto;
+    }
+
+    #pane-applicant,
+    #pane-reviewer,
+    #pane-audit {
+        padding: 16px !important;
+    }
+
+    .hero-title {
+        font-size: clamp(1.35rem, 7vw, 1.75rem);
+    }
+
+    .workflow-section {
+        margin-top: 28px;
+    }
+
+    .upload-section {
+        margin-bottom: 32px;
+    }
+
+    .dropzone-area {
+        min-height: 240px;
+        padding: 28px 12px;
+    }
+
+    .extracted-facts-panel {
+        min-height: 260px;
+        padding: 16px;
+    }
+
+    .extracted-facts-grid,
+    .facts-loading-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .submitter-context-grid {
+        grid-template-columns: 1fr;
+        padding: 14px;
+    }
+
+    .submitter-field:last-child {
+        grid-column: auto;
+    }
+
+    .submitter-input.form-control,
+    .amount-input-aura.form-control,
+    .audit-date-input {
+        font-size: 16px;
+    }
+
+    .results-heading-actions > button {
+        width: 100%;
+    }
+
+    .audit-filter {
+        align-items: stretch;
+        padding: 12px;
+    }
+
+    .audit-filter-field,
+    .audit-date-input,
+    .audit-filter-reset {
+        width: 100%;
+    }
+
+    .table-responsive-aura.table-scroll-area:has(.responsive-cards) {
+        max-height: none;
+        overflow: visible;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .table-aura.responsive-cards {
+        min-width: 0;
+        border-spacing: 0;
+    }
+
+    .table-aura.responsive-cards colgroup,
+    .table-aura.responsive-cards thead {
+        display: none;
     }
 
     .back-to-top {
@@ -1351,6 +1491,108 @@ main {
         display: block;
         min-width: 0;
         width: 100%;
+    }
+
+    .table-aura.responsive-cards tbody {
+        display: grid;
+        gap: 14px;
+    }
+
+    .table-aura.responsive-cards tr {
+        overflow: hidden;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        background: #111827;
+    }
+
+    .table-aura.responsive-cards tr[hidden] {
+        display: none !important;
+    }
+
+    .table-aura.responsive-cards td {
+        display: grid;
+        grid-template-columns: minmax(104px, 36%) minmax(0, 1fr);
+        gap: 10px;
+        padding: 11px 12px;
+        border-bottom: 1px solid #263247;
+        text-align: left;
+        white-space: normal;
+    }
+
+    .table-aura.responsive-cards td:last-child {
+        border-bottom: 0;
+    }
+
+    .table-aura.responsive-cards td::before {
+        content: attr(data-label);
+        color: #93a4bc;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
+
+    .table-aura.responsive-cards td[colspan],
+    .table-aura.responsive-cards .skeleton-row td {
+        display: block;
+        text-align: center;
+    }
+
+    .table-aura.responsive-cards td[colspan]::before,
+    .table-aura.responsive-cards .skeleton-row td::before {
+        content: none;
+    }
+
+    .manager-reason-column,
+    .manager-action-column {
+        width: 100%;
+        max-width: none;
+    }
+
+    .manager-action-column form {
+        display: block !important;
+        margin: 0 0 8px !important;
+    }
+
+    .manager-action-column form button,
+    .cell-actions .button-primary,
+    .cell-actions form button {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .decision-help {
+        max-width: none;
+    }
+
+    .receipt-preview-link {
+        max-width: 100%;
+    }
+
+    .audit-timeline {
+        padding-left: 16px;
+    }
+}
+
+@media (max-width: 380px) {
+    main {
+        width: min(100% - 12px, 1800px);
+    }
+
+    #pane-applicant,
+    #pane-reviewer,
+    #pane-audit {
+        padding: 12px !important;
+    }
+
+    .top-tabs .nav-link {
+        padding-inline: 3px;
+        font-size: 0.7rem;
+    }
+
+    .table-aura.responsive-cards td {
+        grid-template-columns: 1fr;
+        gap: 5px;
     }
 }
 

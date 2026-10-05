@@ -69,17 +69,17 @@
                         </div>
                     </div>
                     <div class="submitter-context-grid" aria-label="Ngữ cảnh người gửi">
-                        <div>
+                        <div class="submitter-field">
                             <label for="submitterCode" class="form-label fw-semibold">Mã nhân viên</label>
-                            <input id="submitterCode" name="submitterCode" class="form-control" maxlength="100" value="EMP-001" required />
+                            <input id="submitterCode" name="submitterCode" class="form-control submitter-input" maxlength="100" value="EMP-001" required />
                         </div>
-                        <div>
+                        <div class="submitter-field">
                             <label for="submitterDisplayName" class="form-label fw-semibold">Người gửi</label>
-                            <input id="submitterDisplayName" name="submitterDisplayName" class="form-control" maxlength="200" value="Nguyễn An" required />
+                            <input id="submitterDisplayName" name="submitterDisplayName" class="form-control submitter-input" maxlength="200" value="Gia Phú" required />
                         </div>
-                        <div>
+                        <div class="submitter-field">
                             <label for="submitterDepartment" class="form-label fw-semibold">Bộ phận</label>
-                            <input id="submitterDepartment" name="submitterDepartment" class="form-control" maxlength="200" value="Vận hành" required />
+                            <input id="submitterDepartment" name="submitterDepartment" class="form-control submitter-input" maxlength="200" value="Vận hành" required />
                         </div>
                     </div>
                 </div>
@@ -128,7 +128,7 @@
             Ca tự động duyệt được ghi thẳng vào lịch sử. Ca cần xử lý được giữ tại đây cho tới khi nhân viên chuyển tiếp. <strong>Kỳ vọng/Đối chiếu</strong> chỉ dùng trong lượt Verify có nhãn sẵn.
         </p>
         <div class="table-responsive-aura table-scroll-area">
-            <table class="table-aura results-table">
+            <table class="table-aura results-table responsive-cards">
                 <thead>
                     <tr>
                         <th>Mã hồ sơ</th>
@@ -160,8 +160,6 @@
 </div>
 
 <style>
-    .submitter-context-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
-    @@media (max-width: 760px) { .submitter-context-grid { grid-template-columns: 1fr; } }
     /* CSS for skeleton loading animation */
     .skeleton-row td {
         position: relative;
