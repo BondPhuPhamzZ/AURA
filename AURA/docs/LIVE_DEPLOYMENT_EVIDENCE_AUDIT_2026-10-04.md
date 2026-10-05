@@ -1,4 +1,6 @@
-# AURA - Live deployment evidence audit
+# AURA — Live deployment evidence audit
+
+> Bổ sung 05/10: đây là snapshot deployment `c42c5ef`. Source `e94af11` đã sửa responsive và được browser local xác nhận ở 360/390/1440 px; vẫn phải publish/recycle và chụp điện thoại thật/4G để thay trạng thái live `PARTIAL`. Holdout private hiện có 12 candidate; hai file `NewVinamilk.jpg`/`NewKatinat.jpg` là giao dịch mới theo xác nhận của người dùng và không bị loại chỉ vì trùng merchant.
 
 Cập nhật: 05/10/2026. Phạm vi hiện hành là `13_smarterasp_postfix_c42c5ef_2026-10-04`; phần audit `12_smarterasp_final_2026-10-03` bên dưới được giữ làm lịch sử trước bản vá. Ảnh hóa đơn thật vẫn ở ngoài Git.
 
@@ -64,15 +66,15 @@ Sau khi deploy commit mới, chỉ cần recheck targeted: manager YES/NO, UNDO 
 
 ## 5. Blind holdout hiện tại
 
-Thư mục `02_selected_images` hiện có 9 file, nhưng inventory sơ bộ `preliminary-hash-inventory-8-of-15.json` chỉ ghi 8 và dùng hai tên cũ không còn khớp (`Katinat.jpg`, `Vinamilk.jpg` thay vì `NewKatinat.jpg`, `NewVinamilk.jpg`); `SachNhanVan.jpg` chưa có trong inventory. File inventory có trạng thái `PRELIMINARY_NOT_LOCKED`: không thay consent, redaction review hoặc ground truth và phải được tạo lại sau khi chốt đúng 15 ảnh.
+Thư mục `02_selected_images` hiện có 12 file, nhưng inventory sơ bộ cũ không còn khớp. File inventory có trạng thái `PRELIMINARY_NOT_LOCKED`: không thay consent, redaction review hoặc ground truth và phải được tạo lại sau khi chốt đúng 15 ảnh.
 
 Không thể coi đủ 8/15 một cách máy móc:
 
-- `NewVinamilk.jpg`/Vinamilk đã được dùng nhiều lần để phát triển/kiểm tra discount và line-item guard, vì vậy phải loại khỏi blind holdout và chỉ giữ ở development regression;
-- người kiểm thử đã mô tả Katinat là smoke input. Nếu `NewKatinat.jpg` từng được gửi provider, cũng phải loại khỏi blind holdout;
+- receipt Vinamilk/Katinat cũ đã dùng development vẫn thuộc regression;
+- `NewVinamilk.jpg` và `NewKatinat.jpg` chỉ được giữ nếu đúng là giao dịch mới và chính ảnh/giao dịch đó chưa từng gửi AURA/OpenRouter/Ollama; trùng merchant không tự làm mất tính blind;
 - sáu ảnh còn lại mới chỉ là candidate cho tới khi xác nhận quyền sử dụng, ẩn danh và ground truth trước lần gọi model đầu tiên.
 
-Sau khi loại Vinamilk, tối đa còn 8 candidate; nếu Katinat đã chạy thì tối đa còn 7. Vì vậy cần thêm ít nhất 7 ảnh eligible, hoặc 8 nếu Katinat không còn blind; con số thực tế có thể cao hơn nếu consent/redaction/label review loại thêm ảnh. Không gửi bất kỳ candidate nào cho AURA/OpenRouter trước khi manifest được khóa.
+Hiện có 12 candidate nhưng không thể suy ra chỉ cần thêm đúng 3: số ảnh phải thu thập thêm phụ thuộc coverage 5 AUTO/4 FACT/3 POLICY/3 AUTHORITY và kết quả consent/redaction/provenance review. Không gửi bất kỳ candidate nào cho AURA/OpenRouter trước khi manifest được khóa.
 
 Cấu trúc local khuyến nghị:
 

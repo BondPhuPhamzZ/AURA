@@ -79,7 +79,7 @@ Không commit ảnh thật, consent, manifest thật hoặc raw response có PII
 
 ### Bước 1 — Kiểm eligibility
 
-Với từng ảnh, ghi `caseId`, chủ sở hữu/quyền sử dụng, đã từng gửi AI chưa, có dùng để tune không và source type. Loại ảnh không có quyền sử dụng hoặc đã dùng để phát triển. Vinamilk hiện phải để ở regression set; Katinat phải đối chiếu lịch sử.
+Với từng ảnh, ghi `caseId`, chủ sở hữu/quyền sử dụng, đã từng gửi AI chưa, có dùng để tune không và source type. Loại ảnh không có quyền sử dụng hoặc chính giao dịch/ảnh đó đã dùng để phát triển. Trùng merchant với regression cũ không tự làm mất tính blind: `NewVinamilk.jpg` và `NewKatinat.jpg` là candidate nếu là giao dịch mới và chưa từng gửi pipeline/model; ảnh đổi tên/crop/che QR của một giao dịch đã chạy vẫn phải để ở regression.
 
 ### Bước 2 — Ẩn danh
 

@@ -14,7 +14,7 @@ Cập nhật trạng thái: 05/10/2026. Mục tiêu là chốt MVP có bằng ch
 | Fallback OpenRouter -> Ollama | Hoàn thành về chức năng, chưa bật mặc định | Live regression 1/1; audit provider đúng; E2E 84,425 s |
 | Đo trên tập độc lập | Chưa hoàn tất | Judge 15 là synthetic locked set; receipt thật hiện là development samples |
 | Ba người dùng thực tế | Chưa hoàn tất | Đang chờ kết nối/đồng thuận |
-| Live URL sau hardening | Technical pass, final conditional | `c42c5ef`: health/DB/storage, tab, AUTO/FACT, Verify, workflow, recycle/persistence và concurrency pass; mobile 390 px + manual 4G/no-flash còn mở |
+| Live URL sau hardening | Technical pass, final conditional | `c42c5ef`: live gates pass; `e94af11`: responsive local 360/390/1440 pass, còn publish/recycle + điện thoại thật 4G/no-flash |
 
 ## 2. Traceability với yêu cầu Track A
 

@@ -9,7 +9,7 @@ Cập nhật: 05/10/2026. Trạng thái chuẩn nằm tại `docs/CURRENT_PROJEC
 | Frontend/backend clone và chạy localhost | ☑ Có | README root, .NET 8, LocalDB/SQL Server, user-secrets và migration |
 | Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, 15/30 ca chạy ngoài UI bằng evaluator |
 | Public repository và lịch sử commit | ☑ Có | `https://github.com/BondPhuPhamzZ/AURA`; cần push commit chốt sau mỗi lần cập nhật hồ sơ |
-| Public Live URL | ◐ Technical pass, chưa public | Commit `c42c5ef`: health/DB/storage/tab/AUTO/FACT/Verify/workflow/persistence/concurrency pass; còn manual mobile/4G/no-flash, holdout, users và rehearsal |
+| Public Live URL | ◐ Technical pass, chưa public | Live `c42c5ef` pass core gates; responsive `e94af11` pass local, còn publish/recycle + điện thoại thật 4G/no-flash, holdout, users và rehearsal |
 | Video demo tối đa 3 phút (BTC ghi Optional) | ☑ Đã liên kết | Link Google Drive ở README root |
 | Đúng 5 slide | ☑ Đã dựng | `submission/AURA_5_SLIDES.pptx` |
 | Build Log một trang Word | ☑ Đã dựng | `submission/AURA_BUILD_LOG.docx` |
@@ -51,5 +51,5 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 8. Post-fix gate ngày 02/10 đã xác minh Phê La bị che vùng món đi `ESCALATE_FACT`, Vinamilk đủ bảy dòng hàng vẫn `AUTO_APPROVE`, Official Verify 5/5, restart giữ status/ảnh/audit, manager YES/NO/UNDO có audit và concurrent smoke 5/5 với accepted P95 530 ms, end-to-end P95 39,380 giây.
 9. Hướng dẫn BGK chạy local nằm tại `docs/JUDGE_LOCAL_SETUP.md`; báo cáo tiến độ và ranh giới claim hiện hành nằm tại `docs/PROGRESS_REPORT_2026-10-05.md` và `docs/CURRENT_PROJECT_STATUS_2026-10-05.md`.
 10. Development validation bổ sung và fallback live regression nằm tại `docs/REAL_RECEIPT_VALIDATION_2026-10-02.md` và `docs/FALLBACK_REGRESSION_2026-10-02.md`. Ảnh thật/PII vẫn nằm ngoài Git; fallback baseline vẫn tắt.
-11. Evidence postfix ngày 04/10 trên `c42c5ef` đã đóng initial-tab, AUTO/FACT độc lập, Verify, workflow, persistence và concurrency. Mobile 390 px vẫn partial; manual 4G/no-flash còn cần xác nhận.
-12. Holdout folder hiện có chín file nhưng inventory cũ chỉ ghi tám và không khớp tên. Vinamilk không còn blind; Katinat phải xác minh lịch sử. Tạo lại inventory và chỉ khóa manifest khi đủ đúng 15 ảnh eligible, consent/redaction/ground truth và SHA-256.
+11. Evidence postfix ngày 04/10 trên `c42c5ef` đã đóng initial-tab, AUTO/FACT độc lập, Verify, workflow, persistence và concurrency. Responsive `e94af11` đã pass browser local 360/390/1440; manual phone/4G/no-flash sau publish còn cần xác nhận.
+12. Holdout folder hiện có 12 candidate nhưng inventory cũ không còn khớp. `NewVinamilk.jpg`/`NewKatinat.jpg` được giữ nếu là giao dịch mới chưa từng gửi model; trùng merchant không tự làm mất tính blind. Tạo lại inventory và chỉ khóa manifest khi đủ đúng 15 ảnh eligible theo 5 AUTO/4 FACT/3 POLICY/3 AUTHORITY, consent/redaction/ground truth và SHA-256.
