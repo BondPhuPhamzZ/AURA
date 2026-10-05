@@ -21,7 +21,7 @@ Live URL được xác minh trong evidence ngày 04/10. Trước khi công bố 
 
 | Hạng mục | Kết quả |
 |---|---|
-| Source revision | baseline `master` / `49071c4`; responsive/holdout update đang được xác minh trong working tree ngày 05/10 |
+| Source revision | responsive/holdout feature revision `master` / `e94af11` |
 | Release build | 0 warning, 0 error |
 | Automated tests | 108/108 pass, offline, không gọi API trả phí |
 | EF model | Không có pending model change |
