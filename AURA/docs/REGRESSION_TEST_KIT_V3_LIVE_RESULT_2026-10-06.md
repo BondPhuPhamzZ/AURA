@@ -35,7 +35,7 @@ Test Kit v3 đã chạy đúng **một batch 15 ca** trên live AURA/OpenRouter 
 
 ### R3-04 — lỗi deterministic policy matcher
 
-Ảnh in `Bìa hồ sơ`; model đọc đúng thành `Bia hồ sơ`. Matcher cũ xóa toàn bộ dấu nên cả `Bìa hồ sơ` cũng biến thành keyword `bia`. Bản hardening giữ nguyên dấu và dựa trên các biến thể có/không dấu đã khai báo trong prohibited terms. `Bia Larue`, `beer`, `rượu/ruou` vẫn bị chặn; `Bìa hồ sơ` không còn false positive.
+Ảnh in `Bìa hồ sơ`; model làm mất dấu và trả `Bia hồ sơ`. Vì vậy chỉ giữ dấu trong matcher là chưa đủ. Bản hardening vừa giữ dấu khi model đọc đúng, vừa dùng ngoại lệ ngữ cảnh hẹp cho các cụm văn phòng phẩm như `Bia hồ sơ/còng/nhựa/cứng/trình ký` khi OCR mất dấu. Các ngữ cảnh rượu bia rõ ràng như `Bia lon/chai`, brand, `beer`, `rượu/ruou` vẫn bị chặn.
 
 ### R3-08 — safety gap deterministic
 

@@ -86,7 +86,7 @@ The application never asserts approval when a FACT issue exists. Employees only 
 
 For non-VAT evidence, the application requires a traceable identifier appropriate to the document: invoice number, receipt number, or a per-purchase transaction reference for paper retail/restaurant receipts; booking/receipt/transaction ID for ride-hailing; or order/booking/tracking/receipt/transaction ID for e-commerce. ShopID, POS/register, MID/TID and pager/table numbers do not satisfy this requirement. Tax ID and invoice number may legitimately be absent from e-commerce. A traceable identifier is not proof that the document is legally authentic. Digital evidence additionally needs visible merchant/platform context, completed/paid status, reliable transaction/payment date, currency, total and line items. A delivery date alone does not establish the purchase/payment date. Company accounting policy may still require a VAT invoice; Vision must not decide that legal requirement.
 
-Policy phrase matching preserves Vietnamese diacritics and uses explicitly declared accented/unaccented variants. The stationery word `bìa` must not be normalized into the alcohol keyword `bia`; real alcohol labels such as `Bia Larue`, `beer`, `rượu` or `ruou` remain prohibited.
+Policy phrase matching preserves Vietnamese diacritics and uses explicitly declared accented/unaccented variants. Because OCR may still return `Bia hồ sơ` for printed `Bìa hồ sơ`, a narrow context rule exempts stationery phrases such as hồ sơ/còng/nhựa/cứng/trình ký; explicit alcohol contexts such as `Bia lon`, `Bia chai`, brands, `beer`, `rượu` or `ruou` remain prohibited.
 
 ## 6. Output quality checklist
 

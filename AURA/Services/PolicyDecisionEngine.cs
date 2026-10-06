@@ -17,6 +17,18 @@ public static class PolicyDecisionEngine
         "khăn ướt", "khan uot", "wet wipe", "wet wipes", "chăm sóc da", "cham soc da"
     ];
 
+    private static readonly string[] StationeryBiaPhrases =
+    [
+        "bia hồ sơ", "bia ho so", "bia còng", "bia cong", "bia nhựa", "bia nhua", "bia cứng", "bia cung",
+        "bia trình ký", "bia trinh ky", "bia đựng tài liệu", "bia dung tai lieu", "bia lưu tài liệu", "bia luu tai lieu",
+        "bia sách", "bia sach"
+    ];
+
+    private static readonly string[] AlcoholBiaPhrases =
+    [
+        "bia lon", "bia chai", "bia hơi", "bia hoi", "bia tươi", "bia tuoi", "bia keg", "bia draft"
+    ];
+
     public static (string Status, string Reason, string ManagerQuestion) Evaluate(
         ReceiptExtractionDto? facts,
         decimal claimedAmount,
@@ -187,9 +199,27 @@ public static class PolicyDecisionEngine
 
     private static List<string> FindProhibitedItems(ReceiptExtractionDto facts) => facts.LineItems
         .Select(item => item.Description)
-        .Where(description => ProhibitedTerms.Any(term => ContainsPolicyPhrase(description, term)))
+        .Where(description => ProhibitedTerms.Any(term => IsProhibitedTermMatch(description, term)))
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToList();
+
+    private static bool IsProhibitedTermMatch(string? description, string term)
+    {
+        if (!ContainsPolicyPhrase(description, term)) return false;
+
+        // Vision/OCR can drop the grave accent and return "Bia hồ sơ" for "Bìa hồ sơ".
+        // Exempt only a narrow stationery phrase and only when there is no explicit
+        // alcohol context. Other prohibited terms in the same description are still
+        // evaluated independently.
+        if (NormalizePolicyText(term) == "bia" &&
+            StationeryBiaPhrases.Any(phrase => ContainsPolicyPhrase(description, phrase)) &&
+            !AlcoholBiaPhrases.Any(phrase => ContainsPolicyPhrase(description, phrase)))
+        {
+            return false;
+        }
+
+        return true;
+    }
 
     private static bool ContainsPolicyPhrase(string? source, string term)
     {
@@ -202,10 +232,9 @@ public static class PolicyDecisionEngine
 
     private static string NormalizePolicyText(string value)
     {
-        // Preserve Vietnamese diacritics.  The prohibited-term table already carries
-        // explicit accented and unaccented variants.  Removing every mark turns the
-        // stationery word "bìa" into the alcohol keyword "bia" and creates a false
-        // policy escalation.
+        // Preserve Vietnamese diacritics. The prohibited-term table carries explicit
+        // accented/unaccented variants; a separate narrow context rule handles the
+        // common OCR loss "Bìa hồ sơ" -> "Bia hồ sơ" without weakening real beer terms.
         var composed = value.Normalize(NormalizationForm.FormC);
         var builder = new StringBuilder(composed.Length);
         var previousWasSpace = true;

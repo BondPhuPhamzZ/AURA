@@ -188,6 +188,7 @@ public sealed class PolicyDecisionEngineTests
 
     [Theory]
     [InlineData("Tiger Beer")]
+    [InlineData("Bia lon")]
     [InlineData("Thuốc lá")]
     [InlineData("Karaoke client event")]
     [InlineData("Personal item")]
@@ -204,7 +205,10 @@ public sealed class PolicyDecisionEngineTests
     [Theory]
     [InlineData("Bìa hồ sơ")]
     [InlineData("Bìa còng lưu tài liệu")]
-    public void Stationery_bia_with_diacritic_is_not_alcohol(string item)
+    [InlineData("Bia hồ sơ")]
+    [InlineData("Bia ho so")]
+    [InlineData("Bia còng lưu tài liệu")]
+    public void Stationery_bia_even_when_ocr_loses_diacritic_is_not_alcohol(string item)
     {
         var facts = ValidFacts();
         facts.LineItems = [new ReceiptLineItem { Description = item, Amount = 150_000 }];
