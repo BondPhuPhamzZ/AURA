@@ -35,12 +35,24 @@ https://github.com/BondPhuPhamzZ/AURA
 Ollama 8B riêng với context 16384/output 4096; fallback vẫn tắt cho tới khi đạt 0 system error,
 0 missed escalation và evidence processor/token/latency đầy đủ.
 
-## Bản ngắn để dán form
+## Bản ngắn để dán theo từng field
 
-Đã harden policy C# cho nhóm vé xem phim/rạp chiếu phim, thêm test thực thi ground truth R3-12
-v3.1 và guard giữ dấu tiếng Việt (`Bìa`/`Bia`). Sau publish, health 5/5, security 4/4, live
-v3.1 15/15 completed (13/15 exact, 0 missed, 0 system error, field 140/146), Verify 5/5 và
-workflow duyệt/hoàn tác có Audit đều pass. UI desktop/mobile 390x844 và console pass smoke;
-142/142 test pass. Tiếp theo: benchmark Ollama 8B cùng v3.1 trên GPU BTC, 3 user session và
-3 rehearsal; fallback vẫn tắt. OpenRouter hậu-contract v2 đạt 14/15 (missed TK-12 blur cũ,
-0 system error), nên đội giữ raw và dùng v3.1 làm safety gate hiện hành.
+### Mốc Check-in / Giai đoạn
+
+Sprint 2 — Post-contract regression và demo hardening.
+
+### Tiến độ & Công việc đã làm
+
+Đã hoàn tất hardening policy/evidence contract và kiểm thử live sau publish: health, security,
+Verify 5/5, workflow/Audit và UI mobile đều pass; 142/142 test pass, EF clean. OpenRouter v3.1
+hoàn tất 15/15 (13/15 exact, 0 missed, 0 system error); v2 hậu-contract đạt 14/15, còn TK-12
+blur bị đọc nhầm. Raw evidence/SHA-256 được giữ nguyên; fallback vẫn tắt.
+
+### Link GitHub
+
+https://github.com/BondPhuPhamzZ/AURA
+
+### Khó khăn / Cần hỗ trợ
+
+Đang chờ BTC kết nối 3 người dùng thật và xác nhận lịch GPU 16 GB để benchmark Ollama 8B.
+Fallback chỉ được cân nhắc sau khi đạt 0 missed escalation, 0 system error và latency an toàn.
