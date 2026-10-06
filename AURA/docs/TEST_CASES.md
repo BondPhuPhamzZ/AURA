@@ -110,6 +110,7 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P72 | Phiếu in `Giờ 08:29:02`, tổng 60.000, tiền khách đưa 500.000, tiền thối -440.000, VAT đã gồm 4.444,44 | Không coi cash/change/VAT là discount/total; fractional included VAT được giữ hỗ trợ | A/V hậu deploy |
 | P73 | `PTT` và `Mã CQT` là hai mã khác nhau | `PTT -> receiptNumber`, `Mã CQT -> taxAuthorityCode`, không lặp sang transactionReference | A/V hậu deploy |
 | P74 | `Kẹp tóc`, `Khăn ướt chăm sóc da` hoặc wet wipes trên receipt đủ dữ kiện | `ESCALATE_POLICY` theo taxonomy personal-item của MVP; FACT vẫn ưu tiên nếu có vấn đề dữ kiện | A |
+| P75 | Audit timestamp được đọc từ SQL trên host không đặt timezone Việt Nam | DB giữ UTC; UI chuyển rõ sang UTC+7 cho dòng tổng hợp và timeline; không dùng timezone hệ điều hành host | A/live hậu deploy |
 
 ## Ma trận human-in-the-loop
 

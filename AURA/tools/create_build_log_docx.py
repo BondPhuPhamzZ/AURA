@@ -134,13 +134,13 @@ title_bottom.set(qn("w:sz"), "0")
 title_bottom.set(qn("w:space"), "0")
 title_border.append(title_bottom)
 title_ppr.append(title_border)
-run = title.add_run("AURA BUILD LOG SPRINT 1 VÀ HARDENING")
+run = title.add_run("AURA BUILD LOG SPRINT 2 VÀ HARDENING")
 set_run_font(run, size=16, bold=True, color="000000")
 
 subtitle = document.add_paragraph()
 subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
 subtitle.paragraph_format.space_after = Pt(5)
-run = subtitle.add_run("Track A The Escalation Referee | 05 10 2026 | Pham Gia Phu")
+run = subtitle.add_run("Track A The Escalation Referee | 06 10 2026 | Pham Gia Phu")
 set_run_font(run, size=9.2, italic=True, color="555555")
 
 intro = document.add_paragraph()
@@ -207,7 +207,7 @@ evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
 headers = ("Build", "Test offline", "Dependency", "Evaluator")
-values = ("0 warning 0 error", "108 trên 108 pass", "EF model sạch", "Verify live 5 trên 5")
+values = ("0 warning 0 error", "122 trên 122 pass", "EF model sạch", "Verify live 5 trên 5")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -232,9 +232,9 @@ for index, value in enumerate(values):
 
 add_body(
     document,
-    "Kết luận đo lường: Trên cùng judge set 15 ca và fallback tắt, OpenRouter đạt 15 trên 15 quyết định, 70 trên 75 field và P95 "
-    "16,459 giây. Ollama đạt 14 trên 15, 73 trên 75 field và P95 58,318 giây, đồng thời bỏ sót escalation TK-12. "
-    "Đây là regression tổng hợp, không phải accuracy trên hóa đơn thật.",
+    "Kết luận đo lường: Official holdout 15 hóa đơn thật, khóa nhãn và SHA-256 trước request đầu tiên, đạt raw 10 trên 15 "
+    "quyết định; review phát hiện một nhãn người sai nên adjusted view là 11 trên 15. Có một missed escalation, hai "
+    "over-escalation sau adjudication và không có system error. Đây là mẫu nhỏ, không phải accuracy production.",
     bold_lead="Kết luận đo lường: ",
 )
 
@@ -247,9 +247,9 @@ add_body(
 )
 add_body(
     document,
-    "Contract ngày 30/09 tách số hóa đơn, số biên nhận và mã giao dịch. Check/Trace/RRN chỉ được dùng khi là mã riêng "
-    "của lần mua; ShopID, POS, MID/TID và pager không thay thế định danh. Nếu FACT và POLICY cùng tồn tại, FACT vẫn là "
-    "trạng thái chính nhưng lý do giữ policy finding thứ cấp để quản lý không bỏ sót.",
+    "Contract hậu holdout tách số hóa đơn, số biên nhận, mã giao dịch, Mã CQT, serial, số chứng từ và POS. Chỉ tổng cuối "
+    "được in rõ cùng dòng evidence khớp số mới có thể tự duyệt; tổng bị rách hoặc suy từ subtotal/items luôn đi FACT. "
+    "Ngày/giờ gốc, tiền khách đưa, tiền thối và VAT đã gồm được kiểm riêng để không che nhánh policy.",
 )
 add_body(
     document,
@@ -268,9 +268,10 @@ add_bullet(document, "Giữ EF Core 8.0.31: NuGet không báo advisory; không n
 add_heading(document, "6 Bài học và bước tiếp theo")
 add_body(
     document,
-    "Deployment postfix c42c5ef đã pass health, security, AUTO/FACT smoke, Verify 5 trên 5, human workflow, persistence "
-    "và concurrency 2 cộng 5 request. Các cổng còn mở là blind holdout đúng 15 ca đã khóa trước request đầu tiên, phản hồi "
-    "của ba người dùng, manual mobile/4G/no-flash và ba dress rehearsal. Dữ liệu cá nhân thật không được đưa vào Git.",
+    "Live c382ce7 đã pass health 5 trên 5, security negative, upload guard và Verify 5 trên 5; UI mobile, manager và audit "
+    "render đúng. Kiểm tra phát hiện giờ Audit phụ thuộc timezone máy host; source đã chuyển UTC sang Việt Nam rõ ràng và "
+    "122 test pass, còn cần publish/recycle rồi xác nhận lại. Sau đó mới làm ba user session, mobile 4G và ba rehearsal. "
+    "Dữ liệu cá nhân thật không được đưa vào Git.",
 )
 
 OUTPUT.parent.mkdir(parents=True, exist_ok=True)

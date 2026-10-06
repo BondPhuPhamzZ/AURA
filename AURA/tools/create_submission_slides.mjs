@@ -96,7 +96,7 @@ function title(slide, number, heading, subheading) {
   return line;
 }
 
-function footer(slide, number, source = "AURA • Track A • 05/10/2026") {
+function footer(slide, number, source = "AURA • Track A • 06/10/2026") {
   text(slide, source, 54, 686, 950, 18, 12, C.muted);
   text(slide, String(number), 1170, 684, 54, 20, 13, C.muted, { align: "right", bold: true });
 }
@@ -220,7 +220,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   text(s, "Bằng chứng đã có", 54, 428, 250, 28, 20, C.white, { bold: true });
   const evidence = [
-    ["108/108", "test offline", C.blue],
+    ["122/122", "test offline", C.blue],
     ["5/5", "Verify live", C.green],
     ["7/7", "concurrent live", C.violet],
   ];
@@ -241,7 +241,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
   text(s, "Baseline và target chỉ điền sau khi có dữ liệu người dùng thật.", 635, 610, 589, 34, 15, C.amber, { align: "center", bold: true });
   footer(s, 3);
-  s.speakerNotes.textFrame.setText("Nguồn cập nhật 05/10/2026: baseline c42c5ef có 108/108 test offline. Evidence SmartASP ngày 04/10 đạt Verify 5/5 và concurrent 2/2 + 5/5. Trên judge set tổng hợp 15 ca, fallback tắt: OpenRouter 15/15 quyết định, 70/75 field, P95 16,459 giây; Ollama 14/15, 73/75 field, P95 58,318 giây và bỏ sót escalation TK-12. Blind holdout và ba user session vẫn là gate; đây không phải accuracy production.");
+  s.speakerNotes.textFrame.setText("Nguồn cập nhật 06/10/2026: source hậu holdout đạt 122/122 test offline. Live c382ce7 đạt health 5/5, security negative và Verify 5/5; bản vá hiển thị Audit UTC+7 còn cần publish lại. Official holdout thật một lượt: raw 10/15, adjusted 11/15 do một nhãn người sai, một missed escalation và không có system error. Đây là mẫu nhỏ, không phải accuracy production; ba user session vẫn là gate.");
 }
 
 // Slide 4
@@ -303,7 +303,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 157, 382, 242, C.surface2, "rounded-xl", C.green);
   text(s, "ĐÃ BÀN GIAO", 869, 180, 326, 24, 15, C.green, { bold: true });
-  const todo = ["DB-backed upload queue", "108 test • dependency sạch", "Evaluator 15/30 ngoài UI", "Fallback opt-in + audit"];
+  const todo = ["DB-backed upload queue", "122 test • dependency sạch", "Holdout thật 15 ca đã khóa", "Fallback opt-in + audit"];
   todo.forEach((t, i) => {
     pill(s, `${i + 1}`, 869, 225 + i * 40, 30, C.green);
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });
@@ -311,12 +311,12 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 424, 382, 153, "#342334", "rounded-xl", C.red);
   text(s, "CHƯA CÓ TRONG BASELINE", 869, 447, 326, 24, 15, C.red, { bold: true });
-  text(s, "Holdout 15 ca • 3 người dùng\nmobile 390 px • PDF/nhiều trang\nauthentication • object storage", 869, 487, 326, 72, 16, C.white, { bold: true });
+  text(s, "3 người dùng thực tế\nmobile thật/4G • PDF/nhiều trang\nauthentication • object storage", 869, 487, 326, 72, 16, C.white, { bold: true });
 
   text(s, "Verify vẫn đúng 5 ca BTC; runner mở rộng không làm rối dashboard.", 842, 601, 382, 44, 14, C.amber, { align: "center", bold: true });
   footer(s, 5, "AURA • Giới hạn hiện tại, không phải lời hứa marketing");
   s.speakerNotes.textFrame.setText(
-    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ConfiguredVisionExtractor.cs, VisionCircuitBreaker.cs, tools/Invoke-ExtendedDatasetEvaluation.ps1 và docs/SPRINT2_IMPLEMENTATION_PROGRESS_2026-09-28.md. EF Core 8.0.31 đã qua vulnerability scan không còn advisory.",
+    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ReceiptExtractionContract.cs, PolicyDecisionEngine.cs, VietnamTime.cs, tools/Invoke-ExtendedDatasetEvaluation.ps1 và docs/LIVE_POST_HOLDOUT_VALIDATION_2026-10-06.md. EF Core 8.0.31 và test project đã qua vulnerability scan không còn advisory tại thời điểm kiểm tra.",
   );
 }
 

@@ -1,6 +1,6 @@
-# AURA — Current project status
+# AURA — Current project status (snapshot lịch sử)
 
-Cập nhật: 06/10/2026. Đây là nguồn trạng thái hiện hành; các báo cáo có ngày cũ hơn được giữ để truy vết lịch sử.
+Cập nhật lần cuối: 06/10/2026. Trạng thái hiện hành đã chuyển sang [`CURRENT_PROJECT_STATUS_2026-10-06.md`](CURRENT_PROJECT_STATUS_2026-10-06.md); file này được giữ để truy vết thời điểm trước live post-holdout validation.
 
 ## 1. Kết luận điều hành
 

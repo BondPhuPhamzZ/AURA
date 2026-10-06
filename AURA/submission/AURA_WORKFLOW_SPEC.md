@@ -1,6 +1,6 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 1.9 — 05/10/2026
+Phiên bản: 2.0 — 06/10/2026
 Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
@@ -99,6 +99,8 @@ Mỗi quyết định lưu câu hỏi, câu trả lời, kết quả và thời 
 - “Thao tác cuối” và “Trạng thái hiện tại” lấy từ event/hồ sơ mới nhất;
 - nút mở rộng hiển thị timeline đầy đủ theo thời gian.
 
+Timestamp được lưu UTC. Giao diện Audit chuyển rõ sang timezone Việt Nam (UTC+7) bằng mapping Windows/Linux; không dùng `DateTime.ToLocalTime()` vì timezone của máy hosting có thể khác người dùng.
+
 Cách này vừa giữ bằng chứng để truy vết/hoàn tác, vừa tránh ghi đè log gốc và tránh ba dòng giống nhau trên màn hình.
 
 ## 7. Đồng bộ và điều hướng
@@ -135,7 +137,7 @@ AURA có circuit breaker trong bộ nhớ theo instance. Sau ngưỡng lỗi h�
 - Development validation bổ sung: Oppa `AUTO_APPROVE` sau một repair, Texas `AUTO_APPROVE` không repair và Phê La che món `ESCALATE_FACT`. Fallback regression bằng DB riêng xác minh `OpenRouter → Ollama`, `FallbackUsed=true`, E2E 84,425 giây. Hai nhóm này là evidence kỹ thuật, không thay blind holdout hoặc safety gate Ollama.
 - Deployment postfix trên `c42c5ef` đóng automated technical gate: health/DB/storage/migration, initial-tab, security-negative, AUTO + FACT smoke độc lập, Verify 5/5, human workflow, persistence và 2 + 5 concurrent request pass. Mobile 390 px vẫn partial; blind holdout, ba user session, manual 4G/no-flash và rehearsal vẫn là final gate.
 - Official blind holdout thật ngày 06/10 đã chạy đúng một lượt, fallback tắt và raw evidence giữ bất biến: 10/15 decision đúng (66,67%), 1 missed escalation, 3 over-escalation, 0 system error. Review post-hoc chỉ sửa cách diễn giải, không sửa raw: BH-04 thực tế in ngày Chủ nhật nên adjusted view 11/15 (73,33%), 1/10 missed escalation và 2/5 over-escalation. Field 28/30 chỉ đo `currency` + `totalAmount`, không phải full extraction accuracy. Kết luận là NO-GO cho accuracy claim/unattended pilot; 15 ảnh này từ đây chỉ là post-holdout regression, muốn có blind claim mới phải dùng ảnh unseen mới.
-- Hậu holdout P0/P1 ngày 06/10 bổ sung contract v2 cho dòng tổng/ngày gốc, chuẩn hóa giây/AM-PM, money-role guard, mapping PTT/Mã CQT, taxonomy kẹp tóc/khăn ướt và UI hiển thị provenance. Checkpoint source đạt 120/120 automated test; còn phải publish, health/smoke và post-holdout regression thật trước khi ký demo GO.
+- Hậu holdout P0/P1 ngày 06/10 bổ sung contract v2 cho dòng tổng/ngày gốc, chuẩn hóa giây/AM-PM, money-role guard, mapping PTT/Mã CQT, taxonomy kẹp tóc/khăn ướt và UI hiển thị provenance. `c382ce7` đã live và đạt health 5/5, security-negative, UI browser mobile và Verify 5/5. Hậu kiểm phát hiện hiển thị giờ Audit theo timezone host; source đã sửa UTC→giờ Việt Nam và checkpoint đạt 122/122 test. Cần publish/recycle bản vá timezone rồi mới freeze.
 - Mô phỏng: 30 ảnh tổng hợp sinh offline; 5 ảnh Verify và manifest 15 ca BGK được tuyển từ ngân hàng này.
 - Ground truth tổng hợp được sinh tất định bằng Python/Pillow và khóa trong manifest. Ảnh generative AI không được dùng làm nhãn chuẩn; hóa đơn thật đã ẩn danh chỉ nằm trong holdout cục bộ ngoài Git.
 - Không dùng hóa đơn cá nhân thật trong Git. Ảnh thật tùy chọn chỉ đặt tại `test_kit/local_real` và bị `.gitignore` loại trừ.
