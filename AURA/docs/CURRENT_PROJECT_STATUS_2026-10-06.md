@@ -11,7 +11,7 @@ AURA là **MVP technical baseline sẵn sàng cho supervised demo**, chưa phả
 | Hạng mục | Trạng thái |
 |---|---|
 | Deployed revision | `1f4b3c9` — contract v2 và bản vá Audit timezone đã live |
-| Candidate kế tiếp | mobile alignment + policy/identifier hardening + Test Kit v3.1; chờ commit/publish/live v3.1 |
+| Candidate kế tiếp | `bd72763` — mobile alignment + policy/identifier hardening + Test Kit v3.1; chờ publish/live v3.1 |
 | Release build | 0 warning, 0 error |
 | Automated tests | 129/129 pass trên candidate; offline, không gọi API AI |
 | EF model | Không có pending model change |
@@ -33,7 +33,7 @@ Evidence live hiện hành: [`LIVE_POST_HOLDOUT_VALIDATION_2026-10-06.md`](LIVE_
 
 ## Gate còn mở
 
-1. Commit/publish candidate hiện tại, recycle Pool, health `ok`, rồi chạy đúng một live batch v3.1; không chạy lại raw v3.
+1. Publish candidate `bd72763`, recycle Pool, health `ok`, rồi chạy đúng một live batch v3.1; không chạy lại raw v3.
 2. Chụp lại đúng tab quản lý trên điện thoại 4G/5G để đóng P1 alignment.
 3. Ba phiên người dùng thật có giám sát; thu consent, task, quan sát, thời gian, lỗi và feedback do người dùng xác nhận.
 4. Ba dress rehearsal 8–10 phút trên cùng commit freeze; local Ollama chỉ là phương án manual vì 4B chưa đạt safety gate.

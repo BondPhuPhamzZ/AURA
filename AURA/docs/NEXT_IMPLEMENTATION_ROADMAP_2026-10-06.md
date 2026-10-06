@@ -4,7 +4,7 @@ Cập nhật: 06/10/2026. Ưu tiên đóng rủi ro demo; không mở rộng tí
 
 ## P0 technical baseline — đã đóng
 
-Deployment `1f4b3c9` đã đạt health 5/5, Verify 5/5, security 6/6, workflow/undo 2/2, Audit giờ Việt Nam và viewport 390×844. Candidate mới sau Test Kit v3 đạt build sạch, 129/129 test; còn phải publish/recycle/health và chạy đúng một batch v3.1 trước khi freeze.
+Deployment `1f4b3c9` đã đạt health 5/5, Verify 5/5, security 6/6, workflow/undo 2/2, Audit giờ Việt Nam và viewport 390×844. Candidate `bd72763` sau Test Kit v3 đạt build sạch, 129/129 test; còn phải publish/recycle/health và chạy đúng một batch v3.1 trước khi freeze.
 
 Gate điện thoại thật qua 4G/5G đã pass luồng chính, Verify, workflow, Audit, refresh và receipt persistence. Feedback P1 duy nhất là hai nút quản lý lệch cột; candidate đã sửa local và cần republish + phone regression trước khi đóng hoàn toàn.
 
