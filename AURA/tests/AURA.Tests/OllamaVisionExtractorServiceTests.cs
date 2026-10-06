@@ -102,6 +102,26 @@ public sealed class OllamaVisionExtractorServiceTests
     }
 
     [Fact]
+    public async Task Rejects_a_structured_response_that_omits_evidence_contract_version()
+    {
+        var root = CreateFixtureRoot();
+        try
+        {
+            var handler = new StubHandler(_ => Task.FromResult(ResponseFor("{}")));
+            var service = CreateService(root, handler);
+
+            var exception = await Assert.ThrowsAsync<VisionExtractionException>(() =>
+                service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg")));
+
+            Assert.Equal("AI_SCHEMA_MISMATCH", exception.Code);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task Converts_connection_failure_to_safe_local_unavailable_error()
     {
         var root = CreateFixtureRoot();
@@ -209,12 +229,12 @@ public sealed class OllamaVisionExtractorServiceTests
     private static HttpResponseMessage SuccessResponse()
     {
         const string factsJson = """
-            {"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Local Shop",
+            {"evidenceContractVersion":2,"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Local Shop",
             "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
             "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":"PAID",
-            "invoiceNumber":"HD-LOCAL-001","invoiceDate":"2026-09-26","transactionDate":null,
+            "invoiceNumber":"HD-LOCAL-001","invoiceDate":"2026-09-26","invoiceDateEvidence":"26/09/2026","transactionDate":null,"transactionDateEvidence":null,
             "completionDate":null,"invoiceTime":"09:30","currency":"VND","subtotal":100000,
-            "discountAmount":null,"tax":0,"totalAmount":100000,"lineItems":[{"description":"Stationery","quantity":1,
+            "discountAmount":null,"tax":0,"totalAmount":100000,"totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Total 100.000 VND","lineItems":[{"description":"Stationery","quantity":1,
             "unitPrice":100000,"amount":100000}],"missingFields":[],"warnings":[],
             "suspiciousSignals":[],"confidence":0.94}
             """;
@@ -245,46 +265,46 @@ public sealed class OllamaVisionExtractorServiceTests
     }
 
     private const string FaultyTc01Json = """
-        {"documentType":"RIDE_HAILING","documentStatus":"COMPLETED","merchantName":"Double Fish Việt Nam",
+        {"evidenceContractVersion":2,"documentType":"RIDE_HAILING","documentStatus":"COMPLETED","merchantName":"Double Fish Việt Nam",
         "taxId":null,"merchantId":null,"terminalId":null,"platformName":"SPX Instant",
         "orderId":"SPX-VN2693231211394","bookingId":null,"shippingTrackingCode":"SPX-VN2693231211394",
         "shippingProvider":"SPX Instant","orderStatus":"COMPLETED","invoiceNumber":null,"invoiceDate":null,
-        "transactionDate":"2026-09-18","completionDate":"2026-09-18","invoiceTime":"09:45",
-        "currency":"VND","subtotal":292.199,"discountAmount":null,"tax":3.0,"totalAmount":295.199,
+        "transactionDate":"2026-09-18","transactionDateEvidence":"18/09/2026","completionDate":"2026-09-18","invoiceTime":"09:45",
+        "currency":"VND","subtotal":292.199,"discountAmount":null,"tax":3.0,"totalAmount":295.199,"totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Thành tiền 295.199 đ",
         "lineItems":[{"description":"Vợt bóng bàn","quantity":1,"unitPrice":292.199,"amount":292.199},
         {"description":"Bảo hiểm người tiêu dùng","quantity":1,"unitPrice":3.0,"amount":3.0}],
         "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
         """;
 
     private const string CorrectedTc01Json = """
-        {"documentType":"ECOMMERCE","documentStatus":"COMPLETED","merchantName":"Double Fish Việt Nam",
+        {"evidenceContractVersion":2,"documentType":"ECOMMERCE","documentStatus":"COMPLETED","merchantName":"Double Fish Việt Nam",
         "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,"bookingId":null,
         "shippingTrackingCode":"SPX-VN2693231211394","shippingProvider":"SPX Instant","orderStatus":"COMPLETED",
-        "invoiceNumber":null,"invoiceDate":null,"transactionDate":"2026-09-18","completionDate":"2026-09-18",
-        "invoiceTime":"09:45","currency":"VND","subtotal":295199,"discountAmount":null,"tax":0,"totalAmount":295199,
+        "invoiceNumber":null,"invoiceDate":null,"invoiceDateEvidence":null,"transactionDate":"2026-09-18","transactionDateEvidence":"18/09/2026","completionDate":"2026-09-18",
+        "invoiceTime":"09:45","currency":"VND","subtotal":295199,"discountAmount":null,"tax":0,"totalAmount":295199,"totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Thành tiền 295.199 đ",
         "lineItems":[{"description":"Vợt bóng bàn","quantity":1,"unitPrice":292199,"amount":292199},
         {"description":"Bảo hiểm người tiêu dùng","quantity":1,"unitPrice":3000,"amount":3000}],
         "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
         """;
 
     private const string MisplacedPaperDateJson = """
-        {"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"HIGHLANDS COFFEE",
+        {"evidenceContractVersion":2,"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"HIGHLANDS COFFEE",
         "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
         "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
-        "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":null,
-        "transactionDate":"2026-09-29","completionDate":null,"invoiceTime":"13:52","currency":"VND",
-        "subtotal":59000,"discountAmount":null,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
+        "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":null,"invoiceDateEvidence":null,
+        "transactionDate":"2026-09-29","transactionDateEvidence":"29/09/2026","completionDate":null,"invoiceTime":"13:52","currency":"VND",
+        "subtotal":59000,"discountAmount":null,"tax":0,"totalAmount":59000,"totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Tổng cộng 59.000 VND","lineItems":[{"description":"PhinDi Kem Sua L",
         "quantity":1,"unitPrice":59000,"amount":59000}],"missingFields":[],"warnings":[],
         "suspiciousSignals":[],"confidence":0.95}
         """;
 
     private const string CorrectedPaperDateJson = """
-        {"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"HIGHLANDS COFFEE",
+        {"evidenceContractVersion":2,"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"HIGHLANDS COFFEE",
         "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
         "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
-        "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":"2026-09-29",
-        "transactionDate":null,"completionDate":null,"invoiceTime":"13:52","currency":"VND",
-        "subtotal":59000,"discountAmount":null,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
+        "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":"2026-09-29","invoiceDateEvidence":"29/09/2026",
+        "transactionDate":null,"transactionDateEvidence":null,"completionDate":null,"invoiceTime":"13:52","currency":"VND",
+        "subtotal":59000,"discountAmount":null,"tax":0,"totalAmount":59000,"totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Tổng cộng 59.000 VND","lineItems":[{"description":"PhinDi Kem Sua L",
         "quantity":1,"unitPrice":59000,"amount":59000}],"missingFields":[],"warnings":[],
         "suspiciousSignals":[],"confidence":0.95}
         """;

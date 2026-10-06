@@ -338,6 +338,16 @@
         return value == null ? 'Không đọc được' : new Intl.NumberFormat('vi-VN').format(Number(value)) + ' VND';
     }
 
+    function formatTotalSource(value) {
+        const labels = {
+            PRINTED_FINAL_TOTAL: 'Dòng tổng cuối được in rõ',
+            NOT_VISIBLE: 'Dòng tổng cuối không hiển thị đầy đủ',
+            AMBIGUOUS: 'Có nhiều tổng, chưa xác định chắc chắn',
+            INFERRED: 'AI chỉ suy ra, không dùng để tự duyệt'
+        };
+        return labels[String(value || '').trim().toUpperCase()] || displayFact(value);
+    }
+
     function setExtractedFactsContext(contextLabel) {
         const title = document.getElementById('extracted-facts-title');
         title.textContent = contextLabel ? `Nội dung AI — ${contextLabel}` : 'Nội dung AI — hóa đơn lẻ';
@@ -362,6 +372,10 @@
             ['Số hóa đơn', facts.invoiceNumber],
             ['Số biên nhận / Bill No', facts.receiptNumber],
             ['Mã giao dịch', facts.transactionReference],
+            ['Mã cơ quan thuế', facts.taxAuthorityCode],
+            ['Ký hiệu hóa đơn', facts.invoiceSerial],
+            ['Số chứng từ', facts.documentNumber],
+            ['POS No', facts.posNumber],
             ['Mã đơn hàng', facts.orderId],
             ['Mã chuyến / đặt chỗ', facts.bookingId],
             ['Mã vận chuyển', facts.shippingTrackingCode]
@@ -381,6 +395,9 @@
         const evidenceDateLabel = isDigitalEvidence
             ? 'Ngày giao dịch / thanh toán'
             : 'Ngày chứng từ / giao dịch';
+        const evidenceDateRaw = isDigitalEvidence
+            ? (facts.transactionDateEvidence || facts.invoiceDateEvidence)
+            : (facts.invoiceDateEvidence || facts.transactionDateEvidence);
         const items = Array.isArray(facts.lineItems) && facts.lineItems.length
             ? '<ul class="extracted-line-items">' + facts.lineItems.map(item =>
                 '<li><span>' + escapeHtml(displayFact(item.description)) + '</span><strong>' + escapeHtml(formatFactMoney(item.amount)) + '</strong></li>').join('') + '</ul>'
@@ -396,10 +413,13 @@
                 identifierHtml +
                 '<div><dt>Mã số thuế</dt><dd>' + escapeHtml(displayFact(facts.taxId)) + '</dd></div>' +
                 '<div><dt>' + escapeHtml(evidenceDateLabel) + '</dt><dd>' + escapeHtml(displayFact(evidenceDate)) + '</dd></div>' +
+                (evidenceDateRaw ? '<div><dt>Ngày in nguyên văn</dt><dd>' + escapeHtml(displayFact(evidenceDateRaw)) + '</dd></div>' : '') +
                 (facts.subtotal != null ? '<div><dt>Tạm tính</dt><dd>' + escapeHtml(formatFactMoney(facts.subtotal)) + '</dd></div>' : '') +
                 (facts.discountAmount != null && Number(facts.discountAmount) > 0 ? '<div><dt>Giảm giá / chiết khấu</dt><dd>-' + escapeHtml(formatFactMoney(Number(facts.discountAmount))) + '</dd></div>' : '') +
                 (facts.tax != null && Number(facts.tax) !== 0 ? '<div><dt>Thuế</dt><dd>' + escapeHtml(formatFactMoney(facts.tax)) + '</dd></div>' : '') +
                 '<div><dt>Tổng thanh toán</dt><dd>' + escapeHtml(formatFactMoney(facts.totalAmount)) + '</dd></div>' +
+                (facts.totalAmountSource ? '<div><dt>Nguồn tổng tiền</dt><dd>' + escapeHtml(formatTotalSource(facts.totalAmountSource)) + '</dd></div>' : '') +
+                (facts.totalAmountEvidence ? '<div><dt>Dòng tổng nguyên văn</dt><dd>' + escapeHtml(displayFact(facts.totalAmountEvidence)) + '</dd></div>' : '') +
                 '<div><dt>Tiền tệ</dt><dd>' + escapeHtml(displayFact(facts.currency)) + '</dd></div>' +
                 '<div><dt>Trạng thái</dt><dd>' + escapeHtml(displayFact(facts.documentStatus || facts.orderStatus)) + '</dd></div>' +
                 (facts.completionDate ? '<div><dt>Ngày hoàn tất (tham khảo)</dt><dd>' + escapeHtml(displayFact(facts.completionDate)) + '</dd></div>' : '') +

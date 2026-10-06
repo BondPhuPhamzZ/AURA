@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using AURA.Models;
 
 namespace AURA.Services;
@@ -10,9 +11,10 @@ public static class PolicyDecisionEngine
 
     private static readonly string[] ProhibitedTerms =
     [
-        "alcohol", "beer", "bia", "rượu", "ruou", "wine", "whisky", "vodka", "heineken", "tiger",
-        "thuốc lá", "thuoc la", "tobacco", "cigarette", "karaoke", "cinema", "massage", "entertainment",
-        "personal item", "đồ cá nhân", "do ca nhan"
+        "alcohol", "beer", "beers", "bia", "rượu", "ruou", "wine", "wines", "whisky", "vodka", "heineken", "tiger",
+        "thuốc lá", "thuoc la", "tobacco", "cigarette", "cigarettes", "karaoke", "cinema", "massage", "entertainment",
+        "personal item", "personal items", "đồ cá nhân", "do ca nhan", "hair clip", "hair clips", "hair accessory", "hair accessories", "kẹp tóc", "kep toc",
+        "khăn ướt", "khan uot", "wet wipe", "wet wipes", "chăm sóc da", "cham soc da"
     ];
 
     public static (string Status, string Reason, string ManagerQuestion) Evaluate(
@@ -36,6 +38,12 @@ public static class PolicyDecisionEngine
             factProblems.Add("ảnh hóa đơn trùng với hồ sơ đã lưu");
         if (facts.TotalAmount is null or <= 0)
             factProblems.Add("không xác định được tổng tiền hợp lệ");
+        if (facts.EvidenceContractVersion >= ReceiptExtractionContract.CurrentEvidenceContractVersion &&
+            (!string.Equals(facts.TotalAmountSource, "PRINTED_FINAL_TOTAL", StringComparison.OrdinalIgnoreCase) ||
+             string.IsNullOrWhiteSpace(facts.TotalAmountEvidence)))
+        {
+            factProblems.Add("chưa có bằng chứng nguyên văn cho dòng tổng thanh toán cuối được in trực tiếp");
+        }
         if (claimedAmount <= 0)
             factProblems.Add("số tiền đề nghị hoàn ứng không hợp lệ");
         else if (facts.TotalAmount.HasValue && decimal.Round(facts.TotalAmount.Value, 0) != decimal.Round(claimedAmount, 0))
@@ -179,9 +187,44 @@ public static class PolicyDecisionEngine
 
     private static List<string> FindProhibitedItems(ReceiptExtractionDto facts) => facts.LineItems
         .Select(item => item.Description)
-        .Where(description => ProhibitedTerms.Any(term => ContainsAny(description, term)))
+        .Where(description => ProhibitedTerms.Any(term => ContainsPolicyPhrase(description, term)))
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToList();
+
+    private static bool ContainsPolicyPhrase(string? source, string term)
+    {
+        if (string.IsNullOrWhiteSpace(source)) return false;
+
+        var normalizedSource = $" {NormalizePolicyText(source)} ";
+        var normalizedTerm = $" {NormalizePolicyText(term)} ";
+        return normalizedSource.Contains(normalizedTerm, StringComparison.Ordinal);
+    }
+
+    private static string NormalizePolicyText(string value)
+    {
+        var decomposed = value.Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(decomposed.Length);
+        var previousWasSpace = true;
+        foreach (var character in decomposed)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(character) == UnicodeCategory.NonSpacingMark)
+                continue;
+
+            var lower = char.ToLowerInvariant(character);
+            if (char.IsLetterOrDigit(lower))
+            {
+                builder.Append(lower);
+                previousWasSpace = false;
+            }
+            else if (!previousWasSpace)
+            {
+                builder.Append(' ');
+                previousWasSpace = true;
+            }
+        }
+
+        return builder.ToString().Trim();
+    }
 
     private static bool TryParseInvoiceDate(string? value, out DateTime date) =>
         DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date);

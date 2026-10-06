@@ -36,6 +36,7 @@ public sealed class ReceiptSemanticValidatorTests
         facts.Subtotal = 292m;
         facts.Tax = 3m;
         facts.TotalAmount = 295m;
+        facts.TotalAmountEvidence = "Total 295 VND";
         facts.LineItems =
         [
             new ReceiptLineItem { Description = "Mặt hàng A", Amount = 292m },
@@ -44,6 +45,120 @@ public sealed class ReceiptSemanticValidatorTests
 
         Assert.Empty(ReceiptSemanticValidator.Validate(facts));
         Assert.Equal(295m, facts.TotalAmount);
+    }
+
+    [Fact]
+    public void Rejects_a_circle_k_style_inferred_total_when_the_final_value_is_torn_off()
+    {
+        var facts = new ReceiptExtractionDto
+        {
+            EvidenceContractVersion = ReceiptExtractionDto.CurrentEvidenceContractVersion,
+            DocumentType = "RETAIL_RECEIPT",
+            DocumentStatus = "COMPLETED",
+            MerchantName = "Circle K",
+            ReceiptNumber = "QQR",
+            TaxAuthorityCode = "M1-26-CF3SK-11222129209",
+            InvoiceDate = "2026-10-06",
+            InvoiceDateEvidence = "Tue 06 Oct 2026",
+            Currency = "VND",
+            Subtotal = 21_000m,
+            TotalAmount = 21_000m,
+            TotalAmountSource = "INFERRED",
+            TotalAmountEvidence = null,
+            Confidence = 0.95,
+            LineItems =
+            [
+                new ReceiptLineItem { Description = "Khăn giấy ướt", Amount = 14_000m },
+                new ReceiptLineItem { Description = "Nước suối", Amount = 7_000m }
+            ]
+        };
+
+        var issues = ReceiptSemanticValidator.Validate(facts);
+        ReceiptSemanticValidator.MarkUnresolved(facts, issues);
+        var decision = PolicyDecisionEngine.Evaluate(facts, 21_000m,
+            utcNow: new DateTime(2026, 10, 6, 0, 0, 0, DateTimeKind.Utc));
+
+        Assert.Contains(issues, issue => issue.Contains("suy ra", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains("totalAmount", facts.MissingFields);
+        Assert.Equal(0.69, facts.Confidence);
+        Assert.Equal("ESCALATE_FACT", decision.Status);
+    }
+
+    [Fact]
+    public void Accepts_only_a_visible_final_row_whose_vnd_value_matches_total_amount()
+    {
+        var facts = CorrectedTc01();
+
+        Assert.Empty(ReceiptSemanticValidator.Validate(facts));
+
+        facts.TotalAmountEvidence = "Tạm tính 295.199 đ";
+        var wrongLabelIssues = ReceiptSemanticValidator.Validate(facts);
+        Assert.Contains(wrongLabelIssues,
+            issue => issue.Contains("nhãn tổng phải trả", StringComparison.OrdinalIgnoreCase));
+
+        facts.TotalAmountEvidence = "Tổng thanh toán 295.198 đ";
+        var wrongValueIssues = ReceiptSemanticValidator.Validate(facts);
+        Assert.Contains(wrongValueIssues,
+            issue => issue.Contains("không chứa đúng", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Corrects_vietnamese_day_first_date_and_twelve_hour_time_from_raw_evidence()
+    {
+        var facts = VinamilkDiscountedReceipt();
+        facts.InvoiceDate = "2026-04-10";
+        facts.InvoiceDateEvidence = "04-10-26";
+        facts.InvoiceTime = "2:17 PM";
+
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
+
+        Assert.Equal("2026-10-04", facts.InvoiceDate);
+        Assert.Equal("14:17", facts.InvoiceTime);
+        Assert.Contains(facts.Warnings,
+            warning => warning.Contains("2026-10-04", StringComparison.Ordinal));
+        Assert.Empty(ReceiptSemanticValidator.Validate(facts));
+    }
+
+    [Fact]
+    public void Accepts_fractional_included_vat_without_promoting_it_to_the_final_total()
+    {
+        var facts = VinamilkDiscountedReceipt();
+        facts.Subtotal = 60_000m;
+        facts.DiscountAmount = null;
+        facts.Tax = 4_444.44m;
+        facts.TotalAmount = 60_000m;
+        facts.TotalAmountEvidence = "TỔNG CỘNG 60.000";
+        facts.LineItems =
+        [
+            new ReceiptLineItem { Description = "Sữa", Amount = 38_000m },
+            new ReceiptLineItem { Description = "Kem", Amount = 22_000m }
+        ];
+
+        Assert.Empty(ReceiptSemanticValidator.Validate(facts));
+    }
+
+    [Fact]
+    public void Supporting_identifiers_cannot_be_duplicated_into_transaction_fields()
+    {
+        var facts = VinamilkDiscountedReceipt();
+        facts.ReceiptNumber = "622002261001104";
+        facts.TransactionReference = null;
+        facts.TaxAuthorityCode = "622002261001104";
+
+        Assert.Contains(ReceiptSemanticValidator.Validate(facts), issue =>
+            issue.Contains("receiptNumber", StringComparison.Ordinal) &&
+            issue.Contains("taxAuthorityCode", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Ptt_receipt_number_and_distinct_tax_authority_code_are_kept_separate()
+    {
+        var facts = VinamilkDiscountedReceipt();
+        facts.ReceiptNumber = "622002261001104";
+        facts.TransactionReference = null;
+        facts.TaxAuthorityCode = "M1-26-MX4H6-10112701104";
+
+        Assert.Empty(ReceiptSemanticValidator.Validate(facts));
     }
 
     [Fact]
@@ -308,6 +423,7 @@ public sealed class ReceiptSemanticValidatorTests
 
     private static ReceiptExtractionDto CorrectedTc01() => new()
     {
+        EvidenceContractVersion = ReceiptExtractionDto.CurrentEvidenceContractVersion,
         DocumentType = "ECOMMERCE",
         DocumentStatus = "COMPLETED",
         MerchantName = "Double Fish Việt Nam",
@@ -316,12 +432,15 @@ public sealed class ReceiptSemanticValidatorTests
         ShippingProvider = "SPX Instant",
         OrderStatus = "COMPLETED",
         TransactionDate = "2026-09-18",
+        TransactionDateEvidence = "18/09/2026",
         CompletionDate = "2026-09-18",
         InvoiceTime = "09:45",
         Currency = "VND",
         Subtotal = 295_199m,
         Tax = 0m,
         TotalAmount = 295_199m,
+        TotalAmountSource = "PRINTED_FINAL_TOTAL",
+        TotalAmountEvidence = "Thành tiền 295.199 đ",
         Confidence = 0.95,
         LineItems =
         [
@@ -332,17 +451,21 @@ public sealed class ReceiptSemanticValidatorTests
 
     private static ReceiptExtractionDto VinamilkDiscountedReceipt() => new()
     {
+        EvidenceContractVersion = ReceiptExtractionDto.CurrentEvidenceContractVersion,
         DocumentType = "RETAIL_RECEIPT",
         DocumentStatus = "ISSUED",
         MerchantName = "Vinamilk",
         ReceiptNumber = "SAL.CH40411260922000147",
         InvoiceDate = "2026-09-22",
+        InvoiceDateEvidence = "22/09/2026",
         InvoiceTime = "17:31",
         Currency = "VND",
         Subtotal = 183_114m,
         DiscountAmount = 2_828m,
         Tax = 0m,
         TotalAmount = 180_286m,
+        TotalAmountSource = "PRINTED_FINAL_TOTAL",
+        TotalAmountEvidence = "Tổng thanh toán 180.286 VND",
         Confidence = 0.95,
         LineItems =
         [

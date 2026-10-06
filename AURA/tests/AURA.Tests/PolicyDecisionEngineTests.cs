@@ -191,12 +191,51 @@ public sealed class PolicyDecisionEngineTests
     [InlineData("Thuốc lá")]
     [InlineData("Karaoke client event")]
     [InlineData("Personal item")]
+    [InlineData("Kẹp tóc Basic Marble Pattern")]
+    [InlineData("Khăn Ướt Chăm Sóc Da Fressi Care Face")]
     public void Prohibited_item_is_policy_escalation(string item)
     {
         var facts = ValidFacts();
         facts.LineItems = [new ReceiptLineItem { Description = item, Amount = 150_000 }];
 
         Assert.Equal("ESCALATE_POLICY", Decide(facts).Status);
+    }
+
+    [Fact]
+    public void Printed_seconds_are_losslessly_normalized_before_policy()
+    {
+        var facts = ValidFacts();
+        facts.DocumentType = "RETAIL_RECEIPT";
+        facts.TaxId = null;
+        facts.InvoiceNumber = null;
+        facts.ReceiptNumber = "20261006.2.52594";
+        facts.InvoiceDate = "2026-10-06";
+        facts.InvoiceDateEvidence = "06/10/2026";
+        facts.InvoiceTime = "09:46:21";
+        facts.TotalAmount = 16_000m;
+        facts.TotalAmountEvidence = "TỔNG CỘNG 16.000";
+        facts.LineItems = [new ReceiptLineItem { Description = "Bia Larue Special", Amount = 16_000m }];
+
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
+        var result = PolicyDecisionEngine.Evaluate(facts, 16_000m,
+            utcNow: new DateTime(2026, 10, 6, 0, 0, 0, DateTimeKind.Utc));
+
+        Assert.Equal("09:46", facts.InvoiceTime);
+        Assert.Equal("ESCALATE_POLICY", result.Status);
+        Assert.DoesNotContain("giờ", result.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Version_two_facts_without_printed_final_total_provenance_fail_safe()
+    {
+        var facts = ValidFacts();
+        facts.TotalAmountSource = "INFERRED";
+        facts.TotalAmountEvidence = null;
+
+        var result = Decide(facts);
+
+        Assert.Equal("ESCALATE_FACT", result.Status);
+        Assert.Contains("dòng tổng thanh toán cuối", result.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -281,29 +320,37 @@ public sealed class PolicyDecisionEngineTests
 
     private static ReceiptExtractionDto ValidFacts() => new()
     {
+        EvidenceContractVersion = ReceiptExtractionDto.CurrentEvidenceContractVersion,
         DocumentType = "VAT_INVOICE",
         MerchantName = "AURA Taxi",
         TaxId = "0312345678",
         InvoiceNumber = "AA/26E-000001",
         InvoiceDate = "2026-09-18",
+        InvoiceDateEvidence = "18/09/2026",
         InvoiceTime = "09:00",
         Currency = "VND",
         TotalAmount = 150_000,
+        TotalAmountSource = "PRINTED_FINAL_TOTAL",
+        TotalAmountEvidence = "TỔNG THANH TOÁN 150.000 VND",
         Confidence = 0.98,
         LineItems = [new ReceiptLineItem { Description = "Business taxi trip", Amount = 150_000 }]
     };
 
     private static ReceiptExtractionDto ValidEcommerceFacts() => new()
     {
+        EvidenceContractVersion = ReceiptExtractionDto.CurrentEvidenceContractVersion,
         DocumentType = "ECOMMERCE",
         DocumentStatus = "COMPLETED",
         PlatformName = "Shopee",
         MerchantName = "Double Fish Việt Nam",
         OrderStatus = "Đơn hàng đã hoàn thành",
         TransactionDate = "2026-09-18",
+        TransactionDateEvidence = "18/09/2026",
         CompletionDate = "2026-09-18",
         Currency = "VND",
         TotalAmount = 295_199,
+        TotalAmountSource = "PRINTED_FINAL_TOTAL",
+        TotalAmountEvidence = "Thành tiền 295.199 đ",
         Confidence = 0.98,
         LineItems = [new ReceiptLineItem { Description = "Vợt bóng bàn", Quantity = 1, Amount = 295_199 }]
     };

@@ -6,6 +6,8 @@ namespace AURA.Services;
 
 internal static class ReceiptExtractionContract
 {
+    internal const int CurrentEvidenceContractVersion = ReceiptExtractionDto.CurrentEvidenceContractVersion;
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -46,6 +48,8 @@ internal static class ReceiptExtractionContract
             Return only one JSON object that follows the supplied schema. Never add Markdown or prose.
 
             HIGH-PRIORITY NORMALIZATION:
+            - Always return evidenceContractVersion={CurrentEvidenceContractVersion}. This version requires raw visual
+              provenance for the policy date and the final payable amount; never omit or downgrade it.
             - VND has no decimal minor unit in this workflow. Vietnamese printed separators are thousands
               separators: `295.199 đ` -> 295199 and `3.000 đ` -> 3000 in JSON numeric fields.
             - A product-order screen with delivery status and SPX/GHN/GHTK/J&T tracking is ECOMMERCE,
@@ -77,9 +81,25 @@ internal static class ReceiptExtractionContract
               belongs in receiptNumber; a per-purchase `Check`, `Transaction No`, `Trace`, `RRN` or
               `Mã giao dịch` belongs in transactionReference. Shop/store ID, POS/register ID, terminal ID,
               merchant ID, pager number, tax ID, invoice serial or form number are not transaction references.
+              `Mã CQT`/`Tax authority code` belongs only in taxAuthorityCode; `Ký hiệu`/`Serial No`
+              belongs only in invoiceSerial; `Số chứng từ`/`Document No` belongs only in documentNumber;
+              `POS No`/register number belongs only in posNumber. A number explicitly labelled `PTT` on a
+              `PHIẾU TÍNH TIỀN` is the printed receipt number and belongs in receiptNumber, never both
+              receiptNumber and transactionReference.
+            - Copy the exact visible date text into invoiceDateEvidence or transactionDateEvidence alongside
+              the corresponding normalized date. For Vietnamese receipts, numeric dates are day-first:
+              `04-10-26` and `04/10/2026` mean 2026-10-04, not 2026-04-10. Do not invent a raw evidence string.
             - If the final payable row itself is blurred, covered or cropped, set totalAmount to null and
               report that visual defect in warnings or suspiciousSignals. Never infer the final total from
               a line-item amount, subtotal or the user's claimed amount, even when the numbers look equal.
+            - Set totalAmountSource to PRINTED_FINAL_TOTAL only when both the final-payable label and its
+              numeric value are directly visible. Copy that one row verbatim into totalAmountEvidence.
+              If the label is visible but its value is torn/cropped, use NOT_VISIBLE, set totalAmount and
+              totalAmountEvidence to null, add totalAmount to missingFields and record the defect. Use
+              AMBIGUOUS when multiple final candidates cannot be resolved and INFERRED only to disclose a
+              non-authoritative arithmetic guess; AMBIGUOUS and INFERRED must also keep totalAmount null.
+              `Subtotal`, `Tạm tính`, cash tendered/`Tiền mặt`, change/`Tiền thối lại`, and included VAT are
+              never final-payable evidence by themselves.
 
             {policy}
             """;
@@ -92,6 +112,10 @@ internal static class ReceiptExtractionContract
         var json = ExtractJsonObject(content);
         var facts = JsonSerializer.Deserialize<ReceiptExtractionDto>(json, JsonOptions)
             ?? throw new JsonException("Empty extraction object.");
+
+        if (facts.EvidenceContractVersion != CurrentEvidenceContractVersion)
+            throw new JsonException(
+                $"Unsupported or missing evidenceContractVersion. Expected {CurrentEvidenceContractVersion}.");
 
         facts.LineItems ??= [];
         facts.MissingFields ??= [];
@@ -107,14 +131,18 @@ internal static class ReceiptExtractionContract
     {
         type = "object",
         additionalProperties = false,
-        required = new[] { "documentType", "documentStatus", "merchantName", "taxId", "merchantId", "terminalId",
+        required = new[] { "evidenceContractVersion", "documentType", "documentStatus", "merchantName", "taxId", "merchantId", "terminalId",
             "platformName", "orderId", "bookingId", "shippingTrackingCode", "shippingProvider", "orderStatus",
-            "invoiceNumber", "receiptNumber", "transactionReference", "invoiceDate", "transactionDate",
+            "invoiceNumber", "receiptNumber", "transactionReference", "taxAuthorityCode", "invoiceSerial",
+            "documentNumber", "posNumber", "invoiceDate", "invoiceDateEvidence", "transactionDate",
+            "transactionDateEvidence",
             "completionDate", "invoiceTime", "currency",
-            "subtotal", "discountAmount", "tax", "totalAmount", "lineItems", "missingFields", "warnings", "suspiciousSignals",
+            "subtotal", "discountAmount", "tax", "totalAmount", "totalAmountSource", "totalAmountEvidence",
+            "lineItems", "missingFields", "warnings", "suspiciousSignals",
             "confidence" },
         properties = new Dictionary<string, object>
         {
+            ["evidenceContractVersion"] = new { type = "integer", @enum = new[] { CurrentEvidenceContractVersion } },
             ["documentType"] = EnumOrNull("VAT_INVOICE", "RETAIL_RECEIPT", "RESTAURANT_BILL",
                 "RIDE_HAILING", "ECOMMERCE", "OTHER"),
             ["documentStatus"] = EnumOrNull("ISSUED", "COMPLETED", "DRAFT", "CANCELLED",
@@ -125,12 +153,17 @@ internal static class ReceiptExtractionContract
             ["shippingTrackingCode"] = NullableString(), ["shippingProvider"] = NullableString(),
             ["orderStatus"] = NullableString(), ["invoiceNumber"] = NullableString(),
             ["receiptNumber"] = NullableString(), ["transactionReference"] = NullableString(),
-            ["invoiceDate"] = NullableString(), ["transactionDate"] = NullableString(),
+            ["taxAuthorityCode"] = NullableString(), ["invoiceSerial"] = NullableString(),
+            ["documentNumber"] = NullableString(), ["posNumber"] = NullableString(),
+            ["invoiceDate"] = NullableString(), ["invoiceDateEvidence"] = NullableString(),
+            ["transactionDate"] = NullableString(), ["transactionDateEvidence"] = NullableString(),
             ["completionDate"] = NullableString(), ["invoiceTime"] = NullableString(),
             ["currency"] = NullableString(), ["subtotal"] = NullableMoneyNumber("subtotal"),
             ["discountAmount"] = NullableMoneyNumber("receipt-level discount as a non-negative absolute value"),
             ["tax"] = NullableMoneyNumber("tax"),
             ["totalAmount"] = NullableMoneyNumber("final amount actually paid"),
+            ["totalAmountSource"] = EnumOrNull("PRINTED_FINAL_TOTAL", "NOT_VISIBLE", "AMBIGUOUS", "INFERRED"),
+            ["totalAmountEvidence"] = NullableString(),
             ["lineItems"] = new
             {
                 type = "array",

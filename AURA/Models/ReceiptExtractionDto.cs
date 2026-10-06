@@ -13,6 +13,13 @@ namespace AURA.Models
 
     public class ReceiptExtractionDto
     {
+        public const int CurrentEvidenceContractVersion = 2;
+
+        // Versioned evidence contract. Version 2 adds explicit provenance for the
+        // policy-critical date and final payable amount. Legacy persisted facts have
+        // the default value 0 and remain readable, while every new model response must
+        // explicitly return the current version.
+        public int EvidenceContractVersion { get; set; }
         public string? DocumentType { get; set; }
         public string? DocumentStatus { get; set; }
         public string? MerchantName { get; set; }
@@ -28,8 +35,14 @@ namespace AURA.Models
         public string? InvoiceNumber { get; set; }
         public string? ReceiptNumber { get; set; }
         public string? TransactionReference { get; set; }
+        public string? TaxAuthorityCode { get; set; }
+        public string? InvoiceSerial { get; set; }
+        public string? DocumentNumber { get; set; }
+        public string? PosNumber { get; set; }
         public string? InvoiceDate { get; set; }
+        public string? InvoiceDateEvidence { get; set; }
         public string? TransactionDate { get; set; }
+        public string? TransactionDateEvidence { get; set; }
         public string? CompletionDate { get; set; }
         public string? InvoiceTime { get; set; }
         public string? Currency { get; set; }
@@ -37,6 +50,12 @@ namespace AURA.Models
         public decimal? DiscountAmount { get; set; }
         public decimal? Tax { get; set; }
         public decimal? TotalAmount { get; set; }
+        // PRINTED_FINAL_TOTAL is the only source eligible for automated approval.
+        // NOT_VISIBLE, AMBIGUOUS and INFERRED keep the reason explicit and fail safe.
+        public string? TotalAmountSource { get; set; }
+        // Exact visible final-payable row, including its printed label and amount.
+        // The semantic validator independently verifies that it contains TotalAmount.
+        public string? TotalAmountEvidence { get; set; }
         public List<ReceiptLineItem> LineItems { get; set; } = new List<ReceiptLineItem>();
         public List<string> MissingFields { get; set; } = new List<string>();
         public List<string> Warnings { get; set; } = new List<string>();

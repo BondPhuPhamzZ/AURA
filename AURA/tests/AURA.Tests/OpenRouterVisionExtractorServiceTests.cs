@@ -55,6 +55,9 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.Contains($"\"model\":\"{options.Value.Model}\"", requestJson);
             Assert.Contains("\"type\":\"text\"", requestJson);
             Assert.Contains("\"type\":\"image_url\"", requestJson);
+            Assert.Contains("PRINTED_FINAL_TOTAL", requestJson, StringComparison.Ordinal);
+            Assert.Contains("taxAuthorityCode", requestJson, StringComparison.Ordinal);
+            Assert.Contains("04-10-26", requestJson, StringComparison.Ordinal);
             using var payload = JsonDocument.Parse(requestJson!);
             var rootElement = payload.RootElement;
             Assert.Equal(4096, rootElement.GetProperty("max_tokens").GetInt32());
@@ -66,9 +69,22 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.True(jsonSchema.GetProperty("strict").GetBoolean());
             var schema = jsonSchema.GetProperty("schema");
             Assert.False(schema.GetProperty("additionalProperties").GetBoolean());
+            var required = schema.GetProperty("required").EnumerateArray()
+                .Select(item => item.GetString()!)
+                .OrderBy(name => name, StringComparer.Ordinal)
+                .ToArray();
+            var properties = schema.GetProperty("properties").EnumerateObject()
+                .Select(property => property.Name)
+                .OrderBy(name => name, StringComparer.Ordinal)
+                .ToArray();
+            Assert.Equal(properties, required);
             Assert.True(schema.GetProperty("properties").TryGetProperty("receiptNumber", out _));
             Assert.True(schema.GetProperty("properties").TryGetProperty("transactionReference", out _));
             Assert.True(schema.GetProperty("properties").TryGetProperty("discountAmount", out _));
+            Assert.True(schema.GetProperty("properties").TryGetProperty("evidenceContractVersion", out _));
+            Assert.True(schema.GetProperty("properties").TryGetProperty("totalAmountSource", out _));
+            Assert.True(schema.GetProperty("properties").TryGetProperty("totalAmountEvidence", out _));
+            Assert.True(schema.GetProperty("properties").TryGetProperty("invoiceDateEvidence", out _));
         }
         finally
         {
@@ -84,6 +100,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
         {
             var factsJson = JsonSerializer.Serialize(new
             {
+                evidenceContractVersion = 2,
                 documentType = "RETAIL_RECEIPT",
                 documentStatus = "ISSUED",
                 merchantName = "Cửa hàng thử nghiệm",
@@ -98,7 +115,9 @@ public sealed class OpenRouterVisionExtractorServiceTests
                 orderStatus = "PAID",
                 invoiceNumber = "HD-001",
                 invoiceDate = "2026-09-22",
+                invoiceDateEvidence = "22/09/2026",
                 transactionDate = (string?)null,
+                transactionDateEvidence = (string?)null,
                 completionDate = (string?)null,
                 invoiceTime = "10:30",
                 currency = "VND",
@@ -106,6 +125,8 @@ public sealed class OpenRouterVisionExtractorServiceTests
                 discountAmount = (decimal?)null,
                 tax = 0m,
                 totalAmount = 100000m,
+                totalAmountSource = "PRINTED_FINAL_TOTAL",
+                totalAmountEvidence = "TỔNG THANH TOÁN 100.000 VND",
                 lineItems = new[] { new { description = "Văn phòng phẩm", quantity = 1m, unitPrice = 100000m, amount = 100000m } },
                 missingFields = Array.Empty<string>(),
                 warnings = Array.Empty<string>(),
@@ -153,12 +174,12 @@ public sealed class OpenRouterVisionExtractorServiceTests
                 Analysis complete.
                 ```json
                 {
-                  "documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Cửa hàng thử nghiệm",
+                  "evidenceContractVersion":2,"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Cửa hàng thử nghiệm",
                   "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
                   "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":"PAID",
-                  "invoiceNumber":"HD-002","invoiceDate":"2026-09-22","transactionDate":null,
+                  "invoiceNumber":"HD-002","invoiceDate":"2026-09-22","invoiceDateEvidence":"22/09/2026","transactionDate":null,"transactionDateEvidence":null,
                   "completionDate":null,"invoiceTime":"10:30","currency":"VND","subtotal":"88000",
-                  "discountAmount":null,"tax":"0","totalAmount":"88000","lineItems":[{"description":"Phở bò","quantity":"1",
+                  "discountAmount":null,"tax":"0","totalAmount":"88000","totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Tổng cộng 88.000 VND","lineItems":[{"description":"Phở bò","quantity":"1",
                   "unitPrice":"88000","amount":"88000"}],"missingFields":[],"warnings":[],
                   "suspiciousSignals":[],"confidence":"0.91","providerNote":"ignored safely"
                 }
@@ -200,12 +221,12 @@ public sealed class OpenRouterVisionExtractorServiceTests
         {
             var attempts = 0;
             const string validFacts = """
-                {"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Cửa hàng thử nghiệm",
+                {"evidenceContractVersion":2,"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Cửa hàng thử nghiệm",
                 "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
                 "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":"PAID",
-                "invoiceNumber":"HD-003","invoiceDate":"2026-09-22","transactionDate":null,
+                "invoiceNumber":"HD-003","invoiceDate":"2026-09-22","invoiceDateEvidence":"22/09/2026","transactionDate":null,"transactionDateEvidence":null,
                 "completionDate":null,"invoiceTime":"10:30","currency":"VND","subtotal":100000,
-                "discountAmount":null,"tax":0,"totalAmount":100000,"lineItems":[{"description":"Văn phòng phẩm","quantity":1,
+                "discountAmount":null,"tax":0,"totalAmount":100000,"totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Tổng cộng 100.000 VND","lineItems":[{"description":"Văn phòng phẩm","quantity":1,
                 "unitPrice":100000,"amount":100000}],"missingFields":[],"warnings":[],
                 "suspiciousSignals":[],"confidence":0.95}
                 """;
@@ -346,68 +367,68 @@ public sealed class OpenRouterVisionExtractorServiceTests
     }
 
     private const string FaultyTc01Json = """
-        {"documentType":"RIDE_HAILING","documentStatus":"COMPLETED","merchantName":"Double Fish Việt Nam",
+        {"evidenceContractVersion":2,"documentType":"RIDE_HAILING","documentStatus":"COMPLETED","merchantName":"Double Fish Việt Nam",
         "taxId":null,"merchantId":null,"terminalId":null,"platformName":"SPX Instant",
         "orderId":"SPX-VN2693231211394","bookingId":null,"shippingTrackingCode":"SPX-VN2693231211394",
         "shippingProvider":"SPX Instant","orderStatus":"COMPLETED","invoiceNumber":null,"invoiceDate":null,
-        "transactionDate":"2026-09-18","completionDate":"2026-09-18","invoiceTime":"09:45",
-        "currency":"VND","subtotal":292.199,"discountAmount":null,"tax":3.0,"totalAmount":295.199,
+        "transactionDate":"2026-09-18","transactionDateEvidence":"18/09/2026","completionDate":"2026-09-18","invoiceTime":"09:45",
+        "currency":"VND","subtotal":292.199,"discountAmount":null,"tax":3.0,"totalAmount":295.199,"totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Thành tiền 295.199 đ",
         "lineItems":[{"description":"Vợt bóng bàn","quantity":1,"unitPrice":292.199,"amount":292.199},
         {"description":"Bảo hiểm người tiêu dùng","quantity":1,"unitPrice":3.0,"amount":3.0}],
         "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
         """;
 
     private const string CorrectedTc01Json = """
-        {"documentType":"ECOMMERCE","documentStatus":"COMPLETED","merchantName":"Double Fish Việt Nam",
+        {"evidenceContractVersion":2,"documentType":"ECOMMERCE","documentStatus":"COMPLETED","merchantName":"Double Fish Việt Nam",
         "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,"bookingId":null,
         "shippingTrackingCode":"SPX-VN2693231211394","shippingProvider":"SPX Instant","orderStatus":"COMPLETED",
-        "invoiceNumber":null,"invoiceDate":null,"transactionDate":"2026-09-18","completionDate":"2026-09-18",
-        "invoiceTime":"09:45","currency":"VND","subtotal":295199,"discountAmount":null,"tax":0,"totalAmount":295199,
+        "invoiceNumber":null,"invoiceDate":null,"invoiceDateEvidence":null,"transactionDate":"2026-09-18","transactionDateEvidence":"18/09/2026","completionDate":"2026-09-18",
+        "invoiceTime":"09:45","currency":"VND","subtotal":295199,"discountAmount":null,"tax":0,"totalAmount":295199,"totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Thành tiền 295.199 đ",
         "lineItems":[{"description":"Vợt bóng bàn","quantity":1,"unitPrice":292199,"amount":292199},
         {"description":"Bảo hiểm người tiêu dùng","quantity":1,"unitPrice":3000,"amount":3000}],
         "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
         """;
 
     private const string MisplacedPaperDateJson = """
-        {"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"HIGHLANDS COFFEE",
+        {"evidenceContractVersion":2,"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"HIGHLANDS COFFEE",
         "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
         "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
-        "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":null,
-        "transactionDate":"2026-09-29","completionDate":null,"invoiceTime":"13:52","currency":"VND",
-        "subtotal":59000,"discountAmount":null,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
+        "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":null,"invoiceDateEvidence":null,
+        "transactionDate":"2026-09-29","transactionDateEvidence":"29/09/2026","completionDate":null,"invoiceTime":"13:52","currency":"VND",
+        "subtotal":59000,"discountAmount":null,"tax":0,"totalAmount":59000,"totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Tổng cộng 59.000 VND","lineItems":[{"description":"PhinDi Kem Sua L",
         "quantity":1,"unitPrice":59000,"amount":59000}],"missingFields":[],"warnings":[],
         "suspiciousSignals":[],"confidence":0.95}
         """;
 
     private const string CorrectedPaperDateJson = """
-        {"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"HIGHLANDS COFFEE",
+        {"evidenceContractVersion":2,"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"HIGHLANDS COFFEE",
         "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
         "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
-        "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":"2026-09-29",
-        "transactionDate":null,"completionDate":null,"invoiceTime":"13:52","currency":"VND",
-        "subtotal":59000,"discountAmount":null,"tax":0,"totalAmount":59000,"lineItems":[{"description":"PhinDi Kem Sua L",
+        "invoiceNumber":null,"receiptNumber":null,"transactionReference":"221196","invoiceDate":"2026-09-29","invoiceDateEvidence":"29/09/2026",
+        "transactionDate":null,"transactionDateEvidence":null,"completionDate":null,"invoiceTime":"13:52","currency":"VND",
+        "subtotal":59000,"discountAmount":null,"tax":0,"totalAmount":59000,"totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Tổng cộng 59.000 VND","lineItems":[{"description":"PhinDi Kem Sua L",
         "quantity":1,"unitPrice":59000,"amount":59000}],"missingFields":[],"warnings":[],
         "suspiciousSignals":[],"confidence":0.95}
         """;
 
     private const string VinamilkWithoutStructuredDiscountJson = """
-        {"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Vinamilk",
+        {"evidenceContractVersion":2,"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Vinamilk",
         "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
         "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
         "invoiceNumber":null,"receiptNumber":"SAL.CH40411260922000147","transactionReference":null,
-        "invoiceDate":"2026-09-22","transactionDate":null,"completionDate":null,"invoiceTime":"17:31",
-        "currency":"VND","subtotal":183114,"discountAmount":null,"tax":0,"totalAmount":180286,
+        "invoiceDate":"2026-09-22","invoiceDateEvidence":"22/09/2026","transactionDate":null,"transactionDateEvidence":null,"completionDate":null,"invoiceTime":"17:31",
+        "currency":"VND","subtotal":183114,"discountAmount":null,"tax":0,"totalAmount":180286,"totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Tổng thanh toán 180.286 VND",
         "lineItems":[{"description":"Sản phẩm sữa","quantity":1,"unitPrice":183114,"amount":183114}],
         "missingFields":[],"warnings":["Có dòng giảm giá trên hóa đơn"],"suspiciousSignals":[],"confidence":0.95}
         """;
 
     private const string VinamilkDiscountedJson = """
-        {"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Vinamilk",
+        {"evidenceContractVersion":2,"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Vinamilk",
         "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
         "bookingId":null,"shippingTrackingCode":null,"shippingProvider":null,"orderStatus":null,
         "invoiceNumber":null,"receiptNumber":"SAL.CH40411260922000147","transactionReference":null,
-        "invoiceDate":"2026-09-22","transactionDate":null,"completionDate":null,"invoiceTime":"17:31",
-        "currency":"VND","subtotal":183114,"discountAmount":2828,"tax":0,"totalAmount":180286,
+        "invoiceDate":"2026-09-22","invoiceDateEvidence":"22/09/2026","transactionDate":null,"transactionDateEvidence":null,"completionDate":null,"invoiceTime":"17:31",
+        "currency":"VND","subtotal":183114,"discountAmount":2828,"tax":0,"totalAmount":180286,"totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Tổng thanh toán 180.286 VND",
         "lineItems":[{"description":"Sản phẩm sữa","quantity":1,"unitPrice":183114,"amount":183114}],
         "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
         """;
