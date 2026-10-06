@@ -76,6 +76,10 @@ Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_rec
 
 Sau thay đổi contract giảm giá và postfix live fix, làm theo cổng `docs/LIVE_POSTFIX_INCIDENT_2026-10-01.md`. Không reset database và không chạy migration vì facts vẫn nằm trong JSON hiện có; restart queue phải dùng chính DB cũ để chứng minh độ bền.
 
+Sau official holdout 06/10, extraction mới dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Trước publish phải đạt Release build sạch, 120/120 test và `dotnet ef migrations has-pending-model-changes` trả không có thay đổi. Thứ tự SmartASP an toàn: backup/kiểm 22 biến → recycle ngay trước publish để nhả file lock → Visual Studio Web Deploy Release → chờ `Publish succeeded` → recycle lại → đợi 10–30 giây → `/healthz` phải HTTP 200, `status=ok`, database/storage true và pending migration 0. Không bật migration startup hoặc fallback.
+
+Live gate hậu contract v2 phải dùng request mới, không gọi lại 15 ảnh là “blind”: (1) receipt có giờ `HH:mm:ss` + bia phải `ESCALATE_POLICY`; (2) receipt rõ, dòng tổng in đủ phải giữ `PRINTED_FINAL_TOTAL` và AUTO khi các điều kiện khác đạt; (3) ảnh có giá trị Total bị cắt phải FACT dù subtotal/items cộng được; (4) `04-10-26` phải canonicalize thành 2026-10-04; (5) Winmart có PTT + Mã CQT phải tách receipt/tax-authority; (6) money-role CoopSmile không được dùng cash/change/VAT làm total/discount. Lưu raw status/facts/audit và timestamp. Nếu model/provider chưa tuân schema v2, kết quả phải `ESCALATE_SYSTEM_ERROR`/`ESCALATE_FACT`, không rollback gate để lấy AUTO.
+
 Delay giữa các ca Verify được cấu hình bằng `Verify:InterCaseDelayMs`, mặc định 4000 ms để bảo vệ quota. Không đổi giá trị trong cùng một benchmark; luôn ghi giá trị này vào metadata phép đo.
 
 ### Đánh giá mở rộng 15/30 ca, không thêm nút UI

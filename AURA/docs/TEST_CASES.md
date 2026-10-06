@@ -1,6 +1,6 @@
 # AURA Test Matrix
 
-Mốc cập nhật: 01/10/2026. Ký hiệu: `A` đã tự động hóa bằng xUnit; `V` nằm trong Verify Vision; `R` chạy bằng evaluator ngoài UI; `P` backlog mở rộng, chưa tuyên bố đã đạt.
+Mốc cập nhật: 06/10/2026. Ký hiệu: `A` đã tự động hóa bằng xUnit; `V` nằm trong Verify Vision; `R` chạy bằng evaluator ngoài UI; `P` backlog mở rộng, chưa tuyên bố đã đạt.
 
 ## Verify một nút
 
@@ -102,6 +102,14 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P65 | Model gán điểm/tích lũy `1000` thành discount trong khi `lineItems=subtotal=total=59000`, tax=0 | Bỏ riêng discount không tác động, lưu warning audit; không sửa tổng tiền và không false escalation | A/V |
 | P66 | Hóa đơn giấy đọc được merchant/date/id/total nhưng vùng hàng hóa bị che hoặc model trả `lineItems=[]` | Repair đúng một lần; nếu vẫn rỗng thì missing `lineItems`, confidence tối đa 0.69 và `ESCALATE_FACT` | A/V |
 | P66 | Queue hoàn tất escalation sau khi trang đã load hoặc sau app/browser restart | Bảng nhân viên tự refresh từ DB trong tối đa 10 giây; không cần chạy ca mới để “đánh thức” hàng chờ | V |
+| P67 | Giờ in `09:46:21` hoặc `2:17 PM` | Canonicalize lossless thành `09:46`/`14:17` trước policy; không false `ESCALATE_FACT` | A |
+| P68 | Nhãn `Total` còn thấy nhưng giá trị cuối bị rách; subtotal và line items vẫn cộng được | `totalAmountSource=NOT_VISIBLE`, `totalAmount=null`, repair tối đa một lần rồi `ESCALATE_FACT`; tuyệt đối không suy tổng | A/V hậu deploy |
+| P69 | Model trả `totalAmount` từ subtotal/line items với `totalAmountSource=INFERRED` | Semantic issue + confidence tối đa 0.69 + `ESCALATE_FACT` | A |
+| P70 | `PRINTED_FINAL_TOTAL` nhưng evidence row thiếu nhãn hoặc số không bằng `totalAmount` | Semantic issue, repair một lần; còn sai thì `ESCALATE_FACT` | A |
+| P71 | Ngày Việt Nam in `04-10-26` nhưng model trả `2026-04-10` | Backend đối chiếu raw evidence và chuẩn hóa thành `2026-10-04`; lưu warning audit | A |
+| P72 | Phiếu in `Giờ 08:29:02`, tổng 60.000, tiền khách đưa 500.000, tiền thối -440.000, VAT đã gồm 4.444,44 | Không coi cash/change/VAT là discount/total; fractional included VAT được giữ hỗ trợ | A/V hậu deploy |
+| P73 | `PTT` và `Mã CQT` là hai mã khác nhau | `PTT -> receiptNumber`, `Mã CQT -> taxAuthorityCode`, không lặp sang transactionReference | A/V hậu deploy |
+| P74 | `Kẹp tóc`, `Khăn ướt chăm sóc da` hoặc wet wipes trên receipt đủ dữ kiện | `ESCALATE_POLICY` theo taxonomy personal-item của MVP; FACT vẫn ưu tiên nếu có vấn đề dữ kiện | A |
 
 ## Ma trận human-in-the-loop
 

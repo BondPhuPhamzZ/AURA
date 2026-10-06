@@ -43,7 +43,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Kỳ vọng candidate hiện tại: preflight trả `READY: 0 failures`, build 0 warning/error và 108/108 test pass. Warning do `-SkipHttp` là mong đợi; warning registry inspect chỉ là chẩn đoán và phải được đối chiếu bằng full `/healthz` sau khi app chạy. EF Core/dotnet-ef được pin ở 8.0.31. Chạy thêm `dotnet list AURA.csproj package --vulnerable --include-transitive` cho cả app và test project; lượt quét 02/10/2026 không có vulnerable package theo NuGet sources đã cấu hình. Không nâng EF Core 8 lên 10 trước demo vì đó là thay đổi major/target framework, không phải bản vá tại chỗ. Không cần gọi API AI ở bước này.
+Kỳ vọng candidate hậu holdout: preflight trả `READY: 0 failures`, build 0 warning/error và 120/120 test pass. Warning do `-SkipHttp` là mong đợi; warning registry inspect chỉ là chẩn đoán và phải được đối chiếu bằng full `/healthz` sau khi app chạy. EF Core/dotnet-ef được pin ở 8.0.31. Chạy thêm `dotnet list AURA.csproj package --vulnerable --include-transitive` cho cả app và test project. Không nâng EF Core 8 lên 10 trước demo vì đó là thay đổi major/target framework, không phải bản vá tại chỗ. Offline gate không cần gọi API AI; sau deploy phải có một smoke contract v2 vì structured schema đã đổi.
 
 3. Trong Visual Studio, mở `AURA.csproj` và chọn **Publish → Folder** hoặc **Publish → Web Deploy**. Target framework là `net8.0`, cấu hình `Release`.
 

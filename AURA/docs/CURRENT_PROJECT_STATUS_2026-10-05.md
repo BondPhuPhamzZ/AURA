@@ -4,14 +4,14 @@ Cập nhật: 06/10/2026. Đây là nguồn trạng thái hiện hành; các bá
 
 ## 1. Kết luận điều hành
 
-AURA đã đạt mức **MVP demo candidate** cho luồng cốt lõi: upload bất đồng bộ, Vision AI trích xuất, semantic validation/repair có giới hạn, policy C# quyết định, chuyển tiếp cho quản lý, audit và undo. Baseline source hiện tại là `master` tại `798ab0d`; Release build sạch, 109/109 automated tests pass và EF không có model change chưa migration. Verify UI cho phép chọn xem facts riêng của từng ca thay vì chỉ hiển thị ca đầu tiên.
+AURA vẫn là **MVP demo candidate có điều kiện**, chưa phải production-ready hay accuracy-ready. Official blind holdout thật đã hoàn tất đúng một lượt và lộ một fail-open nghiêm trọng cùng các lỗi semantic bị che. Source hậu holdout đã bổ sung evidence contract v2, fail-safe dòng tổng bị cắt, raw-date verification, chuẩn hóa giờ có giây/AM-PM, money-role/identifier guard và taxonomy personal-item; Release checkpoint đạt 120/120 automated tests. Chưa được publish nên live `c42c5ef` chưa có các bảo vệ này.
 
-Deployment SmartASP sau bản vá đã có evidence ngày 04/10: health/DB/storage/migration pass, UI first-paint đúng tab, security-negative pass, AUTO smoke và FACT fail-safe smoke độc lập pass, Official Verify 5/5, human workflow/audit pass, persistence sau refresh/recycle pass và concurrent smoke hoàn tất 7/7 request (2 + 5). Đây là evidence staging/MVP, không phải chứng nhận production accuracy.
+Deployment SmartASP ngày 04/10 vẫn chứng minh health/DB/storage/migration, UI first-paint, security-negative, AUTO/FACT smoke, Verify 5/5, workflow/audit, persistence và concurrency của baseline cũ. Evidence đó không chứng minh contract v2; sau publish bắt buộc chạy live regression riêng.
 
-Chưa được ký **FINAL GO** vì còn bốn cổng do con người xác nhận:
+Chưa được ký **FINAL GO**. Các cổng còn mở là:
 
-1. blind holdout đúng 15 ca, khóa nhãn/hash trước request đầu tiên;
-2. ba phiên người dùng thật với feedback do chính người dùng xác nhận;
+1. publish đúng commit hậu holdout và pass health + live contract-v2 regression (đặc biệt total bị rách phải FACT);
+2. ba phiên người dùng thật có giám sát với feedback do chính người dùng xác nhận;
 3. mobile/4G và thao tác không nháy tab được quan sát thủ công;
 4. ba dress rehearsal có bấm giờ trên cùng commit freeze.
 
@@ -21,9 +21,9 @@ Live URL được xác minh trong evidence ngày 04/10. Trước khi công bố 
 
 | Hạng mục | Kết quả |
 |---|---|
-| Source revision | current feature revision `master` / `798ab0d` |
+| Source revision | working candidate hậu holdout; SHA chốt sau commit/push |
 | Release build | 0 warning, 0 error |
-| Automated tests | 109/109 pass, offline, không gọi API trả phí |
+| Automated tests | 120/120 pass, offline, không gọi API trả phí |
 | EF model | Không có pending model change |
 | Official Verify | 5/5, đúng 3 AUTO + 1 FACT + 1 POLICY |
 | OpenRouter judge set | 15/15 decision; 70/75 field; P50/P95 3,614/16,459 giây |
@@ -31,6 +31,9 @@ Live URL được xác minh trong evidence ngày 04/10. Trước khi công bố 
 | Fallback isolated regression | 1/1; `FallbackUsed=true`; E2E 84,425 giây |
 | Live postfix gate | PASS_WITH_PERFORMANCE_WARNING; 7/7 concurrent request hoàn tất |
 | Live concurrent E2E P95 | 20,941 giây cho 2 request; 23,290 giây cho 5 request |
+| Official real holdout raw | 10/15 decision; missed 1/9; over-escalation 3/6; system error 0; fallback 0 |
+| Holdout adjudicated view | 11/15 sau khi xác nhận BH-04 ground-truth sai; missed 1/10; over 2/5; raw không đổi |
+| Holdout field metric | 28/30 chỉ đo currency + totalAmount; không phải full extraction accuracy |
 
 Các số trên thuộc những tập và revision đã nêu. Không diễn giải thành “accuracy thực tế 100%” hoặc “production-ready”.
 
@@ -71,26 +74,25 @@ Nguồn: `D:\aura\demo_evidence\13_smarterasp_postfix_c42c5ef_2026-10-04\10_fina
 
 Các bằng chứng thủ công còn phải bổ sung: ảnh/timestamp recycle Pool, điện thoại thật qua 4G/5G, quan sát không còn nháy Upload sau YES/NO/UNDO, holdout, ba user session và ba rehearsal.
 
-## 5. Holdout hiện tại
+## 5. Official holdout và kết luận
 
-`D:\aura\demo_evidence\09_blind_holdout_2026-10-04\02_selected_images` hiện chứa đúng 15 file JPG. Inventory sơ bộ ngày 06/10 ghi nhận 15/15 SHA-256 duy nhất, không có file byte-identical trong evidence cũ; tập vẫn là **candidate, chưa locked** cho tới khi ground truth được số hóa, review lần hai và hash manifest trước request đầu tiên.
+Manifest 15 ca đã được khóa trước request đầu tiên, hash manifest `B13EB77621A89DCFABC3E09F27810F9E7921F5E15433F03E3F9250115BA9CDE9`. OpenRouter chạy đúng một official run, fallback tắt; raw evidence phải giữ bất biến. Evidence manifest cuối có SHA-256 `FDD4B86B5B7D57E9DB0E4E44D410ED0321FD1D300E0DA5FFC0621973FD0C7035`.
 
-- Người dùng xác nhận `NewVinamilk.jpg` và `NewKatinat.jpg` là giao dịch mới, khác dữ liệu regression cũ. Hai file được giữ làm candidate nếu chính file/giao dịch này chưa từng gửi AURA/OpenRouter/Ollama và chưa dùng để tune; trùng merchant không tự làm mất tính blind.
-- Inventory hiện hành: `01_candidates_private/preliminary-hash-inventory-15-of-15-2026-10-06.json`. Kết quả không phát hiện được ảnh cùng giao dịch đã crop/che QR/nén lại, nên vẫn cần xác nhận provenance của con người.
-- Những ảnh còn lại chỉ hợp lệ sau khi có quyền sử dụng, redaction review và ground truth độc lập.
+- Raw: 10/15 decision đúng (66,67%), 1 missed escalation, 3 over-escalation, 0 system error.
+- Post-hoc adjudication: BH-04 GS25 được khóa `AUTO_APPROVE` nhưng ảnh in 04/10/2026 là Chủ nhật, nên quyết định FACT của hệ thống đúng. Adjusted view là 11/15 (73,33%), missed 1/10 và over 2/5; đây chỉ là phân tích, không thay raw.
+- Critical BH-07 Circle K: giá trị dòng Total bị rách nhưng model suy/copy 21.000 từ subtotal/items và hệ thống AUTO. Đây là blocker fail-open.
+- BH-06 Ministop: `09:46:21` bị parser HH:mm từ chối, FACT che POLICY bia. BH-08 Katinat: `04-10-26` bị đổi thành 2026-04-10. BH-01 money roles cash/change/VAT bị gán sai. BH-15 PTT/Mã CQT bị lặp identifier.
 
-Không chạy official holdout cho tới khi đúng 15 ảnh eligible, tên file ổn định và manifest đã khóa. Xem [`HOLDOUT_LOCKING_GUIDE_2026-10-05.md`](HOLDOUT_LOCKING_GUIDE_2026-10-05.md) và [`HOLDOUT_MATRIX_15_CASES_2026-10-05.md`](HOLDOUT_MATRIX_15_CASES_2026-10-05.md).
+Vì vậy accuracy claim và unattended real-user pilot là **NO-GO**. Bộ 15 ảnh không còn là blind sau official run; chỉ được gọi là post-holdout regression. Một blind claim mới cần receipts unseen mới.
 
 ## 6. Thứ tự công việc tiếp theo
 
-1. Chép ground truth đang ghi trên giấy vào manifest draft máy đọc được; không chạy rồi mới nhập nhãn hoặc đối chiếu thủ công.
-2. Xác nhận 15 ảnh eligible, quyền sử dụng, redaction và provenance; nếu sửa bất kỳ byte ảnh nào phải tạo lại inventory.
-3. Hai người review claimed amount, expected status, expected facts và rationale; xử lý bất đồng trước khi chạy.
-4. Khóa manifest, manifest hash, commit/policy version và thời điểm khóa.
-5. Chạy OpenRouter đúng một official run, fallback tắt; giữ cả mismatch và system error.
-6. Thực hiện ba user session; triển khai một cải tiến nhỏ truy vết được nếu feedback chỉ ra blocker.
-7. Hoàn tất mobile/4G/no-flash evidence và ba rehearsal.
-8. Khi toàn bộ gate pass: cập nhật slide/build log/video, ký go/no-go, rồi mới public live URL.
+1. Chốt commit/push hậu holdout sau build/test/EF/package gates.
+2. Publish đúng SHA: recycle trước → Visual Studio Web Deploy Release → `Publish succeeded` → recycle sau → health OK.
+3. Chạy live contract-v2 smoke và post-holdout regression; không đổi tên thành blind. Circle K phải FACT, Ministop phải POLICY, ngày/money/id phải đúng nguyên nhân.
+4. Nếu live regression pass, thực hiện ba user session có giám sát; chưa cho vận hành unattended.
+5. Hoàn tất mobile/4G/no-flash evidence và ba rehearsal.
+6. Đồng bộ slide/build log/video bằng số holdout trung thực; chỉ public live URL sau final go/no-go.
 
 ## 7. Giới hạn công bố
 
