@@ -88,6 +88,16 @@ function Convert-ComparableValue {
     return ([string]$Value).Trim()
 }
 
+function Read-Utf8Json {
+    param([Parameter(Mandatory)] [string]$Path)
+
+    # Windows PowerShell 5.1 treats UTF-8 without BOM as the active ANSI code page
+    # when Get-Content is used. Ground-truth Vietnamese text must be decoded
+    # explicitly so field metrics are not corrupted while decisions still look valid.
+    $utf8Strict = [Text.UTF8Encoding]::new($false, $true)
+    return [IO.File]::ReadAllText($Path, $utf8Strict) | ConvertFrom-Json
+}
+
 $projectRoot = (Resolve-Path -LiteralPath (Join-Path $scriptDirectory '..')).Path
 $resolvedManifest = (Resolve-Path -LiteralPath $ManifestPath).Path
 $resolvedImages = (Resolve-Path -LiteralPath $ImagesDirectory).Path
@@ -100,7 +110,7 @@ if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
 $resolvedOutput = [IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Force -Path $resolvedOutput | Out-Null
 
-$manifest = Get-Content -Raw -LiteralPath $resolvedManifest | ConvertFrom-Json
+$manifest = Read-Utf8Json $resolvedManifest
 $manifestCases = @($(if ($null -ne $manifest.PSObject.Properties['cases']) { $manifest.cases } else { $manifest }))
 if ($manifestCases.Count -eq 0) { throw 'The manifest contains no test cases.' }
 
@@ -113,7 +123,7 @@ if ($null -ne $sourceManifestProperty -and -not [string]::IsNullOrWhiteSpace([st
     if (Test-Path -LiteralPath $sourceManifestCandidate -PathType Leaf) {
         $sourceManifestPath = (Resolve-Path -LiteralPath $sourceManifestCandidate).Path
         $sourceManifestSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $sourceManifestPath).Hash
-        $sourceManifest = Get-Content -Raw -LiteralPath $sourceManifestPath | ConvertFrom-Json
+        $sourceManifest = Read-Utf8Json $sourceManifestPath
         $sourceCases = @($(if ($null -ne $sourceManifest.PSObject.Properties['cases']) {
             $sourceManifest.cases
         } else {

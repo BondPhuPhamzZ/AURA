@@ -11,10 +11,10 @@ tích mismatch, đội bổ sung taxonomy policy hẹp cho vé xem phim/rạp ch
 truth R3-12 v3.1 thành automated test thực thi trực tiếp qua PolicyDecisionEngine, và siết prompt
 giữ nguyên dấu tiếng Việt để giảm nhầm `Bìa hồ sơ` thành `Bia hồ sơ`. AURA tiếp tục gửi nguyên
 byte ảnh, không resize ở ứng dụng. Backend đã log token/duration OpenRouter/Ollama để benchmark
-đúng nguyên nhân context/output/off-load. Release build, 140/140 test và EF model gate đều pass;
-v3/v3.1 images/hash không đổi. Logic commit `0241dfa` đã push lên `origin/master`; bước kế tiếp
-là publish đúng master đó, recycle/health, Verify smoke
-và chạy đúng một live batch v3.1 trước khi đóng gate.
+đúng nguyên nhân context/output/off-load. Sau publish, health 5/5 và security negative 4/4 pass.
+Live v3.1 hoàn tất 15/15 request: 13/15 exact decision, 0 missed escalation, 0 system error,
+fallback 0 và field UTF-8-safe 140/146. Hai mismatch đều fail-safe do model lặp identifier.
+Runner được vá đọc UTF-8 tường minh; full suite 141/141 pass. Raw evidence/hash giữ nguyên.
 
 ## Link GitHub
 
@@ -30,6 +30,7 @@ Ollama 8B riêng với context 16384/output 4096; fallback vẫn tắt cho tới
 
 Đã harden policy C# cho nhóm vé xem phim/rạp chiếu phim, thêm test thực thi ground truth R3-12
 v3.1 và guard giữ dấu tiếng Việt (`Bìa`/`Bia`). Bổ sung log token/duration để đo đúng ảnh,
-context, output cap và CPU/GPU off-load. Candidate Release đạt 140/140 test, EF sạch; giữ nguyên
-raw holdout/Test Kit v3 và SHA-256. Tiếp theo: publish/recycle/health, Verify smoke, chạy đúng một
-batch v3.1; sau đó benchmark Ollama 8B trên GPU BTC và tổ chức 3 user session.
+context, output cap và CPU/GPU off-load. Sau publish, health 5/5, security 4/4 và live v3.1
+15/15 completed; 13/15 exact, 0 missed escalation, 0 system error, field 140/146. Runner UTF-8
+đã sửa và 141/141 test pass. Tiếp theo: benchmark Ollama 8B cùng v3.1 trên GPU BTC và tổ chức
+3 user session; fallback vẫn tắt.

@@ -84,3 +84,7 @@ trình review/hash tại [`../test_kit/v3_1/README.md`](../test_kit/v3_1/README.
 Ca R3-12 hiện còn được thực thi trực tiếp qua `PolicyDecisionEngine` trong automated test:
 ground truth `Vé xem phim` phải cho `ESCALATE_POLICY`. Như vậy manifest không thể tuyên bố
 một expected decision mà policy C# hiện tại không tạo ra.
+
+Live v3.1 đã chạy đúng một batch ngày 07/10: 15/15 completed, 13/15 exact decision,
+0 missed escalation, 0 system error và field UTF-8-safe 140/146. Không chạy lại. Xem
+[`LIVE_REGRESSION_V31_RESULT_2026-10-07.md`](LIVE_REGRESSION_V31_RESULT_2026-10-07.md).

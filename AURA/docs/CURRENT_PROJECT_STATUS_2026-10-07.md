@@ -7,16 +7,16 @@ Cập nhật: 07/10/2026. Đây là nguồn trạng thái hiện hành; các fil
 AURA vẫn là **MVP technical baseline cho supervised demo**, chưa phải production/accuracy-ready.
 Raw official holdout và raw Test Kit v3 được giữ bất biến. Logic commit `0241dfa` xử lý gap policy
 `Vé xem phim`, giữ dấu tiếng Việt, bổ sung token/duration observability và tài liệu phân biệt
-off-load/context/output cap. Release publish và 140/140 automated test pass; EF không có pending
-model change và đã push lên `origin/master`. Candidate này chưa được coi là live cho tới khi
-publish/recycle/health và chạy v3.1.
+off-load/context/output cap. Bản mới đã publish; health/public endpoint/security smoke và live
+v3.1 đều hoàn tất. Sau bản vá UTF-8 runner, full offline suite là 141/141; EF không có pending
+model change.
 
 ## Trạng thái kiểm chứng
 
 | Hạng mục | Trạng thái |
 |---|---|
 | Release build/publish local | PASS, 0 compile error |
-| Automated tests | 140/140 PASS, offline, không gọi AI |
+| Automated tests | 141/141 PASS, offline, không gọi AI |
 | EF model | Không có pending model change |
 | Policy entertainment | `Vé xem phim`/`rạp chiếu phim` và English variants → `ESCALATE_POLICY` |
 | R3-12 v3.1 | Ground truth được thực thi thật qua `PolicyDecisionEngine` |
@@ -25,21 +25,17 @@ publish/recycle/health và chạy v3.1.
 | Token observability | Log prompt/completion/token cap cho OpenRouter; prompt/completion/context/duration cho Ollama |
 | Raw holdout | Giữ 10/15 raw, 11/15 adjudicated; không chạy lại như blind |
 | Raw Test Kit v3 | Giữ 11/15 decision, 142/145 field, 0 system error |
-| V3.1 live | Chưa chạy; chỉ chạy đúng một batch sau publish candidate |
+| V3.1 live | 15/15 completed; 13/15 exact; 0 missed; 0 system error; field UTF-8-safe 140/146 |
 | Fallback | Vẫn tắt; Ollama chưa đạt gate để bật mặc định |
 
 ## Gate kế tiếp
 
-1. Publish master có logic commit `0241dfa`, recycle Pool, đợi 10–30 giây và xác nhận `/healthz`
-   trả `ok`, DB/storage true, pending migration 0, provider/model đúng, fallback false.
-2. Chạy Verify 5 ca và security/workflow smoke tối thiểu.
-3. Chạy đúng một live batch v3.1; không chạy lại v3 raw hoặc 15 ảnh official holdout.
-4. Chỉ đóng gate khi 15 request hoàn tất, 0 system error và 0 missed escalation; mọi mismatch
-   khác phải giữ raw và phân tích, không relabel hậu nghiệm.
-5. GPU BTC: benchmark Ollama-only 8B với context 16384/output 4096, ghi `ollama ps`, `nvidia-smi`,
+1. Giữ raw batch v3.1 và báo cáo hai mismatch R3-03/R3-15; không chạy lại để làm đẹp 13/15.
+2. GPU BTC: benchmark Ollama-only 8B bằng đúng v3.1, context 16384/output 4096, ghi `ollama ps`, `nvidia-smi`,
    token/duration và decision/field metrics; không bật fallback trước khi đạt gate.
+3. Tổ chức ba user session và ba rehearsal trên cùng commit freeze.
 
 ## Ranh giới claim
 
-Có thể nói policy C# là authority tất định và candidate offline đã pass 140 test. Chưa được nói
-v3.1 live pass, Ollama tương đương OpenRouter, hoặc hệ thống production-ready trước evidence mới.
+Có thể nói policy C# là authority tất định, 141 code test pass và live v3.1 đạt safety gate
+0 missed/0 system error. Không nói 13/15 là production accuracy hoặc Ollama tương đương OpenRouter.

@@ -219,6 +219,19 @@ public sealed class TestKitIntegrityTests
         Assert.Contains("Vé xem phim", decision.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public void Extended_dataset_runner_decodes_utf8_ground_truth_explicitly()
+    {
+        var runner = File.ReadAllText(Path.Combine(
+            ProjectRoot, "tools", "Invoke-ExtendedDatasetEvaluation.ps1"));
+
+        Assert.Contains("function Read-Utf8Json", runner, StringComparison.Ordinal);
+        Assert.Contains("[IO.File]::ReadAllText", runner, StringComparison.Ordinal);
+        Assert.DoesNotContain("$manifest = Get-Content", runner, StringComparison.Ordinal);
+        Assert.True(File.Exists(Path.Combine(
+            ProjectRoot, "tools", "Measure-ExtendedDatasetEvidence.ps1")));
+    }
+
     private static string FindProjectRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

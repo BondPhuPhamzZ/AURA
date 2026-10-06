@@ -54,6 +54,6 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 10. Development validation bổ sung và fallback live regression nằm tại `docs/REAL_RECEIPT_VALIDATION_2026-10-02.md` và `docs/FALLBACK_REGRESSION_2026-10-02.md`. Ảnh thật/PII vẫn nằm ngoài Git; fallback baseline vẫn tắt.
 11. Evidence live hậu publish 06/10 trên `1f4b3c9` đã đóng health 5/5, security 6/6, UI browser mobile 390 px, Verify 5/5, workflow fixture 2/2 và Audit timezone Việt Nam. Điện thoại thật 4G/5G vẫn là gate trước khi public URL trong README.
 12. Holdout 15 ca đã chạy một official run: raw 10/15, adjusted 11/15 do một nhãn người sai; raw bất biến. Tập ảnh từ đây chỉ là post-holdout regression, không còn blind.
-13. Test Kit v3 synthetic chạy một live batch: raw 11/15, 142/145 field, 0 system error; raw bất biến. Candidate hardening/v3.1 đạt 133/133 offline test nhưng chưa được đánh dấu live PASS trước publish/recycle/batch mới.
+13. Test Kit v3 synthetic chạy một live batch: raw 11/15, 142/145 field, 0 system error; raw bất biến. V3.1 ngày 07/10 chạy đúng một batch sau publish: 15/15 completed, 13/15 exact, 0 missed escalation, 0 system error, field UTF-8-safe 140/146; không chạy lại.
 13. Checklist điện thoại thật, ba user session và rehearsal nằm tại `docs/MANUAL_FINAL_GATES_2026-10-06.md`.
 14. Kế hoạch nhận yêu cầu mới, timebox bốn giờ và demo vòng bảng/Chung kết nằm tại `docs/ONSITE_FINAL_PLAYBOOK_2026-10-06.md`.

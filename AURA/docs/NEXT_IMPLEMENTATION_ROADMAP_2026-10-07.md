@@ -1,11 +1,10 @@
 # AURA — Roadmap 07/10/2026
 
-## P0 — đóng candidate policy/vision
+## P0 — candidate policy/vision đã đóng safety gate
 
-1. Giữ nguyên v3/v3.1 images, manifest và SHA-256.
-2. Publish candidate 140/140 test; recycle/health; chạy Verify smoke.
-3. Chạy đúng một batch live v3.1. Gate: completed 15/15, system error 0, missed escalation 0.
-4. Nếu fail, phân loại extraction/model/semantic/policy/fixture từ raw facts; không sửa expected theo output.
+Live v3.1 hoàn tất 15/15, exact 13/15, system error 0, missed escalation 0 và field
+UTF-8-safe 140/146. Giữ raw, manifest và SHA-256; không chạy lại. Hai mismatch là duplicate
+identifier fail-safe, không phải policy missed escalation. Xem `LIVE_REGRESSION_V31_RESULT_2026-10-07.md`.
 
 ## P1 — GPU BTC và fallback có kiểm soát
 
