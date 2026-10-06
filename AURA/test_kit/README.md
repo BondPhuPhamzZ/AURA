@@ -1,4 +1,17 @@
-# AURA Test Kit v2
+# AURA Test Kit
+
+## Hai baseline độc lập
+
+- **Test Kit v2** tại root thư mục này là baseline lịch sử. Không sửa ảnh, expected hoặc raw benchmark cũ.
+- **Regression Test Kit v3** tại `v3/` là phương án hậu holdout tách biệt gồm 15 fixture synthetic mới. V3 sửa hai điểm mơ hồ của v2: nhãn định danh ghép và ca tổng chỉ blur nhưng vẫn có thể suy diễn. V3 không thay Verify Harness, không tự chạy API và không phải bằng chứng accuracy trên hóa đơn thật.
+
+Tái tạo v3 bằng:
+
+```powershell
+<python-with-pillow> tools/generate_regression_receipts_v3.py --as-of-date 2026-10-06
+```
+
+`v3/judge-manifest.json` khóa SHA-256 từng ảnh, expected decision, expected facts và lý do ground truth. Runner phải dừng trước request đầu tiên nếu bất kỳ hash nào lệch. Xem `docs/REGRESSION_TEST_KIT_V3.md` trước khi chạy.
 
 ## Hai gói bàn giao cho BGK
 

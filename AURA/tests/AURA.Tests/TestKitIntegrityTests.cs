@@ -83,6 +83,68 @@ public sealed class TestKitIntegrityTests
         });
     }
 
+    [Fact]
+    public void Regression_v3_is_separate_locked_and_semantically_explicit()
+    {
+        var kitRoot = Path.Combine(ProjectRoot, "test_kit", "v3");
+        using var judgeDocument = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(kitRoot, "judge-manifest.json")));
+        using var sourceDocument = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(kitRoot, "manifest.json")));
+
+        var judgeCases = judgeDocument.RootElement.GetProperty("cases").EnumerateArray().ToList();
+        var sourceCases = sourceDocument.RootElement.GetProperty("cases").EnumerateArray()
+            .ToDictionary(x => x.GetProperty("id").GetString()!, StringComparer.Ordinal);
+
+        Assert.Equal("post-holdout-regression-alternative",
+            sourceDocument.RootElement.GetProperty("datasetRole").GetString());
+        Assert.Equal(15, judgeCases.Count);
+        Assert.Equal(5, judgeCases.Count(x => x.GetProperty("expectedStatus").GetString() == "AUTO_APPROVE"));
+        Assert.Equal(4, judgeCases.Count(x => x.GetProperty("expectedStatus").GetString() == "ESCALATE_FACT"));
+        Assert.Equal(3, judgeCases.Count(x => x.GetProperty("expectedStatus").GetString() == "ESCALATE_POLICY"));
+        Assert.Equal(3, judgeCases.Count(x => x.GetProperty("expectedStatus").GetString() == "ESCALATE_AUTHORITY"));
+
+        var ids = judgeCases.Select(x => x.GetProperty("id").GetString()).ToList();
+        Assert.Equal(15, ids.Distinct(StringComparer.Ordinal).Count());
+        Assert.All(ids, id => Assert.StartsWith("R3-", id, StringComparison.Ordinal));
+
+        foreach (var testCase in judgeCases)
+        {
+            var id = testCase.GetProperty("id").GetString()!;
+            var fileName = testCase.GetProperty("fileName").GetString()!;
+            var expectedHash = testCase.GetProperty("sha256").GetString()!;
+            Assert.Matches("^[0-9A-F]{64}$", expectedHash);
+            Assert.True(sourceCases.TryGetValue(id, out var sourceCase));
+            Assert.Equal(fileName, sourceCase.GetProperty("file_name").GetString());
+            Assert.Equal(expectedHash, sourceCase.GetProperty("sha256").GetString());
+            Assert.False(string.IsNullOrWhiteSpace(testCase.GetProperty("groundTruthRationale").GetString()));
+
+            var imagePath = Path.Combine(kitRoot, "images", fileName);
+            Assert.True(File.Exists(imagePath));
+            var actualHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+                File.ReadAllBytes(imagePath)));
+            Assert.Equal(expectedHash, actualHash);
+        }
+
+        var ambiguousLabels = new[] { "Số hóa đơn/biên nhận", "Invoice/Receipt No" };
+        Assert.All(sourceCases.Values, sourceCase =>
+        {
+            var label = sourceCase.GetProperty("identifier_label");
+            if (label.ValueKind != JsonValueKind.Null)
+                Assert.DoesNotContain(label.GetString(), ambiguousLabels);
+        });
+
+        var destroyedTotal = sourceCases["R3-06"];
+        var destroyedFacts = destroyedTotal.GetProperty("expected_facts");
+        Assert.Equal(JsonValueKind.Null, destroyedFacts.GetProperty("totalAmount").ValueKind);
+        Assert.Equal("NOT_VISIBLE", destroyedFacts.GetProperty("totalAmountSource").GetString());
+
+        var readableFade = sourceCases["R3-05"];
+        Assert.Equal("AUTO_APPROVE", readableFade.GetProperty("expected_status").GetString());
+        Assert.Equal("PRINTED_FINAL_TOTAL",
+            readableFade.GetProperty("expected_facts").GetProperty("totalAmountSource").GetString());
+    }
+
     private static string FindProjectRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
