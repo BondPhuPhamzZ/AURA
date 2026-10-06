@@ -1132,6 +1132,10 @@ main {
     min-width: 290px;
 }
 
+.manager-action-column .js-workflow-form + .js-workflow-form {
+    margin-left: 8px;
+}
+
 .decision-help {
     margin-top: 8px;
     max-width: 290px;
@@ -1577,6 +1581,11 @@ main {
     .manager-action-column form {
         display: block !important;
         margin: 0 0 8px !important;
+    }
+
+    .manager-action-column > form,
+    .manager-action-column > .decision-help {
+        grid-column: 2;
     }
 
     .manager-action-column form button,

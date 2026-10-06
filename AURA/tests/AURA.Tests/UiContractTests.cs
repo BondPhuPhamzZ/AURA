@@ -23,6 +23,20 @@ public sealed class UiContractTests
         Assert.DoesNotContain(".ToLocalTime()", auditView, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Mobile_manager_actions_stay_in_the_content_column()
+    {
+        var queueView = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Shared", "Components",
+            "EscalationQueue", "Default.cshtml"));
+        var stylesheet = File.ReadAllText(Path.Combine(ProjectRoot, "wwwroot", "css", "site.css"));
+
+        Assert.Contains(".manager-action-column > form", stylesheet, StringComparison.Ordinal);
+        Assert.Contains(".manager-action-column > .decision-help", stylesheet, StringComparison.Ordinal);
+        Assert.Contains("grid-column: 2", stylesheet, StringComparison.Ordinal);
+        Assert.DoesNotContain("class=\"d-inline js-workflow-form\" style=\"margin-left: 8px;\"",
+            queueView, StringComparison.Ordinal);
+    }
+
     private static string FindProjectRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
