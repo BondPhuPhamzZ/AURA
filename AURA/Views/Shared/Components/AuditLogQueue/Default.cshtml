@@ -71,7 +71,7 @@
                         var detailParts = (entry.Log.Details ?? string.Empty)
                             .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                         var actionLabel = ActionLabel(entry.Log.Action);
-                        var localTimestamp = entry.Log.Timestamp.ToLocalTime();
+                        var localTimestamp = AURA.Services.VietnamTime.FromUtc(entry.Log.Timestamp);
                         <tr class="audit-data-row" data-audit-date="@localTimestamp.ToString("yyyy-MM-dd")">
                             <td data-label="Thời gian" class="audit-time-cell">
                                 <time datetime="@entry.Log.Timestamp.ToString("O")">
@@ -129,7 +129,7 @@
                                                 .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                                             <li>
                                                 <div class="audit-timeline-heading">
-                                                    <time datetime="@timelineEvent.Timestamp.ToString("O")">@timelineEvent.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</time>
+                                                    <time datetime="@timelineEvent.Timestamp.ToString("O")">@AURA.Services.VietnamTime.FromUtc(timelineEvent.Timestamp).ToString("dd/MM/yyyy HH:mm:ss")</time>
                                                     <strong>@ActionLabel(timelineEvent.Action)</strong>
                                                 </div>
                                                 @if (eventParts.Length > 0)

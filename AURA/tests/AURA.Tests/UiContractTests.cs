@@ -11,12 +11,16 @@ public sealed class UiContractTests
     {
         var controller = File.ReadAllText(Path.Combine(ProjectRoot, "Controllers", "VerifyController.cs"));
         var dashboard = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Home", "Index.cshtml"));
+        var auditView = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Shared", "Components",
+            "AuditLogQueue", "Default.cshtml"));
 
         Assert.Contains("facts = extractedFacts", controller, StringComparison.Ordinal);
         Assert.Contains("facts-view-button", dashboard, StringComparison.Ordinal);
         Assert.Contains("showAnalysisFacts", dashboard, StringComparison.Ordinal);
         Assert.Contains("getAnalysisFactsLabel", dashboard, StringComparison.Ordinal);
         Assert.Contains("Nội dung AI —", dashboard, StringComparison.Ordinal);
+        Assert.Contains("VietnamTime.FromUtc", auditView, StringComparison.Ordinal);
+        Assert.DoesNotContain(".ToLocalTime()", auditView, StringComparison.Ordinal);
     }
 
     private static string FindProjectRoot()
