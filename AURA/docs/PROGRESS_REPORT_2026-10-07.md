@@ -12,7 +12,8 @@ truth R3-12 v3.1 thành automated test thực thi trực tiếp qua PolicyDecisi
 giữ nguyên dấu tiếng Việt để giảm nhầm `Bìa hồ sơ` thành `Bia hồ sơ`. AURA tiếp tục gửi nguyên
 byte ảnh, không resize ở ứng dụng. Backend đã log token/duration OpenRouter/Ollama để benchmark
 đúng nguyên nhân context/output/off-load. Release build, 140/140 test và EF model gate đều pass;
-v3/v3.1 images/hash không đổi. Bước kế tiếp là publish đúng commit, recycle/health, Verify smoke
+v3/v3.1 images/hash không đổi. Logic commit `0241dfa` đã push lên `origin/master`; bước kế tiếp
+là publish đúng master đó, recycle/health, Verify smoke
 và chạy đúng một live batch v3.1 trước khi đóng gate.
 
 ## Link GitHub
