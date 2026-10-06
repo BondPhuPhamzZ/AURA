@@ -9,7 +9,7 @@ Cập nhật: 06/10/2026. Trạng thái chuẩn nằm tại `docs/CURRENT_PROJEC
 | Frontend/backend clone và chạy localhost | ☑ Có | README root, .NET 8, LocalDB/SQL Server, user-secrets và migration |
 | Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, 15/30 ca chạy ngoài UI bằng evaluator |
 | Public repository và lịch sử commit | ☑ Có | `https://github.com/BondPhuPhamzZ/AURA`; cần push commit chốt sau mỗi lần cập nhật hồ sơ |
-| Public Live URL | ◐ Technical pass, chưa public | Live `c382ce7` pass health/security/UI/Verify; còn publish bản vá timezone Audit, điện thoại thật 4G, users và rehearsal |
+| Public Live URL | ◐ Technical baseline pass, chưa public | Live `1f4b3c9` pass health/security/UI/Verify/workflow/timezone; còn điện thoại thật 4G trước khi đưa URL vào README |
 | Video demo tối đa 3 phút (BTC ghi Optional) | ☑ Đã liên kết | Link Google Drive ở README root |
 | Đúng 5 slide | ☑ Đã dựng | `submission/AURA_5_SLIDES.pptx` |
 | Build Log một trang Word | ☑ Đã dựng | `submission/AURA_BUILD_LOG.docx` |
@@ -51,5 +51,6 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 8. Post-fix gate ngày 02/10 đã xác minh Phê La bị che vùng món đi `ESCALATE_FACT`, Vinamilk đủ bảy dòng hàng vẫn `AUTO_APPROVE`, Official Verify 5/5, restart giữ status/ảnh/audit, manager YES/NO/UNDO có audit và concurrent smoke 5/5 với accepted P95 530 ms, end-to-end P95 39,380 giây.
 9. Hướng dẫn BGK chạy local nằm tại `docs/JUDGE_LOCAL_SETUP.md`; báo cáo tiến độ, ranh giới claim và roadmap hiện hành nằm tại `docs/PROGRESS_REPORT_2026-10-06.md`, `docs/CURRENT_PROJECT_STATUS_2026-10-06.md` và `docs/NEXT_IMPLEMENTATION_ROADMAP_2026-10-06.md`.
 10. Development validation bổ sung và fallback live regression nằm tại `docs/REAL_RECEIPT_VALIDATION_2026-10-02.md` và `docs/FALLBACK_REGRESSION_2026-10-02.md`. Ảnh thật/PII vẫn nằm ngoài Git; fallback baseline vẫn tắt.
-11. Evidence live 06/10 trên `c382ce7` đã đóng health 5/5, security negative, UI browser mobile, Verify 5/5 và workflow fixture 2/2 (policy reject/undo, fact approve/undo). Audit timestamp lỗi timezone host đã được sửa trong source; cần publish/recycle và xác nhận lại trước freeze.
+11. Evidence live hậu publish 06/10 trên `1f4b3c9` đã đóng health 5/5, security 6/6, UI browser mobile 390 px, Verify 5/5, workflow fixture 2/2 và Audit timezone Việt Nam. Điện thoại thật 4G/5G vẫn là gate trước khi public URL trong README.
 12. Holdout 15 ca đã chạy một official run: raw 10/15, adjusted 11/15 do một nhãn người sai; raw bất biến. Tập ảnh từ đây chỉ là post-holdout regression, không còn blind.
+13. Checklist điện thoại thật, ba user session và rehearsal nằm tại `docs/MANUAL_FINAL_GATES_2026-10-06.md`.

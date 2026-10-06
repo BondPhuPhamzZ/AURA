@@ -2,14 +2,11 @@
 
 Cập nhật: 06/10/2026. Ưu tiên đóng rủi ro demo; không mở rộng tính năng phức tạp trước khi các gate hiện hành đạt.
 
-## P0 trước khi freeze
+## P0 technical baseline — đã đóng
 
-1. Publish revision mới được báo ở lần bàn giao: recycle trước, Web Deploy Release, chờ `Publish succeeded`, rồi recycle lần nữa.
-2. `/healthz` phải trả `status=ok`, database/storage true, pending migration 0 và fallback false.
-3. Chạy Verify một lượt; kỳ vọng 3 AUTO, 1 FACT và 1 POLICY.
-4. Mở Audit; giờ dòng tổng hợp và timeline phải trùng giờ Việt Nam thực tế, không còn lệch 14 giờ.
-5. Chạy public endpoint/security smoke; không upload lại ảnh holdout nếu chưa có quyền mới.
-6. Kiểm tra trên điện thoại thật qua 4G/5G: ba tab, form, kết quả, manager và Audit không tràn ngang hoặc nháy sai tab.
+Deployment `1f4b3c9` đã đạt health 5/5, Verify 5/5, security 6/6, workflow/undo 2/2, Audit giờ Việt Nam, viewport 390×844, build 0 warning/error, 122/122 test, EF sạch và package scan sạch.
+
+Gate P0 thực địa còn lại trước khi public URL là kiểm tra điện thoại thật qua 4G/5G: ba tab, form, kết quả, manager và Audit không tràn ngang hoặc nháy sai tab.
 
 Dừng freeze nếu health lỗi, Verify sai nhánh, Audit mất event, timestamp vẫn sai hoặc workflow approve/reject/undo sai.
 

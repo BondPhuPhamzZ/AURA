@@ -37,7 +37,7 @@ Key capabilities:
 
 ## Verified baseline
 
-Last live validation: 6 October 2026 on deployment `c382ce7`. A small Audit timezone fix was added afterward and must be republished before the final live URL is frozen.
+Last live validation: 6 October 2026 on deployment `1f4b3c9`.
 
 - Build: **0 warnings, 0 errors**.
 - Automated tests after holdout/live hardening: **122/122 passed**; they do not call the paid AI API.
@@ -46,11 +46,11 @@ Last live validation: 6 October 2026 on deployment `c382ce7`. A small Audit time
 - SmartASP post-holdout gate: home and health 5/5, DB/storage/migration, upload/security-negative checks, browser mobile UI and Verify OpenRouter 5/5 passed. Human workflow also passed 2/2 with synthetic fixtures: policy reject/undo and fact approve/undo.
 - Live concurrency: **2/2 + 5/5 completed**; end-to-end P95 **20.941 / 23.290 seconds**. The accepted timer includes antiforgery GET/setup/network, so it is not a pure POST SLO.
 - The one-time locked real holdout produced **10/15 raw decision matches** (one missed escalation, three over-escalations, zero system errors). A post-hoc review found one locked label error, giving an adjudicated analysis of 11/15 without changing raw evidence. The 28/30 field score measured only currency and total, not full extraction accuracy.
-- Holdout findings led to evidence contract v2: printed-final-total provenance, raw-date verification, second-level money/identifier guards, time normalization and expanded personal-item taxonomy. Contract v2 is deployed on `c382ce7`.
-- Post-deploy review found Audit times were rendered in the hosting server timezone although the database UTC values were correct. The candidate now converts explicitly to Vietnam time and has regression tests; publish/recycle and one Audit check remain before freeze.
+- Holdout findings led to evidence contract v2: printed-final-total provenance, raw-date verification, second-level money/identifier guards, time normalization and expanded personal-item taxonomy. Contract v2 is deployed on `1f4b3c9`.
+- The Audit timezone defect found on the earlier deployment is fixed and live-verified: new and historical events render in Vietnam time while UTC remains the database source of truth.
 - Isolated OpenRouter-to-Ollama fallback passed 1/1, but took **84.425 seconds**. Fallback therefore remains disabled in the official demo baseline.
 
-These are regression/staging results, not a claim of production accuracy. The official holdout is complete and its 15 images are no longer blind; a new blind claim requires unseen receipts. Accuracy claim and unattended user rollout remain NO-GO. Final demo gates are republishing the Audit timezone fix, three supervised user sessions, manual mobile/4G/no-flash evidence and three timed rehearsals.
+These are regression/staging results, not a claim of production accuracy. The official holdout is complete and its 15 images are no longer blind; a new blind claim requires unseen receipts. Accuracy claim and unattended user rollout remain NO-GO. The live technical baseline is ready for a supervised demo; remaining final gates are a real-phone 4G/5G check, three supervised user sessions and three timed rehearsals.
 
 ## Run locally
 
@@ -147,6 +147,7 @@ Stop the app with `Ctrl+C`. No database reset or LocalDB deletion is required.
 - [Optional local Ollama setup](AURA/docs/LOCAL_OLLAMA.md)
 - [Deployment decision](AURA/docs/DEPLOYMENT_DECISION_2026-10-02.md)
 - [Current roadmap and acceptance gates](AURA/docs/NEXT_IMPLEMENTATION_ROADMAP_2026-10-06.md)
+- [Manual phone, user-session and rehearsal gates](AURA/docs/MANUAL_FINAL_GATES_2026-10-06.md)
 
 ## Current limitations
 

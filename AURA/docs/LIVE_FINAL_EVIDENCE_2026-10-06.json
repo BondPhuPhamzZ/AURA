@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "observedDate": "2026-10-06",
+  "deploymentRevision": "1f4b3c9",
+  "baseUrl": "https://bondphupham-001-site1.ltempurl.com",
+  "result": "GO_TECHNICAL_BASELINE_SUPERVISED_DEMO",
+  "notClaims": [
+    "production-ready",
+    "accuracy-ready",
+    "unattended-user-rollout"
+  ],
+  "checks": {
+    "healthAndPublic": {
+      "passed": true,
+      "attempts": 5,
+      "homeHttpStatus": 200,
+      "healthStatus": "ok",
+      "databaseAvailable": true,
+      "databaseUpToDate": true,
+      "pendingMigrationCount": 0,
+      "storageAvailable": true,
+      "fallbackEnabled": false
+    },
+    "securityNegative": {
+      "passed": true,
+      "passedChecks": 6,
+      "totalChecks": 6,
+      "scope": [
+        "business-rules-not-public",
+        "appsettings-not-public",
+        "verify-requires-antiforgery-token",
+        "upload-requires-antiforgery-token",
+        "invalid-jpeg-signature",
+        "oversize-jpeg"
+      ]
+    },
+    "verifyHarness": {
+      "passed": true,
+      "passedCases": 5,
+      "totalCases": 5,
+      "actualSplit": {
+        "AUTO_APPROVE": 3,
+        "ESCALATE_FACT": 1,
+        "ESCALATE_POLICY": 1
+      },
+      "requestPrefixes": [
+        "018a03f5",
+        "3ef00103",
+        "c783807d",
+        "2b80bf9e",
+        "338e9d12"
+      ],
+      "latencyMs": [8049, 10220, 21684, 10346, 17187]
+    },
+    "humanWorkflow": {
+      "passed": true,
+      "passedCases": 2,
+      "totalCases": 2,
+      "fact": "ESCALATE_FACT -> MANUAL_REVIEW_ACCEPTED -> ESCALATE_FACT",
+      "policy": "ESCALATE_POLICY -> REJECTED_POLICY_EXCEPTION -> ESCALATE_POLICY"
+    },
+    "auditTimezone": {
+      "passed": true,
+      "businessTimezone": "Asia/Ho_Chi_Minh / SE Asia Standard Time",
+      "newEventDisplay": "06/10/2026 17:13:30",
+      "historicalEventChecked": true
+    },
+    "responsiveBrowser": {
+      "passed": true,
+      "viewport": "390x844",
+      "employeeHorizontalOverflow": false,
+      "managerHorizontalOverflow": false,
+      "auditHorizontalOverflow": false,
+      "physicalPhoneStillRequired": true
+    },
+    "offlineRegression": {
+      "passed": true,
+      "buildWarnings": 0,
+      "buildErrors": 0,
+      "testsPassed": 122,
+      "testsFailed": 0,
+      "pendingModelChanges": false,
+      "vulnerablePackagesReported": 0
+    }
+  },
+  "holdout": {
+    "rerunPerformed": false,
+    "reason": "The official 15-image set is no longer blind. A rerun would be post-holdout regression and requires renewed data-transfer authorization.",
+    "immutableRawDecisionMatches": "10/15",
+    "adjudicatedAnalysis": "11/15"
+  },
+  "remainingManualGates": [
+    "physical phone over 4G/5G",
+    "three supervised user sessions",
+    "three timed rehearsals"
+  ]
+}

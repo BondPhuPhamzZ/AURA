@@ -241,7 +241,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
   text(s, "Baseline và target chỉ điền sau khi có dữ liệu người dùng thật.", 635, 610, 589, 34, 15, C.amber, { align: "center", bold: true });
   footer(s, 3);
-  s.speakerNotes.textFrame.setText("Nguồn cập nhật 06/10/2026: source hậu holdout đạt 122/122 test offline. Live c382ce7 đạt health 5/5, security negative, Verify 5/5 và workflow fixture 2/2; bản vá hiển thị Audit UTC+7 còn cần publish lại. Official holdout thật một lượt: raw 10/15, adjusted 11/15 do một nhãn người sai, một missed escalation và không có system error. Đây là mẫu nhỏ, không phải accuracy production; ba user session vẫn là gate.");
+  s.speakerNotes.textFrame.setText("Nguồn cập nhật 06/10/2026: source hậu holdout đạt 122/122 test offline. Live 1f4b3c9 đạt health 5/5, security 6/6, Verify 5/5, workflow fixture 2/2 và Audit UTC+7; điện thoại thật 4G vẫn là gate trước public URL. Official holdout thật một lượt: raw 10/15, adjusted 11/15 do một nhãn người sai, một missed escalation và không có system error. Đây là mẫu nhỏ, không phải accuracy production; ba user session vẫn là gate.");
 }
 
 // Slide 4
