@@ -16,8 +16,10 @@ https://github.com/BondPhuPhamzZ/AURA
 
 ## Khó khăn / cần hỗ trợ
 
-Đội đang chờ BTC kết nối ba người dùng thực tế để chạy usability session có giám sát và chờ thông tin GPU 16 GB để benchmark Ollama. GPU không phải blocker của MVP vì OpenRouter là primary. Cần hỗ trợ lịch user/GPU đủ sớm; đội sẽ không tuyên bố production accuracy trước khi có user feedback, mobile 4G evidence và rehearsal cuối. Technical baseline đã sẵn sàng cho supervised demo.
+Đội đang chờ BTC/Kelly kết nối ba người dùng thực tế. BTC đã cung cấp lịch mượn máy RTX 5070 Ti 16 GB theo phiên Meet một giờ; đội đã chuẩn bị runbook synthetic-first cho Qwen3-VL-8B. GPU không phải blocker của MVP vì OpenRouter là primary. Điện thoại thật 4G/5G đã pass luồng chính; feedback alignment nút quản lý đã được sửa local và chờ republish/phone regression. Đội không tuyên bố production accuracy trước user feedback và rehearsal cuối.
 
 ## Bản cực ngắn để dán form
 
-Hoàn tất official holdout 15 hóa đơn thật (raw 10/15; adjusted 11/15 do một nhãn người sai, raw giữ nguyên) và triển khai contract v2. Bản live `1f4b3c9` hậu publish đạt health 5/5, security 6/6, Verify OpenRouter 5/5, workflow/undo 2/2, mobile-browser 390 px và Audit UTC→giờ Việt Nam; build 0 warning/error, 122/122 test, EF/package gate sạch. Technical baseline sẵn sàng cho supervised demo. Tiếp theo: điện thoại thật qua 4G/5G, ba user session và ba rehearsal. Đang chờ BTC hỗ trợ user thực tế và lịch GPU; GPU không chặn MVP.
+Hoàn tất official holdout 15 hóa đơn thật (raw 10/15; adjusted 11/15 do một nhãn người sai, raw giữ nguyên) và triển khai contract v2. Bản live `1f4b3c9` hậu publish đạt health 5/5, security 6/6, Verify OpenRouter 5/5, workflow/undo 2/2, mobile-browser 390 px và Audit UTC→giờ Việt Nam; build 0 warning/error, 122/122 test, EF/package gate sạch. Technical baseline sẵn sàng cho supervised demo. Phone 4G/5G đã hoàn tất; tiếp theo là republish bản vá P1, ba user session và ba rehearsal. GPU không chặn MVP.
+
+Cập nhật cuối ngày 06/10: phone 4G/5G đã pass health/Verify/workflow/Audit/refresh. Candidate sửa hai nút quản lý lệch cột đã pass visual local 390x844 và 122/122 test. Một lượt Ollama 4B post-policy trên judge synthetic đạt 13/15, missed TK-12, over TK-02, 0 system error, nên fallback vẫn tắt. Runbook GPU BTC đã khóa 8B Q4, context 16384/output 4096, DB/storage/port cô lập và không dùng receipt thật.

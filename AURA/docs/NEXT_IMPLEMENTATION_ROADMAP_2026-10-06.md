@@ -6,7 +6,7 @@ Cập nhật: 06/10/2026. Ưu tiên đóng rủi ro demo; không mở rộng tí
 
 Deployment `1f4b3c9` đã đạt health 5/5, Verify 5/5, security 6/6, workflow/undo 2/2, Audit giờ Việt Nam, viewport 390×844, build 0 warning/error, 122/122 test, EF sạch và package scan sạch.
 
-Gate P0 thực địa còn lại trước khi public URL là kiểm tra điện thoại thật qua 4G/5G: ba tab, form, kết quả, manager và Audit không tràn ngang hoặc nháy sai tab.
+Gate điện thoại thật qua 4G/5G đã pass luồng chính, Verify, workflow, Audit, refresh và receipt persistence. Feedback P1 duy nhất là hai nút quản lý lệch cột; candidate đã sửa local và cần republish + phone regression trước khi đóng hoàn toàn.
 
 Dừng freeze nếu health lỗi, Verify sai nhánh, Audit mất event, timestamp vẫn sai hoặc workflow approve/reject/undo sai.
 
@@ -16,12 +16,12 @@ Dừng freeze nếu health lỗi, Verify sai nhánh, Audit mất event, timestam
 2. Mỗi phiên lưu consent, thiết bị/mạng, task, thời gian hoàn thành, lỗi quan sát được, feedback do người dùng xác nhận và action item.
 3. Ưu tiên fixture tổng hợp hoặc ảnh đã che dữ liệu; không đưa dữ liệu nhạy cảm mới vào hệ thống khi chưa thống nhất cách xử lý.
 4. Chạy ba rehearsal 8–10 phút trên cùng commit freeze. Lượt đầu sửa flow, lượt hai sửa timing, lượt ba không đổi code.
-5. Chuẩn bị local fallback với database đã migrate và secret cục bộ; không bật Ollama fallback mặc định.
+5. Chuẩn bị local OpenRouter baseline với database đã migrate và secret cục bộ. Ollama 4B post-policy chỉ đạt 13/15 nên không bật fallback mặc định.
 6. Chuẩn bị theo [`ONSITE_FINAL_PLAYBOOK_2026-10-06.md`](ONSITE_FINAL_PLAYBOOK_2026-10-06.md): hai drill thay đổi có acceptance criteria/test/evidence, một kịch bản vòng bảng 8 phút và một bản nén Chung kết 5 phút.
 
 ## P2 sau khi P0 và P1 đạt
 
-- Benchmark GPU 16 GB: ghi GPU, VRAM, driver, OS, Ollama, model/quant/context, warm-up, concurrency, P50/P95, decision/field score, missed escalation và memory peak.
+- Benchmark GPU 16 GB theo `BTC_GPU_8B_RUNBOOK_2026-10-06.md`: synthetic-first, 8B Q4, context 16384/output 4096, ghi GPU/VRAM/driver/Ollama, warm-up, P50/P95, decision/field score, missed escalation và memory peak.
 - PDF/nhiều trang: cần rasterization an toàn, page limit, malware/zip-bomb guard, provenance theo trang và benchmark lại accuracy.
 - Auth/RBAC, object storage, retention/deletion, backup/restore, monitoring và rate limiting thuộc production backlog.
 

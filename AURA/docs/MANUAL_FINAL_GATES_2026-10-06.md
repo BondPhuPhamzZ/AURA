@@ -2,6 +2,12 @@
 
 Cập nhật: 06/10/2026. Technical baseline `1f4b3c9` đã đạt. Tài liệu này chỉ liệt kê phần cần người thật hoặc thiết bị thật trước khi public live URL trong README.
 
+## Trạng thái thực hiện ngày 06/10
+
+- Điện thoại thật 4G/5G: PASS health, Verify 3 AUTO + 2 escalation, workflow, Audit, refresh và mở lại ảnh. Feedback P1 là hai nút quản lý lệch cột; candidate đã sửa và kiểm local 390x844, chờ republish/phone regression.
+- Local Ollama 4B: pipeline hoạt động nhưng judge post-policy chỉ 13/15, missed TK-12 và over TK-02; không đủ cơ sở bật fallback mặc định.
+- Còn mở: ba user session do BTC/Kelly hỗ trợ và ba rehearsal trên commit freeze.
+
 ## 1 Điện thoại thật qua 4G hoặc 5G
 
 Chuẩn bị: một điện thoại, quay màn hình, tắt Wi-Fi, không mở dashboard API key hoặc thông tin SmarterASP.

@@ -2,6 +2,8 @@
 App_Data/receipts/*
 !App_Data/receipts/.gitkeep
 App_Data/fallback-evidence-*/
+App_Data/ollama-policy-regression-*/
+App_Data/gpu-evidence-*/
 
 # Build, IDE, publish and local runtime output.
 bin/

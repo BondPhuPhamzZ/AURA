@@ -109,13 +109,14 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 ### Provider Ollama local tùy chọn
 
 - Chọn bằng `Vision:Provider=Ollama`; quay lại baseline bằng `Vision:Provider=OpenRouter`.
-- Model mặc định local là `qwen3-vl:4b-instruct`; một request tại một thời điểm, context 8192 và timeout 180 giây.
+- Model mặc định local là `qwen3-vl:4b-instruct`; một request tại một thời điểm, context 8192 và timeout 180 giây. Đây là cấu hình máy 4 GB lịch sử, không còn đủ cho mọi semantic repair của evidence contract v2.
 - Fallback mặc định tắt để benchmark không trộn provider. Khi demo cần đường dự phòng, bật `Vision:FallbackEnabled=true`, giữ `Vision:Provider=OpenRouter` và đặt `Vision:FallbackProvider=Ollama` sau khi smoke Ollama.
 - Fallback chỉ chạy một lần cho lỗi hạ tầng đủ điều kiện. Lỗi schema, semantic, truncated response hoặc invalid request vẫn chuyển kiểm tra thủ công.
 - Sau JSON Schema, backend kiểm tra ngữ nghĩa tiền VND, loại chứng từ và các identifier. Dữ kiện mâu thuẫn được đọc lại đúng một lần; vẫn sai thì chuyển `ESCALATE_FACT`, không tự đoán hoặc tự nhân số tiền.
 - Hóa đơn giấy phải có ít nhất một hàng hóa/dịch vụ đọc được mới có thể tự duyệt. Nếu vùng món hàng bị che, cắt, mờ hoặc model trả `lineItems=[]`, backend repair đúng một lần rồi fail-safe `ESCALATE_FACT`; không được suy ra “không có hạng mục cấm”.
 - `/healthz` chỉ đạt `ok` khi policy, cấu hình AI, database, migration và thư mục receipt sẵn sàng; endpoint không gọi provider nên không thay cho một ảnh smoke test.
-- Baseline năm fixture ngày 27/09/2026 từng đạt 25/25 bằng Ollama 4B. Trên judge set mở rộng 15 ca ngày 29/09/2026, Ollama đạt 14/15 và bỏ sót escalation TK-12, trong khi OpenRouter đạt 15/15. Vì vậy Ollama chỉ là đường offline/manual có giới hạn; không dùng kết quả năm fixture để tuyên bố độ chính xác thực tế hoặc bật auto-fallback toàn cục.
+- Baseline năm fixture ngày 27/09/2026 từng đạt 25/25 bằng Ollama 4B. Trên judge set mở rộng 15 ca ngày 29/09, Ollama đạt 14/15 và bỏ sót TK-12. Lượt post-policy/contract v2 ngày 06/10 đạt 13/15: vẫn missed TK-12, thêm over TK-02 do repair vượt context/output, 0 system error. Vì vậy Ollama 4B chỉ là đường offline/manual có giới hạn; không bật auto-fallback toàn cục.
+- Runbook GPU BTC dùng `qwen3-vl:8b-instruct-q4_K_M`, `ContextTokens=16384`, `MaxOutputTokens=4096` trên database test và synthetic data. Đây là benchmark mới; không được suy ra PASS từ cấu hình trước khi chạy. Xem `docs/BTC_GPU_8B_RUNBOOK_2026-10-06.md`.
 - Xem hướng dẫn cài, giới hạn RAM và rollback tại `docs/LOCAL_OLLAMA.md`.
 
 ### Khi OpenRouter/Qwen trả lỗi

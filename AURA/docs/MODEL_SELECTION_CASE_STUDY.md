@@ -19,7 +19,7 @@ AURA cần đọc một ảnh hóa đơn/chứng từ và trả dữ kiện có 
 
 | Phương án | Điểm mạnh | Hạn chế | Quyết định |
 |---|---|---|---|
-| Qwen3-VL-4B-Instruct qua Ollama local | Không tính phí theo request; dữ liệu ở máy local; official Verify và upload nhỏ ổn định; judge set đạt 73/75 field | Judge set chỉ đạt 14/15 quyết định, bỏ sót TK-12; P95 58,318 giây và không phù hợp 4–5 request đồng thời trên RTX 3050 4 GB | **Giữ tùy chọn offline/manual fallback, chưa bật auto-fallback** |
+| Qwen3-VL-4B-Instruct qua Ollama local | Không tính phí theo request; dữ liệu ở máy local; official Verify và upload nhỏ ổn định | Judge lịch sử 14/15; post-policy v2 ngày 06/10 chỉ 13/15, vẫn missed TK-12 và thêm over TK-02; P95 mới 136,758 giây trên RTX 3050 4 GB | **Giữ tùy chọn offline/manual, không bật auto-fallback** |
 | Qwen3-VL-8B-Instruct qua OpenRouter | Structured output; judge set đạt 15/15 quyết định, không missed escalation; P95 16,459 giây; concurrency 5 request hoàn tất 5/5 | 70/75 field; dữ liệu đi qua dịch vụ ngoài; phụ thuộc Internet, credit và provider | **Chọn làm demo primary** |
 | Model vision cỡ rất lớn (ví dụ 100B+) | Năng lực tổng quát cao | Compute, giá và độ trễ không tương xứng tác vụ OCR; khó biện minh trong bối cảnh doanh nghiệp | Không chọn |
 
@@ -27,7 +27,7 @@ AURA cần đọc một ảnh hóa đơn/chứng từ và trả dữ kiện có 
 
 Cấu hình mặc định vẫn là `Vision:Provider=OpenRouter` với `qwen/qwen3-vl-8b-instruct`. `ConfiguredVisionExtractor` cho phép đổi sang Ollama hoặc bật Ollama làm fallback có kiểm soát. `ReceiptExtractionContract` giữ cùng prompt, schema và parser; audit ghi provider thực sự phục vụ. Adapter local không đồng nghĩa model 4B đã đạt chất lượng trên dữ liệu thực.
 
-Không mô tả 8B hay 4B là “đã chính xác trong thực tế”. Trên judge set 15 ca tổng hợp, OpenRouter đạt 15/15 quyết định và 70/75 field; Ollama đạt 14/15 quyết định và 73/75 field. Ollama đọc metadata tốt hơn một chút nhưng bỏ sót một escalation, nên safety gate ưu tiên OpenRouter. Xem số đo, sai lệch và giới hạn tại [live validation](LIVE_VALIDATION_2026-09-29.md).
+Không mô tả 8B hay 4B là “đã chính xác trong thực tế”. Benchmark lịch sử trên judge set 15 ca tổng hợp: OpenRouter đạt 15/15 quyết định và 70/75 field; Ollama 4B đạt 14/15 và 73/75. Sau evidence contract v2, lượt Ollama 4B ngày 06/10 đạt 13/15 và 56/75 field, vẫn bỏ sót TK-12. Vì missed escalation quan trọng hơn metadata, safety gate tiếp tục ưu tiên OpenRouter; 8B local trên GPU BTC phải được đo như cấu hình mới.
 
 ## 5. Bộ kiểm thử bàn giao
 

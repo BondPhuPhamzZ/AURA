@@ -7,7 +7,7 @@ Cập nhật: 02/10/2026. Tùy chọn này bổ sung provider local để benchm
 - Windows 10 22H2 trở lên, .NET 8 và SQL Server LocalDB như luồng local hiện tại.
 - RAM 16 GB: bắt đầu với `qwen3-vl:4b-instruct` Q4_K_M, một request tại một thời điểm.
 - Ổ đĩa trống: dành ít nhất 8 GB cho model, cache và log. Gói model Q4 hiện khoảng 3,3 GB nhưng RAM runtime lớn hơn dung lượng file.
-- `ContextTokens=8192`, `MaxOutputTokens=2048`, `KeepAlive=5m`. Nếu máy swap hoặc thiếu RAM, giảm context còn 4096 trước khi đổi model nhỏ hơn.
+- Cấu hình 4 GB lịch sử là `ContextTokens=8192`, `MaxOutputTokens=2048`, `KeepAlive=5m`. Evidence contract v2 ngày 06/10 cho thấy một số repair có thể vượt cả context 8192 hoặc output cap 2048; không tăng giữa một batch đang đo. Với GPU 16 GB, benchmark riêng 8B bằng context 16384/output 4096 theo runbook BTC. Nếu thiếu VRAM, giảm context có ghi nhận rồi chạy batch mới từ đầu.
 - Không mở port 11434 ra Internet. AURA chỉ chấp nhận HTTP Ollama trên loopback hoặc HTTPS khi cấu hình endpoint khác.
 
 Ollama là lựa chọn local cho một người dùng và demo. vLLM chỉ nên cân nhắc khi có NVIDIA GPU server và cần throughput/concurrency cao.
@@ -106,6 +106,8 @@ Mở `/healthz`. Kỳ vọng:
 7. Chỉ dùng Ollama cho demo chính khi đạt cổng benchmark trong `docs/MEASUREMENT_PLAN.md`.
 
 Kết quả kiểm soát ngày 27/09/2026 trên build semantic-hardening: năm batch liên tiếp đều đạt 5/5, tức 25/25 quyết định đúng trên 5 fixture tổng hợp; upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Ba batch có đo chi tiết mất khoảng 303-304 giây mỗi batch; TC-02 cần một lượt repair nên khoảng 100 giây và các ca còn lại khoảng 45-55 giây. Hai batch xác nhận bổ sung chưa tổng hợp latency. Đây là bằng chứng pipeline có kiểm soát, chưa phải accuracy trên hóa đơn thật độc lập.
+
+Post-policy/contract v2 ngày 06/10 chạy đúng một lượt judge set synthetic 15 ca, database/storage/port riêng và fallback tắt. Kết quả 13/15: 1 missed escalation TK-12, 1 over-escalation TK-02, 0 system error; P50/P95 89,728/136,758 giây. TK-12 vẫn đọc sai dòng tổng bị mờ thành tổng cuối nhìn thấy; TK-02 fail-safe vì repair vượt resource envelope. Do đó 4B vẫn không đạt safety gate để bật fallback tự động.
 
 ## 7. Dừng phiên test và tắt máy an toàn
 
