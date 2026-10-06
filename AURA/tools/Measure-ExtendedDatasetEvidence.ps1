@@ -45,6 +45,16 @@ $manifestById = @{}
 foreach ($testCase in $manifestCases) {
     $manifestById[[string]$testCase.id] = $testCase
 }
+$sourceById = @{}
+$sourceManifestProperty = $manifest.PSObject.Properties['sourceManifest']
+if ($null -ne $sourceManifestProperty -and
+    -not [string]::IsNullOrWhiteSpace([string]$sourceManifestProperty.Value)) {
+    $sourceManifestPath = Join-Path (Split-Path -Parent $resolvedManifest) ([string]$sourceManifestProperty.Value)
+    $sourceManifest = Read-Utf8Json $sourceManifestPath
+    foreach ($sourceCase in @($sourceManifest.cases)) {
+        $sourceById[[string]$sourceCase.id] = $sourceCase
+    }
+}
 
 $caseReports = [Collections.Generic.List[object]]::new()
 $correctTotal = 0
@@ -57,8 +67,21 @@ foreach ($result in $results) {
     }
 
     $testCase = $manifestById[$caseId]
-    $expectedFacts = $testCase.expectedFacts
-    if ($null -eq $expectedFacts) { $expectedFacts = $testCase.expected_facts }
+    $expectedFactsProperty = $testCase.PSObject.Properties['expectedFacts']
+    if ($null -eq $expectedFactsProperty) {
+        $expectedFactsProperty = $testCase.PSObject.Properties['expected_facts']
+    }
+    if ($null -eq $expectedFactsProperty -and $sourceById.ContainsKey($caseId)) {
+        $sourceCase = $sourceById[$caseId]
+        $expectedFactsProperty = $sourceCase.PSObject.Properties['expectedFacts']
+        if ($null -eq $expectedFactsProperty) {
+            $expectedFactsProperty = $sourceCase.PSObject.Properties['expected_facts']
+        }
+    }
+    if ($null -eq $expectedFactsProperty -or $null -eq $expectedFactsProperty.Value) {
+        throw "Manifest case '$caseId' has neither expectedFacts nor expected_facts."
+    }
+    $expectedFacts = $expectedFactsProperty.Value
     $actualFacts = if ([string]::IsNullOrWhiteSpace([string]$result.ActualFactsJson)) {
         $null
     } else {
@@ -102,7 +125,7 @@ foreach ($result in $results) {
 $report = [pscustomobject]@{
     SchemaVersion = 1
     Purpose = 'Offline UTF-8-safe field re-evaluation; no HTTP or AI request is performed.'
-    MeasuredAtUtc = [DateTimeOffset]::UtcNow.ToString('O')
+    MeasuredAtUtc = [DateTime]::UtcNow.ToString('O', [Globalization.CultureInfo]::InvariantCulture)
     ResultsPath = $resolvedResults
     ResultsSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $resolvedResults).Hash
     ManifestPath = $resolvedManifest

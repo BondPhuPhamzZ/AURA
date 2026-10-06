@@ -10,16 +10,17 @@ Cập nhật: 07/10/2026. Dùng file này làm điểm bắt đầu; tài liệu
 4. `10_VISION_INPUT_AND_OFFLOAD_GUIDE_2026-10-07.md` — phân biệt ảnh, context, output cap và CPU/GPU off-load.
 5. `11_LIVE_REGRESSION_V31_RESULT_2026-10-07.md` — live 13/15 exact, 0 missed/system error, field 140/146 và phân tích mismatch.
 6. `12_LIVE_POSTPUBLISH_VERIFY_WORKFLOW_2026-10-07.md` — Verify 5/5, workflow forward/accept/undo, UI smoke và vị trí evidence.
-7. `07_ONSITE_FINAL_PLAYBOOK_2026-10-06.md` — lịch 17/10, chiến lược bốn giờ, bản đồ code, kế hoạch ôn và demo 15 phút.
-8. `06_MANUAL_FINAL_GATES_2026-10-06.md` — checklist điện thoại thật, user session, rehearsal và readiness onsite.
-9. `demo_setup/DEMO_COMMANDS_AND_TEST_PLAN_2026-10-06.md` — publish, smoke, rehearsal, local fallback và checklist setup onsite.
-10. `presentation/AURA_FINAL_7_MINUTE_PITCH_AND_JUDGE_QA_2026-10-06.md` — script vòng bảng, bản nén Chung kết và câu hỏi BGK.
-11. `02_BLIND_HOLDOUT_LOCKING_AND_GROUND_TRUTH_2026-10-05.md` — phương pháp khóa nhãn/hash; dùng để giải thích, vì official holdout đã chạy xong.
-12. `09_REGRESSION_TEST_KIT_V3_LIVE_RESULT_2026-10-06.md` — raw v3 11/15, phân tích bốn mismatch và ranh giới claim.
-13. `demo_setup/REGRESSION_TEST_KIT_V3_RUNBOOK_2026-10-06.md` — nguồn gốc ảnh, hash lock, v3 bất biến và v3.1.
-14. `explain/AURA_PROJECT_ARCHITECTURE_GUIDE.md` và `explain/AURA_TESTING_DATA_AND_IMPLEMENTATION_WORKFLOW_GUIDE.md` — tài liệu học sâu; số baseline cũ trong đó là lịch sử.
-15. `08_OLLAMA_POST_POLICY_REGRESSION_2026-10-06.md` — kết quả mới nhất 4B 13/15 và lý do chưa bật fallback.
-16. `demo_setup/BTC_GPU_8B_RUNBOOK_2026-10-06.md` — lệnh setup và agenda một giờ trên máy BTC.
+7. `13_OPENROUTER_POSTCONTRACT_V2_RESULT_2026-10-07.md` — v2 hậu-contract 14/15, TK-12 blur và vì sao v3.1 là gate hiện hành.
+8. `07_ONSITE_FINAL_PLAYBOOK_2026-10-06.md` — lịch 17/10, chiến lược bốn giờ, bản đồ code, kế hoạch ôn và demo 15 phút.
+9. `06_MANUAL_FINAL_GATES_2026-10-06.md` — checklist điện thoại thật, user session, rehearsal và readiness onsite.
+10. `demo_setup/DEMO_COMMANDS_AND_TEST_PLAN_2026-10-06.md` — publish, smoke, rehearsal, local fallback và checklist setup onsite.
+11. `presentation/AURA_FINAL_7_MINUTE_PITCH_AND_JUDGE_QA_2026-10-06.md` — script vòng bảng, bản nén Chung kết và câu hỏi BGK.
+12. `02_BLIND_HOLDOUT_LOCKING_AND_GROUND_TRUTH_2026-10-05.md` — phương pháp khóa nhãn/hash; dùng để giải thích, vì official holdout đã chạy xong.
+13. `09_REGRESSION_TEST_KIT_V3_LIVE_RESULT_2026-10-06.md` — raw v3 11/15, phân tích bốn mismatch và ranh giới claim.
+14. `demo_setup/REGRESSION_TEST_KIT_V3_RUNBOOK_2026-10-06.md` — nguồn gốc ảnh, hash lock, v3 bất biến và v3.1.
+15. `explain/AURA_PROJECT_ARCHITECTURE_GUIDE.md` và `explain/AURA_TESTING_DATA_AND_IMPLEMENTATION_WORKFLOW_GUIDE.md` — tài liệu học sâu; số baseline cũ trong đó là lịch sử.
+16. `08_OLLAMA_POST_POLICY_REGRESSION_2026-10-06.md` — kết quả mới nhất 4B 13/15 và lý do chưa bật fallback.
+17. `demo_setup/BTC_GPU_8B_RUNBOOK_2026-10-06.md` — lệnh setup và agenda một giờ trên máy BTC.
 
 ## Baseline nhớ khi trình bày
 
@@ -33,6 +34,7 @@ Cập nhật: 07/10/2026. Dùng file này làm điểm bắt đầu; tài liệu
 | Holdout adjusted | 11/15 vì BH-04 có nhãn người sai; raw không đổi |
 | Provider | OpenRouter/Qwen3-VL-8B primary; Ollama 4B post-policy 13/15, fallback tắt |
 | Test Kit v3 raw | 11/15 decision, 142/145 field, 0 system error; raw bất biến |
+| Test Kit v2 hậu-contract | 14/15 decision, missed TK-12, 0 over/system error, field 69/75; raw bất biến |
 | Chưa đóng | 3 users, 3 rehearsals, GPU 8B benchmark cùng v3.1; fallback vẫn tắt |
 
 ## Một câu mô tả sản phẩm
@@ -45,6 +47,7 @@ AURA là trợ lý thẩm định hoàn ứng: VLM chỉ đọc dữ kiện có 
 - Không nói “holdout 73,33% = production accuracy”. Mẫu chỉ có 15 ca và adjusted view không thay raw.
 - Không gọi 15 ảnh cũ là blind nếu chạy lại; chúng chỉ còn là regression set.
 - Không nói fallback Ollama đang bật hoặc an toàn tương đương OpenRouter.
+- Không nói OpenRouter hậu-contract v2 vẫn 15/15; kết quả mới là 14/15 do TK-12.
 - Không nói hệ thống đã có PDF, RBAC production, antivirus, retention hoặc object storage.
 
 ## Khi nào được quay video/public live URL

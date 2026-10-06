@@ -19,6 +19,12 @@ Runner được vá đọc UTF-8 tường minh; full suite 142/142 pass. Tái x�
 UI desktop/mobile 390x844 pass smoke, tên mặc định `Gia Phú`, console sạch. Raw evidence/hash
 v3.1 giữ nguyên.
 
+Đội cũng hoàn tất đúng một batch OpenRouter hậu-contract còn thiếu cho Test Kit v2 judge set:
+15/15 request hoàn tất, 14/15 exact, 1 missed TK-12, 0 over/system error, field 69/75 và không
+dùng fallback. TK-12 là fixture blur cũ vẫn bị VLM khẳng định đọc được tổng tiền; raw được giữ
+nguyên và không sửa policy theo heuristic ảnh mờ. Safety gate hiện hành vẫn là v3.1 với physical
+ink loss và 0 missed escalation.
+
 ## Link GitHub
 
 https://github.com/BondPhuPhamzZ/AURA
@@ -36,4 +42,5 @@ v3.1 và guard giữ dấu tiếng Việt (`Bìa`/`Bia`). Sau publish, health 5/
 v3.1 15/15 completed (13/15 exact, 0 missed, 0 system error, field 140/146), Verify 5/5 và
 workflow duyệt/hoàn tác có Audit đều pass. UI desktop/mobile 390x844 và console pass smoke;
 142/142 test pass. Tiếp theo: benchmark Ollama 8B cùng v3.1 trên GPU BTC, 3 user session và
-3 rehearsal; fallback vẫn tắt.
+3 rehearsal; fallback vẫn tắt. OpenRouter hậu-contract v2 đạt 14/15 (missed TK-12 blur cũ,
+0 system error), nên đội giữ raw và dùng v3.1 làm safety gate hiện hành.

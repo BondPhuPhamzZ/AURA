@@ -11,7 +11,9 @@ off-load/context/output cap. Bản mới đã publish; health/public endpoint/se
 v3.1 đều hoàn tất. Live Verify tái xác nhận 5/5 và workflow thật đã đi qua chuyển quản lý,
 đồng ý duyệt rồi hoàn tác về đúng `ESCALATE_FACT`. Kiểm tra trực quan desktop/mobile 390x844
 không thấy vỡ layout; console không có warning/error. Sau các guard runner, full offline suite
-là 142/142; EF không có pending model change.
+là 142/142; EF không có pending model change. Batch OpenRouter hậu-contract còn thiếu của v2
+đã chạy đúng một lần: 14/15 exact, 1 missed TK-12, 0 over/system error, field 69/75. Kết quả
+không còn tối ưu 15/15 như lịch sử và được giữ nguyên; v3.1 vẫn là safety gate hiện hành.
 
 ## Trạng thái kiểm chứng
 
@@ -28,6 +30,7 @@ là 142/142; EF không có pending model change.
 | Raw holdout | Giữ 10/15 raw, 11/15 adjudicated; không chạy lại như blind |
 | Raw Test Kit v3 | Giữ 11/15 decision, 142/145 field, 0 system error |
 | V3.1 live | 15/15 completed; 13/15 exact; 0 missed; 0 system error; field UTF-8-safe 140/146 |
+| V2 live hậu-contract | 15/15 completed; 14/15 exact; missed TK-12; 0 over/system error; field 69/75 |
 | Verify live hậu publish | 5/5: 3 AUTO + FACT + POLICY; 0 system error |
 | Human workflow | FACT → forward → `MANUAL_REVIEW_ACCEPTED` → UNDO → FACT; Audit lưu vết |
 | UI smoke | Desktop reviewer và mobile 390x844 applicant/reviewer/audit pass; mặc định `Gia Phú`; console sạch |
@@ -35,7 +38,8 @@ là 142/142; EF không có pending model change.
 
 ## Gate kế tiếp
 
-1. Giữ raw batch v3.1 và báo cáo hai mismatch R3-03/R3-15; không chạy lại để làm đẹp 13/15.
+1. Giữ raw v2/v3/v3.1. Báo cáo TK-12 v2 là fixture blur còn đọc/suy đoán được; không sửa policy
+   hoặc chạy lại để làm đẹp. Dùng physical ink-loss của v3.1 làm safety regression hiện hành.
 2. GPU BTC: benchmark Ollama-only 8B bằng đúng v3.1, context 16384/output 4096, ghi `ollama ps`, `nvidia-smi`,
    token/duration và decision/field metrics; không bật fallback trước khi đạt gate.
 3. Tổ chức ba user session và ba rehearsal trên cùng commit freeze. Không cần chạy lại official
@@ -44,4 +48,5 @@ là 142/142; EF không có pending model change.
 ## Ranh giới claim
 
 Có thể nói policy C# là authority tất định, 142 code test pass và live v3.1 đạt safety gate
-0 missed/0 system error. Không nói 13/15 là production accuracy hoặc Ollama tương đương OpenRouter.
+0 missed/0 system error. Phải nói rõ v2 hậu-contract chỉ đạt 14/15 với một missed TK-12.
+Không nói 13/15 là production accuracy hoặc Ollama tương đương OpenRouter.

@@ -228,8 +228,14 @@ public sealed class TestKitIntegrityTests
         Assert.Contains("function Read-Utf8Json", runner, StringComparison.Ordinal);
         Assert.Contains("[IO.File]::ReadAllText", runner, StringComparison.Ordinal);
         Assert.DoesNotContain("$manifest = Get-Content", runner, StringComparison.Ordinal);
-        Assert.True(File.Exists(Path.Combine(
-            ProjectRoot, "tools", "Measure-ExtendedDatasetEvidence.ps1")));
+        var measurementPath = Path.Combine(
+            ProjectRoot, "tools", "Measure-ExtendedDatasetEvidence.ps1");
+        Assert.True(File.Exists(measurementPath));
+        var measurement = File.ReadAllText(measurementPath);
+        Assert.Contains("PSObject.Properties['expectedFacts']", measurement, StringComparison.Ordinal);
+        Assert.Contains("PSObject.Properties['expected_facts']", measurement, StringComparison.Ordinal);
+        Assert.Contains("PSObject.Properties['sourceManifest']", measurement, StringComparison.Ordinal);
+        Assert.Contains("[DateTime]::UtcNow", measurement, StringComparison.Ordinal);
     }
 
     [Fact]
