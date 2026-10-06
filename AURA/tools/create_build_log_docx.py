@@ -268,8 +268,8 @@ add_bullet(document, "Giữ EF Core 8.0.31: NuGet không báo advisory; không n
 add_heading(document, "6 Bài học và bước tiếp theo")
 add_body(
     document,
-    "Live c382ce7 đã pass health 5 trên 5, security negative, upload guard và Verify 5 trên 5; UI mobile, manager và audit "
-    "render đúng. Kiểm tra phát hiện giờ Audit phụ thuộc timezone máy host; source đã chuyển UTC sang Việt Nam rõ ràng và "
+    "Live c382ce7 đã pass health 5 trên 5, security negative, upload guard, Verify 5 trên 5 và workflow fixture 2 trên 2; "
+    "UI mobile, manager và audit render đúng. Kiểm tra phát hiện giờ Audit phụ thuộc timezone máy host; source đã chuyển UTC sang Việt Nam rõ ràng và "
     "122 test pass, còn cần publish/recycle rồi xác nhận lại. Sau đó mới làm ba user session, mobile 4G và ba rehearsal. "
     "Dữ liệu cá nhân thật không được đưa vào Git.",
 )

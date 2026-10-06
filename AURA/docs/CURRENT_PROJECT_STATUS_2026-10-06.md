@@ -4,20 +4,21 @@ Cập nhật: 06/10/2026. Đây là nguồn trạng thái hiện hành; các fil
 
 ## Kết luận điều hành
 
-AURA là **MVP demo candidate có điều kiện**, chưa phải production-ready hoặc accuracy-ready. Official holdout 15 hóa đơn thật đã hoàn tất một lượt và dẫn tới evidence contract v2. Deployment `c382ce7` đã pass health 5/5, security negative, upload guard, UI browser mobile và Verify OpenRouter 5/5. Kiểm tra hậu publish phát hiện một lỗi P1 ở phần hiển thị giờ Audit do timezone máy host; dữ liệu UTC không hỏng. Candidate source đã sửa về giờ Việt Nam và đạt 122/122 test, nhưng cần publish/recycle lại rồi xác nhận Audit trước khi freeze.
+AURA là **MVP demo candidate có điều kiện**, chưa phải production-ready hoặc accuracy-ready. Official holdout 15 hóa đơn thật đã hoàn tất một lượt và dẫn tới evidence contract v2. Deployment `c382ce7` đã pass health 5/5, security negative, upload guard, UI browser mobile, Verify OpenRouter 5/5 và workflow fixture 2/2. Kiểm tra hậu publish phát hiện một lỗi P1 ở phần hiển thị giờ Audit do timezone máy host; dữ liệu UTC không hỏng. Candidate source đã sửa về giờ Việt Nam và đạt 122/122 test, nhưng cần publish/recycle lại rồi xác nhận Audit trước khi freeze.
 
 ## Baseline đã kiểm
 
 | Hạng mục | Trạng thái |
 |---|---|
 | Deployed revision | `c382ce7` — contract v2 đã live |
-| Candidate kế tiếp | code fix `d9d357c` trên latest `master`; publish toàn bộ latest `master` |
+| Candidate kế tiếp | latest `master`, có bản vá timezone từ `d9d357c`; publish toàn bộ revision được báo ở lần bàn giao này |
 | Release build | 0 warning, 0 error |
 | Automated tests | 122/122 pass; offline, không gọi API AI |
 | EF model | Không có pending model change |
 | NuGet vulnerability scan | Không có advisory cho app/test tại thời điểm kiểm |
 | Live health | 5/5 `ok`; DB/storage true; pending migration 0 |
 | Live Verify | 5/5: 3 AUTO + FACT + POLICY |
+| Live human workflow | 2/2 bằng fixture tổng hợp: policy reject/undo và fact approve/undo |
 | Live security negative | 6/6 nếu tính 2 upload guard + 4 route/CSRF checks |
 | Official holdout raw | 10/15; missed 1; over 3; system error 0 |
 | Holdout adjusted | 11/15; missed 1/10; over 2/5; raw không đổi |

@@ -22,6 +22,7 @@ Thư mục local, không commit ảnh hay secret:
 | UI mobile browser | PASS trong viewport kiểm tra | Không vỡ ngang; ba tab, form upload, Quản lý và Audit render được; mặc định `Gia Phú` |
 | Verify thật qua OpenRouter | PASS 5/5 | TC01–03 AUTO, TC04 FACT, TC05 POLICY; contract-v2 hiển thị raw date và printed-total provenance |
 | Audit persistence | PASS | Năm event Verify mới tồn tại và xuất hiện trong Audit sau điều hướng |
+| Human workflow bằng fixture tổng hợp | PASS 2/2 | POLICY: chuyển tiếp → từ chối → Audit → hoàn tác; FACT: chuyển tiếp → duyệt → Audit → hoàn tác. Trạng thái cuối trở lại đúng trạng thái escalation |
 | Audit business timezone | FAIL trên deployment, FIXED trong source | DB UTC đúng; live dùng timezone host. Candidate chuyển rõ sang UTC+7, có unit test |
 | Offline regression | PASS | Build Release 0 warning/0 error; 122/122 test; EF model clean |
 | Package advisory | PASS | App và test project không có package bị NuGet báo vulnerable tại thời điểm kiểm tra |
@@ -35,6 +36,8 @@ Mã năm request Verify live mới nhất:
 - `0089a999`: TC05 `VERIFY_ESCALATE_POLICY`.
 
 Latency quan sát lần lượt khoảng 5,415; 14,242; 9,197; 8,179; 13,797 giây. Đây là một lần smoke, không phải SLO thống kê.
+
+Workflow live sử dụng đúng hai fixture server-owned ở trên, không upload lại hóa đơn thật. Ca `0089a999` chuyển `ESCALATE_POLICY → REJECTED_POLICY_EXCEPTION → ESCALATE_POLICY`; ca `a7173375` chuyển `ESCALATE_FACT → MANUAL_REVIEW_ACCEPTED → ESCALATE_FACT`. Audit và undo đều bền vững qua điều hướng. Trong lượt browser tự động không quan sát thấy nháy sang tab upload, nhưng vẫn giữ kiểm tra điện thoại thật trong final gate.
 
 ## 3. Những gì không được chạy lại
 
