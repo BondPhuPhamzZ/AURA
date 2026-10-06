@@ -16,8 +16,10 @@ identifier fail-safe, không phải policy missed escalation. Xem `LIVE_REGRESSI
 
 ## P1 — demo và người dùng
 
+Live Verify 5/5, workflow forward/accept/undo và desktop/mobile UI smoke đã pass sau publish.
+
 1. Ba user session có consent, task, thời gian, lỗi quan sát và feedback do user xác nhận.
-2. Ba rehearsal cùng commit freeze; không đổi code ở lượt cuối.
+2. Ba rehearsal cùng commit freeze; không đổi code ở lượt cuối và không chạy lại holdout/v3.1.
 3. Chỉ public URL dưới nhãn supervised MVP/demo; không quảng bá unattended production service.
 
 ## P2 — sau Chung kết

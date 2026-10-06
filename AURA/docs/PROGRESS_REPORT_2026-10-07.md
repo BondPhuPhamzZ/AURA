@@ -14,7 +14,10 @@ byte ảnh, không resize ở ứng dụng. Backend đã log token/duration Open
 đúng nguyên nhân context/output/off-load. Sau publish, health 5/5 và security negative 4/4 pass.
 Live v3.1 hoàn tất 15/15 request: 13/15 exact decision, 0 missed escalation, 0 system error,
 fallback 0 và field UTF-8-safe 140/146. Hai mismatch đều fail-safe do model lặp identifier.
-Runner được vá đọc UTF-8 tường minh; full suite 141/141 pass. Raw evidence/hash giữ nguyên.
+Runner được vá đọc UTF-8 tường minh; full suite 142/142 pass. Tái xác nhận live Verify 5/5,
+0 system error; workflow FACT chuyển quản lý, duyệt rồi UNDO trở lại FACT và Audit giữ đủ vết.
+UI desktop/mobile 390x844 pass smoke, tên mặc định `Gia Phú`, console sạch. Raw evidence/hash
+v3.1 giữ nguyên.
 
 ## Link GitHub
 
@@ -29,8 +32,8 @@ Ollama 8B riêng với context 16384/output 4096; fallback vẫn tắt cho tới
 ## Bản ngắn để dán form
 
 Đã harden policy C# cho nhóm vé xem phim/rạp chiếu phim, thêm test thực thi ground truth R3-12
-v3.1 và guard giữ dấu tiếng Việt (`Bìa`/`Bia`). Bổ sung log token/duration để đo đúng ảnh,
-context, output cap và CPU/GPU off-load. Sau publish, health 5/5, security 4/4 và live v3.1
-15/15 completed; 13/15 exact, 0 missed escalation, 0 system error, field 140/146. Runner UTF-8
-đã sửa và 141/141 test pass. Tiếp theo: benchmark Ollama 8B cùng v3.1 trên GPU BTC và tổ chức
-3 user session; fallback vẫn tắt.
+v3.1 và guard giữ dấu tiếng Việt (`Bìa`/`Bia`). Sau publish, health 5/5, security 4/4, live
+v3.1 15/15 completed (13/15 exact, 0 missed, 0 system error, field 140/146), Verify 5/5 và
+workflow duyệt/hoàn tác có Audit đều pass. UI desktop/mobile 390x844 và console pass smoke;
+142/142 test pass. Tiếp theo: benchmark Ollama 8B cùng v3.1 trên GPU BTC, 3 user session và
+3 rehearsal; fallback vẫn tắt.

@@ -232,6 +232,19 @@ public sealed class TestKitIntegrityTests
             ProjectRoot, "tools", "Measure-ExtendedDatasetEvidence.ps1")));
     }
 
+    [Fact]
+    public void Live_verify_workflow_runner_preserves_raw_results_when_resumed()
+    {
+        var runnerPath = Path.Combine(ProjectRoot, "tools", "Invoke-LiveVerifyWorkflowSmoke.ps1");
+        Assert.True(File.Exists(runnerPath));
+
+        var runner = File.ReadAllText(runnerPath);
+        Assert.Contains("Test-Path -LiteralPath $verifyResultsPath", runner, StringComparison.Ordinal);
+        Assert.Contains("ResumedFromExistingRawResults", runner, StringComparison.Ordinal);
+        Assert.Contains("if ($verifyWasResumed) { $null }", runner, StringComparison.Ordinal);
+        Assert.Contains("FinalStatusAfterUndo", runner, StringComparison.Ordinal);
+    }
+
     private static string FindProjectRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
