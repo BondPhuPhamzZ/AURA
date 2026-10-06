@@ -24,7 +24,7 @@ Tỷ lệ hóa đơn hoàn toàn hợp lệ nhưng bị hệ thống ném vào h
 ## 6. Ngân sách benchmark và quota
 
 - Test Kit v2 có 30 ca nhưng Verify demo chỉ gọi 5 ca đại diện.
-- Build và 133 automated test hiện tại (policy/workflow/audit + OpenRouter/Ollama evidence contract v2 + raw date/final-total provenance + semantic validation/repair + định danh chứng từ giấy + đối chiếu giảm giá/VAT đã gồm + guard dòng hàng + taxonomy personal-item + OCR-loss policy disambiguation + fallback/circuit breaker + worker backoff + Test Kit v2/v3/v3.1 integrity + initial-tab rendering) không gọi API AI.
+- Build và 140 automated test hiện tại (policy/workflow/audit + OpenRouter/Ollama evidence contract v2 + raw date/final-total provenance + semantic validation/repair + định danh chứng từ giấy + đối chiếu giảm giá/VAT đã gồm + guard dòng hàng + taxonomy personal-item/entertainment + OCR-loss policy disambiguation + executable R3-12 ground truth + fallback/circuit breaker + worker backoff + Test Kit v2/v3/v3.1 integrity + initial-tab rendering) không gọi API AI.
 - Sau deploy: 1 request smoke test; nếu pass mới chạy 1 lượt Verify = 5 request. Giữ tối thiểu 10 request dự phòng cho BGK/video.
 - Không retry thủ công liên tục khi 429. Ghi lỗi và chờ đúng cửa sổ rate-limit của OpenRouter/provider.
 - Benchmark 30 ca chỉ chạy trong một phiên đo riêng khi đã xác nhận quota/billing; không dùng trong luồng demo.

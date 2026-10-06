@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AURA.Models;
+using AURA.Services;
 using Xunit;
 
 namespace AURA.Tests;
@@ -173,6 +174,49 @@ public sealed class TestKitIntegrityTests
         Assert.Equal("ESCALATE_POLICY", policyCase.GetProperty("expectedStatus").GetString());
         Assert.Equal("RCP-261005-1207", expectedFacts.GetProperty("receiptNumber").GetString());
         Assert.Equal("DV-261005-1207", expectedFacts.GetProperty("documentNumber").GetString());
+    }
+
+    [Fact]
+    public void Regression_v31_entertainment_ground_truth_executes_as_policy_escalation()
+    {
+        using var sourceDocument = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(ProjectRoot, "test_kit", "v3_1", "manifest.json")));
+        var sourceCase = sourceDocument.RootElement.GetProperty("cases").EnumerateArray()
+            .Single(testCase => testCase.GetProperty("id").GetString() == "R3-12");
+        var expectedFacts = sourceCase.GetProperty("expected_facts");
+        var facts = new ReceiptExtractionDto
+        {
+            EvidenceContractVersion = expectedFacts.GetProperty("evidenceContractVersion").GetInt32(),
+            DocumentType = expectedFacts.GetProperty("documentType").GetString(),
+            DocumentStatus = "ISSUED",
+            MerchantName = expectedFacts.GetProperty("merchantName").GetString(),
+            ReceiptNumber = expectedFacts.GetProperty("receiptNumber").GetString(),
+            DocumentNumber = expectedFacts.GetProperty("documentNumber").GetString(),
+            PosNumber = expectedFacts.GetProperty("posNumber").GetString(),
+            InvoiceDate = expectedFacts.GetProperty("invoiceDate").GetString(),
+            InvoiceDateEvidence = expectedFacts.GetProperty("invoiceDateEvidence").GetString(),
+            Currency = expectedFacts.GetProperty("currency").GetString(),
+            TotalAmount = expectedFacts.GetProperty("totalAmount").GetDecimal(),
+            TotalAmountSource = expectedFacts.GetProperty("totalAmountSource").GetString(),
+            TotalAmountEvidence = "TỔNG THANH TOÁN 310.000 đ",
+            Confidence = 0.98,
+            LineItems = sourceCase.GetProperty("items").EnumerateArray()
+                .Select(item => new ReceiptLineItem
+                {
+                    Description = item.GetProperty("description").GetString()!,
+                    Quantity = item.GetProperty("quantity").GetDecimal(),
+                    UnitPrice = item.GetProperty("unitPrice").GetDecimal(),
+                    Amount = item.GetProperty("amount").GetDecimal()
+                }).ToList()
+        };
+
+        var decision = PolicyDecisionEngine.Evaluate(
+            facts,
+            sourceCase.GetProperty("claimed_amount").GetDecimal(),
+            utcNow: new DateTime(2026, 10, 6, 0, 0, 0, DateTimeKind.Utc));
+
+        Assert.Equal(sourceCase.GetProperty("expected_status").GetString(), decision.Status);
+        Assert.Contains("Vé xem phim", decision.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string FindProjectRoot()

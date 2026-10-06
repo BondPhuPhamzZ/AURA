@@ -76,3 +76,11 @@ python tools/generate_regression_receipts_v3.py --as-of-date 2026-10-06 --revisi
 ```
 
 Chỉ chạy live v3.1 sau khi commit hardening, publish đúng commit, recycle pool và health trả `ok`. Không chạy lại v3 để thay raw 11/15.
+
+`contact-sheet.jpg` chỉ là mục lục thumbnail nên chữ cố ý nhỏ. Runner phải upload từng ảnh
+trong `test_kit/v3_1/images`, không upload contact sheet. Xem ảnh riêng ở 100% zoom và quy
+trình review/hash tại [`../test_kit/v3_1/README.md`](../test_kit/v3_1/README.md).
+
+Ca R3-12 hiện còn được thực thi trực tiếp qua `PolicyDecisionEngine` trong automated test:
+ground truth `Vé xem phim` phải cho `ESCALATE_POLICY`. Như vậy manifest không thể tuyên bố
+một expected decision mà policy C# hiện tại không tạo ra.

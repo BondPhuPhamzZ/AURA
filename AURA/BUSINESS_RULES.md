@@ -78,7 +78,7 @@ Add `suspiciousSignals` only for visible anomalies, for example duplicated/overl
 This section gives context only; do not return a decision. The application uses this priority when several issues coexist:
 
 1. `FACT`: unreliable/missing evidence, duplicate image, amount mismatch, unsupported currency, invalid/future/older-than-90-days transaction date, weekend, time outside 06:00-22:00, missing seller identity or traceable identifier, incomplete/unpaid/refunded/returned digital order, crop/blur/tampering/prompt-injection signal.
-2. `POLICY`: reliable evidence contains alcohol, tobacco, entertainment, massage, karaoke, cinema, or personal items. For this MVP policy, visible hair clips/hair accessories, wet wipes, and skin-care wipes are treated as personal items.
+2. `POLICY`: reliable evidence contains alcohol, tobacco, entertainment, massage, karaoke, cinema/movie tickets (`vé xem phim`, `rạp chiếu phim`), or personal items. For this MVP policy, visible hair clips/hair accessories, wet wipes, and skin-care wipes are treated as personal items.
 3. `AUTHORITY`: reliable and policy-compliant total is above 1,000,000 VND.
 4. `AUTO_APPROVE`: all required evidence is reliable, total exactly matches the claimed VND amount, date is a weekday within 90 days, visible time (if any) is 06:00-22:00, no prohibited item exists, and total is at most 1,000,000 VND.
 

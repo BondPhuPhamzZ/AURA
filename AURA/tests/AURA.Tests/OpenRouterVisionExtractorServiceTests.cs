@@ -60,6 +60,9 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.Contains("04-10-26", requestJson, StringComparison.Ordinal);
             using var payload = JsonDocument.Parse(requestJson!);
             var rootElement = payload.RootElement;
+            Assert.Contains("Bìa hồ sơ",
+                rootElement.GetProperty("messages")[0].GetProperty("content").GetString(),
+                StringComparison.Ordinal);
             Assert.Equal(4096, rootElement.GetProperty("max_tokens").GetInt32());
             Assert.Equal("response-healing",
                 rootElement.GetProperty("plugins")[0].GetProperty("id").GetString());

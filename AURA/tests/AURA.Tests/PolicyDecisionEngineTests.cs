@@ -194,6 +194,12 @@ public sealed class PolicyDecisionEngineTests
     [InlineData("Personal item")]
     [InlineData("Kẹp tóc Basic Marble Pattern")]
     [InlineData("Khăn Ướt Chăm Sóc Da Fressi Care Face")]
+    [InlineData("Vé xem phim")]
+    [InlineData("Ve xem phim")]
+    [InlineData("Vé xem phim IMAX")]
+    [InlineData("Rạp chiếu phim - suất tối")]
+    [InlineData("Movie ticket")]
+    [InlineData("Cinema ticket")]
     public void Prohibited_item_is_policy_escalation(string item)
     {
         var facts = ValidFacts();

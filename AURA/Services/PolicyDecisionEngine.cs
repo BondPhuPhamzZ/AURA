@@ -12,7 +12,8 @@ public static class PolicyDecisionEngine
     private static readonly string[] ProhibitedTerms =
     [
         "alcohol", "beer", "beers", "bia", "rượu", "ruou", "wine", "wines", "whisky", "vodka", "heineken", "tiger",
-        "thuốc lá", "thuoc la", "tobacco", "cigarette", "cigarettes", "karaoke", "cinema", "massage", "entertainment",
+        "thuốc lá", "thuoc la", "tobacco", "cigarette", "cigarettes", "karaoke", "cinema", "vé xem phim", "ve xem phim",
+        "rạp chiếu phim", "rap chieu phim", "movie ticket", "cinema ticket", "massage", "entertainment",
         "personal item", "personal items", "đồ cá nhân", "do ca nhan", "hair clip", "hair clips", "hair accessory", "hair accessories", "kẹp tóc", "kep toc",
         "khăn ướt", "khan uot", "wet wipe", "wet wipes", "chăm sóc da", "cham soc da"
     ];

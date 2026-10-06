@@ -121,6 +121,7 @@ public sealed class OllamaVisionExtractorService : IVisionExtractor
             {
                 using var document = JsonDocument.Parse(responseText);
                 var root = document.RootElement;
+                LogUsage(root);
                 if (root.TryGetProperty("done_reason", out var doneReason) &&
                     string.Equals(doneReason.GetString(), "length", StringComparison.OrdinalIgnoreCase))
                     throw new VisionExtractionException("AI_RESPONSE_TRUNCATED",
@@ -146,6 +147,28 @@ public sealed class OllamaVisionExtractorService : IVisionExtractor
             }
         }
     }
+
+    private void LogUsage(JsonElement root)
+    {
+        var promptTokens = ReadInt64(root, "prompt_eval_count");
+        var completionTokens = ReadInt64(root, "eval_count");
+        var loadDuration = ReadInt64(root, "load_duration");
+        var promptDuration = ReadInt64(root, "prompt_eval_duration");
+        var generationDuration = ReadInt64(root, "eval_duration");
+
+        if (promptTokens is null && completionTokens is null)
+            return;
+
+        _logger.LogInformation(
+            "Ollama usage for {Model}: prompt={PromptTokens}/{ContextTokens} context tokens, completion={CompletionTokens}/{MaxOutputTokens} output tokens, load={LoadDurationNs}ns, prompt-eval={PromptDurationNs}ns, generation={GenerationDurationNs}ns.",
+            _options.Model, promptTokens, _options.ContextTokens, completionTokens, _options.MaxOutputTokens,
+            loadDuration, promptDuration, generationDuration);
+    }
+
+    private static long? ReadInt64(JsonElement source, string propertyName) =>
+        source.TryGetProperty(propertyName, out var value) && value.TryGetInt64(out var number)
+            ? number
+            : null;
 
     private VisionExtractionException CreateHttpFailure(HttpStatusCode statusCode, string responseBody)
     {

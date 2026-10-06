@@ -8,6 +8,9 @@ Cập nhật: 02/10/2026. Tùy chọn này bổ sung provider local để benchm
 - RAM 16 GB: bắt đầu với `qwen3-vl:4b-instruct` Q4_K_M, một request tại một thời điểm.
 - Ổ đĩa trống: dành ít nhất 8 GB cho model, cache và log. Gói model Q4 hiện khoảng 3,3 GB nhưng RAM runtime lớn hơn dung lượng file.
 - Cấu hình 4 GB lịch sử là `ContextTokens=8192`, `MaxOutputTokens=2048`, `KeepAlive=5m`. Evidence contract v2 ngày 06/10 cho thấy một số repair có thể vượt cả context 8192 hoặc output cap 2048; không tăng giữa một batch đang đo. Với GPU 16 GB, benchmark riêng 8B bằng context 16384/output 4096 theo runbook BTC. Nếu thiếu VRAM, giảm context có ghi nhận rồi chạy batch mới từ đầu.
+- CPU/GPU split chủ yếu làm tăng latency nếu giữ nguyên weights/quantization/context; nó
+  không tự hạ độ phân giải ảnh. Các nguyên nhân giảm chất lượng gián tiếp và checklist
+  evidence nằm tại [`VISION_INPUT_AND_OFFLOAD_GUIDE_2026-10-07.md`](VISION_INPUT_AND_OFFLOAD_GUIDE_2026-10-07.md).
 - Không mở port 11434 ra Internet. AURA chỉ chấp nhận HTTP Ollama trên loopback hoặc HTTPS khi cấu hình endpoint khác.
 
 Ollama là lựa chọn local cho một người dùng và demo. vLLM chỉ nên cân nhắc khi có NVIDIA GPU server và cần throughput/concurrency cao.

@@ -149,6 +149,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
 
         using var responseDocument = ParseResponseDocument(responseText);
         var root = responseDocument.RootElement;
+        LogUsage(root);
 
         if (!root.TryGetProperty("choices", out var choices) || choices.GetArrayLength() == 0)
             throw new VisionExtractionException("AI_EMPTY_RESPONSE",
@@ -186,6 +187,24 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
 
         return facts;
     }
+
+    private void LogUsage(JsonElement root)
+    {
+        if (!root.TryGetProperty("usage", out var usage) || usage.ValueKind != JsonValueKind.Object)
+            return;
+
+        var promptTokens = ReadInt64(usage, "prompt_tokens");
+        var completionTokens = ReadInt64(usage, "completion_tokens");
+        var totalTokens = ReadInt64(usage, "total_tokens");
+        _logger.LogInformation(
+            "OpenRouter token usage for {Model}: prompt={PromptTokens}, completion={CompletionTokens}, total={TotalTokens}, configured output cap={MaxOutputTokens}.",
+            _options.Model, promptTokens, completionTokens, totalTokens, _options.MaxOutputTokens);
+    }
+
+    private static long? ReadInt64(JsonElement source, string propertyName) =>
+        source.TryGetProperty(propertyName, out var value) && value.TryGetInt64(out var number)
+            ? number
+            : null;
 
     private async Task<(HttpStatusCode StatusCode, string Body)> SendWithRetryAsync(
         object payload, CancellationToken cancellationToken)

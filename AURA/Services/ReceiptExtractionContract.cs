@@ -55,6 +55,11 @@ internal static class ReceiptExtractionContract
             - A product-order screen with delivery status and SPX/GHN/GHTK/J&T tracking is ECOMMERCE,
               not RIDE_HAILING. RIDE_HAILING is only for passenger trips with a trip/booking/receipt ID.
             - Keep order IDs, trip/booking IDs and shipping tracking codes in their distinct fields.
+            - Preserve the exact visible Vietnamese wording and diacritics in merchantName and every
+              lineItems.description. Never silently replace a visually supported word with a more common
+              policy word; in particular `Bìa hồ sơ` must not become `Bia hồ sơ`. If a policy-relevant word
+              is genuinely unreadable, retain the best visible transcription, lower confidence and add a
+              concise warning instead of confidently guessing a different product.
             - Read the document's overall status banner before local delivery milestones. Any visible
               `đã trả hàng`, `hoàn tiền`, `refunded`, `returned`, `đã hủy` or `cancelled` label takes
               precedence over `giao hàng thành công`/`completed`; set documentStatus and orderStatus to
