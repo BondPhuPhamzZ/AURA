@@ -28,7 +28,7 @@ Gói 15/30 ca không có nút riêng trên dashboard. `tools/Invoke-ExtendedData
 | OP-06 | Nhiều lỗi hạ tầng đến ngưỡng | Circuit mở; hết cooldown có primary probe |
 | OP-07 | Hai manager action cùng hồ sơ | Một thao tác thành công, thao tác stale nhận conflict |
 
-Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số `AUTO_APPROVE`/`ESCALATE_*`; facts trích xuất hiển thị cạnh upload; auto approve xuất hiện ngay trong Audit; escalation còn trong bảng kết quả cho tới khi chuyển quản lý. Upload/Verify cập nhật trong workspace; mutation workflow điều hướng toàn trang sau commit để tránh trạng thái cũ hoặc trùng lặp.
+Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số `AUTO_APPROVE`/`ESCALATE_*`; facts trích xuất hiển thị cạnh upload; mỗi dòng Verify có nút `Xem dữ kiện` và panel phải ghi đúng `TC-xx · tên ảnh`; auto approve xuất hiện ngay trong Audit; escalation còn trong bảng kết quả cho tới khi chuyển quản lý. Upload/Verify cập nhật trong workspace; mutation workflow điều hướng toàn trang sau commit để tránh trạng thái cũ hoặc trùng lặp.
 
 ## Ma trận policy mở rộng
 

@@ -8,6 +8,8 @@ Cập nhật: 05/10/2026. Dùng cùng `test_kit/holdout-manifest.template.json` 
 
 Nghĩa là: trước khi bất kỳ ảnh nào của official holdout được gửi tới AURA/OpenRouter/Ollama, con người phải hoàn tất nhãn chuẩn và fingerprint của đúng file ảnh, rồi đóng băng chúng. Sau khi đã xem output model, không được sửa nhãn để biến kết quả thành PASS.
 
+Ghi nhãn trên giấy có thể dùng làm worksheet review độc lập, nhưng **không đủ làm artifact official duy nhất**. Trước request đầu tiên phải chép nguyên nhãn đó vào manifest máy đọc được, review lại lỗi nhập liệu và hash manifest. Nếu chỉ chạy rồi mới nhập hoặc đối chiếu giấy, runner không thể chứng minh nhãn đã tồn tại trước output và không thể tính metric tái lập.
+
 ### Khóa
 
 “Khóa” là freeze/version dữ liệu đánh giá, không nhất thiết là đặt mật khẩu hay mã hóa file. Sau thời điểm khóa:

@@ -73,18 +73,18 @@ Các bằng chứng thủ công còn phải bổ sung: ảnh/timestamp recycle P
 
 ## 5. Holdout hiện tại
 
-`D:\aura\demo_evidence\09_blind_holdout_2026-10-04\02_selected_images` hiện chứa 12 file; inventory cũ không còn khớp và phải tạo lại sau khi chốt redaction/tên file. Tập này đang là **candidate, chưa locked**.
+`D:\aura\demo_evidence\09_blind_holdout_2026-10-04\02_selected_images` hiện chứa đúng 15 file JPG. Inventory sơ bộ ngày 06/10 ghi nhận 15/15 SHA-256 duy nhất, không có file byte-identical trong evidence cũ; tập vẫn là **candidate, chưa locked** cho tới khi ground truth được số hóa, review lần hai và hash manifest trước request đầu tiên.
 
 - Người dùng xác nhận `NewVinamilk.jpg` và `NewKatinat.jpg` là giao dịch mới, khác dữ liệu regression cũ. Hai file được giữ làm candidate nếu chính file/giao dịch này chưa từng gửi AURA/OpenRouter/Ollama và chưa dùng để tune; trùng merchant không tự làm mất tính blind.
-- Đối chiếu SHA-256 ngày 05/10 không tìm thấy file byte-identical của 12 candidate trong các thư mục evidence cũ. Kết quả này không phát hiện được ảnh cùng giao dịch đã crop/che QR/nén lại, nên vẫn cần xác nhận provenance của con người.
+- Inventory hiện hành: `01_candidates_private/preliminary-hash-inventory-15-of-15-2026-10-06.json`. Kết quả không phát hiện được ảnh cùng giao dịch đã crop/che QR/nén lại, nên vẫn cần xác nhận provenance của con người.
 - Những ảnh còn lại chỉ hợp lệ sau khi có quyền sử dụng, redaction review và ground truth độc lập.
 
 Không chạy official holdout cho tới khi đúng 15 ảnh eligible, tên file ổn định và manifest đã khóa. Xem [`HOLDOUT_LOCKING_GUIDE_2026-10-05.md`](HOLDOUT_LOCKING_GUIDE_2026-10-05.md) và [`HOLDOUT_MATRIX_15_CASES_2026-10-05.md`](HOLDOUT_MATRIX_15_CASES_2026-10-05.md).
 
 ## 6. Thứ tự công việc tiếp theo
 
-1. Phân loại 12 candidate theo BH-01…BH-15; loại mọi ảnh đã dùng để tune/test và mọi ảnh thiếu quyền sử dụng.
-2. Thu thập đủ 15 ảnh eligible, ẩn danh xong mới tính SHA-256.
+1. Chép ground truth đang ghi trên giấy vào manifest draft máy đọc được; không chạy rồi mới nhập nhãn hoặc đối chiếu thủ công.
+2. Xác nhận 15 ảnh eligible, quyền sử dụng, redaction và provenance; nếu sửa bất kỳ byte ảnh nào phải tạo lại inventory.
 3. Hai người review claimed amount, expected status, expected facts và rationale; xử lý bất đồng trước khi chạy.
 4. Khóa manifest, manifest hash, commit/policy version và thời điểm khóa.
 5. Chạy OpenRouter đúng một official run, fallback tắt; giữ cả mismatch và system error.

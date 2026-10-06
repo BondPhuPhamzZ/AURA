@@ -85,7 +85,7 @@
                 </div>
 
                 <div class="extracted-facts-column">
-                    <h3 id="extracted-facts-title" class="workflow-subtitle extracted-facts-title">Nội dung AI</h3>
+                    <h3 id="extracted-facts-title" class="workflow-subtitle extracted-facts-title">Nội dung AI — hóa đơn lẻ</h3>
                     <section class="extracted-facts-panel" aria-labelledby="extracted-facts-title" aria-live="polite">
                         <div class="extracted-facts-toolbar">
                             <span id="extractedFactsConfidence" class="badge facts-confidence-badge bg-secondary">Chưa quét</span>
@@ -235,6 +235,7 @@
     const emptyResultsRow = '<tr><td colspan="8" class="text-center empty-state">Không có hồ sơ nào đang chờ chuyển tiếp. Ca tự động duyệt đã được ghi thẳng vào lịch sử.</td></tr>';
     let currentAnalysisItems = [];
     let processingPlaceholderRows = 0;
+    let selectedFactsCaseId = null;
     let persistedEscalationRows = Array.from(resultsBody.querySelectorAll('tr[data-case-id]'))
         .map(row => ({ caseId: row.dataset.caseId, html: row.outerHTML }));
     let queueRefreshInFlight = false;
@@ -337,9 +338,15 @@
         return value == null ? 'Không đọc được' : new Intl.NumberFormat('vi-VN').format(Number(value)) + ' VND';
     }
 
-    function renderExtractedFacts(facts) {
+    function setExtractedFactsContext(contextLabel) {
+        const title = document.getElementById('extracted-facts-title');
+        title.textContent = contextLabel ? `Nội dung AI — ${contextLabel}` : 'Nội dung AI — hóa đơn lẻ';
+    }
+
+    function renderExtractedFacts(facts, contextLabel = '') {
         const body = document.getElementById('extractedFactsBody');
         const confidence = document.getElementById('extractedFactsConfidence');
+        setExtractedFactsContext(contextLabel);
         if (!facts) {
             confidence.className = 'badge facts-confidence-badge bg-secondary';
             confidence.textContent = 'Chưa quét';
@@ -351,8 +358,17 @@
         const confidencePercent = Math.round(Number(facts.confidence || 0) * 100);
         confidence.className = 'badge facts-confidence-badge ' + (confidencePercent >= 70 ? 'bg-success' : 'bg-warning text-dark');
         confidence.textContent = `Tin cậy ${confidencePercent}%`;
-        const identifier = facts.invoiceNumber || facts.receiptNumber || facts.transactionReference ||
-            facts.orderId || facts.bookingId || facts.shippingTrackingCode;
+        const identifierRows = [
+            ['Số hóa đơn', facts.invoiceNumber],
+            ['Số biên nhận / Bill No', facts.receiptNumber],
+            ['Mã giao dịch', facts.transactionReference],
+            ['Mã đơn hàng', facts.orderId],
+            ['Mã chuyến / đặt chỗ', facts.bookingId],
+            ['Mã vận chuyển', facts.shippingTrackingCode]
+        ].filter(entry => entry[1] != null && String(entry[1]).trim() !== '');
+        const identifierHtml = identifierRows.length
+            ? identifierRows.map(entry => '<div><dt>' + escapeHtml(entry[0]) + '</dt><dd>' + escapeHtml(displayFact(entry[1])) + '</dd></div>').join('')
+            : '<div><dt>Định danh giao dịch</dt><dd>Không đọc được</dd></div>';
         const normalizedDocumentType = String(facts.documentType || '').trim().toUpperCase();
         const isDigitalEvidence = normalizedDocumentType === 'ECOMMERCE' ||
             normalizedDocumentType === 'RIDE_HAILING' ||
@@ -377,7 +393,7 @@
             '<dl class="extracted-facts-grid">' +
                 '<div><dt>Loại chứng từ</dt><dd>' + escapeHtml(displayFact(facts.documentType)) + '</dd></div>' +
                 '<div><dt>Đơn vị bán</dt><dd>' + escapeHtml(displayFact(facts.merchantName)) + '</dd></div>' +
-                '<div><dt>Số HĐ / mã truy vết</dt><dd>' + escapeHtml(displayFact(identifier)) + '</dd></div>' +
+                identifierHtml +
                 '<div><dt>Mã số thuế</dt><dd>' + escapeHtml(displayFact(facts.taxId)) + '</dd></div>' +
                 '<div><dt>' + escapeHtml(evidenceDateLabel) + '</dt><dd>' + escapeHtml(displayFact(evidenceDate)) + '</dd></div>' +
                 (facts.subtotal != null ? '<div><dt>Tạm tính</dt><dd>' + escapeHtml(formatFactMoney(facts.subtotal)) + '</dd></div>' : '') +
@@ -392,9 +408,10 @@
             (warnings.length ? '<div class="extracted-warning"><strong>Cần lưu ý:</strong> ' + escapeHtml(warnings.join('; ')) + '</div>' : '');
     }
 
-    function renderExtractedFactsLoading(message) {
+    function renderExtractedFactsLoading(message, contextLabel = '') {
         const body = document.getElementById('extractedFactsBody');
         const confidence = document.getElementById('extractedFactsConfidence');
+        setExtractedFactsContext(contextLabel);
         confidence.className = 'badge facts-confidence-badge bg-primary';
         confidence.textContent = 'Đang xử lý';
         body.className = 'extracted-facts-loading';
@@ -405,9 +422,10 @@
             '</div>';
     }
 
-    function renderExtractedFactsUnavailable(message) {
+    function renderExtractedFactsUnavailable(message, contextLabel = '') {
         const body = document.getElementById('extractedFactsBody');
         const confidence = document.getElementById('extractedFactsConfidence');
+        setExtractedFactsContext(contextLabel);
         confidence.className = 'badge facts-confidence-badge bg-warning text-dark';
         confidence.textContent = 'Chưa có dữ liệu';
         body.className = 'extracted-facts-empty extracted-facts-unavailable';
@@ -445,11 +463,15 @@
         if(item.actual && item.actual.startsWith('ESCALATE_')) actualBadge = '<span class="badge bg-warning text-dark">' + escapeHtml(item.actual) + '</span>';
         if(item.actual === 'ESCALATE_SYSTEM_ERROR') actualBadge = '<span class="badge bg-danger">SYSTEM_ERROR</span>';
         
-        const action = isProcessing
+        const workflowAction = isProcessing
             ? '<span class="text-muted">Đang chờ</span>'
             : item.canForward
             ? '<button type="button" class="button-primary button-compact" onclick="forwardToManager(\'' + escapeJsString(item.caseId) + '\', this)">Chuyển tiếp</button>'
             : '<span class="text-muted">Không cần</span>';
+        const factsAction = item.facts
+            ? '<button type="button" class="button-ghost-sm facts-view-button" aria-pressed="' +
+              (selectedFactsCaseId === item.caseId ? 'true' : 'false') + '" onclick="showAnalysisFacts(\'' + escapeJsString(item.caseId) + '\')">Xem dữ kiện</button>'
+            : '';
         const receipt = item.receiptUrl
             ? '<a class="receipt-preview-link" href="' + escapeHtml(item.receiptUrl) + '" target="_blank" rel="noopener">' +
               '<img class="receipt-thumbnail" src="' + escapeHtml(item.receiptUrl) + '" alt="Ảnh chứng từ ' + escapeHtml(item.image) + '" loading="lazy" />' +
@@ -457,7 +479,8 @@
             : escapeHtml(item.image);
         const handoffText = item.canForward ? (item.handoffPrompt || '') : (item.question || '');
 
-        return '<tr data-case-id="' + escapeHtml(item.caseId || '') + '" data-can-forward="' +
+        const rowClass = selectedFactsCaseId === item.caseId ? ' class="facts-selected"' : '';
+        return '<tr' + rowClass + ' data-case-id="' + escapeHtml(item.caseId || '') + '" data-can-forward="' +
             (item.canForward ? 'true' : 'false') + '" data-row-source="current-analysis">' +
             '<td data-label="Mã hồ sơ" class="cell-code">' + escapeHtml(item.caseId ? item.caseId.substring(0,8) : '') + '</td>' +
             '<td data-label="Ảnh">' + receipt + '</td>' +
@@ -466,8 +489,34 @@
             '<td data-label="Đối chiếu">' + passBadge + '</td>' +
             '<td data-label="Lý do và câu hỏi" class="cell-reason"><strong>' + escapeHtml(item.reason) + '</strong><small>' + escapeHtml(handoffText) + '</small></td>' +
             '<td data-label="Độ trễ" class="cell-number">' + (item.latencyMs == null ? '—' : escapeHtml(item.latencyMs) + ' ms') + '</td>' +
-            '<td data-label="Thao tác" class="cell-actions">' + action + '</td>' +
+            '<td data-label="Thao tác" class="cell-actions"><div class="result-row-actions">' + factsAction + workflowAction + '</div></td>' +
         '</tr>';
+    }
+
+    function getAnalysisFactsLabel(item) {
+        const testCase = item?.testCaseId ? String(item.testCaseId) : '';
+        const image = item?.image ? String(item.image) : '';
+        return [testCase, image].filter(Boolean).join(' · ') || 'hồ sơ đã chọn';
+    }
+
+    function showAnalysisFacts(caseId, shouldScroll = true) {
+        const item = currentAnalysisItems.find(candidate => candidate?.caseId === caseId);
+        if (!item?.facts) {
+            renderExtractedFactsUnavailable('Ca này chưa có dữ kiện trích xuất để hiển thị.', getAnalysisFactsLabel(item));
+            return;
+        }
+
+        selectedFactsCaseId = caseId;
+        renderExtractedFacts(item.facts, getAnalysisFactsLabel(item));
+        document.querySelectorAll('#resultsBody tr[data-row-source="current-analysis"]').forEach(row => {
+            const selected = row.dataset.caseId === caseId;
+            row.classList.toggle('facts-selected', selected);
+            row.querySelector('.facts-view-button')?.setAttribute('aria-pressed', selected ? 'true' : 'false');
+        });
+
+        if (shouldScroll) {
+            document.querySelector('.extracted-facts-column')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     function escapeHtml(value) {
@@ -497,6 +546,9 @@
 
     function setCurrentAnalysisItems(items) {
         currentAnalysisItems = (Array.isArray(items) ? items : [items]).filter(Boolean);
+        if (!currentAnalysisItems.some(item => item?.caseId === selectedFactsCaseId && item?.facts)) {
+            selectedFactsCaseId = null;
+        }
         processingPlaceholderRows = 0;
         renderResultsTable();
     }
@@ -698,8 +750,8 @@
             const completed = await pollReceiptStatus(data.statusUrl);
             setCurrentAnalysisItems(completed);
             sessionStorage.removeItem('aura.pendingReceipt');
-            if (completed.facts) renderExtractedFacts(completed.facts);
-            else renderExtractedFactsUnavailable('AI chưa trả về dữ liệu trích xuất; hồ sơ đã được chuyển sang kiểm tra thủ công.');
+            if (completed.facts) showAnalysisFacts(completed.caseId, false);
+            else renderExtractedFactsUnavailable('AI chưa trả về dữ liệu trích xuất; hồ sơ đã được chuyển sang kiểm tra thủ công.', completed.image);
             if (completed.duplicateDetected && !completed.duplicatePolicyEnabled) {
                 showToast('Ảnh này đã từng được dùng; hệ thống vẫn xử lý vì đang bật chế độ kiểm thử.', 'warning');
             }
@@ -742,7 +794,7 @@
             const completed = await pollReceiptStatus(pending.statusUrl);
             sessionStorage.removeItem('aura.pendingReceipt');
             setCurrentAnalysisItems(completed);
-            if (completed.facts) renderExtractedFacts(completed.facts);
+            if (completed.facts) showAnalysisFacts(completed.caseId, false);
             updateAnalysisSummary(completed);
             finishAnalysisProgress('Đã khôi phục kết quả thẩm định',
                 completed.canForward ? 'Hồ sơ đang chờ chuyển tiếp.' : 'Kết quả đã được lưu vào lịch sử hành vi.');
@@ -761,7 +813,7 @@
         
         btn.disabled = true;
         btnText.innerText = 'Đang chạy 5 hóa đơn...';
-        renderExtractedFactsLoading('AI đang lần lượt xử lý 5 ca Verify Harness…');
+        renderExtractedFactsLoading('AI đang lần lượt xử lý 5 ca Verify Harness…', 'Verify Harness');
         beginAnalysisProgress('Verify Harness đang chạy 5 ca',
             'Các ca được xử lý tuần tự để hạn chế rate limit. Bảng sẽ cập nhật sau khi cả batch hoàn tất.');
         currentAnalysisItems = [];
@@ -789,20 +841,20 @@
             setCurrentAnalysisItems(data);
             const firstExtractedResult = data.find(item => item?.facts);
             if (firstExtractedResult) {
-                renderExtractedFacts(firstExtractedResult.facts);
+                showAnalysisFacts(firstExtractedResult.caseId, false);
             } else {
-                renderExtractedFactsUnavailable('Verify Harness đã hoàn tất nhưng AI không trả về dữ liệu trích xuất cho bất kỳ ca nào. Hãy kiểm tra thông báo lỗi, quota hoặc cấu hình model.');
+                renderExtractedFactsUnavailable('Verify Harness đã hoàn tất nhưng AI không trả về dữ liệu trích xuất cho bất kỳ ca nào. Hãy kiểm tra thông báo lỗi, quota hoặc cấu hình model.', 'Verify Harness');
                 showToast('Không có nội dung AI nào được trả về trong lượt Verify này.', 'warning');
             }
             updateAnalysisSummary(data);
             finishAnalysisProgress('Verify Harness đã hoàn tất',
-                'Kết quả Expected/Actual đã được lưu; các ca escalation vẫn ở bảng cho tới khi chuyển tiếp.');
+                'Chọn “Xem dữ kiện” tại từng dòng để đối chiếu nội dung AI của cả 5 ca; các ca escalation vẫn ở bảng cho tới khi chuyển tiếp.');
             await refreshEmployeeEscalationQueue();
             scrollToResults();
         } catch(e) {
             processingPlaceholderRows = 0;
             renderResultsTable();
-            renderExtractedFactsUnavailable('Verify Harness không nhận được nội dung từ AI: ' + e.message);
+            renderExtractedFactsUnavailable('Verify Harness không nhận được nội dung từ AI: ' + e.message, 'Verify Harness');
             finishAnalysisProgress('Verify Harness không hoàn tất', e.message, true);
             scrollToResults();
         } finally {

@@ -692,6 +692,31 @@ main {
     border-color: #3b82f6;
 }
 
+.result-row-actions {
+    display: grid;
+    gap: 8px;
+    justify-items: stretch;
+}
+
+.result-row-actions > * {
+    width: 100%;
+    text-align: center;
+}
+
+.facts-view-button {
+    color: #bfdbfe;
+    border-color: #3b82f6;
+    white-space: nowrap;
+}
+
+.results-table tr.facts-selected td {
+    background: rgba(59, 130, 246, 0.12);
+}
+
+.results-table tr.facts-selected td:first-child {
+    box-shadow: inset 3px 0 0 #60a5fa;
+}
+
 .results-heading-actions {
     display: flex;
     align-items: center;
