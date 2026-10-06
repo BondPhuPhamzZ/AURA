@@ -17,6 +17,7 @@ Dừng freeze nếu health lỗi, Verify sai nhánh, Audit mất event, timestam
 3. Ưu tiên fixture tổng hợp hoặc ảnh đã che dữ liệu; không đưa dữ liệu nhạy cảm mới vào hệ thống khi chưa thống nhất cách xử lý.
 4. Chạy ba rehearsal 8–10 phút trên cùng commit freeze. Lượt đầu sửa flow, lượt hai sửa timing, lượt ba không đổi code.
 5. Chuẩn bị local fallback với database đã migrate và secret cục bộ; không bật Ollama fallback mặc định.
+6. Chuẩn bị theo [`ONSITE_FINAL_PLAYBOOK_2026-10-06.md`](ONSITE_FINAL_PLAYBOOK_2026-10-06.md): hai drill thay đổi có acceptance criteria/test/evidence, một kịch bản vòng bảng 8 phút và một bản nén Chung kết 5 phút.
 
 ## P2 sau khi P0 và P1 đạt
 
@@ -26,4 +27,4 @@ Dừng freeze nếu health lỗi, Verify sai nhánh, Audit mất event, timestam
 
 ## Điều kiện GO Chung kết
 
-Build/test/EF sạch; live health, Verify, Audit timezone và phone 4G đạt; không còn P0/P1 crash hoặc safety blocker; evidence nối được commit/provider/model/timestamp; ba user session và ba rehearsal hoàn tất, hoặc dependency BTC được ghi trung thực.
+Build/test/EF sạch; live health, Verify, Audit timezone và phone 4G đạt; local fallback chạy; không còn P0/P1 crash hoặc safety blocker; evidence nối được commit/provider/model/timestamp; hai onsite change drill và ba rehearsal hoàn tất. Ba user session cần hoàn tất hoặc dependency BTC phải được ghi trung thực.

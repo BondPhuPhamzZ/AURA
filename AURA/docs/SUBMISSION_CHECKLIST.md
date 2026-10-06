@@ -54,3 +54,4 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 11. Evidence live hậu publish 06/10 trên `1f4b3c9` đã đóng health 5/5, security 6/6, UI browser mobile 390 px, Verify 5/5, workflow fixture 2/2 và Audit timezone Việt Nam. Điện thoại thật 4G/5G vẫn là gate trước khi public URL trong README.
 12. Holdout 15 ca đã chạy một official run: raw 10/15, adjusted 11/15 do một nhãn người sai; raw bất biến. Tập ảnh từ đây chỉ là post-holdout regression, không còn blind.
 13. Checklist điện thoại thật, ba user session và rehearsal nằm tại `docs/MANUAL_FINAL_GATES_2026-10-06.md`.
+14. Kế hoạch nhận yêu cầu mới, timebox bốn giờ và demo vòng bảng/Chung kết nằm tại `docs/ONSITE_FINAL_PLAYBOOK_2026-10-06.md`.

@@ -43,3 +43,16 @@ Mục tiêu an toàn là 8 phút, để lại khoảng 1 đến 2 phút cho chuy
 Sau khi mục 1 PASS và có ít nhất một rehearsal sạch, có thể đưa URL vào README với nhãn `Supervised MVP demo`. Ba user session vẫn cần hoàn tất để có development story cho pitch. Không mô tả URL là production service hoặc unattended pilot.
 
 Official holdout 15 ảnh không chạy lại trong các gate này. Nếu upload lại, phải ghi là post-holdout regression, xin quyền chuyển dữ liệu mới và giữ nguyên raw score 10/15.
+
+## 5 Readiness cho đề onsite 17/10
+
+Đề và cách đánh giá chỉ được BTC công bố trong khai mạc. Không đoán rồi mở feature lớn trên baseline hiện hành.
+
+1. Chạy hai drill thay đổi: một rule/ngưỡng và một field/UI hoặc report nhỏ. Mỗi drill phải ghi acceptance criteria trước khi code.
+2. Với mỗi drill, chứng minh được targeted test, full suite/build liên quan, một negative case và evidence runtime.
+3. Chuẩn bị script vòng bảng 8 phút trong khung tối đa 15 phút, để khoảng 5 phút Q&A và 2 phút điều phối.
+4. Chuẩn bị thêm bản nén 5 phút cho vòng Chung kết; đây là phương án dự phòng, không phải giới hạn BTC đã công bố.
+5. Ngày 16/10 khóa commit, dữ liệu demo và slide; không đổi schema, model hoặc package nếu không có blocker.
+6. Ngày 17/10 mục tiêu có mặt 07:30–07:45; mang laptop, sạc, hotspot và adapter. Kiểm local fallback trong 09:00–09:30.
+
+Quy trình chi tiết và bản đồ “yêu cầu nào sửa ở đâu” nằm tại [`ONSITE_FINAL_PLAYBOOK_2026-10-06.md`](ONSITE_FINAL_PLAYBOOK_2026-10-06.md).
