@@ -4,7 +4,7 @@ Cập nhật: 06/10/2026. Ưu tiên đóng rủi ro demo; không mở rộng tí
 
 ## P0 technical baseline — đã đóng
 
-Deployment `1f4b3c9` đã đạt health 5/5, Verify 5/5, security 6/6, workflow/undo 2/2, Audit giờ Việt Nam, viewport 390×844, build 0 warning/error, 122/122 test, EF sạch và package scan sạch.
+Deployment `1f4b3c9` đã đạt health 5/5, Verify 5/5, security 6/6, workflow/undo 2/2, Audit giờ Việt Nam và viewport 390×844. Candidate mới sau Test Kit v3 đạt build sạch, 129/129 test; còn phải publish/recycle/health và chạy đúng một batch v3.1 trước khi freeze.
 
 Gate điện thoại thật qua 4G/5G đã pass luồng chính, Verify, workflow, Audit, refresh và receipt persistence. Feedback P1 duy nhất là hai nút quản lý lệch cột; candidate đã sửa local và cần republish + phone regression trước khi đóng hoàn toàn.
 
@@ -17,6 +17,7 @@ Dừng freeze nếu health lỗi, Verify sai nhánh, Audit mất event, timestam
 3. Ưu tiên fixture tổng hợp hoặc ảnh đã che dữ liệu; không đưa dữ liệu nhạy cảm mới vào hệ thống khi chưa thống nhất cách xử lý.
 4. Chạy ba rehearsal 8–10 phút trên cùng commit freeze. Lượt đầu sửa flow, lượt hai sửa timing, lượt ba không đổi code.
 5. Chuẩn bị local OpenRouter baseline với database đã migrate và secret cục bộ. Ollama 4B post-policy chỉ đạt 13/15 nên không bật fallback mặc định.
+6. Sau publish, chạy Test Kit v3.1 synthetic đúng một lượt; gate là 0 system error và 0 missed escalation. Không chạy lại v3 raw 11/15.
 6. Chuẩn bị theo [`ONSITE_FINAL_PLAYBOOK_2026-10-06.md`](ONSITE_FINAL_PLAYBOOK_2026-10-06.md): hai drill thay đổi có acceptance criteria/test/evidence, một kịch bản vòng bảng 8 phút và một bản nén Chung kết 5 phút.
 
 ## P2 sau khi P0 và P1 đạt

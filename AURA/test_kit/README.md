@@ -13,6 +13,12 @@ Tái tạo v3 bằng:
 
 `v3/judge-manifest.json` khóa SHA-256 từng ảnh, expected decision, expected facts và lý do ground truth. Runner phải dừng trước request đầu tiên nếu bất kỳ hash nào lệch. Xem `docs/REGRESSION_TEST_KIT_V3.md` trước khi chạy.
 
+Raw v3 đã chạy đúng một lần trên live OpenRouter ngày 06/10 và được giữ bất biến. Revision `v3_1/` chỉ sửa precondition khách quan của R3-12 bằng cách in riêng `Số biên nhận` và `Số chứng từ`; nó không ghi đè ảnh/hash/kết quả v3. Tái tạo revision bằng:
+
+```powershell
+<python-with-pillow> tools/generate_regression_receipts_v3.py --as-of-date 2026-10-06 --revision 3.1
+```
+
 ## Hai gói bàn giao cho BGK
 
 - **5 ca chạy được bằng một nút:** `wwwroot/test_data/expected-results.json` và ảnh tại `wwwroot/test_data/images`. Verify Harness gọi đúng production path, gồm 3 ca tự duyệt và 2 ca chuyển tiếp.

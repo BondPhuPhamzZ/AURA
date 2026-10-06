@@ -44,6 +44,7 @@ Do not claim that an invoice is legally authentic. Vision can only report visibl
 - `invoiceNumber`: formal invoice number printed as `Số hóa đơn` or `Invoice No`. Do not substitute a receipt/check number, invoice serial, form number, tax authority code, or booking ID.
 - `receiptNumber`: receipt or bill number printed as `Số biên nhận`, `Receipt No`, `Bill No`, or an equivalent receipt label. Do not duplicate it into `invoiceNumber`, `orderId`, `bookingId`, or `shippingTrackingCode`.
 - `transactionReference`: a per-purchase reference printed as `Check`, `Transaction No`, `Transaction ID`, `Trace`, `RRN`, `Mã giao dịch`, or an equivalent label. Use it only when the label and layout show that the value identifies this transaction.
+- A damaged identifier that leaves only a short alphabetic prefix such as `RCF` or `PTT` without its printed number is not traceable evidence. Return the corresponding identifier as null, add it to `missingFields`, and describe the ink loss/crop; never approve from the prefix alone.
 - `taxAuthorityCode`: code printed as `Mã CQT` or `Tax Authority Code`; otherwise null. It is supporting evidence and never substitutes for an invoice, receipt, or transaction number.
 - `invoiceSerial`: value printed as `Ký hiệu hóa đơn`, `Serial`, or `Serial No`; otherwise null.
 - `documentNumber`: value printed specifically as `Số chứng từ` or `Document No`; otherwise null. It is supporting evidence, not automatically a receipt number.
@@ -84,6 +85,8 @@ This section gives context only; do not return a decision. The application uses 
 The application never asserts approval when a FACT issue exists. Employees only forward escalations; they never answer the approval question. Human managers receive a specific Vietnamese question and explicitly choose approve or reject for every escalation.
 
 For non-VAT evidence, the application requires a traceable identifier appropriate to the document: invoice number, receipt number, or a per-purchase transaction reference for paper retail/restaurant receipts; booking/receipt/transaction ID for ride-hailing; or order/booking/tracking/receipt/transaction ID for e-commerce. ShopID, POS/register, MID/TID and pager/table numbers do not satisfy this requirement. Tax ID and invoice number may legitimately be absent from e-commerce. A traceable identifier is not proof that the document is legally authentic. Digital evidence additionally needs visible merchant/platform context, completed/paid status, reliable transaction/payment date, currency, total and line items. A delivery date alone does not establish the purchase/payment date. Company accounting policy may still require a VAT invoice; Vision must not decide that legal requirement.
+
+Policy phrase matching preserves Vietnamese diacritics and uses explicitly declared accented/unaccented variants. The stationery word `bìa` must not be normalized into the alcohol keyword `bia`; real alcohol labels such as `Bia Larue`, `beer`, `rượu` or `ruou` remain prohibited.
 
 ## 6. Output quality checklist
 

@@ -18,6 +18,8 @@ Năm ca Verify chính thức không thay đổi trong hardening ngày 28/09/2026
 
 Gói 15/30 ca không có nút riêng trên dashboard. `tools/Invoke-ExtendedDatasetEvaluation.ps1` đọc manifest, gọi đúng upload endpoint cho từng ảnh/claimed amount, poll trạng thái và ghi evidence CSV/JSON. Ngày 29/09/2026, judge set 15 ca đã chạy thật với fallback tắt: OpenRouter đạt 15/15 quyết định, Ollama đạt 14/15 và bỏ sót escalation TK-12. Post-policy/contract v2 ngày 06/10, Ollama 4B đạt 13/15: missed TK-12, over TK-02, 0 system error. Gói 30 ca chưa chạy vì không cần cho phần trình bày; xem `LIVE_VALIDATION_2026-09-29.md` và `LOCAL_OLLAMA.md`.
 
+Test Kit v3/v3.1 là namespace riêng tại `test_kit/v3*`, không thay gói trên. Raw live v3: 11/15 decision, 142/145 field, 0 system error; xem `REGRESSION_TEST_KIT_V3_LIVE_RESULT_2026-10-06.md`. V3.1 sửa ground-truth precondition R3-12 bằng ảnh/hash mới và chỉ được chạy sau publish; raw v3 không chạy lại hoặc relabel.
+
 | ID vận hành | Kịch bản | Kỳ vọng |
 |---|---|---|
 | OP-01 | Refresh sau khi upload nhận `202` | Job vẫn hoàn tất; tab nối lại status từ `sessionStorage` |
@@ -109,6 +111,9 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P71 | Ngày Việt Nam in `04-10-26` nhưng model trả `2026-04-10` | Backend đối chiếu raw evidence và chuẩn hóa thành `2026-10-04`; lưu warning audit | A |
 | P72 | Phiếu in `Giờ 08:29:02`, tổng 60.000, tiền khách đưa 500.000, tiền thối -440.000, VAT đã gồm 4.444,44 | Không coi cash/change/VAT là discount/total; fractional included VAT được giữ hỗ trợ | A/V hậu deploy |
 | P73 | `PTT` và `Mã CQT` là hai mã khác nhau | `PTT -> receiptNumber`, `Mã CQT -> taxAuthorityCode`, không lặp sang transactionReference | A/V hậu deploy |
+| P74 | Item văn phòng `Bìa hồ sơ` | Không match alcohol `bia`; AUTO nếu các rule khác đạt | A/V3.1 |
+| P75 | Receipt number chỉ còn prefix chữ ngắn như `RCF` do mất mực | Repair một lần; còn fragment thì `ESCALATE_FACT` | A/V3.1 |
+| P76 | `Số biên nhận` và `Số chứng từ` cùng xuất hiện | Map tách `receiptNumber`/`documentNumber`; policy item vẫn được xét | A/V3.1 |
 | P74 | `Kẹp tóc`, `Khăn ướt chăm sóc da` hoặc wet wipes trên receipt đủ dữ kiện | `ESCALATE_POLICY` theo taxonomy personal-item của MVP; FACT vẫn ưu tiên nếu có vấn đề dữ kiện | A |
 | P75 | Audit timestamp được đọc từ SQL trên host không đặt timezone Việt Nam | DB giữ UTC; UI chuyển rõ sang UTC+7 cho dòng tổng hợp và timeline; không dùng timezone hệ điều hành host | A/live hậu deploy |
 

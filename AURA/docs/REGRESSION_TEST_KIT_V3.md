@@ -64,3 +64,15 @@ Runner xác minh toàn bộ 15 SHA-256 trước khi lấy antiforgery token ho�
 - **Đạt regression v3:** 15 case hoàn tất, 0 system error, 0 missed escalation; over-escalation và field mismatch phải được phân tích theo raw evidence, không sửa nhãn hậu nghiệm.
 - **Không đạt:** giữ v2/OpenRouter baseline, lưu raw v3 làm evidence, phân loại lỗi fixture/model/contract và sửa trong version mới.
 - Chỉ một tập hóa đơn thật mới, chưa từng được xem hoặc dùng để phát triển, mới có thể tạo claim blind tiếp theo.
+
+## Raw v3 và revision v3.1
+
+Raw v3 ngày 06/10 đạt 11/15 decision, 142/145 field, 0 system error và lộ hai safety gap cùng một fixture precondition sai. Không sửa raw/expected/hash v3. Xem [`REGRESSION_TEST_KIT_V3_LIVE_RESULT_2026-10-06.md`](REGRESSION_TEST_KIT_V3_LIVE_RESULT_2026-10-06.md).
+
+V3.1 chỉ thay R3-12 bằng ảnh/hash mới có cả `Số biên nhận` và `Số chứng từ`; 14 ca còn lại giữ cùng mục đích kiểm thử. Sinh revision bằng:
+
+```powershell
+python tools/generate_regression_receipts_v3.py --as-of-date 2026-10-06 --revision 3.1
+```
+
+Chỉ chạy live v3.1 sau khi commit hardening, publish đúng commit, recycle pool và health trả `ok`. Không chạy lại v3 để thay raw 11/15.

@@ -1,0 +1,319 @@
+{
+  "version": "judge-15-v3.1",
+  "description": "Locked synthetic post-holdout regression set; not a blind real-world accuracy claim.",
+  "sourceManifest": "manifest.json",
+  "imageDirectory": "images",
+  "cases": [
+    {
+      "id": "R3-01",
+      "fileName": "R3-01-vat-invoice-number.jpg",
+      "sha256": "715D4EF5BACB35DDDF659EA4A3C322704C0B257D0D7C29C13E88FBD9F91391E5",
+      "expectedStatus": "AUTO_APPROVE",
+      "claimedAmount": 241920,
+      "category": "routine",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "VAT_INVOICE",
+        "merchantName": "CÔNG TY TNHH VĂN PHÒNG NAM VIỆT",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 241920,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "invoiceNumber": "000142",
+        "invoiceSerial": "1C26TNV",
+        "taxAuthorityCode": "00D7A4C921680A"
+      },
+      "groundTruthRationale": "Nhãn Số hóa đơn tách riêng Ký hiệu và Mã CQT; tổng cuối in rõ."
+    },
+    {
+      "id": "R3-02",
+      "fileName": "R3-02-restaurant-ptt.jpg",
+      "sha256": "C47F08D37FC7A7FD67C0535DD4E147BAECA1D83732BE822F5285284F5394BDD5",
+      "expectedStatus": "AUTO_APPROVE",
+      "claimedAmount": 90000,
+      "category": "routine",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "RESTAURANT_BILL",
+        "merchantName": "BẾP NHỎ PHƯƠNG NAM",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 90000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "receiptNumber": "PTT-051026-1842"
+      },
+      "groundTruthRationale": "PTT là số biên nhận in trên phiếu tính tiền, không phải mã giao dịch."
+    },
+    {
+      "id": "R3-03",
+      "fileName": "R3-03-pos-rrn.jpg",
+      "sha256": "69EF03C9846302D9B751EB499544B82954657591E59C887BDE78A04DAD135E8C",
+      "expectedStatus": "AUTO_APPROVE",
+      "claimedAmount": 158000,
+      "category": "routine",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "CỬA HÀNG TIỆN LỢI MỞ 24H",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 158000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "transactionReference": "683104927615",
+        "posNumber": "POS-03"
+      },
+      "groundTruthRationale": "RRN định danh giao dịch; POS No và TID chỉ là định danh thiết bị."
+    },
+    {
+      "id": "R3-04",
+      "fileName": "R3-04-retail-bill-no.jpg",
+      "sha256": "FFEF642DB148242113645B1E60246D429BC5B975B5B97F1A7B398ED3FFE603DF",
+      "expectedStatus": "AUTO_APPROVE",
+      "claimedAmount": 185000,
+      "category": "routine",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "NHÀ SÁCH HẢI ĐĂNG",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 185000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "receiptNumber": "BILL-261005-0417"
+      },
+      "groundTruthRationale": "Bill No là số biên nhận; mỗi nhãn chỉ gắn với một giá trị."
+    },
+    {
+      "id": "R3-05",
+      "fileName": "R3-05-readable-thermal-fade.jpg",
+      "sha256": "9FE5CBCB53C465E614BB37D0233E2661B56B36E5365DCD238FD66DB6B9C40465",
+      "expectedStatus": "AUTO_APPROVE",
+      "claimedAmount": 138000,
+      "category": "routine",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "CỬA HÀNG GIA DỤNG AN NHIÊN",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 138000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "receiptNumber": "RCP-261005-0528"
+      },
+      "groundTruthRationale": "Mực giảm tương phản nhưng toàn bộ nhãn và chữ số tổng vẫn đọc trực tiếp được."
+    },
+    {
+      "id": "R3-06",
+      "fileName": "R3-06-destroyed-final-total.jpg",
+      "sha256": "7A3A99D4DE455518C36881742A9B9300EDFE7B1B7A88C9663AA9238CD581C51A",
+      "expectedStatus": "ESCALATE_FACT",
+      "claimedAmount": 220000,
+      "category": "fact",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "TRUNG TÂM IN ẤN MINH KHÔI",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": null,
+        "totalAmountSource": "NOT_VISIBLE",
+        "receiptNumber": "RCP-261005-0619"
+      },
+      "groundTruthRationale": "Giá trị giảm giá và tổng cuối bị mất mực vật lý; không thể xác minh tổng bằng quan sát hoặc số học."
+    },
+    {
+      "id": "R3-07",
+      "fileName": "R3-07-device-ids-only.jpg",
+      "sha256": "C56191108DEBA33C7DAC09ED60505A7911C2B506A5D1F2565420FF975B90DBBB",
+      "expectedStatus": "ESCALATE_FACT",
+      "claimedAmount": 268000,
+      "category": "fact",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "ĐIỂM BÁN THIẾT BỊ THIÊN PHÚ",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 268000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "posNumber": "POS-07"
+      },
+      "groundTruthRationale": "Chỉ có Shop ID, POS No và TID; không có mã riêng của giao dịch."
+    },
+    {
+      "id": "R3-08",
+      "fileName": "R3-08-destroyed-receipt-number.jpg",
+      "sha256": "EB14311C024A07EDA9BD22B945563D4EE8E4332DC71ED95CE0D452F0899901D2",
+      "expectedStatus": "ESCALATE_FACT",
+      "claimedAmount": 315000,
+      "category": "fact",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "RESTAURANT_BILL",
+        "merchantName": "NHÀ HÀNG GÓC PHỐ XANH",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 315000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "receiptNumber": null,
+        "posNumber": "POS-08"
+      },
+      "groundTruthRationale": "Nhiều ký tự của số biên nhận bị mất nét; POS No không được dùng thay thế."
+    },
+    {
+      "id": "R3-09",
+      "fileName": "R3-09-claimed-amount-mismatch.jpg",
+      "sha256": "6179DA1052121259E7ADA231DAB1045E3D0C3023B09A4D026B0E55D954D3C364",
+      "expectedStatus": "ESCALATE_FACT",
+      "claimedAmount": 498000,
+      "category": "fact",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "VAT_INVOICE",
+        "merchantName": "CÔNG TY DỊCH VỤ BẢO TÍN",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 478000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "invoiceNumber": "000309",
+        "invoiceSerial": "1C26TBT"
+      },
+      "groundTruthRationale": "Tổng in 478.000 VND không khớp claimed amount 498.000 VND."
+    },
+    {
+      "id": "R3-10",
+      "fileName": "R3-10-policy-alcohol.jpg",
+      "sha256": "A5A17EE9772AC2592BBF8D20F62570AD8D020A3FB4C961FDB20CAAE03FBC1921",
+      "expectedStatus": "ESCALATE_POLICY",
+      "claimedAmount": 617000,
+      "category": "policy",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "RESTAURANT_BILL",
+        "merchantName": "NHÀ HÀNG BẾN SÔNG",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 617000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "receiptNumber": "BILL-261005-1034"
+      },
+      "groundTruthRationale": "Có hạng mục bia được in rõ; tổng dưới hạn mức."
+    },
+    {
+      "id": "R3-11",
+      "fileName": "R3-11-policy-personal-item.jpg",
+      "sha256": "2283ACB15C13E9F155502B1B6EA2467BA06233C387F6351A1D8E66FED723F247",
+      "expectedStatus": "ESCALATE_POLICY",
+      "claimedAmount": 176000,
+      "category": "policy",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "CỬA HÀNG CHĂM SÓC HẰNG NGÀY",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 176000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "transactionReference": "TXN-261005-1148",
+        "posNumber": "POS-11"
+      },
+      "groundTruthRationale": "Khăn ướt chăm sóc da thuộc nhóm đồ dùng cá nhân theo policy hiện hành."
+    },
+    {
+      "id": "R3-12",
+      "fileName": "R3-12-policy-entertainment.jpg",
+      "sha256": "632FAB8CF70A07A602775019FC3FBCBF8DED650BCA257F369E843A7FF440A2A2",
+      "expectedStatus": "ESCALATE_POLICY",
+      "claimedAmount": 310000,
+      "category": "policy",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "TRUNG TÂM GIẢI TRÍ ÁNH SAO",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 310000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "receiptNumber": "RCP-261005-1207",
+        "posNumber": "POS-12",
+        "documentNumber": "DV-261005-1207"
+      },
+      "groundTruthRationale": "Vé xem phim là hạng mục policy; Số biên nhận và Số chứng từ được in thành hai trường riêng."
+    },
+    {
+      "id": "R3-13",
+      "fileName": "R3-13-authority-vat.jpg",
+      "sha256": "E9B8A2311EF9C0B18F668B26E2443A6318AAA23E8993684AAEBCEC306BA13F54",
+      "expectedStatus": "ESCALATE_AUTHORITY",
+      "claimedAmount": 1050000,
+      "category": "authority",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "VAT_INVOICE",
+        "merchantName": "CÔNG TY THIẾT BỊ DỰ ÁN ĐÔNG NAM",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 1050000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "invoiceNumber": "000513",
+        "invoiceSerial": "1C26TDN"
+      },
+      "groundTruthRationale": "Chứng từ hợp lệ nhưng tổng vượt hạn mức 1.000.000 VND."
+    },
+    {
+      "id": "R3-14",
+      "fileName": "R3-14-authority-receipt.jpg",
+      "sha256": "2835FBF2D95B6502FEF3A9B0617CF98EA83CF731EC27B191179A498BF7246049",
+      "expectedStatus": "ESCALATE_AUTHORITY",
+      "claimedAmount": 1680000,
+      "category": "authority",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "TRUNG TÂM ĐIỆN MÁY HÒA PHÁT",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 1680000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "receiptNumber": "REC-261005-1455",
+        "posNumber": "POS-14"
+      },
+      "groundTruthRationale": "Receipt No tách khỏi POS No; tổng vượt hạn mức."
+    },
+    {
+      "id": "R3-15",
+      "fileName": "R3-15-authority-transaction.jpg",
+      "sha256": "3B5E5A09CF71F3E6631048C7D3C0233859DF739B79152B9239D61ADE3228F862",
+      "expectedStatus": "ESCALATE_AUTHORITY",
+      "claimedAmount": 2350000,
+      "category": "authority",
+      "expectedFacts": {
+        "evidenceContractVersion": 2,
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "CỬA HÀNG MÁY TÍNH THÀNH CÔNG",
+        "currency": "VND",
+        "invoiceDate": "2026-10-05",
+        "invoiceDateEvidence": "05/10/2026",
+        "totalAmount": 2350000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "transactionReference": "TRC-261005-1508",
+        "posNumber": "POS-15"
+      },
+      "groundTruthRationale": "Trace là mã giao dịch; tổng vượt hạn mức."
+    }
+  ]
+}

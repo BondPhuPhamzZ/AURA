@@ -86,6 +86,9 @@ public static class ReceiptSemanticValidator
         AddDuplicateIdentifierIssue(issues, "receiptNumber", facts.ReceiptNumber,
             "transactionReference", facts.TransactionReference);
         AddSupportingIdentifierCollisionIssues(issues, facts);
+        AddIdentifierFragmentIssue(issues, "invoiceNumber", facts.InvoiceNumber);
+        AddIdentifierFragmentIssue(issues, "receiptNumber", facts.ReceiptNumber);
+        AddIdentifierFragmentIssue(issues, "transactionReference", facts.TransactionReference);
 
         if (!string.IsNullOrWhiteSpace(facts.OrderId) &&
             !string.IsNullOrWhiteSpace(facts.ShippingTrackingCode) &&
@@ -482,9 +485,22 @@ public static class ReceiptSemanticValidator
         documentType is "VAT_INVOICE" or "RETAIL_RECEIPT" or "RESTAURANT_BILL";
 
     private static bool HasPaperTraceableIdentifier(ReceiptExtractionDto facts) =>
-        !string.IsNullOrWhiteSpace(facts.InvoiceNumber) ||
-        !string.IsNullOrWhiteSpace(facts.ReceiptNumber) ||
-        !string.IsNullOrWhiteSpace(facts.TransactionReference);
+        IsPlausibleTraceableIdentifier(facts.InvoiceNumber) ||
+        IsPlausibleTraceableIdentifier(facts.ReceiptNumber) ||
+        IsPlausibleTraceableIdentifier(facts.TransactionReference);
+
+    private static void AddIdentifierFragmentIssue(List<string> issues, string name, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value) && !IsPlausibleTraceableIdentifier(value))
+            issues.Add($"{name}='{value.Trim()}' chỉ còn tiền tố chữ quá ngắn, chưa đủ để truy vết giao dịch");
+    }
+
+    private static bool IsPlausibleTraceableIdentifier(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        var compact = new string(value.Where(char.IsLetterOrDigit).ToArray());
+        return compact.Length > 0 && !(compact.Length <= 4 && compact.All(char.IsLetter));
+    }
 
     private static void AddDuplicateIdentifierIssue(List<string> issues,
         string leftName, string? left, string rightName, string? right)

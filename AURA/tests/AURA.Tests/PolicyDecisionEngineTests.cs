@@ -201,6 +201,30 @@ public sealed class PolicyDecisionEngineTests
         Assert.Equal("ESCALATE_POLICY", Decide(facts).Status);
     }
 
+    [Theory]
+    [InlineData("Bìa hồ sơ")]
+    [InlineData("Bìa còng lưu tài liệu")]
+    public void Stationery_bia_with_diacritic_is_not_alcohol(string item)
+    {
+        var facts = ValidFacts();
+        facts.LineItems = [new ReceiptLineItem { Description = item, Amount = 150_000 }];
+
+        Assert.Equal("AUTO_APPROVE", Decide(facts).Status);
+    }
+
+    [Fact]
+    public void Short_alphabetic_receipt_fragment_cannot_auto_approve()
+    {
+        var facts = ValidFacts();
+        facts.InvoiceNumber = null;
+        facts.ReceiptNumber = "RCF";
+
+        var result = Decide(facts);
+
+        Assert.Equal("ESCALATE_FACT", result.Status);
+        Assert.Contains("thiếu số hóa đơn", result.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public void Printed_seconds_are_losslessly_normalized_before_policy()
     {

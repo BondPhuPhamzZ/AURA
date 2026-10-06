@@ -64,20 +64,20 @@ public static class PolicyDecisionEngine
         var isDigital = isEcommerce || isRideHailing ||
             ContainsAny(facts.DocumentType, "digital", "electronic", "e-invoice");
 
-        var hasPaperTraceableIdentifier = !string.IsNullOrWhiteSpace(facts.InvoiceNumber) ||
-            !string.IsNullOrWhiteSpace(facts.ReceiptNumber) ||
-            !string.IsNullOrWhiteSpace(facts.TransactionReference);
+        var hasPaperTraceableIdentifier = IsPlausibleTraceableIdentifier(facts.InvoiceNumber) ||
+            IsPlausibleTraceableIdentifier(facts.ReceiptNumber) ||
+            IsPlausibleTraceableIdentifier(facts.TransactionReference);
         if (!isDigital && !hasPaperTraceableIdentifier)
             factProblems.Add("thiếu số hóa đơn, số biên nhận hoặc mã giao dịch riêng của chứng từ");
 
         if (isEcommerce)
         {
-            var hasTraceableIdentifier = !string.IsNullOrWhiteSpace(facts.InvoiceNumber) ||
-                !string.IsNullOrWhiteSpace(facts.ReceiptNumber) ||
-                !string.IsNullOrWhiteSpace(facts.TransactionReference) ||
-                !string.IsNullOrWhiteSpace(facts.OrderId) ||
-                !string.IsNullOrWhiteSpace(facts.BookingId) ||
-                !string.IsNullOrWhiteSpace(facts.ShippingTrackingCode);
+            var hasTraceableIdentifier = IsPlausibleTraceableIdentifier(facts.InvoiceNumber) ||
+                IsPlausibleTraceableIdentifier(facts.ReceiptNumber) ||
+                IsPlausibleTraceableIdentifier(facts.TransactionReference) ||
+                IsPlausibleTraceableIdentifier(facts.OrderId) ||
+                IsPlausibleTraceableIdentifier(facts.BookingId) ||
+                IsPlausibleTraceableIdentifier(facts.ShippingTrackingCode);
             if (!hasTraceableIdentifier)
                 factProblems.Add("thiếu mã đơn hàng, mã đặt chỗ, mã vận chuyển hoặc số biên nhận để đối chiếu");
 
@@ -97,10 +97,10 @@ public static class PolicyDecisionEngine
             if (facts.LineItems.Count == 0 && facts.ValidationIssues.Count > 0)
                 factProblems.Add("đơn hàng trực tuyến thiếu danh sách hàng hóa/dịch vụ để đối chiếu");
         }
-        else if (isRideHailing && string.IsNullOrWhiteSpace(facts.BookingId) &&
-                 string.IsNullOrWhiteSpace(facts.InvoiceNumber) &&
-                 string.IsNullOrWhiteSpace(facts.ReceiptNumber) &&
-                 string.IsNullOrWhiteSpace(facts.TransactionReference))
+        else if (isRideHailing && !IsPlausibleTraceableIdentifier(facts.BookingId) &&
+                 !IsPlausibleTraceableIdentifier(facts.InvoiceNumber) &&
+                 !IsPlausibleTraceableIdentifier(facts.ReceiptNumber) &&
+                 !IsPlausibleTraceableIdentifier(facts.TransactionReference))
         {
             factProblems.Add("thiếu mã chuyến đi/đặt chỗ hoặc số biên nhận để đối chiếu");
         }
@@ -202,14 +202,15 @@ public static class PolicyDecisionEngine
 
     private static string NormalizePolicyText(string value)
     {
-        var decomposed = value.Normalize(NormalizationForm.FormD);
-        var builder = new StringBuilder(decomposed.Length);
+        // Preserve Vietnamese diacritics.  The prohibited-term table already carries
+        // explicit accented and unaccented variants.  Removing every mark turns the
+        // stationery word "bìa" into the alcohol keyword "bia" and creates a false
+        // policy escalation.
+        var composed = value.Normalize(NormalizationForm.FormC);
+        var builder = new StringBuilder(composed.Length);
         var previousWasSpace = true;
-        foreach (var character in decomposed)
+        foreach (var character in composed)
         {
-            if (CharUnicodeInfo.GetUnicodeCategory(character) == UnicodeCategory.NonSpacingMark)
-                continue;
-
             var lower = char.ToLowerInvariant(character);
             if (char.IsLetterOrDigit(lower))
             {
@@ -224,6 +225,17 @@ public static class PolicyDecisionEngine
         }
 
         return builder.ToString().Trim();
+    }
+
+    private static bool IsPlausibleTraceableIdentifier(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return false;
+
+        var compact = new string(value.Where(char.IsLetterOrDigit).ToArray());
+        // A short alphabetic fragment such as "RCF" is typically only the readable
+        // prefix of a damaged identifier.  Numeric short receipts remain accepted;
+        // this guard deliberately avoids imposing an arbitrary global minimum length.
+        return compact.Length > 0 && !(compact.Length <= 4 && compact.All(char.IsLetter));
     }
 
     private static bool TryParseInvoiceDate(string? value, out DateTime date) =>

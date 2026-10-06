@@ -20,7 +20,7 @@ Cập nhật: 06/10/2026. Trạng thái chuẩn nằm tại `docs/CURRENT_PROJEC
 - `README.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_AND_INTEGRATION_REPORT.md`.
 - `docs/`: Build Log nguồn, deployment, runbook, test cases, model selection, measurement plan.
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
-- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; đã refresh theo holdout/live candidate và mốc 122/122.
+- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; đang giữ baseline đã xác minh. Chỉ cập nhật mốc 129/129 và v3.1 sau khi live v3.1 hoàn tất; không ghi trước kết quả candidate.
 - `submission/AURA_BUILD_LOG.docx`: một trang.
 - `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.
 - 5 ảnh Verify trong `wwwroot/test_data/images`, manifest Verify và gói 15 ca BGK.
@@ -54,5 +54,6 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 10. Development validation bổ sung và fallback live regression nằm tại `docs/REAL_RECEIPT_VALIDATION_2026-10-02.md` và `docs/FALLBACK_REGRESSION_2026-10-02.md`. Ảnh thật/PII vẫn nằm ngoài Git; fallback baseline vẫn tắt.
 11. Evidence live hậu publish 06/10 trên `1f4b3c9` đã đóng health 5/5, security 6/6, UI browser mobile 390 px, Verify 5/5, workflow fixture 2/2 và Audit timezone Việt Nam. Điện thoại thật 4G/5G vẫn là gate trước khi public URL trong README.
 12. Holdout 15 ca đã chạy một official run: raw 10/15, adjusted 11/15 do một nhãn người sai; raw bất biến. Tập ảnh từ đây chỉ là post-holdout regression, không còn blind.
+13. Test Kit v3 synthetic chạy một live batch: raw 11/15, 142/145 field, 0 system error; raw bất biến. Candidate hardening/v3.1 đạt 129/129 offline test nhưng chưa được đánh dấu live PASS trước publish/recycle/batch mới.
 13. Checklist điện thoại thật, ba user session và rehearsal nằm tại `docs/MANUAL_FINAL_GATES_2026-10-06.md`.
 14. Kế hoạch nhận yêu cầu mới, timebox bốn giờ và demo vòng bảng/Chung kết nằm tại `docs/ONSITE_FINAL_PLAYBOOK_2026-10-06.md`.

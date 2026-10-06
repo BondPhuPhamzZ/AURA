@@ -79,6 +79,7 @@ class Case:
     tax: int | None = None
     issue: str | None = None
     visual_condition: str = "clean-camera"
+    additional_fields: list[tuple[str, str]] = field(default_factory=list)
     expected_facts: dict = field(default_factory=dict)
     ground_truth_rationale: str = ""
     sha256: str = ""
@@ -110,7 +111,7 @@ def recent_weekday(as_of: date) -> date:
     return value
 
 
-def build_cases(as_of: date) -> list[Case]:
+def build_cases(as_of: date, revision: str = "3.0") -> list[Case]:
     tx_date = recent_weekday(as_of)
     iso = tx_date.isoformat()
     visible = tx_date.strftime("%d/%m/%Y")
@@ -239,6 +240,20 @@ def build_cases(as_of: date) -> list[Case]:
         ),
     ]
 
+    if revision == "3.1":
+        # V3 raw evidence exposed an objective fixture error in R3-12: a supporting
+        # Số chứng từ alone cannot satisfy the traceable paper-identifier rule, so
+        # FACT would outrank POLICY.  V3.1 keeps that supporting field and adds a
+        # distinct receipt number.  V3 remains immutable and reproducible.
+        policy_case = next(case for case in cases if case.id == "R3-12")
+        policy_case.identifier_label = "Số biên nhận"
+        policy_case.identifier_value = "RCP-261005-1207"
+        policy_case.identifier_field = "receiptNumber"
+        policy_case.additional_fields = [("Số chứng từ", "DV-261005-1207")]
+        policy_case.ground_truth_rationale = (
+            "Vé xem phim là hạng mục policy; Số biên nhận và Số chứng từ được in thành hai trường riêng."
+        )
+
     for case in cases:
         total_visible = case.issue != "destroyed-total"
         identifier_visible = case.identifier_value if case.issue != "destroyed-identifier" else None
@@ -260,6 +275,9 @@ def build_cases(as_of: date) -> list[Case]:
             facts["invoiceSerial"] = case.invoice_serial
         if case.tax_authority_code:
             facts["taxAuthorityCode"] = case.tax_authority_code
+        for label, value in case.additional_fields:
+            if label == "Số chứng từ":
+                facts["documentNumber"] = value
         case.expected_facts = facts
     return cases
 
@@ -318,6 +336,7 @@ def draw_receipt(case: Case, rng: random.Random) -> Image.Image:
         fields.append(("Mã CQT", case.tax_authority_code))
     if case.identifier_label and case.identifier_value:
         fields.append((case.identifier_label, case.identifier_value))
+    fields.extend(case.additional_fields)
     if case.shop_id:
         fields.append(("Shop ID", case.shop_id))
     if case.pos_number:
@@ -434,6 +453,8 @@ def save_case(case: Case, rng: random.Random) -> None:
 
 def case_for_manifest(case: Case) -> dict:
     value = asdict(case)
+    if not value["additional_fields"]:
+        value.pop("additional_fields")
     value["items"] = [
         {"description": item.description, "quantity": item.quantity, "unitPrice": item.unit_price,
          "amount": item.amount}
@@ -442,10 +463,11 @@ def case_for_manifest(case: Case) -> dict:
     return value
 
 
-def write_manifests(cases: list[Case], as_of: date) -> None:
+def write_manifests(cases: list[Case], as_of: date, revision: str = "3.0") -> None:
+    is_revision = revision == "3.1"
     manifest = {
-        "version": "regression-15-v3",
-        "generatorVersion": GENERATOR_VERSION,
+        "version": "regression-15-v3.1" if is_revision else "regression-15-v3",
+        "generatorVersion": "3.1.0" if is_revision else GENERATOR_VERSION,
         "source": "synthetic-deterministic-pillow",
         "seed": SEED,
         "asOfDate": as_of.isoformat(),
@@ -462,7 +484,7 @@ def write_manifests(cases: list[Case], as_of: date) -> None:
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     judge = {
-        "version": "judge-15-v3",
+        "version": "judge-15-v3.1" if is_revision else "judge-15-v3",
         "description": "Locked synthetic post-holdout regression set; not a blind real-world accuracy claim.",
         "sourceManifest": "manifest.json",
         "imageDirectory": "images",
@@ -508,16 +530,22 @@ def write_contact_sheet(cases: list[Case]) -> None:
 
 
 def main() -> None:
+    global KIT_ROOT, IMAGE_ROOT
     parser = argparse.ArgumentParser()
     parser.add_argument("--as-of-date", type=date.fromisoformat, required=True)
+    parser.add_argument("--revision", choices=["3.0", "3.1"], default="3.0")
     args = parser.parse_args()
+
+    if args.revision == "3.1":
+        KIT_ROOT = ROOT / "test_kit" / "v3_1"
+        IMAGE_ROOT = KIT_ROOT / "images"
 
     KIT_ROOT.mkdir(parents=True, exist_ok=True)
     IMAGE_ROOT.mkdir(parents=True, exist_ok=True)
     for stale in IMAGE_ROOT.glob("R3-*.jpg"):
         stale.unlink()
 
-    cases = build_cases(args.as_of_date)
+    cases = build_cases(args.as_of_date, args.revision)
     if len(cases) != 15:
         raise RuntimeError("Test Kit v3 must contain exactly 15 cases.")
 
@@ -526,7 +554,7 @@ def main() -> None:
         save_case(case, rng)
         case.sha256 = sha256(IMAGE_ROOT / case.file_name)
 
-    write_manifests(cases, args.as_of_date)
+    write_manifests(cases, args.as_of_date, args.revision)
     write_contact_sheet(cases)
     print(f"Generated {len(cases)} locked synthetic regression cases under {KIT_ROOT}")
 

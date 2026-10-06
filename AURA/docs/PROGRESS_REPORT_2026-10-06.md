@@ -23,3 +23,11 @@ https://github.com/BondPhuPhamzZ/AURA
 Hoàn tất official holdout 15 hóa đơn thật (raw 10/15; adjusted 11/15 do một nhãn người sai, raw giữ nguyên) và triển khai contract v2. Bản live `1f4b3c9` hậu publish đạt health 5/5, security 6/6, Verify OpenRouter 5/5, workflow/undo 2/2, mobile-browser 390 px và Audit UTC→giờ Việt Nam; build 0 warning/error, 122/122 test, EF/package gate sạch. Technical baseline sẵn sàng cho supervised demo. Phone 4G/5G đã hoàn tất; tiếp theo là republish bản vá P1, ba user session và ba rehearsal. GPU không chặn MVP.
 
 Cập nhật cuối ngày 06/10: phone 4G/5G đã pass health/Verify/workflow/Audit/refresh. Candidate sửa hai nút quản lý lệch cột đã pass visual local 390x844 và 122/122 test. Một lượt Ollama 4B post-policy trên judge synthetic đạt 13/15, missed TK-12, over TK-02, 0 system error, nên fallback vẫn tắt. Runbook GPU BTC đã khóa 8B Q4, context 16384/output 4096, DB/storage/port cô lập và không dùng receipt thật.
+
+## Cập nhật Test Kit v3
+
+Đội giữ nguyên Test Kit v2 và tạo v3 như một post-holdout regression synthetic độc lập, khóa manifest/SHA-256 trước request. Một batch live OpenRouter hoàn tất 15/15 request, 0 system error, raw 11/15 decision và 142/145 field; kết quả không được dùng làm production accuracy. Phân tích lỗi dẫn tới hai hardening deterministic (`Bìa` không bị hiểu thành `bia`; prefix receipt rách như `RCF` không đủ truy vết) và revision v3.1 sửa precondition R3-12 mà không ghi đè raw v3. Candidate hiện pass 129/129 test; bước tiếp theo là publish/recycle/health rồi chạy đúng một live v3.1 batch.
+
+### Bản cực ngắn mới để dán form
+
+Giữ nguyên raw holdout và Test Kit v2; bổ sung Test Kit v3 synthetic có SHA-256/ground truth khóa trước request. Lượt live OpenRouter v3 hoàn tất 15/15, 0 system error, raw 11/15 decision và 142/145 field, qua đó phát hiện false-positive `Bìa`→`bia`, receipt prefix rách vẫn được coi là truy vết và một fixture precondition sai. Đã harden deterministic, tạo v3.1 riêng, 129/129 test pass; chờ publish/recycle rồi chạy live v3.1. Không thay raw và không tuyên bố production accuracy.

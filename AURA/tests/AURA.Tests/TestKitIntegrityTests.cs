@@ -145,6 +145,36 @@ public sealed class TestKitIntegrityTests
             readableFade.GetProperty("expected_facts").GetProperty("totalAmountSource").GetString());
     }
 
+    [Fact]
+    public void Regression_v31_preserves_v3_and_corrects_the_policy_fixture_precondition()
+    {
+        var originalRoot = Path.Combine(ProjectRoot, "test_kit", "v3");
+        var revisionRoot = Path.Combine(ProjectRoot, "test_kit", "v3_1");
+        using var original = JsonDocument.Parse(File.ReadAllText(Path.Combine(originalRoot, "manifest.json")));
+        using var revision = JsonDocument.Parse(File.ReadAllText(Path.Combine(revisionRoot, "judge-manifest.json")));
+
+        Assert.Equal("regression-15-v3", original.RootElement.GetProperty("version").GetString());
+        Assert.Equal("judge-15-v3.1", revision.RootElement.GetProperty("version").GetString());
+        var cases = revision.RootElement.GetProperty("cases").EnumerateArray().ToList();
+        Assert.Equal(15, cases.Count);
+
+        foreach (var testCase in cases)
+        {
+            var fileName = testCase.GetProperty("fileName").GetString()!;
+            var expectedHash = testCase.GetProperty("sha256").GetString()!;
+            var imagePath = Path.Combine(revisionRoot, "images", fileName);
+            Assert.True(File.Exists(imagePath));
+            Assert.Equal(expectedHash, Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+                File.ReadAllBytes(imagePath))));
+        }
+
+        var policyCase = cases.Single(x => x.GetProperty("id").GetString() == "R3-12");
+        var expectedFacts = policyCase.GetProperty("expectedFacts");
+        Assert.Equal("ESCALATE_POLICY", policyCase.GetProperty("expectedStatus").GetString());
+        Assert.Equal("RCP-261005-1207", expectedFacts.GetProperty("receiptNumber").GetString());
+        Assert.Equal("DV-261005-1207", expectedFacts.GetProperty("documentNumber").GetString());
+    }
+
     private static string FindProjectRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -300,6 +300,32 @@ public sealed class ReceiptSemanticValidatorTests
     }
 
     [Fact]
+    public void Damaged_short_alphabetic_receipt_prefix_is_not_traceable()
+    {
+        var facts = new ReceiptExtractionDto
+        {
+            DocumentType = "RESTAURANT_BILL",
+            ReceiptNumber = "RCF",
+            InvoiceDate = "2026-10-05",
+            InvoiceDateEvidence = "05/10/2026",
+            Currency = "VND",
+            TotalAmount = 315_000m,
+            TotalAmountSource = "PRINTED_FINAL_TOTAL",
+            TotalAmountEvidence = "TỔNG THANH TOÁN 315.000 đ",
+            Confidence = 0.95,
+            LineItems = [new ReceiptLineItem { Description = "Suất ăn làm việc", Amount = 315_000m }]
+        };
+
+        var issues = ReceiptSemanticValidator.Validate(facts);
+
+        Assert.Contains(issues, issue => issue.Contains("receiptNumber='RCF'", StringComparison.Ordinal));
+        facts.ValidationIssues = issues.ToList();
+        Assert.Equal("ESCALATE_FACT",
+            PolicyDecisionEngine.Evaluate(facts, 315_000m,
+                utcNow: new DateTime(2026, 10, 6, 0, 0, 0, DateTimeKind.Utc)).Status);
+    }
+
+    [Fact]
     public void Removes_a_nonimpacting_discount_when_three_independent_totals_already_match()
     {
         var facts = new ReceiptExtractionDto
