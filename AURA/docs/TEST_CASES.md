@@ -111,7 +111,7 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P71 | Ngày Việt Nam in `04-10-26` nhưng model trả `2026-04-10` | Backend đối chiếu raw evidence và chuẩn hóa thành `2026-10-04`; lưu warning audit | A |
 | P72 | Phiếu in `Giờ 08:29:02`, tổng 60.000, tiền khách đưa 500.000, tiền thối -440.000, VAT đã gồm 4.444,44 | Không coi cash/change/VAT là discount/total; fractional included VAT được giữ hỗ trợ | A/V hậu deploy |
 | P73 | `PTT` và `Mã CQT` là hai mã khác nhau | `PTT -> receiptNumber`, `Mã CQT -> taxAuthorityCode`, không lặp sang transactionReference | A/V hậu deploy |
-| P74 | Item văn phòng `Bìa hồ sơ` | Không match alcohol `bia`; AUTO nếu các rule khác đạt | A/V3.1 |
+| P74 | Item văn phòng `Bìa hồ sơ`; OCR có thể trả `Bia hồ sơ/Bia ho so` | Ngoại lệ ngữ cảnh hẹp, không match alcohol; `Bia lon/chai` vẫn POLICY; AUTO nếu các rule khác đạt | A/V3.1 |
 | P75 | Receipt number chỉ còn prefix chữ ngắn như `RCF` do mất mực | Repair một lần; còn fragment thì `ESCALATE_FACT` | A/V3.1 |
 | P76 | `Số biên nhận` và `Số chứng từ` cùng xuất hiện | Map tách `receiptNumber`/`documentNumber`; policy item vẫn được xét | A/V3.1 |
 | P74 | `Kẹp tóc`, `Khăn ướt chăm sóc da` hoặc wet wipes trên receipt đủ dữ kiện | `ESCALATE_POLICY` theo taxonomy personal-item của MVP; FACT vẫn ưu tiên nếu có vấn đề dữ kiện | A |

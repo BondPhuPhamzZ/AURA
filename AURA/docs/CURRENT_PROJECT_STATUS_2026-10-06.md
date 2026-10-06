@@ -4,16 +4,16 @@ Cập nhật: 06/10/2026. Đây là nguồn trạng thái hiện hành; các fil
 
 ## Kết luận điều hành
 
-AURA là **MVP technical baseline sẵn sàng cho supervised demo**, chưa phải production-ready hoặc accuracy-ready. Official holdout 15 hóa đơn thật đã hoàn tất một lượt và dẫn tới evidence contract v2. Deployment `1f4b3c9` đã pass health 5/5, security negative 6/6, Verify OpenRouter 5/5, workflow fixture 2/2 và Audit timezone Việt Nam. Điện thoại thật qua 4G/5G đã pass luồng chính. Candidate hiện tại gồm bản vá mobile và hardening hậu Test Kit v3; full suite 129/129 pass nhưng phải publish/recycle rồi chạy live v3.1 trước khi đóng gate mới.
+AURA là **MVP technical baseline sẵn sàng cho supervised demo**, chưa phải production-ready hoặc accuracy-ready. Official holdout 15 hóa đơn thật đã hoàn tất một lượt và dẫn tới evidence contract v2. Deployment `1f4b3c9` đã pass health 5/5, security negative 6/6, Verify OpenRouter 5/5, workflow fixture 2/2 và Audit timezone Việt Nam. Điện thoại thật qua 4G/5G đã pass luồng chính. Candidate hiện tại gồm bản vá mobile và hardening hậu Test Kit v3; full suite 133/133 pass nhưng phải publish/recycle rồi chạy live v3.1 trước khi đóng gate mới.
 
 ## Baseline đã kiểm
 
 | Hạng mục | Trạng thái |
 |---|---|
 | Deployed revision | `1f4b3c9` — contract v2 và bản vá Audit timezone đã live |
-| Candidate kế tiếp | `bd72763` — mobile alignment + policy/identifier hardening + Test Kit v3.1; chờ publish/live v3.1 |
+| Candidate kế tiếp | logic `b69ff5d` — mobile alignment + policy/identifier hardening context-aware + Test Kit v3.1; chờ publish/live v3.1 |
 | Release build | 0 warning, 0 error |
-| Automated tests | 129/129 pass trên candidate; offline, không gọi API AI |
+| Automated tests | 133/133 pass trên candidate; offline, không gọi API AI |
 | EF model | Không có pending model change |
 | NuGet vulnerability scan | Không có advisory cho app/test tại thời điểm kiểm |
 | Live health | 5/5 `ok`; DB/storage true; pending migration 0 |
@@ -33,7 +33,7 @@ Evidence live hiện hành: [`LIVE_POST_HOLDOUT_VALIDATION_2026-10-06.md`](LIVE_
 
 ## Gate còn mở
 
-1. Publish candidate `bd72763`, recycle Pool, health `ok`, rồi chạy đúng một live batch v3.1; không chạy lại raw v3.
+1. Publish current master có logic `b69ff5d`, recycle Pool, health `ok`, rồi chạy đúng một live batch v3.1; không chạy lại raw v3.
 2. Chụp lại đúng tab quản lý trên điện thoại 4G/5G để đóng P1 alignment.
 3. Ba phiên người dùng thật có giám sát; thu consent, task, quan sát, thời gian, lỗi và feedback do người dùng xác nhận.
 4. Ba dress rehearsal 8–10 phút trên cùng commit freeze; local Ollama chỉ là phương án manual vì 4B chưa đạt safety gate.
