@@ -1,10 +1,10 @@
 # AURA — Current project status
 
-Cập nhật: 05/10/2026. Đây là nguồn trạng thái hiện hành; các báo cáo có ngày cũ hơn được giữ để truy vết lịch sử.
+Cập nhật: 06/10/2026. Đây là nguồn trạng thái hiện hành; các báo cáo có ngày cũ hơn được giữ để truy vết lịch sử.
 
 ## 1. Kết luận điều hành
 
-AURA đã đạt mức **MVP demo candidate** cho luồng cốt lõi: upload bất đồng bộ, Vision AI trích xuất, semantic validation/repair có giới hạn, policy C# quyết định, chuyển tiếp cho quản lý, audit và undo. Baseline code hiện tại là `master` tại `c42c5ef`; Release build sạch, 108/108 automated tests pass và EF không có model change chưa migration.
+AURA đã đạt mức **MVP demo candidate** cho luồng cốt lõi: upload bất đồng bộ, Vision AI trích xuất, semantic validation/repair có giới hạn, policy C# quyết định, chuyển tiếp cho quản lý, audit và undo. Baseline source hiện tại là `master` tại `798ab0d`; Release build sạch, 109/109 automated tests pass và EF không có model change chưa migration. Verify UI cho phép chọn xem facts riêng của từng ca thay vì chỉ hiển thị ca đầu tiên.
 
 Deployment SmartASP sau bản vá đã có evidence ngày 04/10: health/DB/storage/migration pass, UI first-paint đúng tab, security-negative pass, AUTO smoke và FACT fail-safe smoke độc lập pass, Official Verify 5/5, human workflow/audit pass, persistence sau refresh/recycle pass và concurrent smoke hoàn tất 7/7 request (2 + 5). Đây là evidence staging/MVP, không phải chứng nhận production accuracy.
 
@@ -21,9 +21,9 @@ Live URL được xác minh trong evidence ngày 04/10. Trước khi công bố 
 
 | Hạng mục | Kết quả |
 |---|---|
-| Source revision | responsive/holdout feature revision `master` / `e94af11` |
+| Source revision | current feature revision `master` / `798ab0d` |
 | Release build | 0 warning, 0 error |
-| Automated tests | 108/108 pass, offline, không gọi API trả phí |
+| Automated tests | 109/109 pass, offline, không gọi API trả phí |
 | EF model | Không có pending model change |
 | Official Verify | 5/5, đúng 3 AUTO + 1 FACT + 1 POLICY |
 | OpenRouter judge set | 15/15 decision; 70/75 field; P50/P95 3,614/16,459 giây |

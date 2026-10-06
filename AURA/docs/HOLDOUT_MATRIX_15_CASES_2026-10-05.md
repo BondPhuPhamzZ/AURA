@@ -34,12 +34,12 @@ Cập nhật: 05/10/2026. Tài liệu này là checklist chọn **candidate**. G
 
 Nếu ba nhánh POLICY hoặc AUTHORITY không thể thu thập an toàn bằng hóa đơn thật, dùng fixture synthetic đã khai báo rõ thay vì sửa một hóa đơn thật. Ma trận 5/4/3/3 là coverage mục tiêu, không phải lý do để gán sai nhãn.
 
-## 3. Cách phân 12 candidate hiện tại
+## 3. Cách chốt 15 candidate hiện tại
 
-1. Giữ nguyên 12 file trong `02_selected_images`; chưa upload file nào vào AURA.
+1. Giữ nguyên 15 file đã chốt trong `02_selected_images`; chưa upload file nào vào AURA.
 2. Với từng file, con người mở offline và điền bảng nháp: merchant, ngày/giờ, document type, identifier và nhãn của identifier, item, subtotal, discount, tax, final total, PII đã che, quyền sử dụng, đã từng gửi model hay chưa.
 3. Đánh dấu cell BH-01…BH-15 mà file **tự nhiên** thỏa mãn. Một file chỉ được chọn cho một cell.
-4. Nếu nhiều file cùng phù hợp, ưu tiên merchant/layout/điều kiện chụp khác nhau. Nếu một cell trống, thu thập thêm candidate; vì vậy 12 file không đồng nghĩa chỉ cần thêm đúng 3 file.
+4. Nếu nhiều file cùng phù hợp, ưu tiên merchant/layout/điều kiện chụp khác nhau. Không bẻ nhãn để ép phân bố; nhánh hiếm có thể được báo cáo bằng synthetic supplement tách biệt.
 5. Khi đủ 15 cell hợp lệ, đổi tên ổn định, hoàn tất redaction, rồi mới tạo SHA-256 và manifest locked.
 
 `NewVinamilk.jpg` và `NewKatinat.jpg` được xem là candidate holdout nếu đây là giao dịch mới, ảnh cuối chưa từng gửi bất kỳ model/pipeline nào và chưa dùng output của chúng để sửa hệ thống. Việc trùng merchant với regression cũ không tự làm mất tính blind. Nếu chính hai giao dịch này đã từng được upload thử, chúng phải chuyển sang regression dù ảnh hiện tại đã che QR hoặc đổi hash.
