@@ -8,7 +8,7 @@ Sprint 2 — hậu holdout, xác minh deployment và chốt demo candidate.
 
 Đội đã hoàn tất official holdout 15 hóa đơn thật một lượt với nhãn và SHA-256 khóa trước request đầu tiên. Kết quả raw là 10/15 quyết định đúng; review độc lập phát hiện một nhãn người sai nên adjusted view là 11/15, nhưng raw evidence được giữ nguyên. Từ lỗi holdout, đội bổ sung evidence contract v2: chỉ chấp nhận tổng cuối được in rõ, đối chiếu ngày/giờ gốc, tách money role và identifier, mở rộng taxonomy personal-item và hiển thị provenance trên UI.
 
-Bản `c382ce7` đã được deploy lên SmarterASP. Health 5/5 đều `ok`, DB/storage/migration đạt; security negative và upload guard đạt; giao diện browser mobile, Quản lý và Audit render ổn; Verify thật qua OpenRouter đạt 5/5 đúng 3 AUTO, 1 FACT, 1 POLICY. Kiểm tra phát hiện giờ Audit phụ thuộc timezone máy host; DB UTC vẫn đúng. Source đã sửa chuyển đổi rõ sang giờ Việt Nam, thêm regression test, đạt build sạch, 122/122 test, EF model sạch và không có package bị báo vulnerable. Cần publish/recycle bản vá nhỏ này và xác nhận lại Audit trước khi freeze/public live URL.
+Bản `c382ce7` đã được deploy lên SmarterASP. Health 5/5 đều `ok`, DB/storage/migration đạt; security negative và upload guard đạt; giao diện browser mobile, Quản lý và Audit render ổn; Verify thật qua OpenRouter đạt 5/5 đúng 3 AUTO, 1 FACT, 1 POLICY. Kiểm tra phát hiện giờ Audit phụ thuộc timezone máy host; DB UTC vẫn đúng. Code fix `d9d357c` đã chuyển đổi rõ sang giờ Việt Nam, thêm regression test; latest `master` đạt build sạch, 122/122 test, EF model sạch và không có package bị báo vulnerable. Cần publish/recycle latest `master` và xác nhận lại Audit trước khi freeze/public live URL.
 
 ## Link GitHub
 

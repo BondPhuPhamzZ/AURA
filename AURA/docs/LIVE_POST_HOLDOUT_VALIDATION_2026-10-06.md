@@ -1,6 +1,6 @@
 # AURA — Live post-holdout validation
 
-Cập nhật: 06/10/2026. Live URL được kiểm trên deployment `c382ce7`; source candidate sau kiểm tra có thêm bản vá timezone Audit và 122/122 test pass.
+Cập nhật: 06/10/2026. Live URL được kiểm trên deployment `c382ce7`; code fix timezone Audit là `d9d357c` trên latest `master` và candidate đạt 122/122 test.
 
 ## 1. Kết luận
 

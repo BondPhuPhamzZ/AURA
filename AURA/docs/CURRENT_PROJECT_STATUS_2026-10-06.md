@@ -11,7 +11,7 @@ AURA là **MVP demo candidate có điều kiện**, chưa phải production-read
 | Hạng mục | Trạng thái |
 |---|---|
 | Deployed revision | `c382ce7` — contract v2 đã live |
-| Candidate kế tiếp | bản vá Audit UTC→UTC+7; SHA chốt khi commit |
+| Candidate kế tiếp | code fix `d9d357c` trên latest `master`; publish toàn bộ latest `master` |
 | Release build | 0 warning, 0 error |
 | Automated tests | 122/122 pass; offline, không gọi API AI |
 | EF model | Không có pending model change |
