@@ -58,5 +58,5 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 14. Test Kit v2 hậu-contract đạt 14/15, missed TK-12 blur cũ, 0 over/system error và field 69/75; không gọi là kết quả 15/15 lịch sử.
 15. Post-holdout real-receipt regression ngày 07/10 chạy đúng 15 request độc lập trên OpenRouter 8B: 11/15 exact, 0 missed, 4 over, 0 system error. Đây là regression an toàn, không phải blind holdout mới; xem `docs/REAL_RECEIPT_REGRESSION_RESULT_2026-10-07.md`.
 16. Checklist điện thoại thật, ba user session và rehearsal nằm tại `docs/MANUAL_FINAL_GATES_2026-10-06.md`.
-17. Runbook GPU dùng đúng v3.1 tổng hợp nằm tại `docs/BTC_GPU_8B_RUNBOOK_2026-10-06.md`; protocol chạy lại receipt thật nằm tại `docs/REAL_RECEIPT_REGRESSION_PROTOCOL_2026-10-07.md`.
-18. Kế hoạch nhận yêu cầu mới, hạn nộp 14/10, timebox bốn giờ và demo vòng bảng/Chung kết nằm tại `docs/ONSITE_FINAL_PLAYBOOK_2026-10-06.md`.
+17. Benchmark GPU chỉ dùng v3.1 tổng hợp; protocol chạy lại receipt thật nằm tại `docs/REAL_RECEIPT_REGRESSION_PROTOCOL_2026-10-07.md`. Runbook phiên máy mượn và secret vận hành không thuộc submission công khai.
+18. Repository công khai chỉ giữ gate kỹ thuật và evidence kiểm chứng; kế hoạch học, pitch, Q&A và chiến lược onsite nằm ngoài Git.

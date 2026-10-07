@@ -61,4 +61,4 @@ Official holdout 15 ảnh không chạy lại trong các gate này. Nếu upload
 5. Ngày 16/10 khóa commit, dữ liệu demo và slide; không đổi schema, model hoặc package nếu không có blocker.
 6. Ngày 17/10 mục tiêu có mặt 07:30–07:45; mang laptop, sạc, hotspot và adapter. Kiểm local fallback trong 09:00–09:30.
 
-Quy trình chi tiết và bản đồ “yêu cầu nào sửa ở đâu” nằm tại [`ONSITE_FINAL_PLAYBOOK_2026-10-06.md`](ONSITE_FINAL_PLAYBOOK_2026-10-06.md).
+Tài liệu rehearsal và chiến lược onsite chi tiết được giữ ngoài repository công khai. Trong repo chỉ giữ gate kỹ thuật, acceptance criteria và evidence có thể kiểm chứng.

@@ -118,7 +118,7 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 - Hóa đơn giấy phải có ít nhất một hàng hóa/dịch vụ đọc được mới có thể tự duyệt. Nếu vùng món hàng bị che, cắt, mờ hoặc model trả `lineItems=[]`, backend repair đúng một lần rồi fail-safe `ESCALATE_FACT`; không được suy ra “không có hạng mục cấm”.
 - `/healthz` chỉ đạt `ok` khi policy, cấu hình AI, database, migration và thư mục receipt sẵn sàng; endpoint không gọi provider nên không thay cho một ảnh smoke test.
 - Baseline năm fixture ngày 27/09/2026 từng đạt 25/25 bằng Ollama 4B. Trên judge set mở rộng 15 ca ngày 29/09, Ollama đạt 14/15 và bỏ sót TK-12. Lượt post-policy/contract v2 ngày 06/10 đạt 13/15: vẫn missed TK-12, thêm over TK-02 do repair vượt context/output, 0 system error. Vì vậy Ollama 4B chỉ là đường offline/manual có giới hạn; không bật auto-fallback toàn cục.
-- Runbook GPU BTC dùng `qwen3-vl:8b-instruct-q4_K_M`, `ContextTokens=16384`, `MaxOutputTokens=4096` trên database test và synthetic data. Đây là benchmark mới; không được suy ra PASS từ cấu hình trước khi chạy. Xem `docs/BTC_GPU_8B_RUNBOOK_2026-10-06.md`.
+- Benchmark GPU BTC dùng `qwen3-vl:8b-instruct-q4_K_M`, `ContextTokens=16384`, `MaxOutputTokens=4096` trên database test và synthetic data. Đây là benchmark mới; không được suy ra PASS từ cấu hình trước khi chạy. Runbook phiên mượn máy được giữ ngoài repository công khai.
 - CPU/GPU off-load, context và output cap là ba biến khác nhau. AURA gửi nguyên byte ảnh,
   không resize; cách đo token/processor và điều kiện so sánh nằm tại
   [`VISION_INPUT_AND_OFFLOAD_GUIDE_2026-10-07.md`](VISION_INPUT_AND_OFFLOAD_GUIDE_2026-10-07.md).

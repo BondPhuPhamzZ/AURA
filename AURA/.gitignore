@@ -35,3 +35,13 @@ appsettings.Production.local.json
 submission/*.mp4
 submission/*.mov
 submission/*.mkv
+
+# Private study, pitch and competition-strategy material lives in D:/aura/phan_bien.
+# Keep the public repository limited to product, verification and submission artifacts.
+docs/AURA_FINAL_DEFENSE_SOURCE_CODE_QA_*.md
+docs/AURA_FINAL_PITCH_AND_JUDGE_QA_*.md
+docs/AURA_FINAL_STUDY_GUIDE_*.md
+docs/*STUDY_PLAN*.md
+docs/BTC_GPU_*_RUNBOOK_*.md
+docs/ONSITE_FINAL_PLAYBOOK_*.md
+docs/PERSONAL_*.md

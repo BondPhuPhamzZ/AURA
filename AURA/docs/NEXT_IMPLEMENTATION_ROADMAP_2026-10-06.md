@@ -18,11 +18,11 @@ Dừng freeze nếu health lỗi, Verify sai nhánh, Audit mất event, timestam
 4. Chạy ba rehearsal 8–10 phút trên cùng commit freeze. Lượt đầu sửa flow, lượt hai sửa timing, lượt ba không đổi code.
 5. Chuẩn bị local OpenRouter baseline với database đã migrate và secret cục bộ. Ollama 4B post-policy chỉ đạt 13/15 nên không bật fallback mặc định.
 6. Sau publish, chạy Test Kit v3.1 synthetic đúng một lượt; gate là 0 system error và 0 missed escalation. Không chạy lại v3 raw 11/15.
-6. Chuẩn bị theo [`ONSITE_FINAL_PLAYBOOK_2026-10-06.md`](ONSITE_FINAL_PLAYBOOK_2026-10-06.md): hai drill thay đổi có acceptance criteria/test/evidence, một kịch bản vòng bảng 8 phút và một bản nén Chung kết 5 phút.
+7. Thực hiện hai drill thay đổi có acceptance criteria/test/evidence và ba lượt rehearsal trên cùng commit freeze; tài liệu chiến lược cá nhân được giữ ngoài repository công khai.
 
 ## P2 sau khi P0 và P1 đạt
 
-- Benchmark GPU 16 GB theo `BTC_GPU_8B_RUNBOOK_2026-10-06.md`: synthetic-first, 8B Q4, context 16384/output 4096, ghi GPU/VRAM/driver/Ollama, warm-up, P50/P95, decision/field score, missed escalation và memory peak.
+- Benchmark GPU 16 GB theo nguyên tắc synthetic-first: 8B Q4, context 16384/output 4096, ghi GPU/VRAM/driver/Ollama, warm-up, P50/P95, decision/field score, missed escalation và memory peak. Lệnh vận hành chi tiết được giữ ngoài repository công khai.
 - PDF/nhiều trang: cần rasterization an toàn, page limit, malware/zip-bomb guard, provenance theo trang và benchmark lại accuracy.
 - Auth/RBAC, object storage, retention/deletion, backup/restore, monitoring và rate limiting thuộc production backlog.
 
