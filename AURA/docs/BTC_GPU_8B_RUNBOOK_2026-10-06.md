@@ -1,16 +1,35 @@
 # AURA — runbook GPU BTC (Qwen3-VL 8B)
 
-Cập nhật: 06/10/2026. Mục tiêu là chạy AURA và Ollama trên **cùng máy BTC** trong một phiên Google Meet có giám sát. Đây là benchmark/POC một giờ, không phải GPU server công khai hoặc dịch vụ hosting 24/7.
+Cập nhật: 07/10/2026. Mục tiêu là chạy AURA và Ollama trên **cùng máy BTC** trong một phiên Google Meet có giám sát. Đây là benchmark/POC một giờ, không phải GPU server công khai hoặc dịch vụ hosting 24/7.
 
 ## 1. Phạm vi an toàn
 
-- Chỉ dùng ảnh tổng hợp trong `test_kit/images` hoặc `wwwroot/test_data/images`; không dùng lại blind holdout hoặc receipt có PII.
+- Benchmark chính chỉ dùng bộ tổng hợp đã khóa `test_kit/v3_1`; smoke có thể dùng `wwwroot/test_data/images`. Không dùng blind holdout, receipt thật mới hoặc dữ liệu có PII trên máy BTC.
 - Không gửi API key, connection string hay secret qua GitHub, Discord, log hoặc màn hình Meet.
 - Không mở cổng Ollama `11434` ra Internet và không đặt `OLLAMA_HOST=0.0.0.0`.
 - Dùng database, storage và port test riêng; không dùng `AuraDb` hoặc dữ liệu live.
 - Đo Ollama-only trước. Chỉ kiểm fallback sau khi model pass smoke; không trộn provider trong benchmark.
 
-## 2. Chuẩn bị trước buổi Meet
+## 2. Mẫu đặt lịch gửi BTC
+
+Thay ngày/giờ và SHA lấy từ `git rev-parse HEAD`, rồi gửi:
+
+```text
+Team AURA xin đặt lịch run GPU từ [21:00] đến [22:00] ngày [dd/mm].
+Repo: https://github.com/BondPhuPhamzZ/AURA
+Branch: master
+Commit cần pull: [FULL_COMMIT_SHA]
+Model: qwen3-vl:8b-instruct-q4_K_M
+Mục tiêu: chạy Ollama-only smoke + Test Kit v3.1 gồm 15 ca tổng hợp, thu latency/VRAM/provider evidence; nếu còn thời gian mới chạy 1 fallback smoke cô lập.
+Không cần mở port Ollama ra Internet và không dùng hóa đơn thật/API key production.
+Nhờ anh xác nhận máy đã pull model và code trước giờ Meet giúp team.
+```
+
+Agenda một giờ: 0–10 phút xác minh môi trường/commit; 10–20 phút build/test/EF; 20–25 phút
+health + smoke; 25–50 phút v3.1; 50–57 phút fallback smoke nếu gate chính đã xong; 57–60
+phút khóa evidence và dừng process. Nếu batch chưa xong ở phút 50, bỏ fallback để giữ raw v3.1.
+
+## 3. Chuẩn bị trước buổi Meet
 
 BTC cần có Git, .NET 8 SDK, SQL Server LocalDB, NVIDIA driver và Ollama `>= 0.12.7`. Pull model trước buổi Meet:
 
@@ -19,6 +38,10 @@ ollama --version
 ollama pull qwen3-vl:8b-instruct-q4_K_M
 ollama list
 ```
+
+Tag chính thức đã được đối chiếu tại
+[`ollama.com/library/qwen3-vl:8b-instruct-q4_K_M`](https://ollama.com/library/qwen3-vl:8b-instruct-q4_K_M):
+Q4_K_M khoảng 6,1 GB, nhận text + image và yêu cầu Ollama từ 0.12.7.
 
 Giữ Ollama ở loopback. Trên Windows, đặt ba biến user environment rồi **Quit Ollama** ở system tray và mở lại:
 
@@ -30,7 +53,7 @@ OLLAMA_MAX_LOADED_MODELS=1
 
 Không bật parallel trong phiên đầu. Model khuyến nghị là tag chính xác `qwen3-vl:8b-instruct-q4_K_M`; không dùng `latest`, 30B/32B hoặc BF16.
 
-## 3. Pull và xác minh code
+## 4. Pull và xác minh code
 
 ```powershell
 git clone https://github.com/BondPhuPhamzZ/AURA.git
@@ -40,15 +63,16 @@ git pull --ff-only origin master
 git status --short --branch
 git rev-parse HEAD
 dotnet --info
-dotnet restore
+dotnet restore .\AURA.csproj
+dotnet restore .\tests\AURA.Tests\AURA.Tests.csproj
 dotnet build AURA.csproj -c Release --no-restore
-dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release --no-build --no-restore
+dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release --no-restore
 dotnet ef migrations has-pending-model-changes --configuration Release --no-build
 ```
 
 PASS khi Git sạch, commit trùng SHA team gửi trong tin đặt lịch, build 0 error, toàn bộ test pass và EF báo không có model change chưa migration.
 
-## 4. Kiểm GPU và Ollama
+## 5. Kiểm GPU và Ollama
 
 ```powershell
 nvidia-smi
@@ -60,7 +84,7 @@ Warm-up không dùng ảnh:
 ```powershell
 $warmup = @{
   model = 'qwen3-vl:8b-instruct-q4_K_M'
-  messages = @()
+  messages = @(@{ role = 'user'; content = 'Reply with OK.' })
   stream = $false
   keep_alive = '30m'
 } | ConvertTo-Json -Depth 5
@@ -72,18 +96,19 @@ ollama ps
 
 Kỳ vọng `ollama ps` hiển thị `100% GPU`. Nếu bị CPU/GPU split, không tăng concurrency; ghi nhận tỷ lệ thực tế vào evidence.
 
-## 5. Tạo database test
+## 6. Tạo database test
 
 Mở PowerShell tại thư mục chứa `AURA.csproj`:
 
 ```powershell
-$env:ConnectionStrings__DefaultConnection = 'Server=(localdb)\mssqllocaldb;Database=AuraGpuEvidence_20261007_01;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0'
-$env:ReceiptStorage__Directory = 'App_Data/gpu-evidence-20261007'
+$runStamp = Get-Date -Format 'yyyyMMdd_HHmm'
+$env:ConnectionStrings__DefaultConnection = "Server=(localdb)\mssqllocaldb;Database=AuraGpuEvidence_$runStamp;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0"
+$env:ReceiptStorage__Directory = "App_Data/gpu-evidence-$runStamp"
 $env:Database__ApplyMigrationsOnStartup = 'false'
 dotnet ef database update --configuration Release --no-build
 ```
 
-## 6. Chạy Ollama-only
+## 7. Chạy Ollama-only
 
 Trong **cùng cửa sổ PowerShell**:
 
@@ -118,27 +143,32 @@ Health phải `ok`, DB/storage `true`, migration `0`, provider `Ollama`, model �
 Smoke một ảnh trước:
 
 ```powershell
+$runStamp = Get-Date -Format 'yyyyMMdd_HHmm'
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
   '.\tools\Invoke-ConcurrentUploadSmoke.ps1' `
   -BaseUrl 'http://127.0.0.1:5001' -Copies 1 `
   -ImagePath '.\wwwroot\test_data\images\HoaDon1.jpg' -ClaimedAmount 295199
 ```
 
-Nếu smoke pass, chạy judge set tuần tự:
+Nếu smoke pass, chạy **v3.1** tuần tự để so sánh cùng bộ/hash với OpenRouter hiện hành. Ở
+PowerShell thứ hai, đặt một run stamp riêng cho output:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
   '.\tools\Invoke-ExtendedDatasetEvaluation.ps1' `
   -BaseUrl 'http://127.0.0.1:5001' `
-  -ManifestPath '.\test_kit\judge-manifest.json' `
-  -ImagesDirectory '.\test_kit\images' `
+  -ManifestPath '.\test_kit\v3_1\judge-manifest.json' `
+  -ImagesDirectory '.\test_kit\v3_1\images' `
   -MaxCases 15 -InterCaseDelaySeconds 4 -CaseTimeoutMinutes 10 `
-  -OutputDirectory '.\gpu-evidence\judge-15-8b'
+  -OutputDirectory ".\gpu-evidence\v3_1-8b-$runStamp"
 ```
 
 Không bấm/rerun để săn PASS. Giữ `results.csv`, `results.json`, `summary.json`, `metadata.json` kể cả khi fail.
+Baseline đối chiếu OpenRouter v3.1 là 15/15 completed, 13/15 exact, 0 missed escalation,
+0 system error và field UTF-8-safe 140/146. Ollama không cần giống exact score bằng mọi giá,
+nhưng không được có missed escalation/system error để vượt safety gate.
 
-## 7. Kiểm fallback thật trong môi trường cô lập
+## 8. Kiểm fallback thật trong môi trường cô lập
 
 Dừng app bằng `Ctrl+C`. Tạo database/storage khác hoặc giữ dữ liệu tách rõ, dùng port 5002:
 
@@ -163,7 +193,7 @@ ProcessingState=COMPLETED
 
 Health `degraded` trong phép thử này là dự kiến vì primary cố ý thiếu key. Không dùng test này để tuyên bố OpenRouter outage recovery hoặc production readiness.
 
-## 8. Evidence bắt buộc
+## 9. Evidence bắt buộc
 
 Lưu theo các thư mục `00_environment`, `01_health`, `02_smoke`, `03_judge15`, `04_fallback`, `05_conclusion`:
 
@@ -177,7 +207,7 @@ Lưu theo các thư mục `00_environment`, `01_health`, `02_smoke`, `03_judge15
 
 Không lưu secret, Authorization header, full connection string hoặc receipt thật.
 
-## 9. Kết thúc và hoàn nguyên
+## 10. Kết thúc và hoàn nguyên
 
 ```powershell
 # Trong terminal AURA: Ctrl+C
@@ -187,6 +217,6 @@ ollama ps
 
 Đóng các cửa sổ PowerShell test để xóa process environment override. Không sửa `appsettings.json`, user-secrets của BTC hoặc 22 biến SmartASP. Không bật fallback trên SmartASP vì loopback của hosting không trỏ về máy BTC.
 
-## 10. Gate sử dụng fallback khi demo
+## 11. Gate sử dụng fallback khi demo
 
 Chỉ cân nhắc bật khi cùng một cấu hình đạt: judge 15 không missed escalation, 0 system error, không schema/truncation error, một fallback record có metadata đúng, latency nằm dưới timeout với biên an toàn và model chạy chủ yếu/toàn bộ trên GPU. Nếu chưa đạt, OpenRouter vẫn là primary; Ollama chỉ là đường offline/manual có giám sát.

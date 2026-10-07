@@ -44,6 +44,8 @@ không còn tối ưu 15/15 như lịch sử và được giữ nguyên; v3.1 v�
    token/duration và decision/field metrics; không bật fallback trước khi đạt gate.
 3. Tổ chức ba user session và ba rehearsal trên cùng commit freeze. Không cần chạy lại official
    holdout hoặc v3.1; mỗi lần rehearsal chỉ chạy Verify theo kế hoạch đã chốt.
+4. Nếu cần đo lại 15 receipt thật, chạy đúng một `post-holdout regression` trong evidence folder
+   mới sau consent mới; không thay official raw. Giữ receipt mới unseen cho blind holdout v2.
 
 ## Ranh giới claim
 

@@ -21,6 +21,7 @@ Cập nhật: 07/10/2026. Dùng file này làm điểm bắt đầu; tài liệu
 15. `explain/AURA_PROJECT_ARCHITECTURE_GUIDE.md` và `explain/AURA_TESTING_DATA_AND_IMPLEMENTATION_WORKFLOW_GUIDE.md` — tài liệu học sâu; số baseline cũ trong đó là lịch sử.
 16. `08_OLLAMA_POST_POLICY_REGRESSION_2026-10-06.md` — kết quả mới nhất 4B 13/15 và lý do chưa bật fallback.
 17. `demo_setup/BTC_GPU_8B_RUNBOOK_2026-10-06.md` — lệnh setup và agenda một giờ trên máy BTC.
+18. `14_REAL_RECEIPT_REGRESSION_PROTOCOL_2026-10-07.md` — cách chạy lại 15 receipt cũ mà không làm sai claim và cách giữ receipt mới unseen.
 
 ## Baseline nhớ khi trình bày
 

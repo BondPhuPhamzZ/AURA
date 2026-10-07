@@ -18,6 +18,9 @@ V2 hậu-contract hoàn tất 15/15 request nhưng chỉ 14/15 exact do missed T
 4. Chỉ sau khi Ollama-only đạt gate mới chạy một fallback smoke; baseline live vẫn OpenRouter,
    `FallbackEnabled=false` trong benchmark chính.
 
+Runbook hiện hành dùng đúng `test_kit/v3_1`, không dùng v2 hay receipt thật trên máy BTC. Đặt
+lịch ngay để còn biên sửa blocker trước hạn nộp 14/10.
+
 ## P1 — demo và người dùng
 
 Live Verify 5/5, workflow forward/accept/undo và desktop/mobile UI smoke đã pass sau publish.
@@ -26,6 +29,10 @@ Live Verify 5/5, workflow forward/accept/undo và desktop/mobile UI smoke đã p
 2. Ba rehearsal cùng commit freeze; không đổi code ở lượt cuối và không chạy lại
    holdout/v2/v3/v3.1. Chỉ chạy Verify 5 ca và workflow/Audit smoke.
 3. Chỉ public URL dưới nhãn supervised MVP/demo; không quảng bá unattended production service.
+
+Nếu muốn chạy lại official 15 receipt, phải dùng tên `post-holdout real-receipt regression`,
+consent mới và output folder mới; không ghi đè official raw. Receipt mới giữ unseen cho blind
+holdout v2. Xem `REAL_RECEIPT_REGRESSION_PROTOCOL_2026-10-07.md`.
 
 ## P2 — sau Chung kết
 

@@ -27,9 +27,12 @@ Không có thành viên nào có mặt đúng thời gian làm thủ tục có t
 Kế hoạch này cố ý giữ khối lượng AURA khoảng 45–90 phút trong ngày thường để còn chỗ cho các môn/project khác; chỉ hai buổi drill cần khối tập trung dài hơn.
 
 - **06–08/10:** khóa baseline; hoàn thành điện thoại thật qua 4G/5G; xác minh local fallback; gom một thư mục trình chiếu offline. Không thêm feature lớn.
-- **09–11/10:** mỗi ngày 45–60 phút ôn business flow và trace một request qua code. Chạy một mini drill 60 phút với yêu cầu giả.
-- **12–14/10:** hai buổi drill 90 phút. Mỗi buổi phải có yêu cầu, acceptance tests, code/test/evidence và phần giải thích 2 phút. Thực hiện user session nếu BTC kết nối được người dùng.
-- **15/10:** chạy full gate, chốt commit/demo data/slides, kiểm link và backup. Sau mốc này chỉ sửa blocker có test hồi quy.
+- **07–09/10:** đặt/chạy GPU BTC bằng v3.1 tổng hợp; mỗi ngày 45–60 phút ôn business flow và trace một request qua code. Chạy một mini drill 60 phút với yêu cầu giả.
+- **10–11/10:** một drill 90 phút và một rehearsal; audit README, slide, Build Log, video/live link. Nếu BTC kết nối được người dùng thì thực hiện user session có consent.
+- **12/10:** chạy full gate, chốt commit/demo data/tài liệu nộp. Sau mốc này chỉ sửa blocker có test hồi quy.
+- **13/10:** kiểm repository/link từ thiết bị hoặc tài khoản khác, rehearsal 8 phút và chuẩn bị bản nén 5 phút.
+- **14/10:** nộp và xác minh receipt/link trước hạn khóa; không để thao tác upload/link cuối cùng sát giờ.
+- **15/10:** giữ submission baseline, chỉ luyện change drill onsite hoặc sửa blocker có thể chứng minh; không thay link đã nộp nếu BTC không cho phép.
 - **16/10:** một dress rehearsal 8 phút và một bản nén 5 phút; sạc thiết bị, tải tài liệu offline, kiểm adapter/hotspot. Không nâng package hoặc đổi schema.
 - **17/10:** đến sớm, nghe đề và dùng quy trình bốn giờ bên dưới.
 
