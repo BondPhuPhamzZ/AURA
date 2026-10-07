@@ -25,6 +25,7 @@ Cập nhật: 07/10/2026. Dùng file này làm điểm bắt đầu; tài liệu
 19. `15_REAL_RECEIPT_REGRESSION_RESULT_2026-10-07.md` — kết quả 11/15, 0 missed, 4 over và phân tích safety trade-off.
 20. `16_AURA_FINAL_STUDY_GUIDE_2026-10-07.md` — cẩm nang source code, nghiệp vụ, evidence, onsite drill và lịch ôn.
 21. `17_AURA_FINAL_PITCH_AND_JUDGE_QA_2026-10-07.md` — pitch 7–8 phút, bản nén 5 phút và Q&A theo số hiện hành.
+22. `18_AURA_FINAL_DEFENSE_SOURCE_CODE_QA_2026-10-07.md` — answer key theo từng module: trách nhiệm, fail-safe, test/evidence, giới hạn và cách trả lời BGK.
 
 ## Baseline nhớ khi trình bày
 

@@ -191,3 +191,9 @@ Phải trả lời trôi chảy:
 8. Khi nào fallback được phép chạy?
 9. Nếu đề yêu cầu PDF, minimum safe scope là gì?
 10. Nếu chỉ còn 30 phút, phần nào phải cắt?
+
+## 18. Answer key khi cần đối chiếu
+
+Sau khi tự trả lời, đối chiếu với `AURA_FINAL_DEFENSE_SOURCE_CODE_QA_2026-10-07.md`. File đó
+ghi theo từng module: trách nhiệm, happy/failure path, fail-safe, test/evidence, giới hạn và mẫu
+trả lời BGK. Không đọc answer key trước khi tự teach-back vì mục tiêu là luyện khả năng lập luận.
