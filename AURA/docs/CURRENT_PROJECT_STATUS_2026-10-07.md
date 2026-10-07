@@ -31,6 +31,7 @@ không còn tối ưu 15/15 như lịch sử và được giữ nguyên; v3.1 v�
 | Raw Test Kit v3 | Giữ 11/15 decision, 142/145 field, 0 system error |
 | V3.1 live | 15/15 completed; 13/15 exact; 0 missed; 0 system error; field UTF-8-safe 140/146 |
 | V2 live hậu-contract | 15/15 completed; 14/15 exact; missed TK-12; 0 over/system error; field 69/75 |
+| Real receipt regression | 15/15 completed; 11/15 exact adjudicated; 0 missed; 4 over; 0 system error; field 28/30 chỉ currency/total |
 | Verify live hậu publish | 5/5: 3 AUTO + FACT + POLICY; 0 system error |
 | Human workflow | FACT → forward → `MANUAL_REVIEW_ACCEPTED` → UNDO → FACT; Audit lưu vết |
 | UI smoke | Desktop reviewer và mobile 390x844 applicant/reviewer/audit pass; mặc định `Gia Phú`; console sạch |
@@ -44,8 +45,8 @@ không còn tối ưu 15/15 như lịch sử và được giữ nguyên; v3.1 v�
    token/duration và decision/field metrics; không bật fallback trước khi đạt gate.
 3. Tổ chức ba user session và ba rehearsal trên cùng commit freeze. Không cần chạy lại official
    holdout hoặc v3.1; mỗi lần rehearsal chỉ chạy Verify theo kế hoạch đã chốt.
-4. Nếu cần đo lại 15 receipt thật, chạy đúng một `post-holdout regression` trong evidence folder
-   mới sau consent mới; không thay official raw. Giữ receipt mới unseen cho blind holdout v2.
+4. Post-holdout real-receipt regression đã hoàn tất và giữ riêng: exact 11/15, missed 0,
+   over 4, system error 0. Không nới guard để săn AUTO; giữ receipt mới unseen cho holdout v2.
 
 ## Ranh giới claim
 

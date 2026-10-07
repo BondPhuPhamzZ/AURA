@@ -22,6 +22,9 @@ Cập nhật: 07/10/2026. Dùng file này làm điểm bắt đầu; tài liệu
 16. `08_OLLAMA_POST_POLICY_REGRESSION_2026-10-06.md` — kết quả mới nhất 4B 13/15 và lý do chưa bật fallback.
 17. `demo_setup/BTC_GPU_8B_RUNBOOK_2026-10-06.md` — lệnh setup và agenda một giờ trên máy BTC.
 18. `14_REAL_RECEIPT_REGRESSION_PROTOCOL_2026-10-07.md` — cách chạy lại 15 receipt cũ mà không làm sai claim và cách giữ receipt mới unseen.
+19. `15_REAL_RECEIPT_REGRESSION_RESULT_2026-10-07.md` — kết quả 11/15, 0 missed, 4 over và phân tích safety trade-off.
+20. `16_AURA_FINAL_STUDY_GUIDE_2026-10-07.md` — cẩm nang source code, nghiệp vụ, evidence, onsite drill và lịch ôn.
+21. `17_AURA_FINAL_PITCH_AND_JUDGE_QA_2026-10-07.md` — pitch 7–8 phút, bản nén 5 phút và Q&A theo số hiện hành.
 
 ## Baseline nhớ khi trình bày
 
@@ -36,6 +39,7 @@ Cập nhật: 07/10/2026. Dùng file này làm điểm bắt đầu; tài liệu
 | Provider | OpenRouter/Qwen3-VL-8B primary; Ollama 4B post-policy 13/15, fallback tắt |
 | Test Kit v3 raw | 11/15 decision, 142/145 field, 0 system error; raw bất biến |
 | Test Kit v2 hậu-contract | 14/15 decision, missed TK-12, 0 over/system error, field 69/75; raw bất biến |
+| Real receipt regression | 11/15 exact adjudicated, 0 missed, 4 over, 0 system error; official raw 10/15 bất biến |
 | Chưa đóng | 3 users, 3 rehearsals, GPU 8B benchmark cùng v3.1; fallback vẫn tắt |
 
 ## Một câu mô tả sản phẩm

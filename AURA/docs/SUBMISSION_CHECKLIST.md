@@ -56,6 +56,7 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 12. Holdout 15 ca đã chạy một official run: raw 10/15, adjusted 11/15 do một nhãn người sai; raw bất biến. Tập ảnh từ đây chỉ là post-holdout regression, không còn blind.
 13. Test Kit v3 synthetic chạy một live batch: raw 11/15, 142/145 field, 0 system error; raw bất biến. V3.1 ngày 07/10 chạy đúng một batch sau publish: 15/15 completed, 13/15 exact, 0 missed escalation, 0 system error, field UTF-8-safe 140/146; không chạy lại.
 14. Test Kit v2 hậu-contract đạt 14/15, missed TK-12 blur cũ, 0 over/system error và field 69/75; không gọi là kết quả 15/15 lịch sử.
-15. Checklist điện thoại thật, ba user session và rehearsal nằm tại `docs/MANUAL_FINAL_GATES_2026-10-06.md`.
-16. Runbook GPU dùng đúng v3.1 tổng hợp nằm tại `docs/BTC_GPU_8B_RUNBOOK_2026-10-06.md`; protocol chạy lại receipt thật nằm tại `docs/REAL_RECEIPT_REGRESSION_PROTOCOL_2026-10-07.md`.
-17. Kế hoạch nhận yêu cầu mới, hạn nộp 14/10, timebox bốn giờ và demo vòng bảng/Chung kết nằm tại `docs/ONSITE_FINAL_PLAYBOOK_2026-10-06.md`.
+15. Post-holdout real-receipt regression ngày 07/10 chạy đúng 15 request độc lập trên OpenRouter 8B: 11/15 exact, 0 missed, 4 over, 0 system error. Đây là regression an toàn, không phải blind holdout mới; xem `docs/REAL_RECEIPT_REGRESSION_RESULT_2026-10-07.md`.
+16. Checklist điện thoại thật, ba user session và rehearsal nằm tại `docs/MANUAL_FINAL_GATES_2026-10-06.md`.
+17. Runbook GPU dùng đúng v3.1 tổng hợp nằm tại `docs/BTC_GPU_8B_RUNBOOK_2026-10-06.md`; protocol chạy lại receipt thật nằm tại `docs/REAL_RECEIPT_REGRESSION_PROTOCOL_2026-10-07.md`.
+18. Kế hoạch nhận yêu cầu mới, hạn nộp 14/10, timebox bốn giờ và demo vòng bảng/Chung kết nằm tại `docs/ONSITE_FINAL_PLAYBOOK_2026-10-06.md`.

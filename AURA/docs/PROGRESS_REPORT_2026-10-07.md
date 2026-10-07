@@ -25,6 +25,10 @@ dùng fallback. TK-12 là fixture blur cũ vẫn bị VLM khẳng định đọc
 nguyên và không sửa policy theo heuristic ảnh mờ. Safety gate hiện hành vẫn là v3.1 với physical
 ink loss và 0 missed escalation.
 
+Post-holdout regression trên cùng 15 receipt thật hoàn tất 15/15 request: 11/15 exact theo
+adjudicated ground truth, 0 missed escalation, 4 over-escalation, 0 system error và fallback 0.
+BH-07 total rách nay fail-safe FACT, BH-06 bia đi đúng POLICY; official raw 10/15 không đổi.
+
 ## Link GitHub
 
 https://github.com/BondPhuPhamzZ/AURA
@@ -47,6 +51,9 @@ Sprint 2 — Post-contract regression và demo hardening.
 Verify 5/5, workflow/Audit và UI mobile đều pass; 142/142 test pass, EF clean. OpenRouter v3.1
 hoàn tất 15/15 (13/15 exact, 0 missed, 0 system error); v2 hậu-contract đạt 14/15, còn TK-12
 blur bị đọc nhầm. Raw evidence/SHA-256 được giữ nguyên; fallback vẫn tắt.
+
+Real-receipt regression đạt 11/15, 0 missed, 4 over và 0 system error; kết quả cho thấy safety
+tốt hơn nhưng cần human review nhiều hơn, không phải production accuracy.
 
 ### Link GitHub
 
