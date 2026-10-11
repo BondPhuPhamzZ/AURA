@@ -140,7 +140,7 @@ set_run_font(run, size=16, bold=True, color="000000")
 subtitle = document.add_paragraph()
 subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
 subtitle.paragraph_format.space_after = Pt(5)
-run = subtitle.add_run("Track A The Escalation Referee | 06 10 2026 | Pham Gia Phu")
+run = subtitle.add_run("Track A The Escalation Referee | 11 10 2026 | Pham Gia Phu")
 set_run_font(run, size=9.2, italic=True, color="555555")
 
 intro = document.add_paragraph()
@@ -207,7 +207,7 @@ evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
 headers = ("Build", "Test offline", "Dependency", "Evaluator")
-values = ("0 warning 0 error", "122 trên 122 pass", "EF model sạch", "Verify live 5 trên 5")
+values = ("0 warning 0 error", "142 trên 142 pass", "EF model sạch", "Verify live 5 trên 5")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -268,9 +268,9 @@ add_bullet(document, "Giữ EF Core 8.0.31: NuGet không báo advisory; không n
 add_heading(document, "6 Bài học và bước tiếp theo")
 add_body(
     document,
-    "Live 1f4b3c9 đã pass health 5 trên 5, security 6 trên 6 gồm hai upload guard, Verify 5 trên 5 và workflow fixture 2 trên 2; "
-    "UI mobile-browser, manager và audit render đúng. Bản vá Audit UTC sang giờ Việt Nam đã được publish và xác minh trên live; "
-    "122 test pass. Tiếp theo là điện thoại thật 4G, ba user session và ba rehearsal. "
+    "Live baseline đã pass health, security gồm hai upload guard, Verify 5 trên 5 và workflow FACT chuyển quản lý, duyệt rồi hoàn tác; "
+    "desktop, mobile 390x844 và điện thoại thật 4G/5G đều đạt. Post-holdout regression trên 15 receipt đạt 11 trên 15, "
+    "0 missed, 4 over và 0 system error; đây không phải accuracy production. 142 test pass; còn ba user session và rehearsal. "
     "Dữ liệu cá nhân thật không được đưa vào Git.",
 )
 

@@ -96,7 +96,7 @@ function title(slide, number, heading, subheading) {
   return line;
 }
 
-function footer(slide, number, source = "AURA • Track A • 06/10/2026") {
+function footer(slide, number, source = "AURA • Track A • 11/10/2026") {
   text(slide, source, 54, 686, 950, 18, 12, C.muted);
   text(slide, String(number), 1170, 684, 54, 20, 13, C.muted, { align: "right", bold: true });
 }
@@ -220,9 +220,9 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   text(s, "Bằng chứng đã có", 54, 428, 250, 28, 20, C.white, { bold: true });
   const evidence = [
-    ["122/122", "test offline", C.blue],
+    ["142/142", "test offline", C.blue],
     ["5/5", "Verify live", C.green],
-    ["7/7", "concurrent live", C.violet],
+    ["0 / 4", "missed / over", C.violet],
   ];
   evidence.forEach((e, i) => {
     const x = 54 + i * 185;
@@ -241,7 +241,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
   text(s, "Baseline và target chỉ điền sau khi có dữ liệu người dùng thật.", 635, 610, 589, 34, 15, C.amber, { align: "center", bold: true });
   footer(s, 3);
-  s.speakerNotes.textFrame.setText("Nguồn cập nhật 06/10/2026: source hậu holdout đạt 122/122 test offline. Live 1f4b3c9 đạt health 5/5, security 6/6, Verify 5/5, workflow fixture 2/2 và Audit UTC+7; điện thoại thật 4G vẫn là gate trước public URL. Official holdout thật một lượt: raw 10/15, adjusted 11/15 do một nhãn người sai, một missed escalation và không có system error. Đây là mẫu nhỏ, không phải accuracy production; ba user session vẫn là gate.");
+  s.speakerNotes.textFrame.setText("Nguồn cập nhật 11/10/2026: 142/142 test offline và EF model sạch. Live health/public endpoint, Verify 5/5, workflow/Audit/Undo, desktop/mobile 390x844 và điện thoại thật 4G/5G đều pass. Official holdout giữ raw 10/15 và adjusted 11/15; post-holdout regression trên cùng 15 receipt đạt 11/15, 0 missed escalation, 4 over-escalation, 0 system error. Đây là mẫu nhỏ và không phải accuracy production; ba user session và rehearsal vẫn là gate.");
 }
 
 // Slide 4
@@ -303,7 +303,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 157, 382, 242, C.surface2, "rounded-xl", C.green);
   text(s, "ĐÃ BÀN GIAO", 869, 180, 326, 24, 15, C.green, { bold: true });
-  const todo = ["DB-backed upload queue", "122 test • dependency sạch", "Holdout thật 15 ca đã khóa", "Fallback opt-in + audit"];
+  const todo = ["DB-backed upload queue", "142 test • EF model sạch", "Holdout thật 15 ca đã khóa", "Mobile 4G/5G đã pass"];
   todo.forEach((t, i) => {
     pill(s, `${i + 1}`, 869, 225 + i * 40, 30, C.green);
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });
@@ -311,12 +311,12 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 424, 382, 153, "#342334", "rounded-xl", C.red);
   text(s, "CHƯA CÓ TRONG BASELINE", 869, 447, 326, 24, 15, C.red, { bold: true });
-  text(s, "3 người dùng thực tế\nmobile thật/4G • PDF/nhiều trang\nauthentication • object storage", 869, 487, 326, 72, 16, C.white, { bold: true });
+  text(s, "3 người dùng thực tế • rehearsal\nPDF/nhiều trang\nauthentication • object storage", 869, 487, 326, 72, 16, C.white, { bold: true });
 
   text(s, "Verify vẫn đúng 5 ca BTC; runner mở rộng không làm rối dashboard.", 842, 601, 382, 44, 14, C.amber, { align: "center", bold: true });
   footer(s, 5, "AURA • Giới hạn hiện tại, không phải lời hứa marketing");
   s.speakerNotes.textFrame.setText(
-    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ReceiptExtractionContract.cs, PolicyDecisionEngine.cs, VietnamTime.cs, tools/Invoke-ExtendedDatasetEvaluation.ps1 và docs/LIVE_POST_HOLDOUT_VALIDATION_2026-10-06.md. EF Core 8.0.31 và test project đã qua vulnerability scan không còn advisory tại thời điểm kiểm tra.",
+    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ReceiptExtractionContract.cs, PolicyDecisionEngine.cs, VietnamTime.cs, tools/Invoke-ExtendedDatasetEvaluation.ps1, docs/CURRENT_PROJECT_STATUS_2026-10-07.md và docs/REAL_RECEIPT_REGRESSION_RESULT_2026-10-07.md. Fallback vẫn opt-in và mặc định tắt; OpenRouter 8B là baseline demo.",
   );
 }
 

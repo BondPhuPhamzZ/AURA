@@ -37,20 +37,21 @@ Key capabilities:
 
 ## Verified baseline
 
-Last live validation: 6 October 2026 on deployment `1f4b3c9`.
+Last full post-publish validation: 7 October 2026. Public home and `/healthz` were rechecked on 11 October 2026.
 
 - Build: **0 warnings, 0 errors**.
-- Automated tests after holdout/live hardening: **122/122 passed**; they do not call the paid AI API.
+- Automated tests after holdout/live hardening: **142/142 passed**; they do not call the paid AI API.
 - Official Verify Harness: **5/5** with the expected 3 approve / 2 escalate split.
-- Locked synthetic judge set: OpenRouter **15/15 decisions**, Ollama **14/15**; Ollama missed escalation TK-12.
+- Historical locked synthetic judge set: OpenRouter **15/15 decisions**, Ollama **14/15**. The post-contract OpenRouter v2 run reached **14/15** and still missed TK-12; the physical-ink-loss v3.1 safety set reached **13/15** with zero missed escalations and zero system errors.
 - SmartASP post-holdout gate: home and health 5/5, DB/storage/migration, upload/security-negative checks, browser mobile UI and Verify OpenRouter 5/5 passed. Human workflow also passed 2/2 with synthetic fixtures: policy reject/undo and fact approve/undo.
 - Live concurrency: **2/2 + 5/5 completed**; end-to-end P95 **20.941 / 23.290 seconds**. The accepted timer includes antiforgery GET/setup/network, so it is not a pure POST SLO.
 - The one-time locked real holdout produced **10/15 raw decision matches** (one missed escalation, three over-escalations, zero system errors). A post-hoc review found one locked label error, giving an adjudicated analysis of 11/15 without changing raw evidence. The 28/30 field score measured only currency and total, not full extraction accuracy.
+- A later post-holdout regression on the same 15 receipts reached **11/15**, with zero missed escalations, four over-escalations and zero system errors. It is regression evidence, not a new blind holdout.
 - Holdout findings led to evidence contract v2: printed-final-total provenance, raw-date verification, second-level money/identifier guards, time normalization and expanded personal-item taxonomy. Contract v2 is deployed on `1f4b3c9`.
 - The Audit timezone defect found on the earlier deployment is fixed and live-verified: new and historical events render in Vietnam time while UTC remains the database source of truth.
 - Isolated OpenRouter-to-Ollama fallback passed 1/1, but took **84.425 seconds**. Fallback therefore remains disabled in the official demo baseline.
 
-These are regression/staging results, not a claim of production accuracy. The official holdout is complete and its 15 images are no longer blind; a new blind claim requires unseen receipts. Accuracy claim and unattended user rollout remain NO-GO. The live technical baseline is ready for a supervised demo; remaining final gates are a real-phone 4G/5G check, three supervised user sessions and three timed rehearsals.
+These are regression/staging results, not a claim of production accuracy. The official holdout is complete and its 15 images are no longer blind; a new blind claim requires unseen receipts. Accuracy claim and unattended user rollout remain NO-GO. The live technical baseline is ready for a supervised demo. Real-phone 4G/5G passed; the remaining evidence gates are three supervised user sessions and timed rehearsals on the frozen commit.
 
 ## Run locally
 
@@ -129,7 +130,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore
 dotnet ef migrations has-pending-model-changes --no-build
 ```
 
-Expected for the current candidate: build 0 warnings/errors, 122/122 tests passed, and no model change pending migration.
+Expected for the current candidate: build 0 warnings/errors, 142/142 tests passed, and no model change pending migration.
 
 Stop the app with `Ctrl+C`. No database reset or LocalDB deletion is required.
 
@@ -140,13 +141,13 @@ Stop the app with `Ctrl+C`. No database reset or LocalDB deletion is required.
 - [Business rules](AURA/BUSINESS_RULES.md)
 - [Workflow specification](AURA/submission/AURA_WORKFLOW_SPEC.md)
 - [Dataset and extended evaluation](AURA/docs/DATASET_EVALUATION_GUIDE.md)
-- [Current verified status](AURA/docs/CURRENT_PROJECT_STATUS_2026-10-06.md)
+- [Current verified status](AURA/docs/CURRENT_PROJECT_STATUS_2026-10-07.md)
 - [Live post-holdout validation](AURA/docs/LIVE_POST_HOLDOUT_VALIDATION_2026-10-06.md)
 - [Official holdout postmortem](AURA/docs/OFFICIAL_HOLDOUT_POSTMORTEM_2026-10-06.md)
 - [Blind holdout locking guide](AURA/docs/HOLDOUT_LOCKING_GUIDE_2026-10-05.md)
 - [Optional local Ollama setup](AURA/docs/LOCAL_OLLAMA.md)
 - [Deployment decision](AURA/docs/DEPLOYMENT_DECISION_2026-10-02.md)
-- [Current roadmap and acceptance gates](AURA/docs/NEXT_IMPLEMENTATION_ROADMAP_2026-10-06.md)
+- [Current roadmap and acceptance gates](AURA/docs/NEXT_IMPLEMENTATION_ROADMAP_2026-10-07.md)
 - [Manual phone, user-session and rehearsal gates](AURA/docs/MANUAL_FINAL_GATES_2026-10-06.md)
 
 ## Current limitations
