@@ -22,6 +22,12 @@ public sealed class VisionOptions
     [Range(10, 3600)]
     public int CircuitBreakSeconds { get; set; } = 60;
 
+    [Range(1, 8)]
+    public int MaxConcurrentRequests { get; set; } = 1;
+
+    [Range(10, 900)]
+    public int ProviderCooldownSeconds { get; set; } = 120;
+
     public static bool IsSupportedProvider(string? provider) =>
         string.Equals(provider, OpenRouterProvider, StringComparison.OrdinalIgnoreCase) ||
         string.Equals(provider, OllamaProvider, StringComparison.OrdinalIgnoreCase);

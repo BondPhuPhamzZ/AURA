@@ -38,7 +38,22 @@ public sealed class ReceiptProcessingWorker : BackgroundService
             var processedAny = false;
             try
             {
-                while (await ProcessNextAsync(stoppingToken)) processedAny = true;
+                while (true)
+                {
+                    var result = await ProcessNextAsync(stoppingToken);
+                    if (!result.Processed) break;
+                    processedAny = true;
+                    if (result.ProviderBlocked)
+                    {
+                        var cooldown = result.RetryAfter ??
+                            TimeSpan.FromSeconds(_options.FailureBackoffMaxSeconds);
+                        _logger.LogWarning(
+                            "Stopping receipt queue drain after provider failure {ErrorCode}; retrying pending jobs in {RetryDelaySeconds:F0}s.",
+                            result.ErrorCode, cooldown.TotalSeconds);
+                        await Task.Delay(cooldown, stoppingToken);
+                        break;
+                    }
+                }
 
                 if (consecutiveFailureCount > 0)
                 {
@@ -95,7 +110,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
         }
     }
 
-    private async Task<bool> ProcessNextAsync(CancellationToken cancellationToken)
+    private async Task<ProcessResult> ProcessNextAsync(CancellationToken cancellationToken)
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -110,7 +125,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
             .OrderBy(request => request.QueuedAt)
             .Select(request => request.Id)
             .FirstOrDefaultAsync(cancellationToken);
-        if (requestId is null) return false;
+        if (requestId is null) return ProcessResult.NoJob;
 
         var leaseUntil = now.AddSeconds(_options.LeaseSeconds);
         var claimed = await db.ReimbursementRequests
@@ -123,11 +138,12 @@ public sealed class ReceiptProcessingWorker : BackgroundService
                 .SetProperty(request => request.ProcessingLeaseUntil, leaseUntil)
                 .SetProperty(request => request.ProcessingAttemptCount,
                     request => request.ProcessingAttemptCount + 1), cancellationToken);
-        if (claimed == 0) return true;
+        if (claimed == 0) return ProcessResult.Success;
 
         var request = await db.ReimbursementRequests.SingleAsync(x => x.Id == requestId, cancellationToken);
         var stopwatch = Stopwatch.StartNew();
         ReceiptExtractionDto? extractedFacts = null;
+        VisionExtractionException? providerFailure = null;
         string auditAction;
 
         try
@@ -157,6 +173,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
             request.ProviderErrorCode = exception.Code;
             request.ProcessingState = ProcessingStates.Failed;
             auditAction = "AI_PROCESSED_ESCALATE_SYSTEM_ERROR";
+            if (VisionProviderFailurePolicy.IsBlocking(exception.Code)) providerFailure = exception;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -201,7 +218,9 @@ public sealed class ReceiptProcessingWorker : BackgroundService
                 $"Reason={request.AiReasoning}; Latency={request.ProcessingLatencyMs}ms"
         });
         await db.SaveChangesAsync(cancellationToken);
-        return true;
+        return providerFailure is null
+            ? ProcessResult.Success
+            : ProcessResult.Blocked(providerFailure.Code, providerFailure.RetryAfter);
     }
 
     private string ResolveReceiptPath(string storedFileName)
@@ -213,5 +232,14 @@ public sealed class ReceiptProcessingWorker : BackgroundService
         if (!path.StartsWith(storageRoot, StringComparison.OrdinalIgnoreCase))
             throw new VisionExtractionException("RECEIPT_PATH_INVALID", "Đường dẫn file hóa đơn không hợp lệ.");
         return path;
+    }
+
+    private readonly record struct ProcessResult(bool Processed, bool ProviderBlocked,
+        string? ErrorCode, TimeSpan? RetryAfter)
+    {
+        public static ProcessResult NoJob => new(false, false, null, null);
+        public static ProcessResult Success => new(true, false, null, null);
+        public static ProcessResult Blocked(string errorCode, TimeSpan? retryAfter) =>
+            new(true, true, errorCode, retryAfter);
     }
 }

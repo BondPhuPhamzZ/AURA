@@ -129,7 +129,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
     private async Task<ReceiptExtractionDto> RequestFactsOnceAsync(object payload,
         CancellationToken cancellationToken)
     {
-        (HttpStatusCode statusCode, string responseText) response;
+        ProviderResponse response;
         try
         {
             response = await SendWithRetryAsync(payload, cancellationToken);
@@ -140,11 +140,15 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
                 $"Qwen không phản hồi trong {_options.TimeoutSeconds} giây. Đây là lỗi timeout mạng/dịch vụ hoặc model đang quá tải, không phải do nội dung 'kiểm thử' trong ảnh.", exception);
         }
 
-        var (statusCode, responseText) = response;
+        var (statusCode, responseText, retryAfter, requestId) = response;
         if ((int)statusCode is < 200 or >= 300)
         {
-            _logger.LogWarning("OpenRouter returned HTTP {StatusCode} after retries.", (int)statusCode);
-            throw CreateHttpFailure(statusCode, responseText, _options.Model);
+            var details = ReadProviderError(responseText);
+            _logger.LogWarning(
+                "OpenRouter returned HTTP {StatusCode} after retries. UpstreamProvider={UpstreamProvider}; RequestId={RequestId}; RetryAfterSeconds={RetryAfterSeconds}; ProviderMessage={ProviderMessage}",
+                (int)statusCode, details.Provider ?? "<unknown>", requestId ?? "<none>",
+                retryAfter?.TotalSeconds, details.Message);
+            throw CreateHttpFailure(statusCode, details, _options.Model, retryAfter, requestId);
         }
 
         using var responseDocument = ParseResponseDocument(responseText);
@@ -206,7 +210,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             ? number
             : null;
 
-    private async Task<(HttpStatusCode StatusCode, string Body)> SendWithRetryAsync(
+    private async Task<ProviderResponse> SendWithRetryAsync(
         object payload, CancellationToken cancellationToken)
     {
         const int maxAttempts = 2;
@@ -216,16 +220,19 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
             request.Headers.TryAddWithoutValidation("HTTP-Referer", _options.HttpReferer);
             request.Headers.TryAddWithoutValidation("X-Title", _options.AppTitle);
+            request.Headers.TryAddWithoutValidation("X-OpenRouter-Metadata", "enabled");
             request.Content = JsonContent.Create(payload);
 
             using var response = await _httpClient.SendAsync(
                 request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            var retryAfter = response.Headers.RetryAfter?.Delta;
+            var requestId = ReadFirstHeader(response, "X-Request-Id") ??
+                ReadFirstHeader(response, "X-OpenRouter-Generation-Id");
             if (response.IsSuccessStatusCode || !IsTransient(response.StatusCode) || attempt == maxAttempts)
-                return (response.StatusCode, body);
+                return new ProviderResponse(response.StatusCode, body, retryAfter, requestId);
 
-            var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromMilliseconds(750 * attempt);
-            await Task.Delay(retryAfter, cancellationToken);
+            await Task.Delay(retryAfter ?? TimeSpan.FromMilliseconds(750 * attempt), cancellationToken);
         }
         throw new UnreachableException();
     }
@@ -238,9 +245,10 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         "AI_EMPTY_RESPONSE" or "AI_INVALID_RESPONSE" or
         "AI_RESPONSE_TRUNCATED" or "AI_SCHEMA_MISMATCH";
 
-    private static VisionExtractionException CreateHttpFailure(HttpStatusCode statusCode, string responseBody, string model)
+    private static VisionExtractionException CreateHttpFailure(HttpStatusCode statusCode,
+        ProviderErrorDetails details, string model, TimeSpan? retryAfter, string? requestId)
     {
-        var providerMessage = ReadProviderError(responseBody);
+        var providerMessage = details.Message;
         return statusCode switch
         {
             HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => new VisionExtractionException("AI_AUTH_ERROR",
@@ -248,9 +256,11 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             HttpStatusCode.PaymentRequired => new VisionExtractionException("AI_CREDITS_REQUIRED",
                 "Tài khoản OpenRouter không đủ credit hoặc key không được phép sử dụng model đã chọn."),
             HttpStatusCode.NotFound => new VisionExtractionException("AI_MODEL_UNAVAILABLE",
-                $"OpenRouter không tìm thấy model '{model}' hoặc model đã bị gỡ khỏi catalog (HTTP 404). {providerMessage}".Trim()),
+                $"OpenRouter không tìm thấy model '{model}' hoặc model đã bị gỡ khỏi catalog (HTTP 404). {providerMessage}".Trim(),
+                retryAfter: retryAfter, provider: details.Provider, requestId: requestId),
             HttpStatusCode.TooManyRequests => new VisionExtractionException("AI_RATE_LIMIT",
-                "OpenRouter hoặc Alibaba đang giới hạn tần suất gọi (HTTP 429). Hệ thống không tự retry để tránh phát sinh thêm chi phí."),
+                "OpenRouter hoặc upstream provider đang giới hạn tải (HTTP 429). Hệ thống tạm dừng lời gọi tiếp theo để bảo vệ quota.",
+                retryAfter: retryAfter, provider: details.Provider, requestId: requestId),
             HttpStatusCode.BadRequest => new VisionExtractionException("AI_REQUEST_INVALID",
                 $"OpenRouter không chấp nhận payload ảnh/JSON hiện tại (HTTP 400). {providerMessage}".Trim()),
             HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or
@@ -261,22 +271,54 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         };
     }
 
-    private static string ReadProviderError(string responseBody)
+    private static ProviderErrorDetails ReadProviderError(string responseBody)
     {
         try
         {
             using var document = JsonDocument.Parse(responseBody);
             if (document.RootElement.TryGetProperty("error", out var error) &&
-                error.TryGetProperty("message", out var message))
-                return message.GetString() ?? string.Empty;
+                error.ValueKind == JsonValueKind.Object)
+            {
+                var message = error.TryGetProperty("message", out var messageElement)
+                    ? messageElement.GetString() ?? string.Empty
+                    : string.Empty;
+                string? provider = null;
+                if (error.TryGetProperty("metadata", out var metadata) && metadata.ValueKind == JsonValueKind.Object)
+                {
+                    provider = ReadString(metadata, "provider_name") ?? ReadString(metadata, "provider");
+                }
+
+                return new ProviderErrorDetails(SanitizeDiagnostic(message) ?? string.Empty,
+                    SanitizeDiagnostic(provider));
+            }
         }
         catch (JsonException)
         {
             // Keep the status-specific message; never echo an unknown raw response body.
         }
 
-        return string.Empty;
+        return new ProviderErrorDetails(string.Empty, null);
     }
+
+    private static string? ReadFirstHeader(HttpResponseMessage response, string headerName) =>
+        response.Headers.TryGetValues(headerName, out var values) ? values.FirstOrDefault() : null;
+
+    private static string? ReadString(JsonElement source, string propertyName) =>
+        source.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+
+    private static string? SanitizeDiagnostic(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return value;
+        var compact = string.Join(' ', value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        return compact.Length <= 300 ? compact : compact[..300];
+    }
+
+    private sealed record ProviderResponse(HttpStatusCode StatusCode, string Body,
+        TimeSpan? RetryAfter, string? RequestId);
+
+    private sealed record ProviderErrorDetails(string Message, string? Provider);
 
     private static JsonDocument ParseResponseDocument(string responseText)
     {

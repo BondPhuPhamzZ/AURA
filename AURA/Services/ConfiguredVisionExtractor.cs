@@ -12,11 +12,13 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
     private readonly OllamaVisionExtractorService _ollama;
     private readonly VisionExecutionContext _execution;
     private readonly VisionCircuitBreaker _circuitBreaker;
+    private readonly VisionInvocationCoordinator _coordinator;
     private readonly ILogger<ConfiguredVisionExtractor> _logger;
 
     public ConfiguredVisionExtractor(IOptions<VisionOptions> options,
         OpenRouterVisionExtractorService openRouter, OllamaVisionExtractorService ollama,
         VisionExecutionContext execution, VisionCircuitBreaker circuitBreaker,
+        VisionInvocationCoordinator coordinator,
         ILogger<ConfiguredVisionExtractor> logger)
     {
         _options = options.Value;
@@ -24,17 +26,36 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
         _ollama = ollama;
         _execution = execution;
         _circuitBreaker = circuitBreaker;
+        _coordinator = coordinator;
         _logger = logger;
     }
 
     public async Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
         CancellationToken cancellationToken = default)
     {
+        using var capacityLease = await _coordinator.EnterAsync(cancellationToken);
         var primary = NormalizeProvider(_options.Provider);
         var fallback = NormalizeProvider(_options.FallbackProvider);
         _execution.Begin(primary);
 
         var canFallback = _options.FallbackEnabled && !string.Equals(primary, fallback, StringComparison.OrdinalIgnoreCase);
+        var remainingCooldown = _coordinator.GetRemainingCooldown(primary, DateTime.UtcNow);
+        if (remainingCooldown is not null)
+        {
+            _execution.MarkPrimaryFailure("AI_PROVIDER_COOLDOWN");
+            if (canFallback)
+            {
+                _logger.LogWarning(
+                    "Skipping primary vision provider {PrimaryProvider} for {CooldownSeconds:F0}s; using {FallbackProvider}.",
+                    primary, remainingCooldown.Value.TotalSeconds, fallback);
+                return await ExtractWithFallbackAsync(fallback, physicalImagePath, cancellationToken);
+            }
+
+            throw new VisionExtractionException("AI_PROVIDER_COOLDOWN",
+                $"Nhà cung cấp AI đang trong thời gian chờ sau lỗi giới hạn tải. Vui lòng thử lại sau khoảng {Math.Ceiling(remainingCooldown.Value.TotalSeconds)} giây.",
+                retryAfter: remainingCooldown, provider: primary);
+        }
+
         if (canFallback && _circuitBreaker.ShouldSkipPrimary(DateTime.UtcNow))
         {
             _execution.MarkPrimaryFailure("CIRCUIT_OPEN");
@@ -45,22 +66,39 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
         {
             var result = await ExtractWithProviderAsync(primary, physicalImagePath, cancellationToken);
             _circuitBreaker.RecordSuccess();
+            _coordinator.ClearCooldown(primary);
             _execution.MarkSuccess(primary);
             return result;
-        }
-        catch (VisionExtractionException primaryFailure) when (canFallback && VisionFallbackPolicy.IsEligible(primaryFailure.Code))
-        {
-            _execution.MarkPrimaryFailure(primaryFailure.Code);
-            _circuitBreaker.RecordFailure(DateTime.UtcNow, _options.CircuitBreakFailureThreshold,
-                TimeSpan.FromSeconds(_options.CircuitBreakSeconds));
-            _logger.LogWarning(primaryFailure,
-                "Primary vision provider {PrimaryProvider} failed with {ErrorCode}; trying {FallbackProvider} once.",
-                primary, primaryFailure.Code, fallback);
-            return await ExtractWithFallbackAsync(fallback, physicalImagePath, cancellationToken);
         }
         catch (VisionExtractionException primaryFailure)
         {
             _execution.MarkPrimaryFailure(primaryFailure.Code);
+            if (VisionFallbackPolicy.IsEligible(primaryFailure.Code))
+            {
+                _circuitBreaker.RecordFailure(DateTime.UtcNow, _options.CircuitBreakFailureThreshold,
+                    TimeSpan.FromSeconds(_options.CircuitBreakSeconds));
+            }
+
+            if (primaryFailure.Code == "AI_RATE_LIMIT")
+            {
+                var cooldown = primaryFailure.RetryAfter ?? TimeSpan.FromSeconds(_options.ProviderCooldownSeconds);
+                _coordinator.RecordCooldown(primary, DateTime.UtcNow, cooldown);
+                if (!canFallback && primaryFailure.RetryAfter is null)
+                {
+                    throw new VisionExtractionException(primaryFailure.Code, primaryFailure.UserMessage,
+                        primaryFailure, cooldown, primaryFailure.Provider ?? primary,
+                        primaryFailure.RequestId);
+                }
+            }
+
+            if (canFallback && VisionFallbackPolicy.IsEligible(primaryFailure.Code))
+            {
+                _logger.LogWarning(primaryFailure,
+                    "Primary vision provider {PrimaryProvider} failed with {ErrorCode}; trying {FallbackProvider} once.",
+                    primary, primaryFailure.Code, fallback);
+                return await ExtractWithFallbackAsync(fallback, physicalImagePath, cancellationToken);
+            }
+
             throw;
         }
     }
@@ -68,17 +106,38 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
     private async Task<ReceiptExtractionDto> ExtractWithFallbackAsync(string fallback, string imagePath,
         CancellationToken cancellationToken)
     {
+        var remainingCooldown = _coordinator.GetRemainingCooldown(fallback, DateTime.UtcNow);
+        if (remainingCooldown is not null)
+        {
+            throw new VisionExtractionException("AI_ALL_PROVIDERS_UNAVAILABLE",
+                $"Provider chính không khả dụng và fallback {fallback} đang trong thời gian chờ sau lỗi giới hạn tải.",
+                retryAfter: remainingCooldown, provider: fallback);
+        }
+
         try
         {
             var result = await ExtractWithProviderAsync(fallback, imagePath, cancellationToken);
+            _coordinator.ClearCooldown(fallback);
             _execution.MarkSuccess(fallback, fallbackUsed: true);
             return result;
         }
         catch (VisionExtractionException fallbackFailure)
         {
+            if (fallbackFailure.Code == "AI_RATE_LIMIT")
+            {
+                var cooldown = fallbackFailure.RetryAfter ??
+                    TimeSpan.FromSeconds(_options.ProviderCooldownSeconds);
+                _coordinator.RecordCooldown(fallback, DateTime.UtcNow, cooldown);
+            }
+
             throw new VisionExtractionException("AI_ALL_PROVIDERS_UNAVAILABLE",
                 $"Provider chính không khả dụng và fallback {fallback} cũng thất bại ({fallbackFailure.Code}).",
-                fallbackFailure);
+                fallbackFailure,
+                fallbackFailure.RetryAfter ?? (fallbackFailure.Code == "AI_RATE_LIMIT"
+                    ? TimeSpan.FromSeconds(_options.ProviderCooldownSeconds)
+                    : null),
+                fallbackFailure.Provider ?? fallback,
+                fallbackFailure.RequestId);
         }
     }
 

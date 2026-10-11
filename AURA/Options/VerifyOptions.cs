@@ -8,4 +8,6 @@ public sealed class VerifyOptions
 
     [Range(0, 30000)]
     public int InterCaseDelayMs { get; set; } = 4000;
+
+    public bool Enabled { get; set; } = true;
 }

@@ -86,6 +86,7 @@ builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 builder.Services.AddSingleton<WorkflowOperationGate>();
 builder.Services.AddSingleton<ReceiptProcessingQueue>();
 builder.Services.AddSingleton<VisionCircuitBreaker>();
+builder.Services.AddSingleton<VisionInvocationCoordinator>();
 builder.Services.AddScoped<VisionExecutionContext>();
 builder.Services.AddHostedService<ReceiptProcessingWorker>();
 builder.Services.AddHttpClient<OpenRouterVisionExtractorService>((services, client) =>
@@ -136,6 +137,7 @@ app.UseAuthorization();
 app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
     IOptions<OpenRouterOptions> configuredOpenRouter,
     IOptions<OllamaOptions> configuredOllama,
+    IOptions<VerifyOptions> configuredVerify,
     IWebHostEnvironment environment,
     AppDbContext database,
     CancellationToken cancellationToken) =>
@@ -182,6 +184,9 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
         provider = useOllama ? VisionOptions.OllamaProvider : VisionOptions.OpenRouterProvider,
         model = useOllama ? ollama.Model : openRouter.Model,
         processingMode = "durable-background-queue",
+        maxConcurrentAiRequests = vision.MaxConcurrentRequests,
+        providerCooldownSeconds = vision.ProviderCooldownSeconds,
+        verifyHarnessEnabled = configuredVerify.Value.Enabled,
         fallbackEnabled = vision.FallbackEnabled,
         configuredFallbackProvider = vision.FallbackProvider,
         fallbackProvider = vision.FallbackEnabled ? vision.FallbackProvider : null,

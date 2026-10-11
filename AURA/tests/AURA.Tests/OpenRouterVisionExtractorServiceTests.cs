@@ -14,6 +14,51 @@ namespace AURA.Tests;
 public sealed class OpenRouterVisionExtractorServiceTests
 {
     [Fact]
+    public async Task Preserves_sanitized_429_diagnostics_and_requests_routing_metadata()
+    {
+        var root = CreateFixtureRoot();
+        try
+        {
+            string? metadataHeader = null;
+            var handler = new StubHandler(request =>
+            {
+                metadataHeader = request.Headers.TryGetValues("X-OpenRouter-Metadata", out var values)
+                    ? values.Single()
+                    : null;
+                var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests)
+                {
+                    Content = new StringContent(
+                        "{\"error\":{\"message\":\"Provider capacity exceeded\",\"metadata\":{\"provider_name\":\"Parasail\"}}}",
+                        Encoding.UTF8, "application/json")
+                };
+                response.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(
+                    TimeSpan.FromSeconds(45));
+                response.Headers.TryAddWithoutValidation("X-Request-Id", "req-safe-123");
+                return Task.FromResult(response);
+            });
+            var options = Microsoft.Extensions.Options.Options.Create(
+                new OpenRouterOptions { ApiKey = "test-key" });
+            var client = new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) };
+            var service = new OpenRouterVisionExtractorService(client, options,
+                new TestEnvironment(root), NullLogger<OpenRouterVisionExtractorService>.Instance);
+
+            var exception = await Assert.ThrowsAsync<VisionExtractionException>(() =>
+                service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg")));
+
+            Assert.Equal("AI_RATE_LIMIT", exception.Code);
+            Assert.Equal(TimeSpan.FromSeconds(45), exception.RetryAfter);
+            Assert.Equal("Parasail", exception.Provider);
+            Assert.Equal("req-safe-123", exception.RequestId);
+            Assert.Equal("enabled", metadataHeader);
+            Assert.DoesNotContain("Alibaba", exception.UserMessage, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task Sends_image_to_openrouter_chat_completions_with_configured_model()
     {
         var root = CreateFixtureRoot();

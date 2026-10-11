@@ -17,17 +17,20 @@ public sealed class VerifyController : Controller
     private readonly IReimbursementRepository _repository;
     private readonly ILogger<VerifyController> _logger;
     private readonly WorkflowOperationGate _operationGate;
+    private readonly VisionExecutionContext _execution;
     private readonly VerifyOptions _verifyOptions;
 
     public VerifyController(IVisionExtractor vision, IWebHostEnvironment environment,
         IReimbursementRepository repository, ILogger<VerifyController> logger,
-        WorkflowOperationGate operationGate, IOptions<VerifyOptions> verifyOptions)
+        WorkflowOperationGate operationGate, VisionExecutionContext execution,
+        IOptions<VerifyOptions> verifyOptions)
     {
         _vision = vision;
         _environment = environment;
         _repository = repository;
         _logger = logger;
         _operationGate = operationGate;
+        _execution = execution;
         _verifyOptions = verifyOptions.Value;
     }
 
@@ -38,6 +41,11 @@ public sealed class VerifyController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RunHarness(CancellationToken cancellationToken)
     {
+        if (!_verifyOptions.Enabled) return NotFound(new
+        {
+            error = "Verify Harness đang tắt trên môi trường này. Chỉ bật trong phiên kiểm thử có giám sát."
+        });
+
         if (!_operationGate.TryEnter("Verify Harness đang chạy", out var lease))
         {
             return Conflict(new
@@ -81,6 +89,11 @@ public sealed class VerifyController : Controller
             string question;
             string? extractedFactsJson = null;
             ReceiptExtractionDto? extractedFacts = null;
+            var aiAttempted = false;
+            string? primaryProvider = null;
+            string? servedProvider = null;
+            string? providerErrorCode = null;
+            var fallbackUsed = false;
 
             if (blockingProviderFailure is not null)
             {
@@ -100,6 +113,7 @@ public sealed class VerifyController : Controller
                 {
                     if (results.Count > 0 && _verifyOptions.InterCaseDelayMs > 0)
                         await Task.Delay(_verifyOptions.InterCaseDelayMs, cancellationToken);
+                    aiAttempted = true;
                     extractedFacts = await _vision.ExtractFactsAsync(imagePath, cancellationToken);
                     extractedFactsJson = JsonSerializer.Serialize(extractedFacts);
                     var decision = PolicyDecisionEngine.Evaluate(extractedFacts, testCase.ClaimedAmount);
@@ -129,6 +143,18 @@ public sealed class VerifyController : Controller
                 }
             }
 
+            if (aiAttempted)
+            {
+                primaryProvider = _execution.PrimaryProvider;
+                servedProvider = _execution.ServedProvider;
+                providerErrorCode = _execution.PrimaryErrorCode;
+                fallbackUsed = _execution.FallbackUsed;
+            }
+            else if (blockingProviderFailure is not null)
+            {
+                providerErrorCode = blockingProviderFailure.Code;
+            }
+
             stopwatch.Stop();
             var bytes = System.IO.File.Exists(imagePath)
                 ? await System.IO.File.ReadAllBytesAsync(imagePath, cancellationToken)
@@ -156,13 +182,19 @@ public sealed class VerifyController : Controller
                 QueuedAt = DateTime.UtcNow,
                 ProcessingStartedAt = DateTime.UtcNow,
                 ProcessingCompletedAt = DateTime.UtcNow,
-                ProcessingAttemptCount = blockingProviderFailure is null ? 1 : 0,
+                ProcessingAttemptCount = aiAttempted ? 1 : 0,
+                PrimaryProvider = primaryProvider,
+                ServedProvider = servedProvider,
+                ProviderErrorCode = providerErrorCode,
+                FallbackUsed = fallbackUsed,
                 SubmitterCode = "VERIFY-HARNESS",
                 SubmitterDisplayName = "Verify Harness",
                 SubmitterDepartment = "Quality Assurance"
             };
             await _repository.AddRequestWithAuditAsync(request, $"VERIFY_{actualStatus}",
-                $"Case={testCase.Id}; Expected={testCase.ExpectedStatus}; Reason={reason}; Latency={stopwatch.ElapsedMilliseconds}ms");
+                $"Case={testCase.Id}; Expected={testCase.ExpectedStatus}; PrimaryProvider={primaryProvider}; " +
+                $"ServedProvider={servedProvider}; FallbackUsed={fallbackUsed}; ProviderErrorCode={providerErrorCode}; " +
+                $"Reason={reason}; Latency={stopwatch.ElapsedMilliseconds}ms");
 
             results.Add(new
             {
@@ -183,6 +215,10 @@ public sealed class VerifyController : Controller
                 handoffPrompt = PolicyDecisionEngine.IsEscalation(actualStatus)
                     ? EscalationWorkflow.EmployeeHandoffPrompt
                     : null,
+                primaryProvider,
+                servedProvider,
+                fallbackUsed,
+                providerErrorCode,
                 facts = extractedFacts
             });
         }
@@ -194,9 +230,7 @@ public sealed class VerifyController : Controller
         string.Equals(expected, actual, StringComparison.Ordinal) ||
         string.Equals(expected, "ESCALATE", StringComparison.Ordinal) && PolicyDecisionEngine.IsEscalation(actual);
 
-    private static bool IsBlockingProviderFailure(string code) => code is
-        "AI_TIMEOUT" or "AI_RATE_LIMIT" or "AI_NOT_CONFIGURED" or "AI_TEMPORARILY_UNAVAILABLE" or
-        "AI_AUTH_ERROR" or "AI_CREDITS_REQUIRED" or "AI_MODEL_UNAVAILABLE" or
-        "AI_REQUEST_INVALID" or "AI_ALL_PROVIDERS_UNAVAILABLE";
+    private static bool IsBlockingProviderFailure(string code) =>
+        VisionProviderFailurePolicy.IsBlocking(code);
 }
 
