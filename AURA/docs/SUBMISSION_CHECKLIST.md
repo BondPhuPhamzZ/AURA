@@ -1,6 +1,6 @@
 # AURA — Checklist nộp bài
 
-Cập nhật: 07/10/2026. Trạng thái chuẩn nằm tại `docs/CURRENT_PROJECT_STATUS_2026-10-07.md`; không điền số liệu hoặc URL chưa được xác minh. Hạn khóa link nộp do đội ghi nhận là 14/10/2026; mục tiêu nội bộ là chốt hồ sơ ngày 12/10 và kiểm link ngày 13/10.
+Cập nhật: 12/10/2026. Trạng thái lịch sử nằm tại `docs/CURRENT_PROJECT_STATUS_2026-10-07.md`; forensic hardening mới nhất ở `docs/REAL_RECEIPT_OVER_ESCALATION_ANALYSIS_2026-10-12.md`. Không điền số liệu hoặc URL chưa được xác minh. Hạn khóa link nộp do đội ghi nhận là 14/10/2026; kiểm link và rehearsal ngày 13/10.
 
 ## 1. Hạng mục bàn giao
 
@@ -20,7 +20,7 @@ Cập nhật: 07/10/2026. Trạng thái chuẩn nằm tại `docs/CURRENT_PROJEC
 - `README.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_AND_INTEGRATION_REPORT.md`.
 - `docs/`: Build Log nguồn, deployment, runbook, test cases, model selection, measurement plan.
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
-- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide nhưng phải audit/cập nhật số hiện hành trước 12/10: 142/142 code test; v3.1 13/15 exact, 0 missed/system error; v2 hậu-contract 14/15 với missed TK-12. Không biến các số này thành production accuracy claim.
+- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; số ứng viên hiện hành là 149/149 code test, còn số receipt thật công khai vẫn phải giữ đúng ranh giới regression/holdout. Không biến các số fixture hoặc batch bị HTTP 429 thành production accuracy claim.
 - `submission/AURA_BUILD_LOG.docx`: một trang.
 - `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.
 - 5 ảnh Verify trong `wwwroot/test_data/images`, manifest Verify và gói 15 ca BGK.
@@ -60,3 +60,4 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 16. Checklist điện thoại thật, ba user session và rehearsal nằm tại `docs/MANUAL_FINAL_GATES_2026-10-06.md`.
 17. Benchmark GPU chỉ dùng v3.1 tổng hợp; protocol chạy lại receipt thật nằm tại `docs/REAL_RECEIPT_REGRESSION_PROTOCOL_2026-10-07.md`. Runbook phiên máy mượn và secret vận hành không thuộc submission công khai.
 18. Repository công khai chỉ giữ gate kỹ thuật và evidence kiểm chứng; kế hoạch học, pitch, Q&A và chiến lược onsite nằm ngoài Git.
+19. Forensic hardening 12/10 tại `d0440f2`: 149/149 test và Release build sạch. API thật xác nhận BH-03/BH-14/BH-15 hết over; BH-01 còn fail-safe. Batch 15 ca có 5 `AI_RATE_LIMIT`, vì vậy không thay số 11/15 ngày 07/10 và phải chạy live post-publish gate có kiểm soát trước khi freeze.

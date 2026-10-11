@@ -40,7 +40,7 @@ Live validation ngày 29/09/2026 đã chốt thêm: OpenRouter đạt 15/15 quy�
 
 ### 4. Kiểm thử và công cụ vận hành
 
-- Automated tests tăng từ 70 lên 88 trong hardening Sprint 2, lên 93 sau hardening định danh chứng từ giấy, 100 sau đối chiếu giảm giá, 102 sau postfix live regressions và 108 sau regression initial-tab; kết quả candidate hiện tại: 108/108 pass.
+- Automated tests tăng từ 70 lên 88 trong hardening Sprint 2, tiếp tục mở rộng qua các cổng định danh, discount, contract v2, UI và receipt regression; kết quả candidate ngày 12/10: 149/149 pass.
 - Build hiện tại: 0 warning, 0 error.
 - EF Core: migration và model snapshot đã được cập nhật cùng thay đổi schema; app smoke test đã truy vấn thành công các cột mới.
 - LocalDB đã áp migration thành công trong lần xác minh.
@@ -60,6 +60,7 @@ Live validation ngày 29/09/2026 đã chốt thêm: OpenRouter đạt 15/15 quy�
 - Worker tăng backoff từ 5 giây đến trần 60 giây khi SQL tạm mất kết nối và giảm full-stack log lặp. Khi DB phục hồi, job còn nằm trong SQL và được tiếp tục xử lý.
 - Thêm `tools/Test-DemoReadiness.ps1`; script đã chạy thành công bằng Windows PowerShell 5.1, xác nhận đúng `AuraDb`, LocalDB, policy, storage, migration, provider và fallback mà không in secret.
 - Hàng đợi quản lý và Lịch sử hành vi hiển thị tên, mã và phòng ban người nộp thay vì nhãn ẩn danh cố định.
+- Forensic hardening ngày 12/10 phân tích bốn over-escalation receipt thật. Exact duplicate identifier và summary pseudo-line được canonicalize bằng điều kiện hẹp; total chỉ được sửa khi dòng final-total, subtotal và đầy đủ line items cùng đối chiếu. API thật xác nhận BH-03/BH-14/BH-15 về AUTO; BH-01 vẫn fail-safe vì model gán sai cash/change/VAT. Batch 15 ca gặp 5 HTTP 429 nên được lưu như evidence chẩn đoán, không thay accuracy lịch sử.
 
 ## Cấu hình khuyến nghị
 

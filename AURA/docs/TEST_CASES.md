@@ -91,7 +91,7 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P52 | Restaurant/retail receipt có `Receipt No`/`Bill No`, không có MST | `receiptNumber`; AUTO nếu các dữ kiện khác đạt | A |
 | P53 | Restaurant bill có `Check: 221196` là mã riêng của lần mua | `transactionReference`; AUTO nếu các dữ kiện khác đạt | A |
 | P54 | Receipt chỉ có ShopID + POS/register + pager/table | `ESCALATE_FACT`; các mã vận hành không thay định danh giao dịch | A |
-| P55 | Cùng mã bị gán đồng thời vào receiptNumber và transactionReference | Semantic issue, repair một lần; còn lặp thì `ESCALATE_FACT` | A/V |
+| P55 | RETAIL/RESTAURANT response lặp chính xác cùng mã vào receiptNumber và invoiceNumber/transactionReference | Canonicalize lossless: giữ `receiptNumber`, bỏ đúng bản sao và lưu warning; không gọi repair thừa | A/V |
 | P56 | Paper receipt có `invoiceDate=null` nhưng một ngày mua/giao dịch hợp lệ ở `transactionDate` | Chuẩn hóa lossless sang ngày chứng từ canonical; không gọi AI repair và không lấy `completionDate` thay thế | A/V |
 | P57 | Paper receipt lặp cùng ngày ở `invoiceDate` và `transactionDate` | Chuẩn hóa lossless: giữ `invoiceDate`, xóa bản sao `transactionDate`; không gọi repair thừa | A |
 | P58 | Paper receipt có `invoiceDate` và `transactionDate` khác nhau nhưng cả hai có nhãn hợp lệ | Giữ cả hai; policy giấy dùng `invoiceDate`, không escalation chỉ vì có ngày giao dịch hỗ trợ | A/V |
@@ -114,6 +114,10 @@ Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số 
 | P74 | Item văn phòng `Bìa hồ sơ`; OCR có thể trả `Bia hồ sơ/Bia ho so` | Ngoại lệ ngữ cảnh hẹp, không match alcohol; `Bia lon/chai` vẫn POLICY; AUTO nếu các rule khác đạt | A/V3.1 |
 | P75 | Receipt number chỉ còn prefix chữ ngắn như `RCF` do mất mực | Repair một lần; còn fragment thì `ESCALATE_FACT` | A/V3.1 |
 | P76 | `Số biên nhận` và `Số chứng từ` cùng xuất hiện | Map tách `receiptNumber`/`documentNumber`; policy item vẫn được xét | A/V3.1 |
+| P77 | VAT invoice lặp chính xác invoice number sang receiptNumber/transactionReference | Giữ `invoiceNumber`, bỏ đúng bản sao; giá trị khác nhau không bị merge | A |
+| P78 | Model đưa dòng `Tổng số/Tổng cộng` thành một line item thứ hai có amount bằng final total | Bỏ đúng pseudo-item, giữ hàng hóa thực; product chỉ chứa chữ `Total` không bị xóa | A/V |
+| P79 | Model chọn VAT đã gồm/tiền mặt làm total nhưng evidence còn một dòng tổng cuối; subtotal và đầy đủ line items cùng bằng dòng tổng đó | Chỉ chuẩn hóa về giá trị dòng tổng khi cả ba nguồn độc lập khớp; không dùng claimed amount | A/V |
+| P80 | Dòng tổng bị rách hoặc evidence chỉ còn tiền mặt/tiền thối, dù line items cộng được | Không dựng total; giữ `ESCALATE_FACT` để tránh fail-open | A/V |
 | P74 | `Kẹp tóc`, `Khăn ướt chăm sóc da` hoặc wet wipes trên receipt đủ dữ kiện | `ESCALATE_POLICY` theo taxonomy personal-item của MVP; FACT vẫn ưu tiên nếu có vấn đề dữ kiện | A |
 | P75 | Audit timestamp được đọc từ SQL trên host không đặt timezone Việt Nam | DB giữ UTC; UI chuyển rõ sang UTC+7 cho dòng tổng hợp và timeline; không dùng timezone hệ điều hành host | A/live hậu deploy |
 
