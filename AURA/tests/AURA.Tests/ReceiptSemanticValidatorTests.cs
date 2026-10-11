@@ -300,6 +300,161 @@ public sealed class ReceiptSemanticValidatorTests
     }
 
     [Fact]
+    public void Canonicalizes_exact_duplicate_retail_identifiers_without_losing_traceability()
+    {
+        var facts = VinamilkDiscountedReceipt();
+        facts.InvoiceNumber = "622002261001104";
+        facts.ReceiptNumber = "622002261001104";
+        facts.TransactionReference = "622002261001104";
+        facts.TaxAuthorityCode = "M1-26-MX4H6-10112701104";
+
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
+
+        Assert.Null(facts.InvoiceNumber);
+        Assert.Equal("622002261001104", facts.ReceiptNumber);
+        Assert.Null(facts.TransactionReference);
+        Assert.Equal("M1-26-MX4H6-10112701104", facts.TaxAuthorityCode);
+        Assert.Contains(facts.Warnings,
+            warning => warning.Contains("bị lặp", StringComparison.OrdinalIgnoreCase));
+        Assert.Empty(ReceiptSemanticValidator.Validate(facts));
+    }
+
+    [Fact]
+    public void Keeps_distinct_retail_identifiers_unchanged()
+    {
+        var facts = VinamilkDiscountedReceipt();
+        facts.InvoiceNumber = "INV-001";
+        facts.ReceiptNumber = "RC-001";
+        facts.TransactionReference = "RRN-001";
+
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
+
+        Assert.Equal("INV-001", facts.InvoiceNumber);
+        Assert.Equal("RC-001", facts.ReceiptNumber);
+        Assert.Equal("RRN-001", facts.TransactionReference);
+    }
+
+    [Fact]
+    public void Removes_a_total_summary_row_but_keeps_real_line_items()
+    {
+        var facts = VinamilkDiscountedReceipt();
+        facts.Subtotal = 12_000m;
+        facts.DiscountAmount = null;
+        facts.Tax = null;
+        facts.TotalAmount = 12_000m;
+        facts.TotalAmountEvidence = "Tổng số/Tổng cộng: 12,000";
+        facts.LineItems =
+        [
+            new ReceiptLineItem { Description = "T3.Trà Ô long Tea plus 45", Amount = 12_000m },
+            new ReceiptLineItem { Description = "Tổng số/Tổng cộng:", Amount = 12_000m }
+        ];
+
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
+
+        var item = Assert.Single(facts.LineItems);
+        Assert.Equal("T3.Trà Ô long Tea plus 45", item.Description);
+        Assert.Contains(facts.Warnings,
+            warning => warning.Contains("lặp vào lineItems", StringComparison.OrdinalIgnoreCase));
+        Assert.Empty(ReceiptSemanticValidator.Validate(facts));
+    }
+
+    [Fact]
+    public void Does_not_remove_a_real_product_merely_containing_the_word_total()
+    {
+        var facts = VinamilkDiscountedReceipt();
+        facts.Subtotal = 120_000m;
+        facts.DiscountAmount = null;
+        facts.Tax = 0;
+        facts.TotalAmount = 120_000m;
+        facts.TotalAmountEvidence = "Tổng cộng 120.000";
+        facts.LineItems =
+        [
+            new ReceiptLineItem { Description = "Total Care Shampoo", Amount = 120_000m }
+        ];
+
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
+
+        Assert.Single(facts.LineItems);
+        Assert.Equal("Total Care Shampoo", facts.LineItems[0].Description);
+    }
+
+    [Fact]
+    public void Corrects_a_wrong_total_only_when_printed_row_subtotal_and_line_items_corroborate()
+    {
+        var facts = VinamilkDiscountedReceipt();
+        facts.MerchantName = "CO.OPSMILE - 85 TUE TINH";
+        facts.ReceiptNumber = "M1-26-AJWGW-21180136552";
+        facts.InvoiceDate = "2026-10-05";
+        facts.InvoiceDateEvidence = "05/10/2026";
+        facts.InvoiceTime = "08:29:02";
+        facts.Subtotal = 60_000m;
+        facts.DiscountAmount = 440_000m;
+        facts.Tax = 4_444.44m;
+        facts.TotalAmount = 4_444.44m;
+        facts.TotalAmountEvidence = "TONG CONG 60.000\nBao gom thue GTGT 8%\n4444.44";
+        facts.MissingFields.Add("totalAmount");
+        facts.LineItems =
+        [
+            new ReceiptLineItem { Description = "Cream NSPN 380g", Amount = 22_000m },
+            new ReceiptLineItem { Description = "VNM ít đường 100% 1L", Amount = 38_000m }
+        ];
+
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
+
+        Assert.Equal(60_000m, facts.TotalAmount);
+        Assert.Null(facts.DiscountAmount);
+        Assert.DoesNotContain(facts.MissingFields,
+            field => string.Equals(field, "totalAmount", StringComparison.OrdinalIgnoreCase));
+        Assert.Empty(ReceiptSemanticValidator.Validate(facts));
+        Assert.Equal("AUTO_APPROVE",
+            PolicyDecisionEngine.Evaluate(facts, 60_000m,
+                utcNow: new DateTime(2026, 10, 6, 0, 0, 0, DateTimeKind.Utc)).Status);
+    }
+
+    [Fact]
+    public void Does_not_reconstruct_total_when_the_labeled_value_lacks_independent_corroboration()
+    {
+        var facts = VinamilkDiscountedReceipt();
+        facts.Subtotal = 60_000m;
+        facts.DiscountAmount = null;
+        facts.Tax = 0;
+        facts.TotalAmount = 4_444.44m;
+        facts.TotalAmountEvidence = "TỔNG CỘNG 59.000";
+        facts.LineItems =
+        [
+            new ReceiptLineItem { Description = "Sữa", Amount = 38_000m },
+            new ReceiptLineItem { Description = "Kem", Amount = 22_000m }
+        ];
+
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
+
+        Assert.Equal(4_444.44m, facts.TotalAmount);
+        Assert.NotEmpty(ReceiptSemanticValidator.Validate(facts));
+    }
+
+    [Fact]
+    public void Does_not_treat_merchandise_total_as_the_final_payment_row()
+    {
+        var facts = VinamilkDiscountedReceipt();
+        facts.Subtotal = 60_000m;
+        facts.DiscountAmount = 5_000m;
+        facts.Tax = 0;
+        facts.TotalAmount = 4_444.44m;
+        facts.TotalAmountEvidence = "Tổng tiền hàng 60.000\nTổng cộng 55.000";
+        facts.LineItems =
+        [
+            new ReceiptLineItem { Description = "Sữa", Amount = 38_000m },
+            new ReceiptLineItem { Description = "Kem", Amount = 22_000m }
+        ];
+
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
+
+        Assert.Equal(4_444.44m, facts.TotalAmount);
+        Assert.Equal(5_000m, facts.DiscountAmount);
+        Assert.NotEmpty(ReceiptSemanticValidator.Validate(facts));
+    }
+
+    [Fact]
     public void Damaged_short_alphabetic_receipt_prefix_is_not_traceable()
     {
         var facts = new ReceiptExtractionDto

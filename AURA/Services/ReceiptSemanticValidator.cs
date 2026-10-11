@@ -31,6 +31,13 @@ public static class ReceiptSemanticValidator
         "h:mm tt", "hh:mm tt", "h:mm:ss tt", "hh:mm:ss tt"
     ];
 
+    private static readonly HashSet<string> SummaryLineItemLabels = new(StringComparer.Ordinal)
+    {
+        "tong cong", "tong so tong cong", "tong thanh toan", "tong tien", "tong tien hang",
+        "thanh tien", "tien can thanh toan", "so tien phai thu", "grand total", "amount due",
+        "total due", "final total", "total"
+    };
+
     public static IReadOnlyList<string> Validate(ReceiptExtractionDto facts)
     {
         var issues = new List<string>();
@@ -209,6 +216,10 @@ public static class ReceiptSemanticValidator
             return facts;
         }
 
+        NormalizeDuplicateCanonicalPaperIdentifiers(facts, documentType);
+        RemovePaperSummaryLineItems(facts);
+        NormalizeCorroboratedPrintedFinalTotal(facts);
+
         // A correction response may keep a previously misplaced value after filling a
         // canonical paper identifier. Removing exact duplicates is lossless and never
         // invents evidence or promotes a merchant/terminal identifier.
@@ -241,6 +252,125 @@ public static class ReceiptSemanticValidator
 
         NormalizeNonImpactingDiscount(facts);
         return facts;
+    }
+
+    private static void NormalizeDuplicateCanonicalPaperIdentifiers(ReceiptExtractionDto facts,
+        string? documentType)
+    {
+        if (string.Equals(documentType, "VAT_INVOICE", StringComparison.Ordinal))
+        {
+            if (SameIdentifier(facts.InvoiceNumber, facts.ReceiptNumber))
+            {
+                facts.ReceiptNumber = null;
+                AddDistinct(facts.Warnings,
+                    "Bỏ trường receiptNumber bị lặp vì VAT_INVOICE đã giữ cùng mã trong invoiceNumber.");
+            }
+
+            if (SameIdentifier(facts.InvoiceNumber, facts.TransactionReference))
+            {
+                facts.TransactionReference = null;
+                AddDistinct(facts.Warnings,
+                    "Bỏ trường transactionReference bị lặp vì VAT_INVOICE đã giữ cùng mã trong invoiceNumber.");
+            }
+
+            return;
+        }
+
+        if (documentType is not ("RETAIL_RECEIPT" or "RESTAURANT_BILL")) return;
+
+        if (SameIdentifier(facts.ReceiptNumber, facts.InvoiceNumber))
+        {
+            facts.InvoiceNumber = null;
+            AddDistinct(facts.Warnings,
+                "Bỏ trường invoiceNumber bị lặp vì chứng từ bán lẻ đã giữ cùng mã trong receiptNumber.");
+        }
+
+        if (SameIdentifier(facts.ReceiptNumber, facts.TransactionReference))
+        {
+            facts.TransactionReference = null;
+            AddDistinct(facts.Warnings,
+                "Bỏ trường transactionReference bị lặp vì chứng từ bán lẻ đã giữ cùng mã trong receiptNumber.");
+        }
+    }
+
+    private static void RemovePaperSummaryLineItems(ReceiptExtractionDto facts)
+    {
+        if (facts.LineItems.Count < 2 || !facts.TotalAmount.HasValue) return;
+
+        var removable = facts.LineItems
+            .Where(item => item.Amount.HasValue && AreEqual(item.Amount.Value, facts.TotalAmount.Value) &&
+                           SummaryLineItemLabels.Contains(NormalizeSearchText(item.Description)))
+            .ToArray();
+        if (removable.Length == 0 || removable.Length == facts.LineItems.Count) return;
+
+        facts.LineItems = facts.LineItems.Except(removable).ToList();
+        AddDistinct(facts.Warnings,
+            "Bỏ dòng tổng thanh toán bị model lặp vào lineItems; vẫn giữ các hàng hóa/dịch vụ thực tế.");
+    }
+
+    private static void NormalizeCorroboratedPrintedFinalTotal(ReceiptExtractionDto facts)
+    {
+        if (!string.Equals(facts.Currency, "VND", StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(facts.TotalAmountSource, "PRINTED_FINAL_TOTAL", StringComparison.Ordinal) ||
+            string.IsNullOrWhiteSpace(facts.TotalAmountEvidence) ||
+            !facts.Subtotal.HasValue || facts.LineItems.Count == 0 ||
+            facts.LineItems.Any(item => !item.Amount.HasValue))
+        {
+            return;
+        }
+
+        var lineTotal = facts.LineItems.Sum(item => item.Amount!.Value);
+        if (!AreEqual(lineTotal, facts.Subtotal.Value) ||
+            !TryExtractSingleVndAmountFromFinalLabelLine(facts.TotalAmountEvidence, out var printedTotal) ||
+            !AreEqual(printedTotal, lineTotal) ||
+            facts.TotalAmount.HasValue && AreEqual(facts.TotalAmount.Value, printedTotal))
+        {
+            return;
+        }
+
+        var previous = facts.TotalAmount;
+        facts.TotalAmount = printedTotal;
+        facts.MissingFields.RemoveAll(field =>
+            string.Equals(field, "totalAmount", StringComparison.OrdinalIgnoreCase));
+        AddDistinct(facts.Warnings,
+            $"Chuẩn hóa totalAmount từ {previous?.ToString(CultureInfo.InvariantCulture) ?? "null"} thành " +
+            $"{printedTotal.ToString(CultureInfo.InvariantCulture)} vì dòng tổng in rõ, subtotal và tổng lineItems cùng đối chiếu được.");
+    }
+
+    private static bool TryExtractSingleVndAmountFromFinalLabelLine(string evidence, out decimal amount)
+    {
+        amount = 0;
+        var printedCandidates = new List<decimal>();
+        foreach (var line in Regex.Split(evidence, @"\r?\n"))
+        {
+            if (!StartsWithTrustedFinalTotalLabel(NormalizeSearchText(line))) continue;
+
+            var candidates = Regex.Matches(line, @"(?<!\d)\d+(?:[\s.,]\d{3})*(?!\d)",
+                    RegexOptions.CultureInvariant)
+                .Select(match => new string(match.Value.Where(char.IsDigit).ToArray()))
+                .Where(value => decimal.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out _))
+                .Select(value => decimal.Parse(value, NumberStyles.None, CultureInfo.InvariantCulture))
+                .Distinct()
+                .ToArray();
+            if (candidates.Length == 1) printedCandidates.Add(candidates[0]);
+        }
+
+        var distinct = printedCandidates.Distinct().ToArray();
+        if (distinct.Length != 1) return false;
+
+        amount = distinct[0];
+        return true;
+    }
+
+    private static bool StartsWithTrustedFinalTotalLabel(string normalizedLine)
+    {
+        string[] labels =
+        [
+            "tong cong", "tong thanh toan", "thanh tien", "tien can thanh toan",
+            "so tien phai thu", "grand total", "amount due", "total due", "final total", "total"
+        ];
+        return labels.Any(label => normalizedLine.Equals(label, StringComparison.Ordinal) ||
+                                   normalizedLine.StartsWith(label + " ", StringComparison.Ordinal));
     }
 
     private static void AddDatePlacementIssues(List<string> issues, ReceiptExtractionDto facts,
@@ -405,8 +535,7 @@ public static class ReceiptSemanticValidator
     {
         if (facts.DiscountAmount is null or <= 0 ||
             !facts.Subtotal.HasValue || !facts.TotalAmount.HasValue ||
-            facts.LineItems.Count == 0 || facts.LineItems.Any(item => !item.Amount.HasValue) ||
-            facts.Tax.GetValueOrDefault() != 0)
+            facts.LineItems.Count == 0 || facts.LineItems.Any(item => !item.Amount.HasValue))
         {
             return;
         }
@@ -419,6 +548,10 @@ public static class ReceiptSemanticValidator
         }
 
         var ignoredValue = facts.DiscountAmount.Value;
+        var tax = facts.Tax.GetValueOrDefault();
+        var impossibleDiscount = ignoredValue > facts.Subtotal.Value + Math.Max(0, tax);
+        if (tax != 0 && !impossibleDiscount) return;
+
         facts.DiscountAmount = null;
         facts.Warnings.Add(
             $"Bỏ qua discountAmount={ignoredValue} vì tổng dòng hàng, tạm tính và tổng thanh toán đều bằng " +
