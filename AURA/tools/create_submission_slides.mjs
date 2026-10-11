@@ -96,7 +96,7 @@ function title(slide, number, heading, subheading) {
   return line;
 }
 
-function footer(slide, number, source = "AURA • Track A • 11/10/2026") {
+function footer(slide, number, source = "AURA • Track A • 12/10/2026") {
   text(slide, source, 54, 686, 950, 18, 12, C.muted);
   text(slide, String(number), 1170, 684, 54, 20, 13, C.muted, { align: "right", bold: true });
 }
@@ -220,9 +220,9 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   text(s, "Bằng chứng đã có", 54, 428, 250, 28, 20, C.white, { bold: true });
   const evidence = [
-    ["142/142", "test offline", C.blue],
-    ["5/5", "Verify live", C.green],
-    ["0 / 4", "missed / over", C.violet],
+    ["149/149", "test offline", C.blue],
+    ["1/5 • 429", "gate live 12/10", C.amber],
+    ["0 / 4", "missed / over 07/10", C.violet],
   ];
   evidence.forEach((e, i) => {
     const x = 54 + i * 185;
@@ -241,7 +241,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
   text(s, "Baseline và target chỉ điền sau khi có dữ liệu người dùng thật.", 635, 610, 589, 34, 15, C.amber, { align: "center", bold: true });
   footer(s, 3);
-  s.speakerNotes.textFrame.setText("Nguồn cập nhật 11/10/2026: 142/142 test offline và EF model sạch. Live health/public endpoint, Verify 5/5, workflow/Audit/Undo, desktop/mobile 390x844 và điện thoại thật 4G/5G đều pass. Official holdout giữ raw 10/15 và adjusted 11/15; post-holdout regression trên cùng 15 receipt đạt 11/15, 0 missed escalation, 4 over-escalation, 0 system error. Đây là mẫu nhỏ và không phải accuracy production; ba user session và rehearsal vẫn là gate.");
+  s.speakerNotes.textFrame.setText("Nguồn cập nhật 12/10/2026: 149/149 test offline và EF model sạch. Live health/security/upload-negative/UI pass; gate AI hậu publish gặp OpenRouter HTTP 429 nên không tạo accuracy mới. Official holdout giữ raw 10/15 và adjusted 11/15; post-holdout regression 07/10 giữ 11/15, 0 missed escalation, 4 over-escalation, 0 system error. Demo dùng một operator và có video/evidence dự phòng; ba user session vẫn là gate.");
 }
 
 // Slide 4
@@ -303,7 +303,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 157, 382, 242, C.surface2, "rounded-xl", C.green);
   text(s, "ĐÃ BÀN GIAO", 869, 180, 326, 24, 15, C.green, { bold: true });
-  const todo = ["DB-backed upload queue", "142 test • EF model sạch", "Holdout thật 15 ca đã khóa", "Mobile 4G/5G đã pass"];
+  const todo = ["DB-backed upload queue", "149 test • EF model sạch", "Holdout thật 15 ca đã khóa", "Mobile 4G/5G đã pass"];
   todo.forEach((t, i) => {
     pill(s, `${i + 1}`, 869, 225 + i * 40, 30, C.green);
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });
@@ -316,7 +316,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   text(s, "Verify vẫn đúng 5 ca BTC; runner mở rộng không làm rối dashboard.", 842, 601, 382, 44, 14, C.amber, { align: "center", bold: true });
   footer(s, 5, "AURA • Giới hạn hiện tại, không phải lời hứa marketing");
   s.speakerNotes.textFrame.setText(
-    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ReceiptExtractionContract.cs, PolicyDecisionEngine.cs, VietnamTime.cs, tools/Invoke-ExtendedDatasetEvaluation.ps1, docs/CURRENT_PROJECT_STATUS_2026-10-07.md và docs/REAL_RECEIPT_REGRESSION_RESULT_2026-10-07.md. Fallback vẫn opt-in và mặc định tắt; OpenRouter 8B là baseline demo.",
+    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ReceiptExtractionContract.cs, PolicyDecisionEngine.cs, VietnamTime.cs, tools/Invoke-ExtendedDatasetEvaluation.ps1 và docs/LIVE_POSTPOLICY_VALIDATION_2026-10-12.md. Fallback vẫn opt-in và mặc định tắt. OpenRouter 8B là baseline demo có giám sát; live capacity gate 12/10 gặp HTTP 429 nên chỉ một operator chạy AI trong demo.",
   );
 }
 

@@ -68,17 +68,17 @@ Mở URL được in trong terminal. Không truy cập `/Verify` để tìm tran
 2. Chờ tối đa năm request Qwen chạy tuần tự qua OpenRouter.
 3. Xác nhận đúng 5 dòng, có timestamp và latency.
 4. Kỳ vọng fixture v2: TC-01..03 `AUTO_APPROVE`, TC-04 `ESCALATE_FACT`, TC-05 `ESCALATE_POLICY`.
-5. Nếu `429/5xx`, chờ retry. Nếu vẫn lỗi, kết quả phải là `ESCALATE_SYSTEM_ERROR`, tuyệt đối không PASS giả.
+5. Với `5xx`, chỉ chờ retry giới hạn của adapter. Với `429`, hệ thống không retry: dừng batch và kết quả phải là `ESCALATE_SYSTEM_ERROR`, tuyệt đối không PASS giả.
 
 Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_receipts.py --as-of-date 2026-09-21`. Script đồng thời sinh Test Kit v2 gồm 30 ca nhưng chỉ 5 ca đại diện được Verify gọi. Không đổi `as-of-date`, fixture hoặc expected sau khi chốt mà không cập nhật manifest, tài liệu và commit.
 
 Test Kit v3/v3.1 là regression namespace riêng, không thay Verify/v2. Tái tạo bằng `tools/generate_regression_receipts_v3.py --as-of-date 2026-10-06 --revision 3.0|3.1`; runner phải nhận manifest và images directory tường minh. Raw v3 đã khóa/chạy một lần; chỉ chạy v3.1 sau publish đúng candidate, recycle và health `ok`.
 
-Để bảo toàn credit: build + 122 automated test offline trước, deploy, chạy health/security smoke không ảnh, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota và quyền gửi ảnh.
+Để bảo toàn credit: build + 149 automated test offline trước, deploy, chạy health/security smoke không ảnh, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota và quyền gửi ảnh.
 
 Sau thay đổi contract giảm giá và postfix live fix, làm theo cổng `docs/LIVE_POSTFIX_INCIDENT_2026-10-01.md`. Không reset database và không chạy migration vì facts vẫn nằm trong JSON hiện có; restart queue phải dùng chính DB cũ để chứng minh độ bền.
 
-Sau official holdout 06/10, extraction mới dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Candidate hiện tại còn chuyển timestamp Audit từ UTC sang giờ Việt Nam rõ ràng, không phụ thuộc timezone host. Trước publish phải đạt Release build sạch, 142/142 test và `dotnet ef migrations has-pending-model-changes` trả không có thay đổi. Thứ tự SmartASP an toàn: backup/kiểm 22 biến → recycle ngay trước publish để nhả file lock → Visual Studio Web Deploy Release → chờ `Publish succeeded` → recycle lại → đợi 10–30 giây → `/healthz` phải HTTP 200, `status=ok`, database/storage true và pending migration 0. Sau đó chạy Verify một lượt và đối chiếu giờ Audit với giờ Việt Nam. Không bật migration startup hoặc fallback.
+Sau official holdout 06/10, extraction mới dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Candidate hiện tại còn chuyển timestamp Audit từ UTC sang giờ Việt Nam rõ ràng, không phụ thuộc timezone host. Trước publish phải đạt Release build sạch, 149/149 test và `dotnet ef migrations has-pending-model-changes` trả không có thay đổi. Thứ tự SmartASP an toàn: backup/kiểm 22 biến → recycle ngay trước publish để nhả file lock → Visual Studio Web Deploy Release → chờ `Publish succeeded` → recycle lại → đợi 10–30 giây → `/healthz` phải HTTP 200, `status=ok`, database/storage true và pending migration 0. Sau đó chạy Verify một lượt và đối chiếu giờ Audit với giờ Việt Nam. Không bật migration startup hoặc fallback.
 
 Live gate hậu contract v2 phải dùng request mới, không gọi lại 15 ảnh là “blind”: (1) receipt có giờ `HH:mm:ss` + bia phải `ESCALATE_POLICY`; (2) receipt rõ, dòng tổng in đủ phải giữ `PRINTED_FINAL_TOTAL` và AUTO khi các điều kiện khác đạt; (3) ảnh có giá trị Total bị cắt phải FACT dù subtotal/items cộng được; (4) `04-10-26` phải canonicalize thành 2026-10-04; (5) Winmart có PTT + Mã CQT phải tách receipt/tax-authority; (6) money-role CoopSmile không được dùng cash/change/VAT làm total/discount. Lưu raw status/facts/audit và timestamp. Nếu model/provider chưa tuân schema v2, kết quả phải `ESCALATE_SYSTEM_ERROR`/`ESCALATE_FACT`, không rollback gate để lấy AUTO.
 
@@ -141,6 +141,14 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 4. Refresh trong cùng tab không làm mất theo dõi vì status URL nằm trong `sessionStorage`. Nếu đóng tab, kết quả vẫn nằm trong database và audit.
 5. Audit `AI_QUEUED` chứng minh request đã nhận; audit `AI_PROCESSED_*` ghi provider chính, provider phục vụ, fallback flag, error code và latency AI.
 6. Circuit breaker mặc định mở sau ba lỗi hạ tầng liên tiếp, dùng fallback 60 giây rồi cho provider chính một lượt probe.
+
+### Khi có 2–5 người cùng thao tác
+
+1. Chỉ một người được bấm **Verify Harness**. `WorkflowOperationGate` trả HTTP 409 cho Verify thứ hai trên cùng instance.
+2. Không chạy Verify khi worker còn xử lý upload. Verify gọi Vision trực tiếp, trong khi upload dùng worker; hai đường có thể cùng chạm API key.
+3. Hai đến năm upload hợp lệ có thể được nhận 202 và giữ trong SQL; worker xử lý FIFO một hồ sơ tại một thời điểm. Nói rõ đây là durability/queue evidence, không phải AI concurrency SLA.
+4. Nếu một hồ sơ trả `AI_RATE_LIMIT`, dừng các lượt AI còn lại. Không recycle, retry dồn hoặc bật fallback chưa benchmark để che lỗi.
+5. Trước demo kiểm OpenRouter Activity/Credits/Key limit và chạy đúng một ảnh smoke. Với 429, dùng video/raw evidence và trình bày fail-safe/human review.
 
 Để bật fallback cho demo trên máy cá nhân:
 

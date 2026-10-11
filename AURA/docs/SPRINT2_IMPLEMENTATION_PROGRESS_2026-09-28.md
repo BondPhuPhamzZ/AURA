@@ -61,6 +61,7 @@ Live validation ngày 29/09/2026 đã chốt thêm: OpenRouter đạt 15/15 quy�
 - Thêm `tools/Test-DemoReadiness.ps1`; script đã chạy thành công bằng Windows PowerShell 5.1, xác nhận đúng `AuraDb`, LocalDB, policy, storage, migration, provider và fallback mà không in secret.
 - Hàng đợi quản lý và Lịch sử hành vi hiển thị tên, mã và phòng ban người nộp thay vì nhãn ẩn danh cố định.
 - Forensic hardening ngày 12/10 phân tích bốn over-escalation receipt thật. Exact duplicate identifier và summary pseudo-line được canonicalize bằng điều kiện hẹp; total chỉ được sửa khi dòng final-total, subtotal và đầy đủ line items cùng đối chiếu. API thật xác nhận BH-03/BH-14/BH-15 về AUTO; BH-01 vẫn fail-safe vì model gán sai cash/change/VAT. Batch 15 ca gặp 5 HTTP 429 nên được lưu như evidence chẩn đoán, không thay accuracy lịch sử.
+- Sau publish `2b75f3f`, health/security/upload-negative/UI và 149/149 test tiếp tục pass. Verify gặp 429 ở TC-02; regression tuần tự 60 giây dừng tại BH-10 sau 10/15 do 429. Vì vậy sản phẩm đủ technical demo có giám sát nhưng capacity gate cho nhiều lượt AI liên tiếp/đồng thời chưa pass; raw được giữ tại evidence local, không ghép thành accuracy mới.
 
 ## Cấu hình khuyến nghị
 
