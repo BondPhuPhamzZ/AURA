@@ -20,7 +20,7 @@ Cập nhật: 12/10/2026. Trạng thái lịch sử nằm tại `docs/CURRENT_PR
 - `README.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_AND_INTEGRATION_REPORT.md`.
 - `docs/`: Build Log nguồn, deployment, runbook, test cases, model selection, measurement plan.
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
-- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; số ứng viên hiện hành là 149/149 code test, còn số receipt thật công khai vẫn phải giữ đúng ranh giới regression/holdout. Không biến các số fixture hoặc batch bị HTTP 429 thành production accuracy claim.
+- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; ứng viên capacity-hardening hiện hành đạt 159/159 code test và Release build sạch, còn số receipt thật công khai vẫn phải giữ đúng ranh giới regression/holdout. Không biến các số fixture hoặc batch bị HTTP 429 thành production accuracy claim.
 - `submission/AURA_BUILD_LOG.docx`: một trang.
 - `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.
 - 5 ảnh Verify trong `wwwroot/test_data/images`, manifest Verify và gói 15 ca BGK.
@@ -62,3 +62,4 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 18. Repository công khai chỉ giữ gate kỹ thuật và evidence kiểm chứng; kế hoạch học, pitch, Q&A và chiến lược onsite nằm ngoài Git.
 19. Forensic hardening 12/10 tại `d0440f2`: 149/149 test và Release build sạch. API thật xác nhận BH-03/BH-14/BH-15 hết over; BH-01 còn fail-safe. Batch 15 ca có 5 `AI_RATE_LIMIT`, vì vậy không thay số 11/15 ngày 07/10 và phải chạy live post-publish gate có kiểm soát trước khi freeze.
 20. Live post-policy gate 12/10 tại `2b75f3f`: health/security/upload-negative/UI và offline pass; Verify và regression tuần tự đều ghi nhận HTTP 429. Regression dừng đúng tại BH-10 sau 10/15; không công bố 8/10 như accuracy. Demo dùng một operator, không chạy Verify song song upload và có video/evidence dự phòng.
+21. OpenRouter Upstream Logs xác nhận lỗi 429 đến từ provider Parasail và key vẫn còn budget/credit. Candidate capacity-hardening thêm shared AI gate, provider cooldown, dừng worker drain và sanitized diagnostics; offline đạt 159/159, Release 0 warning/error. Chưa gọi đây là live pass trước khi publish/recycle/smoke; xem `docs/PROVIDER_CAPACITY_HARDENING_2026-10-12.md`.

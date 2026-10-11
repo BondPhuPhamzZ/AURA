@@ -54,6 +54,7 @@ Kỳ vọng candidate hậu holdout: preflight trả `READY: 0 failures`, build 
 3. Trong Hosting Control Panel vừa mở, vào **Websites**. Chọn website `aura`/temporary site rồi bấm **Manage Website**. Ghi lại Temporary URL và đặt website type/version là ASP.NET Core tương thích .NET 8.
 4. Vào **Databases → MSSQL → + Add Database**, chọn SQL Server version còn được gói trial hỗ trợ, đặt tên database và mật khẩu riêng rồi copy connection string. Không chụp/commit mật khẩu.
 5. Kiểm tra hosting plan đã bật ASP.NET Core 8 và application pool 64-bit. Nếu runtime không có, mở ticket support trước khi deploy.
+6. Trong Pool Manager, đặt **Maximum Worker Processes = 1** cho baseline demo. Limiter/cooldown hiện nằm trong memory từng process.
 
 ## 3. Cấu hình biến môi trường
 
@@ -66,6 +67,9 @@ ASPNETCORE_ENVIRONMENT=Production
 Vision__Provider=OpenRouter
 Vision__FallbackEnabled=false
 Vision__FallbackProvider=Ollama
+Vision__MaxConcurrentRequests=1
+Vision__ProviderCooldownSeconds=120
+Verify__Enabled=true
 OpenRouter__ApiKey=<OPENROUTER_KEY_MỚI>
 OpenRouter__Model=qwen/qwen3-vl-8b-instruct
 ConnectionStrings__DefaultConnection=<SQL_SERVER_CONNECTION_STRING>
@@ -109,7 +113,7 @@ Thực hiện theo thứ tự để không tốn quota vô ích:
 | `AI_NOT_CONFIGURED`/401 | `OpenRouter__ApiKey` ở đúng app pool, recycle sau khi sửa |
 | `POLICY_NOT_FOUND` hoặc `policyAvailable: false` | Publish lại bản mới có `BUSINESS_RULES.md` cạnh `AURA.dll`; không chỉ upload riêng DLL |
 | 404 ảnh sau recycle | quyền ghi `App_Data/receipts` và publish không xóa folder |
-| 429/hết credit | dừng Verify, kiểm OpenRouter Activity/Credits; không tạo key mới để né limit |
+| 429/provider capacity | mở OpenRouter **Upstream Requests**, ghi provider/status/request ID; chờ cooldown; không tạo key mới để né limit |
 | App chạy nhưng redirect HTTPS lỗi | giữ URL HTTPS do host cấp và kiểm proxy/header; không hard-code domain |
 
 Chỉ bật stdout startup log khi cần chẩn đoán, tải log về rồi tắt lại để tránh đầy storage hoặc lộ cấu hình.

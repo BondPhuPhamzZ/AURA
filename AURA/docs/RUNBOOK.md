@@ -129,7 +129,7 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 1. Mở **OpenRouter → Activity/Logs** và đối chiếu HTTP status, model, provider, token và chi phí.
 2. Với `401/403`, xác nhận secret thuộc đúng tài khoản đã nạp credit và key chưa bị thu hồi/giới hạn bởi guardrail.
 3. Với `402`, kiểm tra số dư và giới hạn chi tiêu riêng của API key. `Key limit` là trần chi tiêu, không phải số dư.
-4. Với `429`, dừng vài phút rồi thử đúng **một ảnh**; không bấm Verify liên tục.
+4. Với `429`, ghi provider/request ID/`Retry-After` từ server log, chờ hết cooldown rồi thử đúng **một ảnh**; không bấm Verify liên tục. Candidate 12/10 mặc định khóa upstream provider 120 giây nếu response không có `Retry-After`.
 5. Với `5xx/timeout`, kiểm tra trang trạng thái OpenRouter/provider. Hệ thống phải giữ `ESCALATE_SYSTEM_ERROR`, không dùng kết quả giả hoặc cache cũ như một lần gọi AI mới.
 6. Chỉ đổi model sau khi chạy lại ma trận 5 ca và xác nhận input ảnh, JSON Schema, latency và câu hỏi chuyển tiếp.
 
@@ -141,14 +141,17 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 4. Refresh trong cùng tab không làm mất theo dõi vì status URL nằm trong `sessionStorage`. Nếu đóng tab, kết quả vẫn nằm trong database và audit.
 5. Audit `AI_QUEUED` chứng minh request đã nhận; audit `AI_PROCESSED_*` ghi provider chính, provider phục vụ, fallback flag, error code và latency AI.
 6. Circuit breaker mặc định mở sau ba lỗi hạ tầng liên tiếp, dùng fallback 60 giây rồi cho provider chính một lượt probe.
+7. `VisionInvocationCoordinator` dùng chung cho Verify và worker, mặc định `Vision:MaxConcurrentRequests=1`. Khi 429, worker dừng drain queue; các job chưa claim vẫn nằm trong SQL.
 
 ### Khi có 2–5 người cùng thao tác
 
 1. Chỉ một người được bấm **Verify Harness**. `WorkflowOperationGate` trả HTTP 409 cho Verify thứ hai trên cùng instance.
-2. Không chạy Verify khi worker còn xử lý upload. Verify gọi Vision trực tiếp, trong khi upload dùng worker; hai đường có thể cùng chạm API key.
+2. Candidate từ 12/10 dùng chung AI capacity gate cho Verify và worker nên không còn gọi provider song song trong cùng process. Vẫn không chạy Verify khi đo upload vì Verify giữ gate lâu và làm tăng latency FIFO.
 3. Hai đến năm upload hợp lệ có thể được nhận 202 và giữ trong SQL; worker xử lý FIFO một hồ sơ tại một thời điểm. Nói rõ đây là durability/queue evidence, không phải AI concurrency SLA.
 4. Nếu một hồ sơ trả `AI_RATE_LIMIT`, dừng các lượt AI còn lại. Không recycle, retry dồn hoặc bật fallback chưa benchmark để che lỗi.
 5. Trước demo kiểm OpenRouter Activity/Credits/Key limit và chạy đúng một ảnh smoke. Với 429, dùng video/raw evidence và trình bày fail-safe/human review.
+6. App pool demo phải đặt **Maximum Worker Processes = 1**; gate hiện tại không phân tán giữa nhiều IIS process.
+7. Đặt `Verify:Enabled=false` khi public URL không cần self-service harness; chỉ bật lại trong phiên test/demo có giám sát rồi recycle pool.
 
 Để bật fallback cho demo trên máy cá nhân:
 

@@ -109,7 +109,7 @@ Cách này vừa giữ bằng chứng để truy vết/hoàn tác, vừa tránh 
 - Đánh giá mở rộng 15/30 ca chạy bằng PowerShell runner ngoài UI. Mỗi ca vẫn đi qua upload endpoint, queue, vision, policy và audit; dashboard không có thêm nút batch.
 - Chuyển tiếp, quyết định quản lý và hoàn tác dùng `fetch` để nhận lỗi có cấu trúc, sau đó điều hướng toàn trang tới tab đích khi thành công. Mọi bảng vì vậy được dựng lại từ trạng thái database đã commit.
 - Polling chỉ theo dõi hồ sơ upload của tab hiện tại. Chưa có SignalR để đẩy thay đổi cross-tab cho bảng quản lý/audit.
-- Upload, chuyển tiếp và quyết định không dùng global gate. `WorkflowOperationGate` chỉ ngăn hai Verify batch chạy chồng; `RowVersion` phát hiện hai thao tác cùng sửa một hồ sơ.
+- Upload, chuyển tiếp và quyết định không dùng global workflow gate. `WorkflowOperationGate` chỉ ngăn hai Verify batch chạy chồng; `VisionInvocationCoordinator` giới hạn riêng lời gọi AI dùng chung giữa Verify và worker; `RowVersion` phát hiện hai thao tác cùng sửa một hồ sơ.
 - `GET /Applicant/Receipt/{id}` tải ảnh theo ID, không nhận đường dẫn từ client và đặt `NoStore`.
 
 ## 8. Nhánh lỗi và nguyên tắc fail-safe
@@ -118,7 +118,7 @@ Cách này vừa giữ bằng chứng để truy vết/hoàn tác, vừa tránh 
 |---|---|
 | Ảnh sai loại/quá 5 MB | Chặn trước AI, báo lỗi rõ |
 | API key/model sai | `ESCALATE_SYSTEM_ERROR`, kiểm thủ công |
-| HTTP 429/hết credit | Không retry, dừng harness còn lại |
+| HTTP 429/provider capacity | Không retry request tính phí; đặt cooldown provider, dừng harness/worker drain và giữ hồ sơ fail-safe |
 | HTTP 5xx | Retry tối đa một lần; vẫn lỗi thì chuyển thủ công |
 | JSON/schema không hợp lệ | Parser cố chuẩn hóa giới hạn; thất bại thì chuyển thủ công |
 | JSON đúng schema nhưng tự mâu thuẫn | Đọc lại đúng một lần; vẫn sai thì `ESCALATE_FACT`, không tự sửa theo claim |
@@ -128,7 +128,7 @@ Cách này vừa giữ bằng chứng để truy vết/hoàn tác, vừa tránh 
 | Provider chính lỗi semantic/schema/request | Không fallback; fail-safe để tránh che lỗi dữ liệu/contract |
 | App restart khi job đang chạy | Lease hết hạn rồi worker reclaim; UI có thể tiếp tục poll bằng status URL |
 
-AURA có circuit breaker trong bộ nhớ theo instance. Sau ngưỡng lỗi hạ tầng liên tiếp, request mới dùng fallback trong thời gian cooldown; hết cooldown, provider chính được probe lại. Hệ thống không fallback cho mọi lỗi. Riêng lỗi truy cập SQL của worker dùng exponential backoff có trần 60 giây để tránh bão log; đây là cơ chế phục hồi hàng đợi, không phải retry Vision AI.
+AURA có circuit breaker và capacity coordinator trong bộ nhớ theo instance. Verify/worker chia sẻ một AI permit; HTTP 429 khóa provider theo `Retry-After` hoặc 120 giây và worker không claim tiếp queue trong thời gian đó. Sau ngưỡng lỗi hạ tầng liên tiếp, request mới dùng fallback trong thời gian circuit mở nếu fallback đã được chứng nhận và bật; hết cooldown, provider chính được probe lại. Hệ thống không fallback cho mọi lỗi. Riêng lỗi truy cập SQL của worker dùng exponential backoff có trần 60 giây để tránh bão log; đây là cơ chế phục hồi hàng đợi, không phải retry Vision AI.
 
 ## 9. Dữ liệu thật và dữ liệu mô phỏng
 
@@ -142,6 +142,7 @@ AURA có circuit breaker trong bộ nhớ theo instance. Sau ngưỡng lỗi h�
 - Post-holdout regression trên cùng 15 receipt thật đạt 11/15 exact theo adjudicated ground truth, 0 missed escalation, 4 over-escalation và 0 system error. BH-07 total rách nay FACT và BH-06 bia đi đúng POLICY; BH-03/BH-14 mới fail-safe, BH-01/BH-15 còn over. Official raw 10/15 giữ bất biến; kết quả chứng minh safety tốt hơn nhưng automation rate thấp hơn, không phải production accuracy.
 - Forensic hardening ngày 12/10 xử lý hẹp exact duplicate identifier và summary pseudo-line, không nới guard thiếu evidence. API regression ứng viên trên OpenRouter 8B xác nhận BH-03/BH-14/BH-15 về `AUTO_APPROVE`; BH-01 vẫn `ESCALATE_FACT` vì model tiếp tục gán tiền mặt/tiền thối/VAT sai vai trò. Batch 15 ca bị 5 HTTP 429 nên chỉ là evidence chẩn đoán, không thay số 11/15 ngày 07/10 và không được dùng làm accuracy claim trước live post-publish gate.
 - Live post-publish gate ngày 12/10 tại `2b75f3f` pass health/security/upload-negative/UI và 149/149 offline test. Verify gặp HTTP 429 ở TC-02; regression 15 receipt chạy tuần tự cách 60 giây vẫn dừng ở BH-10 sau 10 ca vì `AI_RATE_LIMIT`. Phần đã chạy có 0 missed, 1 over BH-01 và 1 system error nhưng không phải accuracy result. Demo được giới hạn một operator; DB queue có thể nhận 2–5 upload nhưng chưa tuyên bố AI concurrency/SLA.
+- Capacity hardening ứng viên 12/10 xác minh OpenRouter route tới Parasail và key chưa chạm budget; 429 là upstream capacity/rate window. Shared AI gate, cooldown, worker drain stop và provider metadata đã đạt 159/159 offline test, Release build sạch. Đây chưa phải live evidence trước publish; gate/cooldown vẫn theo process nên baseline IIS phải một worker.
 - Mô phỏng: 30 ảnh tổng hợp sinh offline; 5 ảnh Verify và manifest 15 ca BGK được tuyển từ ngân hàng này.
 - Ground truth tổng hợp được sinh tất định bằng Python/Pillow và khóa trong manifest. Ảnh generative AI không được dùng làm nhãn chuẩn; hóa đơn thật đã ẩn danh chỉ nằm trong holdout cục bộ ngoài Git.
 - Không dùng hóa đơn cá nhân thật trong Git. Ảnh thật tùy chọn chỉ đặt tại `test_kit/local_real` và bị `.gitignore` loại trừ.
