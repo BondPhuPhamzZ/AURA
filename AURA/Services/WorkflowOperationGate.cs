@@ -1,9 +1,10 @@
 namespace AURA.Services;
 
 /// <summary>
-/// Prevents overlapping workflow mutations inside one application instance.
-/// Optimistic database concurrency remains the final guard when multiple
-/// application processes use the same database.
+/// Prevents two Verify Harness batches from running at the same time inside one
+/// application instance. Upload, forwarding and manager decisions do not use
+/// this gate; those paths rely on the durable SQL queue and optimistic database
+/// concurrency instead.
 /// </summary>
 public sealed class WorkflowOperationGate
 {

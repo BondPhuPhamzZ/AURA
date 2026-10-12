@@ -2,11 +2,11 @@
 
 ## Kết luận điều hành
 
-AURA đang ở trạng thái **supervised demo candidate**, chưa phải production/accuracy-ready. Runtime/policy baseline là `c147e1915ae7e6deab26a5eea1b4402c4e6cdd46`; checkpoint hiện hành chỉ đồng bộ default Ollama và tài liệu, không đổi pipeline/policy/schema. Production health sau publish/recycle đã trả `ok`, database/storage/migration đều đạt và capacity guard hiển thị concurrency 1, cooldown 120 giây, fallback tắt.
+AURA đang ở trạng thái **supervised demo candidate**, chưa phải production/accuracy-ready. Workspace audit hiện hành ở source HEAD `9e6fe78`; capacity logic nằm trong checkpoint `f6d6d4b`, còn các commit sau đồng bộ runner, evidence, tài liệu và default Ollama mà không đổi policy/schema. Production health sau publish/recycle đã trả `ok`, database/storage/migration đều đạt và capacity guard hiển thị concurrency 1, cooldown 120 giây, fallback tắt.
 
 Hai rủi ro còn mở không phải lỗi policy C#:
 
-1. OpenRouter/Qwen3-VL-8B đôi lúc nhận HTTP 429 từ upstream Parasail dù tài khoản còn credit. Benchmark 5 client ngày 12/10 chặn đúng 4 lượt Verify phụ ở cả 2/2 lần, nhưng batch chính lần lượt chỉ đạt 4/5 và 2/5; live provider chưa đạt reliability gate cho 5 ca dưới 90 giây.
+1. OpenRouter/Qwen3-VL-8B đôi lúc nhận HTTP 429 từ upstream Parasail dù tài khoản còn credit. Endpoint catalog thời điểm audit chỉ liệt kê Parasail cho model này, nên không có provider thứ hai cùng model để failover. Benchmark 5 client ngày 12/10 chặn đúng 4 lượt Verify phụ ở cả 2/2 lần, nhưng batch chính lần lượt chỉ đạt 4/5 và 2/5; live provider chưa đạt reliability gate cho 5 ca dưới 90 giây.
 2. Ollama 4B 16K đạt safety regression synthetic nhưng chậm trên máy hiện tại; hosted AURA chưa có endpoint Ollama riêng được bảo vệ để bật fallback thật.
 
 ## Evidence hiện hành
@@ -25,6 +25,8 @@ Hai rủi ro còn mở không phải lỗi policy C#:
 | Manual mobile 4G/5G | health, Verify, workflow, Audit, refresh và receipt persistence pass |
 
 Evidence Ollama nằm ngoài Git tại `demo_evidence/27_local_ollama_4b_postpolicy_2026-10-12` (synthetic) và `demo_evidence/28_local_ollama_4b_real_regression_2026-10-12` (15 receipt regression); tài liệu công khai synthetic là `OLLAMA_4B_16K_RECOVERY_BENCHMARK_2026-10-12.md`.
+
+Đối chiếu đầy đủ feedback Sprint 1, ý nghĩa hai semaphore, audit folder/file và phần còn mở nằm tại `PROJECT_AUDIT_AND_FEEDBACK_CLOSURE_2026-10-12.md`.
 
 ## Quyết định cấu hình
 
