@@ -70,6 +70,14 @@ AURA xử lý 429 theo hướng giới hạn thiệt hại:
 
 Không thể cam kết “không bao giờ có 429” với dịch vụ upstream bên ngoài. Mục tiêu đúng là không tạo quyết định giả, không gây bão retry, giữ hồ sơ/audit và chuyển sang đường dự phòng đã kiểm chứng.
 
+## Benchmark Verify 5 người và ngưỡng 90 giây
+
+Ngày 12/10, một capacity probe OpenRouter pass trong 26.817 ms. Sau đó hai lượt mô phỏng 5 client đồng thời đều đạt đúng 1 batch chạy + 4 HTTP 409, chứng minh gate chống double-click hoạt động trên live instance. Tuy nhiên batch chính gặp 429 ở TC-05 rồi TC-03; không lượt nào hoàn tất đủ 5 inference. Thời gian HTTP 84.545 ms và 46.584 ms là thời gian batch kết thúc có system error, không phải bằng chứng 5/5 dưới 90 giây.
+
+Không giảm delay để đổi lấy số latency đẹp khi reliability đang fail. `Verify:InterCaseDelayMs` có miền hợp lệ 0–30.000 ms; tăng quá lớn có thể làm app fail validation hoặc chắc chắn phá SLA, còn giảm về 0 làm request burst hơn. Chỉ tuning sau khi có provider/GPU đủ capacity và phải chạy lại accuracy + reliability gate.
+
+Chi tiết và runner tái lập: `OPENROUTER_VERIFY_CONCURRENCY_BENCHMARK_2026-10-12.md` và `tools/Invoke-ConcurrentVerifySmoke.ps1`.
+
 ## Hướng mở rộng sau cuộc thi
 
 1. Đưa Ollama/GPU thành service riêng có TLS, authentication, health probe, rate limit và capacity SLO.
