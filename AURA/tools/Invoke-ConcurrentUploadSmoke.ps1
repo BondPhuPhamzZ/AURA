@@ -81,6 +81,23 @@ $jobs = 1..$Copies | ForEach-Object {
                 Provider = $status.servedProvider
                 FallbackUsed = $status.fallbackUsed
                 ErrorCode = $status.providerErrorCode
+                ClientError = $null
+            }
+        }
+        catch {
+            $message = $_.Exception.Message
+            if ($message.Length -gt 500) { $message = $message.Substring(0, 500) }
+            [pscustomobject]@{
+                Sequence = $Sequence
+                CaseId = $null
+                HttpAcceptedMs = $null
+                EndToEndMs = $clock.ElapsedMilliseconds
+                ProcessingState = 'CLIENT_ERROR'
+                Actual = $null
+                Provider = $null
+                FallbackUsed = $false
+                ErrorCode = 'CLIENT_ERROR'
+                ClientError = $message
             }
         }
         finally {
@@ -93,11 +110,23 @@ $jobs = 1..$Copies | ForEach-Object {
 try {
     $results = @($jobs | Wait-Job | Receive-Job | Sort-Object Sequence)
     $results | Format-Table -AutoSize
-    $acceptedP95 = ($results.HttpAcceptedMs | Sort-Object)[[Math]::Ceiling($results.Count * 0.95) - 1]
-    $endToEndP95 = ($results.EndToEndMs | Sort-Object)[[Math]::Ceiling($results.Count * 0.95) - 1]
-    "Accepted P95: $acceptedP95 ms"
-    "End-to-end P95: $endToEndP95 ms"
+    $acceptedSamples = @($results | Where-Object { $null -ne $_.HttpAcceptedMs } |
+        ForEach-Object { [long]$_.HttpAcceptedMs } | Sort-Object)
+    $endToEndSamples = @($results | Where-Object {
+            $_.ProcessingState -ne 'CLIENT_ERROR' -and $null -ne $_.EndToEndMs
+        } |
+        ForEach-Object { [long]$_.EndToEndMs } | Sort-Object)
+    $acceptedP95 = if ($acceptedSamples.Count -gt 0) {
+        $acceptedSamples[[Math]::Ceiling($acceptedSamples.Count * 0.95) - 1]
+    } else { $null }
+    $endToEndP95 = if ($endToEndSamples.Count -gt 0) {
+        $endToEndSamples[[Math]::Ceiling($endToEndSamples.Count * 0.95) - 1]
+    } else { $null }
+    "Accepted P95: $(if ($null -eq $acceptedP95) { 'n/a' } else { "$acceptedP95 ms" })"
+    "End-to-end P95: $(if ($null -eq $endToEndP95) { 'n/a' } else { "$endToEndP95 ms" })"
     "Completed: $(@($results | Where-Object ProcessingState -eq 'COMPLETED').Count)/$($results.Count)"
+    "Client errors: $(@($results | Where-Object ProcessingState -eq 'CLIENT_ERROR').Count)/$($results.Count)"
+    if (@($results | Where-Object ProcessingState -eq 'CLIENT_ERROR').Count -gt 0) { exit 1 }
 }
 finally {
     $jobs | Remove-Job -Force -ErrorAction SilentlyContinue
