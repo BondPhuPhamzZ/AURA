@@ -42,6 +42,8 @@ builder.Services.AddOptions<OpenRouterOptions>()
         "OpenRouter:ChatCompletionsPath phải là đường dẫn tương đối, ví dụ chat/completions.")
     .Validate(options => options.Model.StartsWith("qwen/", StringComparison.OrdinalIgnoreCase),
         "OpenRouter:Model phải là model Qwen trên OpenRouter.")
+    .Validate(options => OpenRouterOptions.IsSupportedReasoningEffort(options.ReasoningEffort),
+        "OpenRouter:ReasoningEffort phải để trống hoặc là none, minimal, low, medium, high, xhigh, max.")
     .ValidateOnStart();
 builder.Services.AddOptions<OllamaOptions>()
     .Bind(builder.Configuration.GetSection(OllamaOptions.SectionName))
@@ -183,6 +185,7 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
         storageAvailable,
         provider = useOllama ? VisionOptions.OllamaProvider : VisionOptions.OpenRouterProvider,
         model = useOllama ? ollama.Model : openRouter.Model,
+        reasoningEffort = useOllama ? null : openRouter.ReasoningEffort,
         processingMode = "durable-background-queue",
         maxConcurrentAiRequests = vision.MaxConcurrentRequests,
         providerCooldownSeconds = vision.ProviderCooldownSeconds,

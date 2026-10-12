@@ -14,6 +14,25 @@ namespace AURA.Tests;
 public sealed class OpenRouterVisionExtractorServiceTests
 {
     [Fact]
+    public void Defaults_to_benchmarked_flash_model_with_reasoning_disabled()
+    {
+        var options = new OpenRouterOptions();
+
+        Assert.Equal("qwen/qwen3.8-flash", options.Model);
+        Assert.Equal("none", options.ReasoningEffort);
+    }
+
+    [Fact]
+    public void Accepts_only_documented_reasoning_effort_values()
+    {
+        var supported = new string?[] { null, "", "none", "minimal", "low", "medium", "high", "xhigh", "max", " NONE " };
+
+        Assert.All(supported, value => Assert.True(OpenRouterOptions.IsSupportedReasoningEffort(value)));
+        Assert.False(OpenRouterOptions.IsSupportedReasoningEffort("off"));
+        Assert.False(OpenRouterOptions.IsSupportedReasoningEffort("auto"));
+    }
+
+    [Fact]
     public async Task Preserves_sanitized_429_diagnostics_and_requests_routing_metadata()
     {
         var root = CreateFixtureRoot();
@@ -84,6 +103,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
                 PolicyPath = "BUSINESS_RULES.md",
                 TimeoutSeconds = 90,
                 MaxOutputTokens = 4096,
+                ReasoningEffort = "none",
                 HttpReferer = "https://github.com/BondPhuPhamzZ/AURA",
                 AppTitle = "AURA - The Escalation Referee"
             });
@@ -109,6 +129,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
                 rootElement.GetProperty("messages")[0].GetProperty("content").GetString(),
                 StringComparison.Ordinal);
             Assert.Equal(4096, rootElement.GetProperty("max_tokens").GetInt32());
+            Assert.Equal("none", rootElement.GetProperty("reasoning").GetProperty("effort").GetString());
             Assert.Equal("response-healing",
                 rootElement.GetProperty("plugins")[0].GetProperty("id").GetString());
             var responseFormat = rootElement.GetProperty("response_format");

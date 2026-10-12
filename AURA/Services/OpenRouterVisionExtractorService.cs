@@ -67,41 +67,51 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
     }
 
     private object BuildPayload(ReceiptExtractionContract.Input input, object responseSchema,
-        string? repairInstruction) => new
+        string? repairInstruction)
     {
-        model = _options.Model,
-        messages = new object[]
+        var payload = new Dictionary<string, object?>
         {
-            new { role = "system", content = input.SystemPrompt },
-            new
+            ["model"] = _options.Model,
+            ["messages"] = new object[]
             {
-                role = "user",
-                content = new object[]
+                new { role = "system", content = input.SystemPrompt },
+                new
                 {
-                    new
+                    role = "user",
+                    content = new object[]
                     {
-                        type = "text",
-                        text = repairInstruction ??
-                            "Trích xuất dữ kiện từ ảnh chứng từ này và chỉ trả về JSON đúng schema."
-                    },
-                    new { type = "image_url", image_url = new { url = $"data:{input.MimeType};base64,{input.Base64Image}" } }
+                        new
+                        {
+                            type = "text",
+                            text = repairInstruction ??
+                                "Trích xuất dữ kiện từ ảnh chứng từ này và chỉ trả về JSON đúng schema."
+                        },
+                        new { type = "image_url", image_url = new { url = $"data:{input.MimeType};base64,{input.Base64Image}" } }
+                    }
+                }
+            },
+            ["temperature"] = 0,
+            ["max_tokens"] = _options.MaxOutputTokens,
+            ["plugins"] = new[] { new { id = "response-healing" } },
+            ["response_format"] = new
+            {
+                type = "json_schema",
+                json_schema = new
+                {
+                    name = "aura_receipt_extraction",
+                    strict = true,
+                    schema = responseSchema
                 }
             }
-        },
-        temperature = 0,
-        max_tokens = _options.MaxOutputTokens,
-        plugins = new[] { new { id = "response-healing" } },
-        response_format = new
+        };
+
+        if (!string.IsNullOrWhiteSpace(_options.ReasoningEffort))
         {
-            type = "json_schema",
-            json_schema = new
-            {
-                name = "aura_receipt_extraction",
-                strict = true,
-                schema = responseSchema
-            }
+            payload["reasoning"] = new { effort = _options.ReasoningEffort.Trim().ToLowerInvariant() };
         }
-    };
+
+        return payload;
+    }
 
     private async Task<ReceiptExtractionDto> RequestFactsWithMalformedRetryAsync(object payload,
         CancellationToken cancellationToken)
