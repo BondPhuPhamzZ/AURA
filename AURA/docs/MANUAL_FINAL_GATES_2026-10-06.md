@@ -1,12 +1,13 @@
 # AURA Manual Final Gates
 
-Cập nhật: 06/10/2026. Technical baseline `1f4b3c9` đã đạt. Tài liệu này chỉ liệt kê phần cần người thật hoặc thiết bị thật trước khi public live URL trong README.
+Cập nhật: 12/10/2026. Candidate Qwen3.8 Flash đã đạt live health và Verify 5/5 trong 65,004 giây sau publish. Tài liệu này chỉ liệt kê phần cần người thật hoặc thiết bị thật trước khi public live URL trong README.
 
 ## Trạng thái thực hiện ngày 06/10
 
 - Điện thoại thật 4G/5G: PASS health, Verify 3 AUTO + 2 escalation, workflow, Audit, refresh và mở lại ảnh. Feedback P1 là hai nút quản lý lệch cột; candidate đã sửa và kiểm local 390x844, chờ republish/phone regression.
 - Local Ollama 4B: pipeline hoạt động nhưng judge post-policy chỉ 13/15, missed TK-12 và over TK-02; không đủ cơ sở bật fallback mặc định.
-- Còn mở: ba user session do BTC/Kelly hỗ trợ và ba rehearsal trên commit freeze.
+- Live Verify candidate: PASS 5/5, 0 system/provider error; năm client đồng thời tạo đúng 1 HTTP 200 + 4 HTTP 409.
+- Còn mở: ba user session do BTC/Kelly hỗ trợ và rehearsal trên commit freeze. Một rehearsal sạch là cổng tối thiểu để quay/public URL; ba lượt vẫn là mức evidence mục tiêu.
 
 ## 1 Điện thoại thật qua 4G hoặc 5G
 
@@ -46,7 +47,7 @@ Mục tiêu an toàn là 8 phút, để lại khoảng 1 đến 2 phút cho chuy
 
 ## 4 Quyết định public URL
 
-Sau khi mục 1 PASS và có ít nhất một rehearsal sạch, có thể đưa URL vào README với nhãn `Supervised MVP demo`. Ba user session vẫn cần hoàn tất để có development story cho pitch. Không mô tả URL là production service hoặc unattended pilot.
+Mục 1 và live technical gate đã PASS. Sau khi có ít nhất một rehearsal sạch trên commit freeze, có thể quay video và đưa URL vào README với nhãn `Supervised MVP demo`. Ba user session vẫn cần hoàn tất để có development story cho pitch. Không mô tả URL là production service hoặc unattended pilot.
 
 Official holdout 15 ảnh không chạy lại trong các gate này. Nếu upload lại, phải ghi là post-holdout regression, xin quyền chuyển dữ liệu mới và giữ nguyên raw score 10/15.
 

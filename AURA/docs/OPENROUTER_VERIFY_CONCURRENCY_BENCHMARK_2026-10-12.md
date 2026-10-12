@@ -1,10 +1,14 @@
 # OpenRouter Verify latency and concurrency benchmark — 12/10/2026
 
-> **Addendum:** Báo cáo này là evidence lịch sử của `qwen/qwen3-vl-8b-instruct`/Parasail. Candidate mới `qwen/qwen3.8-flash`/Alibaba, reasoning `none`, đã hoàn tất năm upload đồng thời 5/5 với E2E P95 41,079 giây và không có 429 trong batch 15 receipt. Hai phép đo khác luồng (Verify gate so với durable upload queue), nên không ghi đè raw ở đây; xem `QWEN38_FLASH_BENCHMARK_2026-10-12.md`.
+> **Addendum hiện hành:** Phần kết luận bên dưới là evidence lịch sử của `qwen/qwen3-vl-8b-instruct`/Parasail. Candidate `qwen/qwen3.8-flash`/Alibaba, reasoning `none`, đã đóng live Verify sau publish: **5/5**, 0 system/provider error, E2E **65,004 giây**, đúng 1 HTTP 200 + 4 HTTP 409 khi năm client cùng bấm. Raw cũ không bị ghi đè; xem `QWEN38_FLASH_LIVE_VERIFY_2026-10-12.md` và `QWEN38_FLASH_BENCHMARK_2026-10-12.md`.
+
+## Trạng thái live hiện hành
+
+Candidate mới đã giải quyết blocker quan sát được trong hai lượt Parasail cũ tại thời điểm đo. Có thể dùng Verify trong live demo có giám sát với một operator. Vẫn giữ video/evidence dự phòng và không gọi một lượt pass là SLA production. `WorkflowOperationGate` chỉ là khóa theo process, vì vậy IIS baseline tiếp tục dùng một worker.
 
 ## Kết luận
 
-Live AURA **đã bảo vệ đúng khi 5 người cùng bấm Verify**, nhưng OpenRouter hiện **chưa đạt reliability gate cho demo 5 ca**:
+Tại thời điểm đo model 8B cũ, live AURA **đã bảo vệ đúng khi 5 người cùng bấm Verify**, nhưng route Parasail **chưa đạt reliability gate cho demo 5 ca**:
 
 - cả 2/2 lượt concurrent đều chỉ cho đúng 1 batch chạy và trả HTTP 409 cho 4 lượt còn lại;
 - capacity probe một ảnh trước batch hoàn tất bằng OpenRouter trong 26.817 ms;

@@ -102,7 +102,7 @@ Thực hiện theo thứ tự để không tốn quota vô ích:
 3. Mở tab quản lý và lịch sử để xác nhận SQL Server/migration hoạt động.
 4. Upload một ảnh smoke tổng hợp; xác nhận HTTP `202`, audit `AI_QUEUED`, rồi trạng thái `COMPLETED/FAILED`. Refresh giữa lúc xử lý không được làm mất job.
 5. Mở lại ảnh từ lịch sử, recycle app pool rồi mở lại lần nữa để xác minh file tồn tại.
-6. Chỉ khi 5 bước trên đạt, chạy đúng một lượt Verify Harness nếu rehearsal thật sự cần và ghi thời điểm, 5 expected/actual, tổng latency và OpenRouter cost. Candidate Qwen3.8 Flash đã có regression 15 receipt và concurrency 5/5; không chạy lại gói 15/30 trong deployment smoke để săn PASS.
+6. Chỉ khi 5 bước trên đạt, chạy đúng một lượt Verify Harness nếu rehearsal thật sự cần và ghi thời điểm, 5 expected/actual, tổng latency và OpenRouter cost. Lượt live candidate 12/10 đã đạt 5/5 trong 65,004 giây, 0 system/provider error và gate 1 HTTP 200 + 4 HTTP 409 khi năm client cùng bấm. Không chạy lại Verify hoặc gói 15/30 để săn PASS.
 7. Đổi migration flag về `false`, recycle pool và kiểm `/healthz` lần cuối.
 
 ## 6. Xử lý lỗi thường gặp

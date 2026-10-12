@@ -77,13 +77,15 @@ Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_rec
 
 Test Kit v3/v3.1 là regression namespace riêng, không thay Verify/v2. Tái tạo bằng `tools/generate_regression_receipts_v3.py --as-of-date 2026-10-06 --revision 3.0|3.1`; runner phải nhận manifest và images directory tường minh. Raw v3 đã khóa/chạy một lần; chỉ chạy v3.1 sau publish đúng candidate, recycle và health `ok`.
 
-Để bảo toàn credit: build + 149 automated test offline trước, deploy, chạy health/security smoke không ảnh, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota và quyền gửi ảnh.
+Để bảo toàn credit: build + 161 automated test offline trước, deploy, chạy health/security smoke không ảnh, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota và quyền gửi ảnh.
 
 Sau thay đổi contract giảm giá và postfix live fix, làm theo cổng `docs/LIVE_POSTFIX_INCIDENT_2026-10-01.md`. Không reset database và không chạy migration vì facts vẫn nằm trong JSON hiện có; restart queue phải dùng chính DB cũ để chứng minh độ bền.
 
 Sau official holdout 06/10, extraction mới dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Candidate hiện tại còn chuyển timestamp Audit từ UTC sang giờ Việt Nam rõ ràng, không phụ thuộc timezone host. Trước publish phải đạt Release build sạch, 161/161 test và `dotnet ef migrations has-pending-model-changes` trả không có thay đổi. Thứ tự SmartASP an toàn: backup/kiểm biến môi trường, bổ sung `OpenRouter__Model=qwen/qwen3.8-flash` và `OpenRouter__ReasoningEffort=none` → recycle ngay trước publish để nhả file lock → Visual Studio Web Deploy Release → chờ `Publish succeeded` → recycle lại → đợi 10–30 giây → `/healthz` phải HTTP 200, `status=ok`, database/storage true, pending migration 0, model/reasoning đúng. Sau đó chạy đúng một synthetic smoke trước khi Verify; không bật migration startup hoặc fallback.
 
 Live gate hậu contract v2 phải dùng request mới, không gọi lại 15 ảnh là “blind”: (1) receipt có giờ `HH:mm:ss` + bia phải `ESCALATE_POLICY`; (2) receipt rõ, dòng tổng in đủ phải giữ `PRINTED_FINAL_TOTAL` và AUTO khi các điều kiện khác đạt; (3) ảnh có giá trị Total bị cắt phải FACT dù subtotal/items cộng được; (4) `04-10-26` phải canonicalize thành 2026-10-04; (5) Winmart có PTT + Mã CQT phải tách receipt/tax-authority; (6) money-role CoopSmile không được dùng cash/change/VAT làm total/discount. Lưu raw status/facts/audit và timestamp. Nếu model/provider chưa tuân schema v2, kết quả phải `ESCALATE_SYSTEM_ERROR`/`ESCALATE_FACT`, không rollback gate để lấy AUTO.
+
+Live gate candidate 12/10 đã đạt: health đúng Qwen3.8 Flash/reasoning none, Verify 5/5 trong 65,004 giây, 0 system/provider error; năm client cùng bấm chỉ tạo 1 HTTP 200 + 4 HTTP 409. Không chạy lại Verify để săn số đẹp. Trước video chỉ rehearsal luồng trình bày trên commit freeze; nếu cần inference thật, dùng đúng một operator và không chạy upload song song Verify.
 
 Delay giữa các ca Verify được cấu hình bằng `Verify:InterCaseDelayMs`, mặc định 4000 ms để bảo vệ quota. Không đổi giá trị trong cùng một benchmark; luôn ghi giá trị này vào metadata phép đo.
 
@@ -201,7 +203,7 @@ Khi deploy public, ứng dụng phải chạy sau HTTPS/reverse proxy. Container
 - `/BUSINESS_RULES.md` trả `404` vì policy không được public từ static root.
 - Upload giả MIME bị từ chối; JPG/PNG hợp lệ được lưu và mở lại qua route chứng từ.
 - Ảnh lớn hơn 5 MB bị chặn với thông báo dễ hiểu, không xuất hiện lỗi `Unexpected end of JSON input`. Giới hạn multipart có phần đệm cho antiforgery/boundary nhưng controller vẫn khóa riêng file ở 5 MB.
-- Verify đạt 5/5 trong thời gian demo cho phép. Timeout cấu hình là 90 giây cho OpenRouter và 600 giây cho Ollama 4B 16K; đây là chốt lỗi kỹ thuật, không phải tuyên bố latency mục tiêu.
+- Verify đạt 5/5 trong thời gian demo cho phép. Evidence live candidate hiện hành là 65,004 giây E2E. Timeout cấu hình là 90 giây cho OpenRouter và 600 giây cho Ollama 4B 16K; đây là chốt lỗi kỹ thuật, không phải SLA production.
 
 Chiến lược tách public/local, cấu hình lease cho inference chậm và giới hạn của provider failover nằm tại [`COMPETITION_FAILOVER_AND_429_STRATEGY_2026-10-12.md`](COMPETITION_FAILOVER_AND_429_STRATEGY_2026-10-12.md).
 - Audit hiển thị input, action, timestamp, reason; chuyển tiếp/Đồng ý/Từ chối/undo hoạt động.

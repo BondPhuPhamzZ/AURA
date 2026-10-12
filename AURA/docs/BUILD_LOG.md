@@ -2,6 +2,8 @@
 
 > Candidate Alibaba/Qwen3.8 Flash ngày 12/10 bổ sung `OpenRouter:ReasoningEffort` và khóa `none` cho extraction. Raw smoke đầu giữ nguyên lỗi `AI_RESPONSE_TRUNCATED` sau 114.329 ms do reasoning dùng hết 4.096 completion token dù upstream trả 200; smoke sau fix pass 11.053 ms. Một lượt 15 receipt thật post-holdout trên manifest SHA-256 `850479...FB0` đạt **15/15 decision, 0 missed, 0 over, 0 system error, 30/30 field**, P50/P95 10.807/26.687 ms; 20/20 upstream calls HTTP 200. Năm upload đồng thời hoàn tất 5/5 với accepted P95 469 ms và E2E P95 41.079 ms ở concurrency AI 1. Source default đổi sang `qwen/qwen3.8-flash`; fallback vẫn tắt. Đây là regression hậu chỉnh, không thay official blind raw. Xem `QWEN38_FLASH_BENCHMARK_2026-10-12.md`.
 
+> Live gate sau publish cùng ngày xác nhận `/healthz` đúng candidate và Verify **5/5** trong **65.004 ms**, 0 system/provider error. Năm client đồng thời chỉ tạo một batch thật: 1 HTTP 200 + 4 HTTP 409. Runner PowerShell 5.1 ban đầu ghi nhầm `0/5`; raw response vẫn có năm case pass, summary hiệu chỉnh khóa theo SHA-256 và không replay provider. Xem `QWEN38_FLASH_LIVE_VERIFY_2026-10-12.md`.
+
 ## Công cụ AI và cách sử dụng
 
 - **Qwen3.8 Flash qua OpenRouter/Alibaba, reasoning none:** đọc một ảnh hóa đơn và trả dữ kiện theo JSON Schema chặt. Qwen không được quyền tự quyết định duyệt/chuyển tiếp. Qwen3-VL-8B-Instruct/Parasail được giữ làm baseline lịch sử và đường rollback.

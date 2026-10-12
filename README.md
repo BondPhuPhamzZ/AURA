@@ -37,13 +37,14 @@ Key capabilities:
 
 ## Verified baseline
 
-Last full post-publish validation: 7 October 2026. Public home and `/healthz` were rechecked on 11 October 2026.
+Last full post-publish validation: 12 October 2026. Live health and the Qwen3.8 Flash Verify gate were rechecked after publish/recycle.
 
 - Build: **0 warnings, 0 errors**.
 - Automated tests after Alibaba/Qwen3.8 Flash hardening: **161/161 passed**; they do not call the paid AI API.
 - Official Verify Harness: **5/5** with the expected 3 approve / 2 escalate split.
 - Historical locked synthetic judge set: OpenRouter **15/15 decisions**, Ollama **14/15**. The post-contract OpenRouter v2 run reached **14/15** and still missed TK-12; the physical-ink-loss v3.1 safety set reached **13/15** with zero missed escalations and zero system errors.
 - The 12 October Qwen3.8 Flash candidate completed the same 15 locked post-holdout real receipts at **15/15**, with zero missed/over/system errors and 30/30 critical fields. Five concurrent uploads completed with 41.079-second P95 at AI concurrency 1. This is post-adjustment regression evidence, not a new blind holdout or production SLA.
+- After publish/recycle, the live Qwen3.8 Flash Verify Harness completed **5/5** in **65.004 seconds** with no system/provider error. Five simultaneous clients produced one HTTP 200 and four HTTP 409 responses, so duplicate clicks did not create duplicate AI batches on the single-process demo deployment.
 - SmartASP post-holdout gate: home and health 5/5, DB/storage/migration, upload/security-negative checks, browser mobile UI and Verify OpenRouter 5/5 passed. Human workflow also passed 2/2 with synthetic fixtures: policy reject/undo and fact approve/undo.
 - Live concurrency: **2/2 + 5/5 completed**; end-to-end P95 **20.941 / 23.290 seconds**. The accepted timer includes antiforgery GET/setup/network, so it is not a pure POST SLO.
 - The one-time locked real holdout produced **10/15 raw decision matches** (one missed escalation, three over-escalations, zero system errors). A post-hoc review found one locked label error, giving an adjudicated analysis of 11/15 without changing raw evidence. The 28/30 field score measured only currency and total, not full extraction accuracy.
@@ -132,7 +133,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore
 dotnet ef migrations has-pending-model-changes --no-build
 ```
 
-Expected for the current candidate: build 0 warnings/errors, 142/142 tests passed, and no model change pending migration.
+Expected for the current candidate: build 0 warnings/errors, 161/161 tests passed, and no model change pending migration.
 
 Stop the app with `Ctrl+C`. No database reset or LocalDB deletion is required.
 
@@ -143,7 +144,9 @@ Stop the app with `Ctrl+C`. No database reset or LocalDB deletion is required.
 - [Business rules](AURA/BUSINESS_RULES.md)
 - [Workflow specification](AURA/submission/AURA_WORKFLOW_SPEC.md)
 - [Dataset and extended evaluation](AURA/docs/DATASET_EVALUATION_GUIDE.md)
-- [Current verified status](AURA/docs/CURRENT_PROJECT_STATUS_2026-10-07.md)
+- [Current verified status](AURA/docs/CURRENT_PROJECT_STATUS_2026-10-12.md)
+- [Qwen3.8 Flash live Verify gate](AURA/docs/QWEN38_FLASH_LIVE_VERIFY_2026-10-12.md)
+- [Current progress report](AURA/docs/PROGRESS_REPORT_2026-10-12.md)
 - [Live post-holdout validation](AURA/docs/LIVE_POST_HOLDOUT_VALIDATION_2026-10-06.md)
 - [Official holdout postmortem](AURA/docs/OFFICIAL_HOLDOUT_POSTMORTEM_2026-10-06.md)
 - [Blind holdout locking guide](AURA/docs/HOLDOUT_LOCKING_GUIDE_2026-10-05.md)

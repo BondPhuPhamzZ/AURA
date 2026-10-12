@@ -10,6 +10,7 @@
 - P50/P95 end-to-end **10.807/26.687 ms**;
 - 20/20 upstream calls trong batch trả HTTP 200, không có 429; năm call tăng thêm là semantic repair có kiểm soát;
 - năm upload đồng thời đều được nhận và hoàn tất, accepted P95 **469 ms**, end-to-end P95 **41.079 ms**, dưới gate 90 giây dù AI concurrency vẫn là 1.
+- sau publish/recycle, live Verify đạt **5/5** trong **65.004 ms**, không có system/provider error; năm client đồng thời chỉ tạo một batch thật với 1 HTTP 200 và 4 HTTP 409.
 
 Vì vậy source mặc định chuyển từ `qwen/qwen3-vl-8b-instruct` sang `qwen/qwen3.8-flash`, reasoning `none`, fallback vẫn tắt và AI concurrency vẫn là 1. Đây là **release candidate cho demo có giám sát**, không phải production SLA và không xóa các bằng chứng 429 trước đây của Parasail.
 
@@ -88,6 +89,12 @@ Năm upload đồng thời không tạo năm inference cùng lúc:
 
 Kết quả này chứng minh admission/queue đáp ứng burst 5 người trên **một process**. Chưa tăng `MaxConcurrentRequests`: parallel inference có thể tái tạo 429 mà chưa mang lợi ích cần thiết, vì FIFO hiện vẫn đạt gate 90 giây. Multi-instance thật vẫn cần distributed limiter/cooldown/lock.
 
+## Live Verify sau publish
+
+Một lượt Verify duy nhất được chạy trên live URL sau khi health xác nhận đúng Qwen3.8 Flash/reasoning none. Kết quả cả năm ca đều đúng, không fallback và E2E 65.004 ms. Khi năm client cùng bấm, `WorkflowOperationGate` cho đúng một batch chạy và trả 409 cho bốn lượt còn lại; bốn click phụ không tạo thêm AI call.
+
+Runner Windows PowerShell 5.1 ban đầu tổng hợp nhầm `0/5` do top-level JSON array đi qua `Start-Job`. Raw HTTP 200 vẫn chứa năm case `pass=true`; bản hiệu chỉnh được tạo từ raw body có SHA-256 khóa và **không replay provider**. Chi tiết: [`QWEN38_FLASH_LIVE_VERIFY_2026-10-12.md`](QWEN38_FLASH_LIVE_VERIFY_2026-10-12.md).
+
 ## Evidence và tính toàn vẹn
 
 Evidence private, không commit ảnh receipt/raw response vào Git:
@@ -107,13 +114,13 @@ Batch 15 ca dùng 20 API calls, 189.869 prompt token, 10.101 completion token, t
 
 ## Quyết định deploy và rollback
 
-Source đã đổi default, nhưng SmarterASP không tự thay đổi chỉ vì Git có commit. Khi publish candidate:
+Candidate đã được publish và recycle thành công trên SmarterASP. Checklist tái triển khai/rollback vẫn là:
 
 1. thêm/cập nhật `OpenRouter__Model=qwen/qwen3.8-flash`;
 2. thêm `OpenRouter__ReasoningEffort=none`;
 3. giữ concurrency 1, cooldown 120 và fallback false;
 4. publish toàn bộ output, recycle pool;
 5. `/healthz` phải trả model mới, reasoning `none`, DB/migration/storage OK;
-6. chạy đúng một synthetic smoke trước video; không chạy lại 15 receipt để săn số đẹp.
+6. chạy đúng một synthetic smoke/Verify có kiểm soát trước khi freeze; không chạy lại 15 receipt để săn số đẹp.
 
 Rollback không cần code change: đặt lại model `qwen/qwen3-vl-8b-instruct`, để trống `OpenRouter__ReasoningEffort` nếu muốn hành vi model cũ, recycle và smoke lại. Nếu Alibaba phát sinh 429/5xx, AURA vẫn fail-safe, cooldown, không retry 429 và không giả quyết định nghiệp vụ.

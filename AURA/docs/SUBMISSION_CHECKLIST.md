@@ -9,7 +9,7 @@ Cập nhật: 12/10/2026. Trạng thái hiện hành nằm tại `docs/CURRENT_P
 | Frontend/backend clone và chạy localhost | ☑ Có | README root, .NET 8, LocalDB/SQL Server, user-secrets và migration |
 | Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, 15/30 ca chạy ngoài UI bằng evaluator |
 | Public repository và lịch sử commit | ☑ Có | `https://github.com/BondPhuPhamzZ/AURA`; cần push commit chốt sau mỗi lần cập nhật hồ sơ |
-| Public Live URL | ◐ Technical baseline pass, chưa public trong README | Health/security/Verify/workflow, mobile 390 px và điện thoại thật 4G/5G đã pass; còn một rehearsal sạch và kiểm link từ thiết bị khác |
+| Public Live URL | ◐ Live technical gate pass, chờ rehearsal freeze | Health candidate, live Verify 5/5 trong 65,004 giây, multi-click gate 1×200 + 4×409, mobile 390 px và điện thoại thật 4G/5G đã pass; còn một rehearsal sạch và kiểm link từ thiết bị khác |
 | Video demo tối đa 3 phút (BTC ghi Optional) | ☑ Đã liên kết | Link Google Drive ở README root |
 | Đúng 5 slide | ☑ Đã dựng | `submission/AURA_5_SLIDES.pptx` |
 | Build Log một trang Word | ☑ Đã dựng | `submission/AURA_BUILD_LOG.docx` |
@@ -20,7 +20,7 @@ Cập nhật: 12/10/2026. Trạng thái hiện hành nằm tại `docs/CURRENT_P
 - `README.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_AND_INTEGRATION_REPORT.md`.
 - `docs/`: Build Log nguồn, deployment, runbook, test cases, model selection, measurement plan.
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
-- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; candidate Qwen3.8 Flash/Alibaba hiện hành đạt 161/161 test, Release build sạch, 15/15 post-holdout regression và burst 5/5. Vẫn phải giữ đúng ranh giới regression/holdout và không biến phép đo một process thành production SLA.
+- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; candidate Qwen3.8 Flash/Alibaba hiện hành đạt 161/161 test, Release build sạch, 15/15 post-holdout regression, burst upload 5/5 và live Verify 5/5 trong 65,004 giây. Vẫn phải giữ đúng ranh giới regression/holdout và không biến phép đo một process thành production SLA.
 - `submission/AURA_BUILD_LOG.docx`: một trang.
 - `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.
 - 5 ảnh Verify trong `wwwroot/test_data/images`, manifest Verify và gói 15 ca BGK.
@@ -66,3 +66,4 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 22. Ollama 4B digest `ee4b975b58c1` dùng context 16K/output 4K, `Think=false`, fallback tắt đã đạt 15/15 Test Kit v2 synthetic với 0 missed/over/system error và field 69/75. Evidence được phục hồi không replay qua durable queue và SHA-256; xem `docs/OLLAMA_4B_16K_RECOVERY_BENCHMARK_2026-10-12.md`. Không đổi primary/fallback production từ kết quả synthetic này.
 23. Audit source/folder và đối chiếu feedback Sprint 1 ngày 12/10 xác nhận global upload gate đã được thay bằng durable SQL queue; hai semaphore còn lại chỉ bảo vệ Verify trùng và giới hạn capacity AI theo process; xem `docs/PROJECT_AUDIT_AND_FEEDBACK_CLOSURE_2026-10-12.md`.
 24. Candidate `qwen/qwen3.8-flash`/Alibaba, reasoning `none`, fallback tắt: real-receipt post-holdout 15/15, 0 missed/over/system error, field 30/30; concurrency upload 5/5, E2E P95 41,079 giây. Không gọi đây là blind accuracy hoặc production SLA. Raw failure reasoning-default và toàn bộ evidence vẫn được giữ ngoài Git.
+25. Live Verify sau publish candidate đạt 5/5, E2E 65,004 giây, 0 system/provider error. Mô phỏng năm client chỉ tạo một batch thật với 1 HTTP 200 + 4 HTTP 409. Lỗi parser evidence Windows PowerShell 5.1 đã được sửa từ raw body/hash mà không replay provider; xem `docs/QWEN38_FLASH_LIVE_VERIFY_2026-10-12.md`.

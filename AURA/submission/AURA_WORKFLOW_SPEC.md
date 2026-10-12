@@ -1,6 +1,6 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 2.0 — 06/10/2026
+Phiên bản: 2.1 — 12/10/2026
 Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
@@ -61,6 +61,7 @@ flowchart LR
 4. Mỗi ca đi qua cùng extractor và policy production; bảng hiển thị expected, actual, PASS/FAIL, lý do, câu hỏi, latency và timestamp.
 5. Khi gặp lỗi provider mang tính hệ thống/quota/schema, harness dừng gọi AI cho các ca còn lại để bảo vệ credit; các ca sau nhận `ESCALATE_SYSTEM_ERROR`, không tạo PASS giả.
 6. Sau khi hoàn tất, giao diện tự cuộn đến bảng kết quả. Các ca chuyển tiếp vẫn cần nhân viên xác nhận trước khi xuất hiện ở tab quản lý.
+7. `WorkflowOperationGate` chỉ cho một batch Verify chạy trong mỗi process. Click đồng thời khác nhận HTTP 409 và không tạo thêm AI call. Live candidate 12/10 xác nhận 1 HTTP 200 + 4 HTTP 409; batch thắng đạt 5/5 trong 65,004 giây.
 
 ## 5. Workflow C — Human-in-the-loop
 
@@ -145,6 +146,7 @@ Checkpoint 12/10 đồng bộ default Ollama với profile 4B đã có evidence:
 - Forensic hardening ngày 12/10 xử lý hẹp exact duplicate identifier và summary pseudo-line, không nới guard thiếu evidence. API regression ứng viên trên OpenRouter 8B xác nhận BH-03/BH-14/BH-15 về `AUTO_APPROVE`; BH-01 vẫn `ESCALATE_FACT` vì model tiếp tục gán tiền mặt/tiền thối/VAT sai vai trò. Batch 15 ca bị 5 HTTP 429 nên chỉ là evidence chẩn đoán, không thay số 11/15 ngày 07/10 và không được dùng làm accuracy claim trước live post-publish gate.
 - Live post-publish gate ngày 12/10 tại `2b75f3f` pass health/security/upload-negative/UI và 149/149 offline test. Verify gặp HTTP 429 ở TC-02; regression 15 receipt chạy tuần tự cách 60 giây vẫn dừng ở BH-10 sau 10 ca vì `AI_RATE_LIMIT`. Phần đã chạy có 0 missed, 1 over BH-01 và 1 system error nhưng không phải accuracy result. Demo được giới hạn một operator; DB queue có thể nhận 2–5 upload nhưng chưa tuyên bố AI concurrency/SLA.
 - Capacity hardening 12/10 xác minh 429 cũ phát sinh tại route Parasail, không phải key budget. Shared AI gate, cooldown, worker drain stop và provider metadata vẫn là lớp bảo vệ. Candidate Qwen3.8 Flash/Alibaba với reasoning none đạt 15/15 post-holdout regression, 0 missed/over/system error và 20/20 upstream HTTP 200. Burst 5 upload đồng thời hoàn tất 5/5, E2E P95 41.079 giây khi AI concurrency giữ ở 1. Đây là hậu chỉnh trên cùng ảnh/manifest nhưng khác revision, thời điểm và upstream; không được trình bày như blind holdout hay causal model-only A/B. Gate/cooldown theo process nên baseline IIS vẫn phải một worker.
+- Live Verify sau publish candidate đạt 5/5, 0 system/provider error và E2E 65,004 giây. Năm client đồng thời chỉ tạo một batch thật với 1 HTTP 200 + 4 HTTP 409. Lỗi tổng hợp Windows PowerShell 5.1 được sửa từ raw body/hash, không replay provider. Đây là synthetic demo gate, không thay holdout hoặc SLA production.
 - Mô phỏng: 30 ảnh tổng hợp sinh offline; 5 ảnh Verify và manifest 15 ca BGK được tuyển từ ngân hàng này.
 - Ground truth tổng hợp được sinh tất định bằng Python/Pillow và khóa trong manifest. Ảnh generative AI không được dùng làm nhãn chuẩn; hóa đơn thật đã ẩn danh chỉ nằm trong holdout cục bộ ngoài Git.
 - Không dùng hóa đơn cá nhân thật trong Git. Ảnh thật tùy chọn chỉ đặt tại `test_kit/local_real` và bị `.gitignore` loại trừ.

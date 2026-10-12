@@ -206,8 +206,8 @@ evidence = document.add_table(rows=2, cols=4)
 evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
-headers = ("Build", "Test offline", "Regression", "Burst 5 ca")
-values = ("0 warning 0 error", "161 trên 161 pass", "15 trên 15", "P95 41.079 giây")
+headers = ("Build", "Test offline", "Regression", "Verify live")
+values = ("0 warning 0 error", "161 trên 161 pass", "15 trên 15", "5 trên 5, 65.004 giây")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -273,7 +273,8 @@ add_body(
     "Live baseline đã pass health, security gồm hai upload guard, Verify 5 trên 5 và workflow FACT chuyển quản lý, duyệt rồi hoàn tác; "
     "desktop, mobile 390x844 và điện thoại thật 4G/5G đều đạt. Candidate ngày 12/10 trên cùng 15 receipt đạt 15 trên 15, "
     "0 missed, 0 over và 0 system error; 20 trên 20 upstream request HTTP 200. Burst 5 upload đồng thời hoàn tất 5 trên 5, "
-    "E2E P95 41.079 giây với AI concurrency bằng 1. Candidate đạt 161 test; còn ba user session và rehearsal. "
+    "E2E P95 41.079 giây với AI concurrency bằng 1. Verify live sau publish đạt 5 trên 5 trong 65.004 giây; "
+    "năm client đồng thời tạo đúng một batch thật với một HTTP 200 và bốn HTTP 409. Candidate đạt 161 test; còn ba user session và rehearsal. "
     "Dữ liệu cá nhân thật không được đưa vào Git.",
 )
 
