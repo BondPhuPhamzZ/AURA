@@ -13,7 +13,10 @@ param(
 
     [Parameter()]
     [ValidateRange(1, 1000000000)]
-    [decimal]$ClaimedAmount = 295199
+    [decimal]$ClaimedAmount = 295199,
+
+    [Parameter()]
+    [string]$OutputPath
 )
 
 $scriptDirectory = $PSScriptRoot
@@ -28,6 +31,7 @@ if (-not (Test-Path -LiteralPath $ImagePath -PathType Leaf)) {
 }
 
 $resolvedImage = (Resolve-Path -LiteralPath $ImagePath).Path
+$imageSha256 = (Get-FileHash -LiteralPath $resolvedImage -Algorithm SHA256).Hash.ToLowerInvariant()
 $normalizedBaseUrl = $BaseUrl.TrimEnd('/')
 $jobs = 1..$Copies | ForEach-Object {
     Start-Job -ArgumentList $_, $normalizedBaseUrl, $resolvedImage, $ClaimedAmount -ScriptBlock {
@@ -122,11 +126,49 @@ try {
     $endToEndP95 = if ($endToEndSamples.Count -gt 0) {
         $endToEndSamples[[Math]::Ceiling($endToEndSamples.Count * 0.95) - 1]
     } else { $null }
+    $completedCount = @($results | Where-Object ProcessingState -eq 'COMPLETED').Count
+    $clientErrorCount = @($results | Where-Object ProcessingState -eq 'CLIENT_ERROR').Count
+    $nonCompletedCount = @($results | Where-Object ProcessingState -ne 'COMPLETED').Count
     "Accepted P95: $(if ($null -eq $acceptedP95) { 'n/a' } else { "$acceptedP95 ms" })"
     "End-to-end P95: $(if ($null -eq $endToEndP95) { 'n/a' } else { "$endToEndP95 ms" })"
-    "Completed: $(@($results | Where-Object ProcessingState -eq 'COMPLETED').Count)/$($results.Count)"
-    "Client errors: $(@($results | Where-Object ProcessingState -eq 'CLIENT_ERROR').Count)/$($results.Count)"
-    if (@($results | Where-Object ProcessingState -eq 'CLIENT_ERROR').Count -gt 0) { exit 1 }
+    "Completed: $completedCount/$($results.Count)"
+    "Client errors: $clientErrorCount/$($results.Count)"
+    "Non-completed: $nonCompletedCount/$($results.Count)"
+
+    $report = [ordered]@{
+        schemaVersion = 1
+        generatedAtUtc = [DateTimeOffset]::UtcNow.ToString('O')
+        baseUrl = $normalizedBaseUrl
+        copies = $Copies
+        imagePath = $resolvedImage
+        imageSha256 = $imageSha256
+        claimedAmount = $ClaimedAmount
+        passed = ($nonCompletedCount -eq 0)
+        metrics = [ordered]@{
+            acceptedP95Ms = $acceptedP95
+            endToEndP95Ms = $endToEndP95
+            completed = $completedCount
+            clientErrors = $clientErrorCount
+            nonCompleted = $nonCompletedCount
+            total = $results.Count
+        }
+        results = @($results | Select-Object Sequence, CaseId, HttpAcceptedMs, EndToEndMs,
+            ProcessingState, Actual, Provider, FallbackUsed, ErrorCode, ClientError)
+    }
+    if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
+        $resolvedOutputPath = [System.IO.Path]::GetFullPath($OutputPath)
+        $outputDirectory = [System.IO.Path]::GetDirectoryName($resolvedOutputPath)
+        if (-not [string]::IsNullOrWhiteSpace($outputDirectory)) {
+            [System.IO.Directory]::CreateDirectory($outputDirectory) | Out-Null
+        }
+        [System.IO.File]::WriteAllText(
+            $resolvedOutputPath,
+            ($report | ConvertTo-Json -Depth 8),
+            [System.Text.UTF8Encoding]::new($false))
+        "Structured report: $resolvedOutputPath"
+    }
+
+    if ($nonCompletedCount -gt 0) { exit 1 }
 }
 finally {
     $jobs | Remove-Job -Force -ErrorAction SilentlyContinue
