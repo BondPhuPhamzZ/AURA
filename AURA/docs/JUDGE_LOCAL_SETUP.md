@@ -197,6 +197,8 @@ Get-NetTCPConnection -LocalPort 5000 -State Listen -ErrorAction SilentlyContinue
 
 Warning inspect registry không tự động có nghĩa database hỏng. Nếu full `/healthz` xác nhận `databaseAvailable=true`, `databaseUpToDate=true` và không có pending migration thì AURA đang truy cập database đúng. Không xóa registry key, LocalDB instance hoặc MDF để làm warning biến mất.
 
+Nếu health treo/degraded và log có `error: 50`, `0x89C50118` hoặc `Cannot create an automatic instance`, dừng thao tác demo và dùng nhánh phục hồi có backup trong `docs/RUNBOOK.md`; đây là blocker thật, không phải warning inspect. Sau phục hồi phải chạy bằng profile `AURA` và xác nhận lại health `ok` trước khi Verify/upload.
+
 ### OpenRouter 401 402 429 5xx hoặc timeout
 
 - 401: kiểm key private.
