@@ -82,6 +82,7 @@ public sealed class OllamaVisionExtractorService : IVisionExtractor
             }
         },
         stream = false,
+        think = _options.Think,
         format = schema,
         keep_alive = _options.KeepAlive,
         options = new

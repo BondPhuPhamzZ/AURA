@@ -36,6 +36,7 @@ public sealed class OllamaVisionExtractorServiceTests
             var body = payload.RootElement;
             Assert.Equal("qwen3-vl:4b-instruct", body.GetProperty("model").GetString());
             Assert.False(body.GetProperty("stream").GetBoolean());
+            Assert.False(body.GetProperty("think").GetBoolean());
             Assert.Equal("5m", body.GetProperty("keep_alive").GetString());
             Assert.False(body.GetProperty("format").GetProperty("additionalProperties").GetBoolean());
             Assert.Equal(8192, body.GetProperty("options").GetProperty("num_ctx").GetInt32());

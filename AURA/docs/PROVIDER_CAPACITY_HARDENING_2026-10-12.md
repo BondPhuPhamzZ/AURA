@@ -4,6 +4,8 @@
 
 OpenRouter Upstream Requests xác nhận các lỗi live là HTTP 429 từ provider Parasail, mỗi lỗi có một attempt. Key production có nhãn `btc_key_test_1`, vẫn còn credit và mới dùng dưới giới hạn chi tiêu tháng; `192 requests` là usage của workspace trong tuần, không phải quota. Vì vậy nguyên nhân quan sát được là rate/capacity ngắn hạn ở upstream provider, không phải policy C#, SQL, số dư hay migration. Ảnh dashboard/key là evidence private, không commit vào Git.
 
+Không có bằng chứng việc BTC clone repository làm phát sinh 429. Evidence BTC chạy local Ollama; lỗi tại URL tunnel là `AI_RESPONSE_TRUNCATED`, không phải HTTP 4xx. `OpenRouter:MaxOutputTokens=4096` đã giữ nguyên từ 22/09/2026. Prompt/policy dài có thể tăng chi phí và latency, hoặc gây context error riêng, nhưng không giải thích response 429 đã mang metadata upstream Parasail. Không tạo key mới để né 429 provider-side; trước một batch dài, kiểm `GET /api/v1/key`/dashboard cho `limit_remaining`, `effective_budget` và trạng thái key.
+
 ## Thay đổi ứng viên
 
 - `VisionInvocationCoordinator` là singleton dùng chung Upload Worker và Verify Harness; mặc định chỉ cho một chuỗi primary→fallback gọi AI tại một thời điểm.

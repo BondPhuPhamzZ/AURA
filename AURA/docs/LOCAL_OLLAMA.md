@@ -7,7 +7,8 @@ Cập nhật: 02/10/2026. Tùy chọn này bổ sung provider local để benchm
 - Windows 10 22H2 trở lên, .NET 8 và SQL Server LocalDB như luồng local hiện tại.
 - RAM 16 GB: bắt đầu với `qwen3-vl:4b-instruct` Q4_K_M, một request tại một thời điểm.
 - Ổ đĩa trống: dành ít nhất 8 GB cho model, cache và log. Gói model Q4 hiện khoảng 3,3 GB nhưng RAM runtime lớn hơn dung lượng file.
-- Cấu hình 4 GB lịch sử là `ContextTokens=8192`, `MaxOutputTokens=2048`, `KeepAlive=5m`. Evidence contract v2 ngày 06/10 cho thấy một số repair có thể vượt cả context 8192 hoặc output cap 2048; không tăng giữa một batch đang đo. Với GPU 16 GB, benchmark riêng 8B bằng context 16384/output 4096 theo runbook BTC. Nếu thiếu VRAM, giảm context có ghi nhận rồi chạy batch mới từ đầu.
+- Cấu hình 4 GB lịch sử là `ContextTokens=8192`, `MaxOutputTokens=2048`, `KeepAlive=5m`, `Think=false`. Evidence contract v2 ngày 06/10 cho thấy một số repair có thể vượt cả context 8192 hoặc output cap 2048; không tăng giữa một batch đang đo. Với GPU 16 GB, benchmark riêng 8B bằng context 16384/output 4096 theo runbook BTC. Nếu thiếu VRAM, giảm context có ghi nhận rồi chạy batch mới từ đầu.
+- Luôn dùng tag đầy đủ `qwen3-vl:8b-instruct-q4_K_M`; không dùng alias `qwen3-vl:8b`. Alias 8B có thể trỏ tới biến thể thinking và tiêu thụ output budget trước khi JSON schema hoàn tất. Adapter gửi `think=false` để extraction có tính tất định và dành output cho JSON; thinking model chỉ được benchmark ở một profile riêng, không trộn vào baseline.
 - CPU/GPU split chủ yếu làm tăng latency nếu giữ nguyên weights/quantization/context; nó
   không tự hạ độ phân giải ảnh. Các nguyên nhân giảm chất lượng gián tiếp và checklist
   evidence nằm tại [`VISION_INPUT_AND_OFFLOAD_GUIDE_2026-10-07.md`](VISION_INPUT_AND_OFFLOAD_GUIDE_2026-10-07.md).
@@ -75,6 +76,7 @@ dotnet user-secrets set "Ollama:BaseUrl" "http://127.0.0.1:11434/"
 dotnet user-secrets set "Ollama:Model" "qwen3-vl:4b-instruct"
 dotnet user-secrets set "Ollama:ContextTokens" "8192"
 dotnet user-secrets set "Ollama:MaxOutputTokens" "2048"
+dotnet user-secrets set "Ollama:Think" "false"
 dotnet user-secrets set "Ollama:TimeoutSeconds" "180"
 dotnet user-secrets set "Ollama:KeepAlive" "5m"
 

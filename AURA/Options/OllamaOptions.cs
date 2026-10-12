@@ -29,4 +29,6 @@ public sealed class OllamaOptions
 
     [Required]
     public string KeepAlive { get; set; } = "5m";
+
+    public bool Think { get; set; } = false;
 }
