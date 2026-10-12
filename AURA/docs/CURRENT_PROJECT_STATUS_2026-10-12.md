@@ -2,49 +2,59 @@
 
 ## Kết luận điều hành
 
-AURA đang ở trạng thái **supervised demo candidate**, chưa phải production/accuracy-ready. Workspace audit hiện hành ở source HEAD `9e6fe78`; capacity logic nằm trong checkpoint `f6d6d4b`, còn các commit sau đồng bộ runner, evidence, tài liệu và default Ollama mà không đổi policy/schema. Production health sau publish/recycle đã trả `ok`, database/storage/migration đều đạt và capacity guard hiển thị concurrency 1, cooldown 120 giây, fallback tắt.
+AURA hiện là **supervised demo release candidate** với primary mới `OpenRouter / qwen/qwen3.8-flash`, reasoning `none`, fallback tắt và AI concurrency 1. Candidate đã pass build/test, một smoke, một lượt 15 receipt thật post-holdout và burst năm upload đồng thời. Source đã đồng bộ default; SmarterASP vẫn cần publish/recycle/health/smoke trước khi được coi là đang chạy candidate này.
 
-Hai rủi ro còn mở không phải lỗi policy C#:
-
-1. OpenRouter/Qwen3-VL-8B đôi lúc nhận HTTP 429 từ upstream Parasail dù tài khoản còn credit. Endpoint catalog thời điểm audit chỉ liệt kê Parasail cho model này, nên không có provider thứ hai cùng model để failover. Benchmark 5 client ngày 12/10 chặn đúng 4 lượt Verify phụ ở cả 2/2 lần, nhưng batch chính lần lượt chỉ đạt 4/5 và 2/5; live provider chưa đạt reliability gate cho 5 ca dưới 90 giây.
-2. Ollama 4B 16K đạt safety regression synthetic nhưng chậm trên máy hiện tại; hosted AURA chưa có endpoint Ollama riêng được bảo vệ để bật fallback thật.
+Lỗi 429 lịch sử đã được phân lập ở upstream Parasail của model 8B cũ, không phải SQL, policy, API key budget hay BTC clone source. Candidate Alibaba không phát sinh non-200 trong 20 upstream calls của batch 15 ca. Điều này giải quyết rủi ro quan sát được trong phiên benchmark, nhưng không thể biến dịch vụ bên thứ ba thành SLA tuyệt đối.
 
 ## Evidence hiện hành
 
 | Hạng mục | Kết quả và ranh giới |
 |---|---|
-| Offline suite/capacity hardening | 159/159 và Release build sạch tại candidate capacity-hardening; xem `PROVIDER_CAPACITY_HARDENING_2026-10-12.md` |
-| Live health | `ok`; AI/policy/database/storage/migration đạt; max AI concurrency 1; cooldown 120 giây; Verify bật; fallback tắt |
-| Live Verify 5-client concurrency | 2/2 lượt đúng 1×HTTP 200 + 4×HTTP 409; batch chính 84.545/46.584 ms nhưng fail 429, nên chưa có bằng chứng 5 inference thành công dưới 90 giây |
-| Official holdout thật | Raw 10/15, adjudicated 11/15; 1 missed raw; không chạy lại để tạo blind claim |
-| Post-holdout real regression | Lượt hoàn chỉnh 07/10: 11/15 exact, 0 missed, 4 over, 0 system error; batch 12/10 bị 429 nên không thay số này |
-| Test Kit v3.1 OpenRouter | 13/15 exact, 0 missed, 0 system error, field 140/146; hai mismatch fail-safe |
-| Test Kit v2 OpenRouter hậu-contract | 14/15, missed TK-12 blur cũ, field 69/75 |
-| Test Kit v2 Ollama 4B 16K | 15/15, 0 missed/over/system error, field 69/75; processing P50/P95 101,833/213,429 giây |
-| Real receipt regression Ollama 4B 16K | 15/15 decision, 0 missed/over/system error, field 29/30; E2E P50/P95 191,261/384,539 giây; an toàn nhưng quá chậm cho Verify 90 giây |
-| Manual mobile 4G/5G | health, Verify, workflow, Audit, refresh và receipt persistence pass |
+| Offline suite | Release build 0 warning/error; **161/161** automated tests sau khi thêm validation/default tests |
+| Final local health | `status=ok`; model `qwen/qwen3.8-flash`; reasoning `none`; DB/migration/storage OK; concurrency 1; fallback false. User Secrets local đã được đồng bộ để không còn override model 8B cũ |
+| Candidate smoke | Lần reasoning mặc định fail-safe `AI_RESPONSE_TRUNCATED` 114.329 ms; lần `reasoning:none` pass 11.053 ms |
+| Qwen3.8 Flash real regression | **15/15**, 0 missed, 0 over, 0 system error, 30/30 field; P50/P95 10.807/26.687 ms |
+| Upstream trong batch | 20/20 HTTP 200; 20 calls gồm 15 extraction + 5 semantic repair; 199.970 total token |
+| Năm upload đồng thời | 5/5 completed; accepted P95 469 ms; E2E P95 41.079 ms; concurrency AI vẫn 1 |
+| Baseline 8B ngày 07/10 | 11/15, 0 missed, 4 over, 0 system error, 28/30 field; đây là baseline tiền chỉnh |
+| Official holdout | Raw 10/15, adjudicated 11/15; không thay bằng regression mới |
+| Ollama 4B 16K | An toàn trên regression đã chạy nhưng P95 receipt thật 384,539 giây; chỉ là contingency local |
 
-Evidence Ollama nằm ngoài Git tại `demo_evidence/27_local_ollama_4b_postpolicy_2026-10-12` (synthetic) và `demo_evidence/28_local_ollama_4b_real_regression_2026-10-12` (15 receipt regression); tài liệu công khai synthetic là `OLLAMA_4B_16K_RECOVERY_BENCHMARK_2026-10-12.md`.
-
-Đối chiếu đầy đủ feedback Sprint 1, ý nghĩa hai semaphore, audit folder/file và phần còn mở nằm tại `PROJECT_AUDIT_AND_FEEDBACK_CLOSURE_2026-10-12.md`.
+Chi tiết và ranh giới so sánh: [`QWEN38_FLASH_BENCHMARK_2026-10-12.md`](QWEN38_FLASH_BENCHMARK_2026-10-12.md). Raw evidence private nằm tại `D:\aura\demo_evidence\30_qwen38_flash_benchmark_2026-10-12`.
 
 ## Quyết định cấu hình
 
-- Primary: `OpenRouter` / `qwen/qwen3-vl-8b-instruct`.
-- Hosted fallback: `false`.
-- Local fallback có điều kiện: `qwen3-vl:4b-instruct` digest `ee4b975b58c1`, context 16384, output 4096, timeout 600 giây, keep-alive 30 phút, `Think=false`, concurrency 1. Chỉ bật khi AURA và Ollama cùng laptop hoặc có endpoint riêng được bảo vệ; xem `COMPETITION_FAILOVER_AND_429_STRATEGY_2026-10-12.md`.
-- Không chuyển sang thinking digest trước hạn nộp; thinking phải có benchmark riêng và không được gộp với instruct baseline.
-- Không public port Ollama 11434. Remote GPU cần private network hoặc TLS + auth + rate limit; app hiện chưa có bearer header riêng cho Ollama.
+```text
+Vision__Provider=OpenRouter
+Vision__FallbackEnabled=false
+Vision__MaxConcurrentRequests=1
+Vision__ProviderCooldownSeconds=120
+OpenRouter__Model=qwen/qwen3.8-flash
+OpenRouter__ReasoningEffort=none
+OpenRouter__MaxOutputTokens=4096
+OpenRouter__TimeoutSeconds=90
+```
+
+- Không tăng concurrency AI: FIFO hiện đã hoàn tất năm upload trong 41,079 giây và giảm nguy cơ burst 429.
+- Không bật fallback Ollama trên SmarterASP. Loopback của host không trỏ về laptop.
+- Local contingency vẫn là `qwen3-vl:4b-instruct`, context 16384, output 4096, timeout 600 giây, `Think=false`, lease 1800 giây khi bật.
+- `ReasoningEffort=none` là bắt buộc với Qwen3.8 Flash cho contract extraction hiện tại; reasoning mặc định đã có raw failure rõ ràng.
+
+## Kiến trúc nhiều giám khảo
+
+Upload đã bất đồng bộ: HTTP 202 → SQL durable queue → Channel wake-up → background worker → atomic lease → AI capacity gate. Năm người có thể upload cùng lúc mà không mất job. Inference vẫn tuần tự trên một process; đây là lựa chọn đã benchmark đạt gate 90 giây.
+
+Không nhầm với Verify Harness: `WorkflowOperationGate` vẫn chặn nhiều người khởi chạy cùng một batch Verify để tránh đốt quota trùng. Khi cần multi-instance, phải thay gate/cooldown/rate limiter in-memory bằng cơ chế phân tán SQL/Redis và bổ sung lease heartbeat; không chỉ tăng semaphore.
 
 ## Việc còn lại trước freeze/nộp
 
-1. Không chạy thêm batch provider dài chỉ để săn PASS. Hai lượt Verify concurrent mới đều dính 429; giữ nguyên cả evidence fail và chỉ chạy một smoke nhỏ khi thật sự cần xác nhận môi trường.
-2. Quay video/rehearsal bằng OpenRouter primary, một operator, không chạy Verify song song upload; có ảnh/video dự phòng nếu upstream 429. Local contingency có thể bật Ollama fallback sau one-image smoke, nhưng public SmarterASP tiếp tục để fallback tắt.
-3. Chỉ benchmark GPU BTC tiếp khi endpoint ổn định và có thời gian: gate TK-02/TK-12/TK-30, full 15 serial, rồi concurrency 2. Không dùng receipt thật trên máy mượn.
-4. Giữ 8–10 receipt mới unseen: khóa ground truth/hash trước request đầu tiên và chỉ chạy official mini-holdout khi code/policy đã freeze. Không điều chỉnh nhãn sau output.
-5. Chỉ sửa code nếu có P0 tái hiện được. Các thay đổi tài liệu/evidence không yêu cầu publish lại ứng dụng.
+1. Commit/push candidate đã review và giữ evidence ngoài Git.
+2. Publish toàn bộ output lên SmarterASP, thêm `OpenRouter__ReasoningEffort=none`, recycle pool.
+3. Xác nhận `/healthz`: model `qwen/qwen3.8-flash`, reasoning `none`, DB/migration/storage OK, concurrency 1, fallback false.
+4. Chạy đúng một synthetic smoke trên Live URL; không chạy lại 15 receipt để săn PASS.
+5. Quay rehearsal/video với một operator; giữ raw evidence/video dự phòng cho sự cố Internet/provider.
+6. Chỉ mở official mini-holdout mới nếu có 8–10 receipt unseen, khóa nhãn/hash trước request đầu tiên.
 
 ## Claim an toàn khi trình bày
 
-Có thể nói AURA tách extraction khỏi policy, fail-safe khi dữ kiện/provider lỗi, durable queue sống qua restart, và Ollama 4B 16K vừa đạt 15/15 trên regression synthetic. Phải nói rõ đây không phải production accuracy; OpenRouter còn rủi ro upstream 429, Ollama còn rủi ro latency/capacity, và official real holdout raw chỉ đạt 10/15.
-
+Có thể nói candidate Alibaba đã hoàn tất 15/15 receipt regression và năm upload đồng thời dưới 90 giây trong phép đo ngày 12/10, đồng thời AURA fail-safe khi provider/output lỗi. Phải nói rõ regression này không còn blind, so sánh 8B và 3.8 Flash khác revision/thời điểm, và availability của upstream không phải production SLA.

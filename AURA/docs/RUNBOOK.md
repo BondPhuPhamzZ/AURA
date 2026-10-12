@@ -18,7 +18,8 @@ dotnet tool restore
 dotnet restore
 dotnet user-secrets set "Vision:Provider" "OpenRouter"
 dotnet user-secrets set "OpenRouter:ApiKey" "YOUR_OPENROUTER_KEY"
-dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
+dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3.8-flash"
+dotnet user-secrets set "OpenRouter:ReasoningEffort" "none"
 dotnet user-secrets set "Vision:FallbackEnabled" "false"
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\mssqllocaldb;Database=AuraDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0"
 dotnet ef database update
@@ -80,7 +81,7 @@ Test Kit v3/v3.1 là regression namespace riêng, không thay Verify/v2. Tái t�
 
 Sau thay đổi contract giảm giá và postfix live fix, làm theo cổng `docs/LIVE_POSTFIX_INCIDENT_2026-10-01.md`. Không reset database và không chạy migration vì facts vẫn nằm trong JSON hiện có; restart queue phải dùng chính DB cũ để chứng minh độ bền.
 
-Sau official holdout 06/10, extraction mới dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Candidate hiện tại còn chuyển timestamp Audit từ UTC sang giờ Việt Nam rõ ràng, không phụ thuộc timezone host. Trước publish phải đạt Release build sạch, 159/159 test và `dotnet ef migrations has-pending-model-changes` trả không có thay đổi. Thứ tự SmartASP an toàn: backup/kiểm 22 biến → recycle ngay trước publish để nhả file lock → Visual Studio Web Deploy Release → chờ `Publish succeeded` → recycle lại → đợi 10–30 giây → `/healthz` phải HTTP 200, `status=ok`, database/storage true và pending migration 0. Sau đó chạy Verify một lượt và đối chiếu giờ Audit với giờ Việt Nam. Không bật migration startup hoặc fallback.
+Sau official holdout 06/10, extraction mới dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Candidate hiện tại còn chuyển timestamp Audit từ UTC sang giờ Việt Nam rõ ràng, không phụ thuộc timezone host. Trước publish phải đạt Release build sạch, 161/161 test và `dotnet ef migrations has-pending-model-changes` trả không có thay đổi. Thứ tự SmartASP an toàn: backup/kiểm biến môi trường, bổ sung `OpenRouter__Model=qwen/qwen3.8-flash` và `OpenRouter__ReasoningEffort=none` → recycle ngay trước publish để nhả file lock → Visual Studio Web Deploy Release → chờ `Publish succeeded` → recycle lại → đợi 10–30 giây → `/healthz` phải HTTP 200, `status=ok`, database/storage true, pending migration 0, model/reasoning đúng. Sau đó chạy đúng một synthetic smoke trước khi Verify; không bật migration startup hoặc fallback.
 
 Live gate hậu contract v2 phải dùng request mới, không gọi lại 15 ảnh là “blind”: (1) receipt có giờ `HH:mm:ss` + bia phải `ESCALATE_POLICY`; (2) receipt rõ, dòng tổng in đủ phải giữ `PRINTED_FINAL_TOTAL` và AUTO khi các điều kiện khác đạt; (3) ảnh có giá trị Total bị cắt phải FACT dù subtotal/items cộng được; (4) `04-10-26` phải canonicalize thành 2026-10-04; (5) Winmart có PTT + Mã CQT phải tách receipt/tax-authority; (6) money-role CoopSmile không được dùng cash/change/VAT làm total/discount. Lưu raw status/facts/audit và timestamp. Nếu model/provider chưa tuân schema v2, kết quả phải `ESCALATE_SYSTEM_ERROR`/`ESCALATE_FACT`, không rollback gate để lấy AUTO.
 
@@ -102,7 +103,9 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 
 ### Model OpenRouter cho demo
 
-- Mặc định demo: `qwen/qwen3-vl-8b-instruct`, model vision-language 8B tập trung OCR/document và hỗ trợ structured output bằng JSON Schema.
+- Mặc định demo: `qwen/qwen3.8-flash` qua endpoint Alibaba, reasoning `none`, hỗ trợ vision và structured output bằng JSON Schema. Candidate ngày 12/10 đạt 15/15 post-holdout regression và năm upload P95 41,079 giây; xem `QWEN38_FLASH_BENCHMARK_2026-10-12.md`.
+- Không bỏ `ReasoningEffort=none`: reasoning mặc định đã dùng hết output cap 4096 và tạo `AI_RESPONSE_TRUNCATED`. Không tăng output cap để che căn nguyên.
+- `qwen/qwen3-vl-8b-instruct` được giữ làm rollback/baseline lịch sử; endpoint Parasail của model này đã phát sinh 429 trong các lượt live ngày 12/10.
 - Qwen3-VL-4B-Instruct là ứng viên self-host tiếp theo, nhưng không được khai báo như route OpenRouter khi catalog chưa cung cấp endpoint đó.
 - HTTP 404 / `AI_MODEL_UNAVAILABLE`: slug model sai, đã bị gỡ hoặc hiện không có endpoint; đây không phải quota.
 - HTTP 401/403 / `AI_AUTH_ERROR`: key sai hoặc thiếu quyền.
@@ -173,7 +176,8 @@ Các biến môi trường bắt buộc:
 
 ```text
 OpenRouter__ApiKey=<secret>
-OpenRouter__Model=qwen/qwen3-vl-8b-instruct
+OpenRouter__Model=qwen/qwen3.8-flash
+OpenRouter__ReasoningEffort=none
 Vision__Provider=OpenRouter
 ConnectionStrings__DefaultConnection=<SQL Server connection string>
 ReceiptStorage__Directory=<persistent volume path>

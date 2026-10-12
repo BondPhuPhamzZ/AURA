@@ -1,5 +1,7 @@
 # Provider capacity hardening — 12/10/2026
 
+> **Addendum:** Candidate `qwen/qwen3.8-flash`/Alibaba với reasoning `none` đã pass 20/20 upstream calls trong một lượt 15 receipt và năm upload đồng thời 5/5, P95 41,079 giây. Các cơ chế gate/cooldown bên dưới vẫn được giữ; incident Parasail là evidence lịch sử của model 8B cũ. Xem `QWEN38_FLASH_BENCHMARK_2026-10-12.md`.
+
 ## Phạm vi và nguyên nhân
 
 OpenRouter Upstream Requests xác nhận các lỗi live là HTTP 429 từ provider Parasail, mỗi lỗi có một attempt. Key production có nhãn `btc_key_test_1`, vẫn còn credit và mới dùng dưới giới hạn chi tiêu tháng; `192 requests` là usage của workspace trong tuần, không phải quota. Vì vậy nguyên nhân quan sát được là rate/capacity ngắn hạn ở upstream provider, không phải policy C#, SQL, số dư hay migration. Ảnh dashboard/key là evidence private, không commit vào Git.
@@ -25,13 +27,15 @@ Verify__Enabled=true   # chỉ trong phiên demo/test có giám sát
 
 Khi public URL mà không cần BGK tự chạy harness, đặt `Verify__Enabled=false`. Cấu hình này không thay đổi upload queue. Fallback production vẫn phải giữ `false` cho đến khi endpoint Ollama HTTPS ổn định, được bảo vệ và model vượt safety regression.
 
-## Gate đã chạy trước publish
+## Gate hardening lịch sử trước khi đổi candidate
 
 - `dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore`: **159/159 pass**.
 - `dotnet build AURA.csproj -c Release --no-restore`: **0 warning, 0 error**.
 - Targeted tests chứng minh serialization, cooldown/expiry, blocking-failure classification và 429 diagnostics.
 
 Đây là offline implementation evidence, chưa phải live deployment evidence. Sau publish phải recycle pool, kiểm `/healthz`, chạy một synthetic upload smoke, rồi mới chạy concurrency admission 2 và 5 upload. Không chạy Verify song song với phép đo upload và không dùng batch bị 429 làm accuracy claim.
+
+Gate candidate sau đó đạt 161/161 test, Release build sạch, 15/15 post-holdout regression với 20/20 upstream HTTP 200 và burst 5/5. Số 159/159 phía trên được giữ nguyên như checkpoint lịch sử của capacity hardening.
 
 ## Giới hạn còn lại
 

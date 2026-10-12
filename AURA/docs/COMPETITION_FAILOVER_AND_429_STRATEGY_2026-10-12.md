@@ -2,6 +2,8 @@
 
 ## Quyết định cuối
 
+Primary release candidate hiện là OpenRouter `qwen/qwen3.8-flash` trên Alibaba với `ReasoningEffort=none`. Lượt 15 receipt post-holdout có 20/20 upstream HTTP 200, không 429; năm upload đồng thời hoàn tất trong P95 41,079 giây ở concurrency AI 1. Kết quả này thay quyết định vận hành cho demo nhưng **không xóa** incident Parasail/8B bên dưới và không đảm bảo upstream sẽ không bao giờ lỗi. Xem `QWEN38_FLASH_BENCHMARK_2026-10-12.md`.
+
 Ollama `qwen3-vl:4b-instruct` digest `ee4b975b58c1` **đủ điều kiện làm fallback có giám sát trên laptop chạy đồng thời AURA và Ollama**. Cơ sở là Test Kit v2 synthetic ở profile 16K đạt 15/15 decision, 0 missed escalation, 0 over-escalation, 0 system error và 69/75 field. Đây không phải chứng nhận production accuracy hoặc multi-user capacity.
 
 Không bật Ollama fallback trên SmarterASP khi `Ollama:BaseUrl=http://127.0.0.1:11434/`. Loopback đó trỏ tới server hosting, không trỏ về laptop. Chỉ bật remote fallback khi có endpoint riêng qua private network hoặc reverse proxy TLS, xác thực, rate limit và log đã che dữ liệu; adapter hiện chưa hỗ trợ bearer header riêng cho Ollama.
@@ -16,11 +18,13 @@ Vision__FallbackEnabled=false
 Vision__FallbackProvider=Ollama
 Vision__MaxConcurrentRequests=1
 Vision__ProviderCooldownSeconds=120
+OpenRouter__Model=qwen/qwen3.8-flash
+OpenRouter__ReasoningEffort=none
 Verify__Enabled=false              # bật tạm trong phiên Verify có giám sát
 ```
 
 - Đặt IIS `Maximum Worker Processes = 1`, vì limiter/cooldown/circuit hiện nằm trong memory của từng process.
-- Chỉ một operator chạy AI; không chạy Verify song song với upload.
+- Nhiều upload có thể được nhận vào durable queue; chỉ một operator khởi chạy Verify và không chạy Verify song song với upload trong phần trình diễn.
 - Chạy một ảnh synthetic smoke trước phần demo. Nếu gặp 429, dừng request mới, giữ evidence/video dự phòng và dùng human-review fail-safe; không spam retry.
 - Key mới không giải quyết upstream capacity và không được dùng để né rate limit.
 

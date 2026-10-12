@@ -43,7 +43,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Kỳ vọng candidate hậu holdout: preflight trả `READY: 0 failures`, build 0 warning/error và 120/120 test pass. Warning do `-SkipHttp` là mong đợi; warning registry inspect chỉ là chẩn đoán và phải được đối chiếu bằng full `/healthz` sau khi app chạy. EF Core/dotnet-ef được pin ở 8.0.31. Chạy thêm `dotnet list AURA.csproj package --vulnerable --include-transitive` cho cả app và test project. Không nâng EF Core 8 lên 10 trước demo vì đó là thay đổi major/target framework, không phải bản vá tại chỗ. Offline gate không cần gọi API AI; sau deploy phải có một smoke contract v2 vì structured schema đã đổi.
+Kỳ vọng candidate hiện hành: preflight trả `READY: 0 failures`, build 0 warning/error và 161/161 test pass. Warning do `-SkipHttp` là mong đợi; warning registry inspect chỉ là chẩn đoán và phải được đối chiếu bằng full `/healthz` sau khi app chạy. EF Core/dotnet-ef được pin ở 8.0.31. Chạy thêm `dotnet list AURA.csproj package --vulnerable --include-transitive` cho cả app và test project. Không nâng EF Core 8 lên 10 trước demo vì đó là thay đổi major/target framework, không phải bản vá tại chỗ. Offline gate không cần gọi API AI; sau deploy phải có một smoke contract v2 vì structured schema đã đổi.
 
 3. Trong Visual Studio, mở `AURA.csproj` và chọn **Publish → Folder** hoặc **Publish → Web Deploy**. Target framework là `net8.0`, cấu hình `Release`.
 
@@ -71,7 +71,8 @@ Vision__MaxConcurrentRequests=1
 Vision__ProviderCooldownSeconds=120
 Verify__Enabled=true
 OpenRouter__ApiKey=<OPENROUTER_KEY_MỚI>
-OpenRouter__Model=qwen/qwen3-vl-8b-instruct
+OpenRouter__Model=qwen/qwen3.8-flash
+OpenRouter__ReasoningEffort=none
 ConnectionStrings__DefaultConnection=<SQL_SERVER_CONNECTION_STRING>
 Database__ApplyMigrationsOnStartup=true
 ReceiptStorage__Directory=App_Data/receipts
@@ -96,12 +97,12 @@ Sau migration đầu tiên chạy thành công, nên đổi `Database__ApplyMigr
 
 Thực hiện theo thứ tự để không tốn quota vô ích:
 
-1. Mở `https://<live-url>/healthz`, kỳ vọng HTTP 200, JSON `status: ok`, `databaseAvailable=true`, `databaseUpToDate=true`, `pendingMigrationCount=0` và `storageAvailable=true`. Endpoint không gọi AI provider nên vẫn cần ảnh smoke test riêng.
+1. Mở `https://<live-url>/healthz`, kỳ vọng HTTP 200, JSON `status: ok`, model `qwen/qwen3.8-flash`, `reasoningEffort=none`, `databaseAvailable=true`, `databaseUpToDate=true`, `pendingMigrationCount=0` và `storageAvailable=true`. Endpoint không gọi AI provider nên vẫn cần ảnh smoke test riêng.
 2. Mở trang chủ ở cửa sổ ẩn danh, kiểm CSS/JS/ba tab.
 3. Mở tab quản lý và lịch sử để xác nhận SQL Server/migration hoạt động.
 4. Upload một ảnh smoke tổng hợp; xác nhận HTTP `202`, audit `AI_QUEUED`, rồi trạng thái `COMPLETED/FAILED`. Refresh giữa lúc xử lý không được làm mất job.
 5. Mở lại ảnh từ lịch sử, recycle app pool rồi mở lại lần nữa để xác minh file tồn tại.
-6. Chỉ khi 5 bước trên đạt, chạy đúng một lượt Verify Harness và ghi thời điểm, 5 expected/actual, tổng latency và OpenRouter cost. Gói 15/30 ca dùng runner ngoài UI trong phiên benchmark riêng, không chạy trong deployment smoke.
+6. Chỉ khi 5 bước trên đạt, chạy đúng một lượt Verify Harness nếu rehearsal thật sự cần và ghi thời điểm, 5 expected/actual, tổng latency và OpenRouter cost. Candidate Qwen3.8 Flash đã có regression 15 receipt và concurrency 5/5; không chạy lại gói 15/30 trong deployment smoke để săn PASS.
 7. Đổi migration flag về `false`, recycle pool và kiểm `/healthz` lần cuối.
 
 ## 6. Xử lý lỗi thường gặp

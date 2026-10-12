@@ -1,5 +1,7 @@
 # Tiến độ hardening sau feedback Sprint 1
 
+> Addendum 12/10/2026: OpenRouter vẫn là gateway nhưng route primary đã chuyển sang Alibaba với model `qwen/qwen3.8-flash` và `reasoning=none`. Candidate đạt 15/15 post-holdout regression, 0 missed/over/system error, 20/20 upstream HTTP 200; burst 5 upload hoàn tất 5/5 với E2E P95 41.079 giây. Đây là regression hậu chỉnh, không phải blind holdout hoặc A/B chỉ thay model. Nội dung bên dưới được giữ như nhật ký Sprint 2 lịch sử.
+
 Ngày cập nhật: 01/10/2026
 
 ## Kết luận hiện tại

@@ -1,5 +1,7 @@
 # Quyết định demo, Live URL và self-hosted VLM — 02/10/2026
 
+> Addendum 12/10/2026: cấu hình primary hiện hành là `qwen/qwen3.8-flash` qua OpenRouter route Alibaba với `OpenRouter__ReasoningEffort=none`. Candidate đạt 15/15 post-holdout regression, 20/20 upstream HTTP 200 và 5/5 upload đồng thời với E2E P95 41.079 giây. Đây là hậu chỉnh, không thay thế official blind holdout. Các phân tích dưới đây được giữ làm lịch sử quyết định hạ tầng.
+
 ## Quyết định ngắn gọn
 
 1. **Demo Chung kết:** chạy localhost trên laptop cá nhân, OpenRouter là primary, fallback tắt. Đây là đường BTC đã xác nhận và là baseline có nhiều evidence nhất.

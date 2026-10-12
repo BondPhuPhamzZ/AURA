@@ -56,8 +56,9 @@ Baseline hosted:
 
 ```text
 Vision__Provider=OpenRouter
-OpenRouter__Model=qwen/qwen3-vl-8b-instruct
+OpenRouter__Model=qwen/qwen3.8-flash
 OpenRouter__MaxOutputTokens=4096
+OpenRouter__ReasoningEffort=none
 Vision__FallbackEnabled=false
 ```
 

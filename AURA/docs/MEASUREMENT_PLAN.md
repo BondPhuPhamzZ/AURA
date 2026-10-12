@@ -31,7 +31,7 @@ Tỷ lệ hóa đơn hoàn toàn hợp lệ nhưng bị hệ thống ném vào h
 - Chạy gói 15/30 bằng `tools/Invoke-ExtendedDatasetEvaluation.ps1`; runner lưu manifest hash, commit, provider config, expected/actual, field match, P50/P95 và error code vào `test_kit/results`.
 - Không dùng ảnh do generative AI tạo làm ground truth chính vì chữ/số có thể bị bịa. Dùng Python/Pillow với seed và manifest cho synthetic coverage; giữ hóa đơn thật đã ẩn danh làm holdout độc lập ngoài Git.
 
-## 7. So sánh OpenRouter 8B và Ollama 4B
+## 7. So sánh model/provider
 
 - Chạy cùng ảnh, policy, JSON Schema và expected result; ghi rõ provider, model/tag, context và cấu hình lượng tử hóa.
 - Báo schema success, exact match của amount/date/currency/identifier, missed-escalation, over-escalation, P50/P95 latency, RAM tối đa và chi phí trên hồ sơ hợp lệ.
@@ -43,3 +43,4 @@ Tỷ lệ hóa đơn hoàn toàn hợp lệ nhưng bị hệ thống ném vào h
 - Live post-policy gate ngày 12/10 không tạo accuracy mới: Verify gặp HTTP 429 ở TC-02; regression cách nhau 60 giây vẫn dừng ở BH-10 do `AI_RATE_LIMIT` sau 10/15 ca. Phần quan sát có 0 missed, 1 over BH-01 và 1 system error; xem [live post-policy validation](LIVE_POSTPOLICY_VALIDATION_2026-10-12.md). Không chạy nốt 5 ca để ghép thành một batch khác cửa sổ quota.
 - Test Kit v3 post-holdout chạy một lượt OpenRouter ngày 06/10 tại commit/hash đã khóa: 11/15 decision, 142/145 field, missed 2, over 2, system error 0, P50/P95 9,235/37,917 giây. Raw không sửa; v3.1 là revision mới sau phân tích mismatch và chỉ được đo sau publish. Xem [raw v3 report](REGRESSION_TEST_KIT_V3_LIVE_RESULT_2026-10-06.md).
 - Fallback regression cô lập ngày 02/10 chạy 1 fixture tổng hợp: primary lỗi `AI_NOT_CONFIGURED`, `ServedProvider=Ollama`, `FallbackUsed=true`, 0 validation issue, worker 83,649 giây và E2E 84,425 giây. Đây là functional evidence, không phải capacity/recovery benchmark; xem [fallback regression](FALLBACK_REGRESSION_2026-10-02.md).
+- Qwen3.8 Flash/Alibaba ngày 12/10 dùng cùng 15 receipt post-holdout đã khóa: 15/15, 0 missed/over/system error, field 30/30, P50/P95 10,807/26,687 giây. Năm upload đồng thời hoàn tất 5/5, P95 41,079 giây ở AI concurrency 1. So với 8B ngày 07/10 là so sánh tiền chỉnh/hậu chỉnh, không phải causal model-only A/B hay holdout mù. Reasoning mặc định từng dùng hết 4.096 output token và bị truncate; cấu hình được chấp nhận là `ReasoningEffort=none`. Xem [benchmark candidate](QWEN38_FLASH_BENCHMARK_2026-10-12.md).

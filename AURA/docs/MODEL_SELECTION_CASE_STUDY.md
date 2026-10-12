@@ -20,14 +20,15 @@ AURA cần đọc một ảnh hóa đơn/chứng từ và trả dữ kiện có 
 | Phương án | Điểm mạnh | Hạn chế | Quyết định |
 |---|---|---|---|
 | Qwen3-VL-4B-Instruct qua Ollama local | Không tính phí theo request; dữ liệu ở máy local; 16K synthetic regression ngày 12/10 đạt 15/15 decision, 0 missed/over/system error | Field 69/75; processing P50/P95 101,833/213,429 giây trên máy CPU/GPU split; chưa có capacity/endpoint production | **Fallback candidate; chưa bật auto-fallback** |
-| Qwen3-VL-8B-Instruct qua OpenRouter | Structured output; judge set đạt 15/15 quyết định, không missed escalation; P95 16,459 giây; concurrency 5 request hoàn tất 5/5 | 70/75 field; dữ liệu đi qua dịch vụ ngoài; phụ thuộc Internet, credit và provider | **Chọn làm demo primary** |
+| Qwen3-VL-8B-Instruct qua OpenRouter/Parasail | Structured output; judge set lịch sử đạt 15/15 và real regression không missed escalation | Endpoint chỉ còn Parasail tại thời điểm audit; live phát sinh 429 xen kẽ; real regression tiền chỉnh 11/15 | **Baseline/rollback, không còn primary** |
+| Qwen3.8 Flash qua OpenRouter/Alibaba, reasoning `none` | Hai Alibaba endpoints tại thời điểm đo; real regression 15/15, 0 missed/over/system error; năm upload E2E P95 41,079 giây | Dịch vụ ngoài; batch hậu chỉnh không phải blind A/B; reasoning mặc định làm JSON bị truncate | **Demo primary release candidate** |
 | Model vision cỡ rất lớn (ví dụ 100B+) | Năng lực tổng quát cao | Compute, giá và độ trễ không tương xứng tác vụ OCR; khó biện minh trong bối cảnh doanh nghiệp | Không chọn |
 
 ## 4. Quyết định kiến trúc
 
-Cấu hình mặc định vẫn là `Vision:Provider=OpenRouter` với `qwen/qwen3-vl-8b-instruct`. `ConfiguredVisionExtractor` cho phép đổi sang Ollama hoặc bật Ollama làm fallback có kiểm soát. `ReceiptExtractionContract` giữ cùng prompt, schema và parser; audit ghi provider thực sự phục vụ. Adapter local không đồng nghĩa model 4B đã đạt chất lượng trên dữ liệu thực.
+Cấu hình mặc định là `Vision:Provider=OpenRouter` với `qwen/qwen3.8-flash` và `OpenRouter:ReasoningEffort=none`. `ConfiguredVisionExtractor` cho phép đổi sang Ollama hoặc bật Ollama làm fallback có kiểm soát. `ReceiptExtractionContract` giữ cùng prompt, schema và parser; audit ghi provider thực sự phục vụ. Adapter local không đồng nghĩa model 4B đã đạt chất lượng trên dữ liệu thực.
 
-Không mô tả 8B hay 4B là “đã chính xác trong thực tế”. Benchmark lịch sử trên judge set 15 ca tổng hợp: OpenRouter đạt 15/15 quyết định và 70/75 field; Ollama 4B từng giảm còn 13/15 ở profile 8K sau evidence contract v2. Lượt 16K ngày 12/10 đạt 15/15 và 69/75 field, cho thấy failure trước đó có phần quan trọng từ context envelope, nhưng latency P95 213,429 giây và chưa có concurrency evidence. Safety gate vận hành tiếp tục ưu tiên OpenRouter; local model chỉ được bật fallback sau benchmark trên đúng endpoint GPU sẽ dùng.
+Không mô tả bất kỳ model nào là “đã chính xác trong thực tế”. Benchmark lịch sử trên judge set 15 ca tổng hợp: OpenRouter 8B đạt 15/15 quyết định và 70/75 field; Ollama 4B profile 16K đạt 15/15 và 69/75 field nhưng P95 213,429 giây. Candidate Qwen3.8 Flash đạt 15/15 receipt post-holdout và concurrency upload 5/5, song đây là regression hậu chỉnh chứ không phải blind A/B. Safety gate vận hành ưu tiên candidate Alibaba sau publish/health/smoke; local model chỉ được bật fallback sau benchmark trên đúng endpoint GPU sẽ dùng. Xem [`QWEN38_FLASH_BENCHMARK_2026-10-12.md`](QWEN38_FLASH_BENCHMARK_2026-10-12.md).
 
 ## 5. Bộ kiểm thử bàn giao
 
@@ -40,14 +41,14 @@ Không mô tả 8B hay 4B là “đã chính xác trong thực tế”. Benchmar
 ## 6. Cổng chấp nhận trước deploy
 
 1. Build sạch và toàn bộ automated tests đạt offline.
-2. Secret key không nằm trong Git/log; model secret trùng `qwen/qwen3-vl-8b-instruct`.
+2. Secret key không nằm trong Git/log; model config trùng `qwen/qwen3.8-flash` và reasoning effort là `none`.
 3. Một ảnh smoke trên môi trường cần đánh giá phải xác nhận JSON, preview, policy và lịch sử hoạt động; đối chiếu OpenRouter Activity khi chẩn đoán provider.
 4. Chạy một lượt Verify 5 ca sau smoke test; ghi lại expected/actual, latency, lỗi và chi phí thay vì chạy lặp để săn PASS.
 5. Nếu không đạt, giữ kết quả thật trong proposal, phân loại lỗi OCR/schema/policy/provider rồi mới điều chỉnh. Không sửa expected result để khớp output.
 
 ## 7. Lộ trình tối ưu tiếp theo
 
-- Giai đoạn 1: OpenRouter + Qwen3-VL-8B-Instruct là provider chính cho demo vì latency đã đo phù hợp hơn.
+- Giai đoạn 1: OpenRouter + Qwen3.8 Flash/Alibaba, reasoning `none`, là provider chính cho demo sau khi pass publish/health/smoke đúng revision.
 - Giai đoạn 2: Ollama local có thể làm fallback trên cùng laptop khi operator bật cờ; circuit breaker chỉ chuyển với lỗi hạ tầng, không chuyển với lỗi semantic/contract.
 - Giai đoạn 3: chỉ đổi provider mặc định sau benchmark tập độc lập và kế hoạch hạ tầng GPU phù hợp; hosted deployment cần Ollama chạy trên chính server hoặc endpoint HTTPS được bảo vệ.
 
@@ -56,6 +57,7 @@ Không mô tả 8B hay 4B là “đã chính xác trong thực tế”. Benchmar
 - Qwen3-VL chính thức và danh sách open weights 4B: https://github.com/QwenLM/Qwen3-VL
 - Model card Qwen3-VL-4B-Instruct: https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct
 - Endpoint Qwen3-VL-8B-Instruct trên OpenRouter: https://openrouter.ai/qwen/qwen3-vl-8b-instruct
+- Endpoint Qwen3.8 Flash trên OpenRouter: https://openrouter.ai/qwen/qwen3.8-flash
 - Structured Outputs của OpenRouter: https://openrouter.ai/docs/guides/features/structured-outputs
 - Ollama vision và structured outputs: https://docs.ollama.com/capabilities/vision và https://docs.ollama.com/capabilities/structured-outputs
 - Ollama Qwen3-VL tags: https://ollama.com/library/qwen3-vl/tags

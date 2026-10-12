@@ -1,6 +1,6 @@
 # AURA — Checklist nộp bài
 
-Cập nhật: 12/10/2026. Trạng thái lịch sử nằm tại `docs/CURRENT_PROJECT_STATUS_2026-10-07.md`; forensic hardening mới nhất ở `docs/REAL_RECEIPT_OVER_ESCALATION_ANALYSIS_2026-10-12.md`. Không điền số liệu hoặc URL chưa được xác minh. Hạn khóa link nộp do đội ghi nhận là 14/10/2026; kiểm link và rehearsal ngày 13/10.
+Cập nhật: 12/10/2026. Trạng thái hiện hành nằm tại `docs/CURRENT_PROJECT_STATUS_2026-10-12.md`; benchmark model mới ở `docs/QWEN38_FLASH_BENCHMARK_2026-10-12.md`. Không điền số liệu hoặc URL chưa được xác minh. Hạn khóa link nộp do đội ghi nhận là 14/10/2026; kiểm link và rehearsal ngày 13/10.
 
 ## 1. Hạng mục bàn giao
 
@@ -20,7 +20,7 @@ Cập nhật: 12/10/2026. Trạng thái lịch sử nằm tại `docs/CURRENT_PR
 - `README.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_AND_INTEGRATION_REPORT.md`.
 - `docs/`: Build Log nguồn, deployment, runbook, test cases, model selection, measurement plan.
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
-- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; ứng viên capacity-hardening hiện hành đạt 159/159 code test và Release build sạch, còn số receipt thật công khai vẫn phải giữ đúng ranh giới regression/holdout. Không biến các số fixture hoặc batch bị HTTP 429 thành production accuracy claim.
+- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; candidate Qwen3.8 Flash/Alibaba hiện hành đạt 161/161 test, Release build sạch, 15/15 post-holdout regression và burst 5/5. Vẫn phải giữ đúng ranh giới regression/holdout và không biến phép đo một process thành production SLA.
 - `submission/AURA_BUILD_LOG.docx`: một trang.
 - `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.
 - 5 ảnh Verify trong `wwwroot/test_data/images`, manifest Verify và gói 15 ca BGK.
@@ -64,4 +64,5 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 20. Live post-policy gate 12/10 tại `2b75f3f`: health/security/upload-negative/UI và offline pass; Verify và regression tuần tự đều ghi nhận HTTP 429. Regression dừng đúng tại BH-10 sau 10/15; không công bố 8/10 như accuracy. Demo dùng một operator, không chạy Verify song song upload và có video/evidence dự phòng.
 21. OpenRouter Upstream Logs xác nhận lỗi 429 đến từ provider Parasail và key vẫn còn budget/credit. Candidate capacity-hardening thêm shared AI gate, provider cooldown, dừng worker drain và sanitized diagnostics; offline đạt 159/159, Release 0 warning/error. Chưa gọi đây là live pass trước khi publish/recycle/smoke; xem `docs/PROVIDER_CAPACITY_HARDENING_2026-10-12.md`.
 22. Ollama 4B digest `ee4b975b58c1` dùng context 16K/output 4K, `Think=false`, fallback tắt đã đạt 15/15 Test Kit v2 synthetic với 0 missed/over/system error và field 69/75. Evidence được phục hồi không replay qua durable queue và SHA-256; xem `docs/OLLAMA_4B_16K_RECOVERY_BENCHMARK_2026-10-12.md`. Không đổi primary/fallback production từ kết quả synthetic này.
-23. Audit source/folder và đối chiếu feedback Sprint 1 ngày 12/10 xác nhận global upload gate đã được thay bằng durable SQL queue; hai semaphore còn lại chỉ bảo vệ Verify trùng và giới hạn capacity AI theo process. P1 còn mở là upstream 429/reliability, rehearsal và đường GPU đủ nhanh; xem `docs/PROJECT_AUDIT_AND_FEEDBACK_CLOSURE_2026-10-12.md`.
+23. Audit source/folder và đối chiếu feedback Sprint 1 ngày 12/10 xác nhận global upload gate đã được thay bằng durable SQL queue; hai semaphore còn lại chỉ bảo vệ Verify trùng và giới hạn capacity AI theo process; xem `docs/PROJECT_AUDIT_AND_FEEDBACK_CLOSURE_2026-10-12.md`.
+24. Candidate `qwen/qwen3.8-flash`/Alibaba, reasoning `none`, fallback tắt: real-receipt post-holdout 15/15, 0 missed/over/system error, field 30/30; concurrency upload 5/5, E2E P95 41,079 giây. Không gọi đây là blind accuracy hoặc production SLA. Raw failure reasoning-default và toàn bộ evidence vẫn được giữ ngoài Git.

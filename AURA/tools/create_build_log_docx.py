@@ -156,7 +156,7 @@ set_run_font(run, size=9.4)
 add_heading(document, "1 Công cụ và phạm vi sử dụng")
 add_body(
     document,
-    "Qwen3-VL-8B-Instruct qua OpenRouter đọc một ảnh JPG hoặc PNG và trả dữ kiện theo JSON Schema. "
+    "Qwen3.8 Flash qua OpenRouter, route Alibaba và reasoning none, đọc một ảnh JPG hoặc PNG rồi trả dữ kiện theo JSON Schema. "
     "Codex hỗ trợ truy route, refactor, viết test và đồng bộ tài liệu. Mọi thay đổi chỉ được giữ sau build, test và kiểm tra UI.",
 )
 
@@ -206,8 +206,8 @@ evidence = document.add_table(rows=2, cols=4)
 evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
-headers = ("Build", "Test offline", "Dependency", "Evaluator")
-values = ("0 warning 0 error", "159 trên 159 pass", "EF model sạch", "Live gate có 429")
+headers = ("Build", "Test offline", "Regression", "Burst 5 ca")
+values = ("0 warning 0 error", "161 trên 161 pass", "15 trên 15", "P95 41.079 giây")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -234,7 +234,9 @@ add_body(
     document,
     "Kết luận đo lường: Official holdout 15 hóa đơn thật, khóa nhãn và SHA-256 trước request đầu tiên, đạt raw 10 trên 15 "
     "quyết định; review phát hiện một nhãn người sai nên adjusted view là 11 trên 15. Có một missed escalation, hai "
-    "over-escalation sau adjudication và không có system error. Đây là mẫu nhỏ, không phải accuracy production.",
+    "over-escalation sau adjudication và không có system error. Candidate hậu chỉnh Qwen3.8 Flash đạt 15 trên 15, 0 missed, "
+    "0 over, 0 system error và 20 trên 20 upstream HTTP 200. Đây là regression hậu chỉnh, không phải blind holdout hay "
+    "causal model-only A/B; mẫu nhỏ này không phải accuracy production.",
     bold_lead="Kết luận đo lường: ",
 )
 
@@ -261,7 +263,7 @@ add_body(
 add_heading(document, "5 Quyết định kiến trúc và phần cắt giảm")
 add_bullet(document, "Tách extraction, semantic validation và PolicyDecisionEngine để đổi model mà không đổi luật duyệt.")
 add_bullet(document, "Giữ Official Verify đúng năm ca; evaluator 15/30 nằm ngoài UI và đi qua cùng production endpoint.")
-add_bullet(document, "Chọn OpenRouter làm primary; Ollama 4B 16K chỉ fallback local có giám sát vì synthetic đạt 15/15 nhưng P95 khoảng 213 giây.")
+add_bullet(document, "Chọn Qwen3.8 Flash qua Alibaba làm primary; reasoning none tránh tiêu hết output budget. Ollama 4B 16K chỉ fallback local có giám sát vì P95 khoảng 213 giây.")
 add_bullet(document, "Hoãn PDF nhiều trang, authentication, tax lookup, antivirus và object storage sang scope production.")
 add_bullet(document, "Giữ EF Core 8.0.31: NuGet không báo advisory; không nâng major .NET/EF sát ngày chốt.")
 
@@ -269,9 +271,9 @@ add_heading(document, "6 Bài học và bước tiếp theo")
 add_body(
     document,
     "Live baseline đã pass health, security gồm hai upload guard, Verify 5 trên 5 và workflow FACT chuyển quản lý, duyệt rồi hoàn tác; "
-    "desktop, mobile 390x844 và điện thoại thật 4G/5G đều đạt. Post-holdout regression ngày 07/10 trên 15 receipt đạt 11 trên 15, "
-    "0 missed, 4 over và 0 system error; đây không phải accuracy production. Candidate đạt 159 test. Live capacity gate 12/10 "
-    "gặp HTTP 429 dù chạy tuần tự, nên demo dùng một operator và evidence/video dự phòng; còn ba user session và rehearsal. "
+    "desktop, mobile 390x844 và điện thoại thật 4G/5G đều đạt. Candidate ngày 12/10 trên cùng 15 receipt đạt 15 trên 15, "
+    "0 missed, 0 over và 0 system error; 20 trên 20 upstream request HTTP 200. Burst 5 upload đồng thời hoàn tất 5 trên 5, "
+    "E2E P95 41.079 giây với AI concurrency bằng 1. Candidate đạt 161 test; còn ba user session và rehearsal. "
     "Dữ liệu cá nhân thật không được đưa vào Git.",
 )
 

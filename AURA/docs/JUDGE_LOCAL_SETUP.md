@@ -8,7 +8,7 @@ Tài liệu này mô tả baseline OpenRouter đơn giản nhất. BGK không c�
 - Git.
 - .NET 8 SDK. Baseline khuyến nghị 8.0.425.
 - SQL Server Express LocalDB. Visual Studio có workload ASP.NET thường đã cài LocalDB.
-- OpenRouter API key có quyền gọi `qwen/qwen3-vl-8b-instruct`.
+- OpenRouter API key có quyền gọi `qwen/qwen3.8-flash`.
 - Trình duyệt Chrome hoặc Edge.
 
 Kiểm tra nhanh:
@@ -54,7 +54,8 @@ Thay `OPENROUTER_EVALUATION_KEY` bằng key được gửi riêng:
 ```powershell
 dotnet user-secrets set "Vision:Provider" "OpenRouter"
 dotnet user-secrets set "OpenRouter:ApiKey" "OPENROUTER_EVALUATION_KEY"
-dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
+dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3.8-flash"
+dotnet user-secrets set "OpenRouter:ReasoningEffort" "none"
 dotnet user-secrets set "Vision:FallbackEnabled" "false"
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\mssqllocaldb;Database=AuraDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0"
 ```
@@ -129,7 +130,7 @@ Kết quả bắt buộc cho live demo:
 - `pendingMigrationCount=0`;
 - `storageAvailable=true`;
 - provider `OpenRouter`;
-- model `qwen/qwen3-vl-8b-instruct`;
+- model `qwen/qwen3.8-flash` và `reasoningEffort=none`;
 - `fallbackEnabled=false`.
 
 Có thể kiểm độc lập:

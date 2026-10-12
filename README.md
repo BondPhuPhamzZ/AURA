@@ -28,7 +28,7 @@ Upload JPG/PNG receipt
 
 Key capabilities:
 
-- OpenRouter/Qwen3-VL-8B is the default receipt reader; Ollama/Qwen3-VL-4B is optional.
+- OpenRouter/Qwen3.8 Flash on Alibaba, with reasoning disabled for deterministic extraction, is the default receipt reader; Ollama/Qwen3-VL-4B is an optional local contingency.
 - SQL-backed processing survives refresh/restart and avoids blocking the upload request.
 - The model extracts structured facts; it never has final approval authority.
 - Missing, contradictory, or unreadable evidence fails safe to human review.
@@ -40,9 +40,10 @@ Key capabilities:
 Last full post-publish validation: 7 October 2026. Public home and `/healthz` were rechecked on 11 October 2026.
 
 - Build: **0 warnings, 0 errors**.
-- Automated tests after holdout/live hardening: **142/142 passed**; they do not call the paid AI API.
+- Automated tests after Alibaba/Qwen3.8 Flash hardening: **161/161 passed**; they do not call the paid AI API.
 - Official Verify Harness: **5/5** with the expected 3 approve / 2 escalate split.
 - Historical locked synthetic judge set: OpenRouter **15/15 decisions**, Ollama **14/15**. The post-contract OpenRouter v2 run reached **14/15** and still missed TK-12; the physical-ink-loss v3.1 safety set reached **13/15** with zero missed escalations and zero system errors.
+- The 12 October Qwen3.8 Flash candidate completed the same 15 locked post-holdout real receipts at **15/15**, with zero missed/over/system errors and 30/30 critical fields. Five concurrent uploads completed with 41.079-second P95 at AI concurrency 1. This is post-adjustment regression evidence, not a new blind holdout or production SLA.
 - SmartASP post-holdout gate: home and health 5/5, DB/storage/migration, upload/security-negative checks, browser mobile UI and Verify OpenRouter 5/5 passed. Human workflow also passed 2/2 with synthetic fixtures: policy reject/undo and fact approve/undo.
 - Live concurrency: **2/2 + 5/5 completed**; end-to-end P95 **20.941 / 23.290 seconds**. The accepted timer includes antiforgery GET/setup/network, so it is not a pure POST SLO.
 - The one-time locked real holdout produced **10/15 raw decision matches** (one missed escalation, three over-escalations, zero system errors). A post-hoc review found one locked label error, giving an adjudicated analysis of 11/15 without changing raw evidence. The 28/30 field score measured only currency and total, not full extraction accuracy.
@@ -81,7 +82,8 @@ Replace `OPENROUTER_EVALUATION_KEY` with the evaluator key. User Secrets stores 
 
 ```powershell
 dotnet user-secrets set "OpenRouter:ApiKey" "OPENROUTER_EVALUATION_KEY"
-dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
+dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3.8-flash"
+dotnet user-secrets set "OpenRouter:ReasoningEffort" "none"
 dotnet user-secrets set "Vision:Provider" "OpenRouter"
 dotnet user-secrets set "Vision:FallbackEnabled" "false"
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\mssqllocaldb;Database=AuraDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0"

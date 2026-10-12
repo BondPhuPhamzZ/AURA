@@ -1,8 +1,10 @@
 # Build Log - Sprint 1 và hardening Sprint 2
 
+> Candidate Alibaba/Qwen3.8 Flash ngày 12/10 bổ sung `OpenRouter:ReasoningEffort` và khóa `none` cho extraction. Raw smoke đầu giữ nguyên lỗi `AI_RESPONSE_TRUNCATED` sau 114.329 ms do reasoning dùng hết 4.096 completion token dù upstream trả 200; smoke sau fix pass 11.053 ms. Một lượt 15 receipt thật post-holdout trên manifest SHA-256 `850479...FB0` đạt **15/15 decision, 0 missed, 0 over, 0 system error, 30/30 field**, P50/P95 10.807/26.687 ms; 20/20 upstream calls HTTP 200. Năm upload đồng thời hoàn tất 5/5 với accepted P95 469 ms và E2E P95 41.079 ms ở concurrency AI 1. Source default đổi sang `qwen/qwen3.8-flash`; fallback vẫn tắt. Đây là regression hậu chỉnh, không thay official blind raw. Xem `QWEN38_FLASH_BENCHMARK_2026-10-12.md`.
+
 ## Công cụ AI và cách sử dụng
 
-- **Qwen3-VL-8B-Instruct qua OpenRouter:** đọc một ảnh hóa đơn và trả dữ kiện theo JSON Schema chặt. Qwen không được quyền tự quyết định duyệt/chuyển tiếp.
+- **Qwen3.8 Flash qua OpenRouter/Alibaba, reasoning none:** đọc một ảnh hóa đơn và trả dữ kiện theo JSON Schema chặt. Qwen không được quyền tự quyết định duyệt/chuyển tiếp. Qwen3-VL-8B-Instruct/Parasail được giữ làm baseline lịch sử và đường rollback.
 - **Codex:** đọc code/tài liệu, truy nguyên route và JavaScript, hỗ trợ refactor, viết test, build và smoke-test. Mọi thay đổi được chia thành commit nhỏ để giữ lịch sử phát triển.
 
 ## Điều mang lại hiệu quả
@@ -10,7 +12,7 @@
 - Tách extraction khỏi deterministic policy giúp kết quả giải thích và unit-test được.
 - Judge set mở rộng ngày 29/09 chạy đúng upload endpoint với fallback tắt. OpenRouter/Qwen3-VL-8B đạt 15/15 quyết định, 70/75 field và P50/P95 3,614/16,459 giây. Ollama/Qwen3-VL-4B đạt 14/15 quyết định, 73/75 field và 52,238/58,318 giây; model bỏ sót escalation TK-12. Baseline lặp trên 5 fixture ngày 27/09 được giữ như bằng chứng lịch sử, không dùng thay accuracy thực tế.
 - Concurrent smoke lịch sử ngày 29/09 tiếp nhận và hoàn tất 5/5 request, HTTP accepted P95 93 ms và end-to-end P95 17,072 giây. Concurrent smoke sau guard ngày 02/10 tiếp tục hoàn tất 5/5, accepted P95 530 ms và end-to-end P95 39,380 giây.
-- 159 automated tests ở candidate hiện tại bao phủ policy/workflow/audit, hợp đồng OpenRouter/Ollama, semantic validation/repair, evidence contract v2, định danh/money role, timezone Audit, fallback/circuit breaker, shared AI capacity gate, provider cooldown/diagnostics, backoff worker, tính toàn vẹn Test Kit v2/v3/v3.1, OCR-loss policy disambiguation, executable R3-12 entertainment ground truth, UTF-8 runner guard, UI contract và negative controls cho duplicate identifier/summary pseudo-line/printed-total corroboration. Các mốc 93/102/108/120/122/124/129/133/140/142/149 bên dưới được giữ làm lịch sử hardening.
+- 161 automated tests ở candidate hiện tại bao phủ policy/workflow/audit, hợp đồng OpenRouter/Ollama, reasoning configuration, semantic validation/repair, evidence contract v2, định danh/money role, timezone Audit, fallback/circuit breaker, shared AI capacity gate, provider cooldown/diagnostics, backoff worker, tính toàn vẹn Test Kit v2/v3/v3.1, OCR-loss policy disambiguation, executable R3-12 entertainment ground truth, UTF-8 runner guard, UI contract và negative controls cho duplicate identifier/summary pseudo-line/printed-total corroboration. Các mốc 93/102/108/120/122/124/129/133/140/142/149/159 bên dưới được giữ làm lịch sử hardening.
 - EF Core SQL Server/Tools và local `dotnet-ef` đã vá lên 8.0.31 trong cùng major. Checkpoint hardening 30/09 đạt 93/93 test; postfix live hardening đạt 102/102 và candidate UI ngày 04/10 đạt 108/108. NuGet không báo package vulnerable và EF không có pending model change.
 - Structured Output giảm parsing lỗi so với JSON tự do.
 - Backend phát hiện JSON đúng schema nhưng sai nghĩa như `295.199 đ -> 295.199`, `ECOMMERCE -> RIDE_HAILING`, hoặc số biên nhận bị gán vào `orderId`; model được đọc lại đúng một lần. Repair không nhận claimed amount và kết quả còn mâu thuẫn luôn đi `ESCALATE_FACT`.

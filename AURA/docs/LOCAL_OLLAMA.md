@@ -143,7 +143,8 @@ Không cần xóa Ollama hoặc tải lại database:
 ```powershell
 dotnet user-secrets set "Vision:Provider" "OpenRouter"
 dotnet user-secrets set "OpenRouter:ApiKey" "YOUR_PRIVATE_KEY"
-dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3-vl-8b-instruct"
+dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3.8-flash"
+dotnet user-secrets set "OpenRouter:ReasoningEffort" "none"
 dotnet run
 ```
 

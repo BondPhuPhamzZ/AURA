@@ -1,5 +1,7 @@
 # OpenRouter Verify latency and concurrency benchmark — 12/10/2026
 
+> **Addendum:** Báo cáo này là evidence lịch sử của `qwen/qwen3-vl-8b-instruct`/Parasail. Candidate mới `qwen/qwen3.8-flash`/Alibaba, reasoning `none`, đã hoàn tất năm upload đồng thời 5/5 với E2E P95 41,079 giây và không có 429 trong batch 15 receipt. Hai phép đo khác luồng (Verify gate so với durable upload queue), nên không ghi đè raw ở đây; xem `QWEN38_FLASH_BENCHMARK_2026-10-12.md`.
+
 ## Kết luận
 
 Live AURA **đã bảo vệ đúng khi 5 người cùng bấm Verify**, nhưng OpenRouter hiện **chưa đạt reliability gate cho demo 5 ca**:

@@ -1,5 +1,7 @@
 # AURA project audit and Sprint 1 feedback closure — 12/10/2026
 
+> **Addendum cùng ngày:** Candidate Qwen3.8 Flash/Alibaba với reasoning `none` đã pass real-receipt post-holdout 15/15, 0 missed/over/system error và concurrency upload 5/5 với E2E P95 41,079 giây. Vì vậy P1 “provider/reliability dưới 90 giây” đã có evidence pass cho candidate trên một process; các mô tả 429/Parasail bên dưới vẫn là forensic history của model 8B cũ. Source default đã đổi, còn Live URL phải publish/recycle/health/smoke trước khi đóng cổng deploy. Xem `QWEN38_FLASH_BENCHMARK_2026-10-12.md`.
+
 ## Kết luận điều hành
 
 Source hiện tại **không còn lỗi kiến trúc P1 “người thứ hai upload nhận HTTP 409”** được nêu ở Sprint 1. Upload kiểm file, lưu ảnh và record `PENDING`, ghi audit `AI_QUEUED`, trả HTTP 202 rồi để `ReceiptProcessingWorker` claim job từ SQL bằng atomic update và lease. Nhiều upload có thể được nhận nhanh; AI vẫn xử lý có kiểm soát theo capacity.
@@ -8,7 +10,7 @@ Không được đồng nhất ba khái niệm sau:
 
 1. **Năm upload đồng thời**: năm request được nhận HTTP 202 và xếp hàng; đây là điều các smoke cũ 2/5 request đã chứng minh.
 2. **Năm inference đồng thời**: không phải mục tiêu hiện tại; `Vision:MaxConcurrentRequests=1` chủ động giới hạn một lời gọi AI để tránh bão 429/VRAM.
-3. **Một Verify batch gồm năm ca dưới 90 giây**: là gate riêng. OpenRouter ngày 12/10 mới đạt 4/5 rồi 2/5 do upstream 429; Ollama 4B trên laptop quá chậm. Gate này chưa pass.
+3. **Một batch năm ca dưới 90 giây**: candidate Qwen3.8 Flash/Alibaba đã hoàn tất burst năm upload 5/5 với E2E P95 41,079 giây và AI concurrency 1. Verify UI cũ trên 8B/Parasail chỉ đạt 4/5 rồi 2/5 do upstream 429; hai phép đo khác cơ chế admission nên phải báo riêng, không gộp thành production SLA.
 
 Không có P0 logic tái hiện được trong lần audit. Trạng thái đúng là **supervised demo candidate**, không phải production SLA.
 
