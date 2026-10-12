@@ -2,7 +2,7 @@
 
 ## Kết luận điều hành
 
-AURA đang ở trạng thái **supervised demo candidate**, chưa phải production/accuracy-ready. Source hiện hành là `c147e1915ae7e6deab26a5eea1b4402c4e6cdd46`; production health sau publish/recycle đã trả `ok`, database/storage/migration đều đạt và capacity guard hiển thị concurrency 1, cooldown 120 giây, fallback tắt.
+AURA đang ở trạng thái **supervised demo candidate**, chưa phải production/accuracy-ready. Runtime/policy baseline là `c147e1915ae7e6deab26a5eea1b4402c4e6cdd46`; checkpoint hiện hành chỉ đồng bộ default Ollama và tài liệu, không đổi pipeline/policy/schema. Production health sau publish/recycle đã trả `ok`, database/storage/migration đều đạt và capacity guard hiển thị concurrency 1, cooldown 120 giây, fallback tắt.
 
 Hai rủi ro còn mở không phải lỗi policy C#:
 
@@ -28,14 +28,14 @@ Evidence Ollama nằm ngoài Git tại `demo_evidence/27_local_ollama_4b_postpol
 
 - Primary: `OpenRouter` / `qwen/qwen3-vl-8b-instruct`.
 - Hosted fallback: `false`.
-- Local fallback candidate: `qwen3-vl:4b-instruct` digest `ee4b975b58c1`, context 16384, output 4096, `Think=false`, concurrency 1.
+- Local fallback có điều kiện: `qwen3-vl:4b-instruct` digest `ee4b975b58c1`, context 16384, output 4096, timeout 600 giây, keep-alive 30 phút, `Think=false`, concurrency 1. Chỉ bật khi AURA và Ollama cùng laptop hoặc có endpoint riêng được bảo vệ; xem `COMPETITION_FAILOVER_AND_429_STRATEGY_2026-10-12.md`.
 - Không chuyển sang thinking digest trước hạn nộp; thinking phải có benchmark riêng và không được gộp với instruct baseline.
 - Không public port Ollama 11434. Remote GPU cần private network hoặc TLS + auth + rate limit; app hiện chưa có bearer header riêng cho Ollama.
 
 ## Việc còn lại trước freeze/nộp
 
 1. Không chạy thêm batch provider dài chỉ để săn PASS; giữ video/evidence đã thu và chạy một smoke nhỏ khi thật sự cần xác nhận môi trường.
-2. Quay video/rehearsal bằng OpenRouter primary, một operator, không chạy Verify song song upload; có ảnh/video dự phòng nếu upstream 429.
+2. Quay video/rehearsal bằng OpenRouter primary, một operator, không chạy Verify song song upload; có ảnh/video dự phòng nếu upstream 429. Local contingency có thể bật Ollama fallback sau one-image smoke, nhưng public SmarterASP tiếp tục để fallback tắt.
 3. Chỉ benchmark GPU BTC tiếp khi endpoint ổn định và có thời gian: gate TK-02/TK-12/TK-30, full 15 serial, rồi concurrency 2. Không dùng receipt thật trên máy mượn.
 4. Giữ 8–10 receipt mới unseen: khóa ground truth/hash trước request đầu tiên và chỉ chạy official mini-holdout khi code/policy đã freeze. Không điều chỉnh nhãn sau output.
 5. Chỉ sửa code nếu có P0 tái hiện được. Các thay đổi tài liệu/evidence không yêu cầu publish lại ứng dụng.

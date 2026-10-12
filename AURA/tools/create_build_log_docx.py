@@ -207,7 +207,7 @@ evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
 headers = ("Build", "Test offline", "Dependency", "Evaluator")
-values = ("0 warning 0 error", "149 trên 149 pass", "EF model sạch", "Live gate có 429")
+values = ("0 warning 0 error", "159 trên 159 pass", "EF model sạch", "Live gate có 429")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -261,7 +261,7 @@ add_body(
 add_heading(document, "5 Quyết định kiến trúc và phần cắt giảm")
 add_bullet(document, "Tách extraction, semantic validation và PolicyDecisionEngine để đổi model mà không đổi luật duyệt.")
 add_bullet(document, "Giữ Official Verify đúng năm ca; evaluator 15/30 nằm ngoài UI và đi qua cùng production endpoint.")
-add_bullet(document, "Chọn OpenRouter làm primary; giữ Ollama cho offline/manual vì còn missed escalation và chậm trên RTX 3050 4 GB.")
+add_bullet(document, "Chọn OpenRouter làm primary; Ollama 4B 16K chỉ fallback local có giám sát vì synthetic đạt 15/15 nhưng P95 khoảng 213 giây.")
 add_bullet(document, "Hoãn PDF nhiều trang, authentication, tax lookup, antivirus và object storage sang scope production.")
 add_bullet(document, "Giữ EF Core 8.0.31: NuGet không báo advisory; không nâng major .NET/EF sát ngày chốt.")
 
@@ -270,7 +270,7 @@ add_body(
     document,
     "Live baseline đã pass health, security gồm hai upload guard, Verify 5 trên 5 và workflow FACT chuyển quản lý, duyệt rồi hoàn tác; "
     "desktop, mobile 390x844 và điện thoại thật 4G/5G đều đạt. Post-holdout regression ngày 07/10 trên 15 receipt đạt 11 trên 15, "
-    "0 missed, 4 over và 0 system error; đây không phải accuracy production. Candidate đạt 149 test. Live capacity gate 12/10 "
+    "0 missed, 4 over và 0 system error; đây không phải accuracy production. Candidate đạt 159 test. Live capacity gate 12/10 "
     "gặp HTTP 429 dù chạy tuần tự, nên demo dùng một operator và evidence/video dự phòng; còn ba user session và rehearsal. "
     "Dữ liệu cá nhân thật không được đưa vào Git.",
 )

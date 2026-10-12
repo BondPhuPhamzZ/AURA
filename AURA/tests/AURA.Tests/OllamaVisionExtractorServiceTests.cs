@@ -37,10 +37,10 @@ public sealed class OllamaVisionExtractorServiceTests
             Assert.Equal("qwen3-vl:4b-instruct", body.GetProperty("model").GetString());
             Assert.False(body.GetProperty("stream").GetBoolean());
             Assert.False(body.GetProperty("think").GetBoolean());
-            Assert.Equal("5m", body.GetProperty("keep_alive").GetString());
+            Assert.Equal("30m", body.GetProperty("keep_alive").GetString());
             Assert.False(body.GetProperty("format").GetProperty("additionalProperties").GetBoolean());
-            Assert.Equal(8192, body.GetProperty("options").GetProperty("num_ctx").GetInt32());
-            Assert.Equal(2048, body.GetProperty("options").GetProperty("num_predict").GetInt32());
+            Assert.Equal(16384, body.GetProperty("options").GetProperty("num_ctx").GetInt32());
+            Assert.Equal(4096, body.GetProperty("options").GetProperty("num_predict").GetInt32());
             Assert.NotEmpty(body.GetProperty("messages")[1].GetProperty("images")[0].GetString()!);
         }
         finally

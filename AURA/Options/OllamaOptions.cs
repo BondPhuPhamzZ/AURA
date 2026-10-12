@@ -19,16 +19,16 @@ public sealed class OllamaOptions
     public string PolicyPath { get; set; } = "BUSINESS_RULES.md";
 
     [Range(30, 600)]
-    public int TimeoutSeconds { get; set; } = 180;
+    public int TimeoutSeconds { get; set; } = 600;
 
     [Range(512, 8192)]
-    public int MaxOutputTokens { get; set; } = 2048;
+    public int MaxOutputTokens { get; set; } = 4096;
 
     [Range(2048, 32768)]
-    public int ContextTokens { get; set; } = 8192;
+    public int ContextTokens { get; set; } = 16384;
 
     [Required]
-    public string KeepAlive { get; set; } = "5m";
+    public string KeepAlive { get; set; } = "30m";
 
     public bool Think { get; set; } = false;
 }

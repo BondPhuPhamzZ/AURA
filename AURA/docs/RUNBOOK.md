@@ -78,7 +78,7 @@ Test Kit v3/v3.1 là regression namespace riêng, không thay Verify/v2. Tái t�
 
 Sau thay đổi contract giảm giá và postfix live fix, làm theo cổng `docs/LIVE_POSTFIX_INCIDENT_2026-10-01.md`. Không reset database và không chạy migration vì facts vẫn nằm trong JSON hiện có; restart queue phải dùng chính DB cũ để chứng minh độ bền.
 
-Sau official holdout 06/10, extraction mới dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Candidate hiện tại còn chuyển timestamp Audit từ UTC sang giờ Việt Nam rõ ràng, không phụ thuộc timezone host. Trước publish phải đạt Release build sạch, 149/149 test và `dotnet ef migrations has-pending-model-changes` trả không có thay đổi. Thứ tự SmartASP an toàn: backup/kiểm 22 biến → recycle ngay trước publish để nhả file lock → Visual Studio Web Deploy Release → chờ `Publish succeeded` → recycle lại → đợi 10–30 giây → `/healthz` phải HTTP 200, `status=ok`, database/storage true và pending migration 0. Sau đó chạy Verify một lượt và đối chiếu giờ Audit với giờ Việt Nam. Không bật migration startup hoặc fallback.
+Sau official holdout 06/10, extraction mới dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Candidate hiện tại còn chuyển timestamp Audit từ UTC sang giờ Việt Nam rõ ràng, không phụ thuộc timezone host. Trước publish phải đạt Release build sạch, 159/159 test và `dotnet ef migrations has-pending-model-changes` trả không có thay đổi. Thứ tự SmartASP an toàn: backup/kiểm 22 biến → recycle ngay trước publish để nhả file lock → Visual Studio Web Deploy Release → chờ `Publish succeeded` → recycle lại → đợi 10–30 giây → `/healthz` phải HTTP 200, `status=ok`, database/storage true và pending migration 0. Sau đó chạy Verify một lượt và đối chiếu giờ Audit với giờ Việt Nam. Không bật migration startup hoặc fallback.
 
 Live gate hậu contract v2 phải dùng request mới, không gọi lại 15 ảnh là “blind”: (1) receipt có giờ `HH:mm:ss` + bia phải `ESCALATE_POLICY`; (2) receipt rõ, dòng tổng in đủ phải giữ `PRINTED_FINAL_TOTAL` và AUTO khi các điều kiện khác đạt; (3) ảnh có giá trị Total bị cắt phải FACT dù subtotal/items cộng được; (4) `04-10-26` phải canonicalize thành 2026-10-04; (5) Winmart có PTT + Mã CQT phải tách receipt/tax-authority; (6) money-role CoopSmile không được dùng cash/change/VAT làm total/discount. Lưu raw status/facts/audit và timestamp. Nếu model/provider chưa tuân schema v2, kết quả phải `ESCALATE_SYSTEM_ERROR`/`ESCALATE_FACT`, không rollback gate để lấy AUTO.
 
@@ -112,7 +112,7 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 
 - Chọn bằng `Vision:Provider=Ollama`; quay lại baseline bằng `Vision:Provider=OpenRouter`.
 - Model mặc định local là `qwen3-vl:4b-instruct`; một request tại một thời điểm. Contract hiện hành cần context 16384, output 4096 và timeout benchmark 600 giây: batch 8K ngày 12/10 có 10/15 response truncated, còn 16K hoàn tất 15/15 nhưng P95 processing 213,429 giây.
-- Fallback mặc định tắt để benchmark không trộn provider. Khi demo cần đường dự phòng, bật `Vision:FallbackEnabled=true`, giữ `Vision:Provider=OpenRouter` và đặt `Vision:FallbackProvider=Ollama` sau khi smoke Ollama.
+- Fallback mặc định tắt để benchmark không trộn provider. Khi demo local cần đường dự phòng, bật `Vision:FallbackEnabled=true`, giữ `Vision:Provider=OpenRouter` và đặt `Vision:FallbackProvider=Ollama` sau khi smoke Ollama. Không bật cấu hình loopback này trên SmarterASP.
 - Fallback chỉ chạy một lần cho lỗi hạ tầng đủ điều kiện. Lỗi schema, semantic, truncated response hoặc invalid request vẫn chuyển kiểm tra thủ công.
 - Sau JSON Schema, backend kiểm tra ngữ nghĩa tiền VND, loại chứng từ và các identifier. Dữ kiện mâu thuẫn được đọc lại đúng một lần; vẫn sai thì chuyển `ESCALATE_FACT`, không tự đoán hoặc tự nhân số tiền.
 - Hóa đơn giấy phải có ít nhất một hàng hóa/dịch vụ đọc được mới có thể tự duyệt. Nếu vùng món hàng bị che, cắt, mờ hoặc model trả `lineItems=[]`, backend repair đúng một lần rồi fail-safe `ESCALATE_FACT`; không được suy ra “không có hạng mục cấm”.
@@ -129,7 +129,7 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 1. Mở **OpenRouter → Activity/Logs** và đối chiếu HTTP status, model, provider, token và chi phí.
 2. Với `401/403`, xác nhận secret thuộc đúng tài khoản đã nạp credit và key chưa bị thu hồi/giới hạn bởi guardrail.
 3. Với `402`, kiểm tra số dư và giới hạn chi tiêu riêng của API key. `Key limit` là trần chi tiêu, không phải số dư.
-4. Với `429`, ghi provider/request ID/`Retry-After` từ server log, chờ hết cooldown rồi thử đúng **một ảnh**; không bấm Verify liên tục. Candidate 12/10 mặc định khóa upstream provider 120 giây nếu response không có `Retry-After`.
+4. Với `429`, ghi provider/request ID/`Retry-After` từ server log, chờ hết cooldown rồi thử đúng **một ảnh**; không bấm Verify liên tục. Public baseline khóa upstream 120 giây nếu response không có `Retry-After`; local contingency có fallback đã gate dùng 300 giây để tránh quay lại Parasail quá sớm.
 5. Với `5xx/timeout`, kiểm tra trang trạng thái OpenRouter/provider. Hệ thống phải giữ `ESCALATE_SYSTEM_ERROR`, không dùng kết quả giả hoặc cache cũ như một lần gọi AI mới.
 6. Chỉ đổi model sau khi chạy lại ma trận 5 ca và xác nhận input ảnh, JSON Schema, latency và câu hỏi chuyển tiếp.
 
@@ -195,7 +195,9 @@ Khi deploy public, ứng dụng phải chạy sau HTTPS/reverse proxy. Container
 - `/BUSINESS_RULES.md` trả `404` vì policy không được public từ static root.
 - Upload giả MIME bị từ chối; JPG/PNG hợp lệ được lưu và mở lại qua route chứng từ.
 - Ảnh lớn hơn 5 MB bị chặn với thông báo dễ hiểu, không xuất hiện lỗi `Unexpected end of JSON input`. Giới hạn multipart có phần đệm cho antiforgery/boundary nhưng controller vẫn khóa riêng file ở 5 MB.
-- Verify đạt 5/5 trong thời gian demo cho phép. Timeout cấu hình là 90 giây cho OpenRouter và 180 giây cho Ollama; đây là chốt lỗi kỹ thuật, không phải tuyên bố latency mục tiêu.
+- Verify đạt 5/5 trong thời gian demo cho phép. Timeout cấu hình là 90 giây cho OpenRouter và 600 giây cho Ollama 4B 16K; đây là chốt lỗi kỹ thuật, không phải tuyên bố latency mục tiêu.
+
+Chiến lược tách public/local, cấu hình lease cho inference chậm và giới hạn của provider failover nằm tại [`COMPETITION_FAILOVER_AND_429_STRATEGY_2026-10-12.md`](COMPETITION_FAILOVER_AND_429_STRATEGY_2026-10-12.md).
 - Audit hiển thị input, action, timestamp, reason; chuyển tiếp/Đồng ý/Từ chối/undo hoạt động.
 - Ca `ESCALATE_*` xuất hiện ở cửa sổ nhân viên trước; bấm **Chuyển tiếp** rồi mới xuất hiện ở cửa sổ quản lý.
 - Nhân viên có thể chuyển từng hồ sơ hoặc **Chuyển tiếp tất cả**; mỗi hồ sơ phải có audit `EMPLOYEE_FORWARDED_TO_MANAGER`.

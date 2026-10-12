@@ -120,6 +120,8 @@ Chỉ bật stdout startup log khi cần chẩn đoán, tải log về rồi t�
 
 Hosted deployment không thể gọi Ollama trên laptop qua `127.0.0.1`; loopback khi đó là chính server hosting. Chỉ bật fallback Ollama nếu model chạy trên cùng server hoặc một endpoint HTTPS riêng đã được bảo vệ. Bản demo trên máy cá nhân có thể bật fallback vì ASP.NET và Ollama cùng máy.
 
+Profile local đã pass synthetic gate dùng timeout 600 giây, context 16384, output 4096, keep-alive 30 phút và `Think=false`. Vì đường fallback có thể chạy sau timeout primary rồi còn semantic repair, đặt riêng `ReceiptProcessing__LeaseSeconds=1800` khi dùng local contingency; không thay lease public baseline nếu không cần. Chi tiết và rollback xem [`COMPETITION_FAILOVER_AND_429_STRATEGY_2026-10-12.md`](COMPETITION_FAILOVER_AND_429_STRATEGY_2026-10-12.md).
+
 Implementation hiện tại cho phép `Ollama:BaseUrl` là HTTPS từ xa nhưng chưa có cấu hình bearer/API-key riêng cho Ollama. Vì vậy **không public trực tiếp cổng 11434** và không trỏ production AURA tới một endpoint Ollama Internet chưa có lớp bảo vệ. POC GPU phải dùng private network/VPN hoặc reverse proxy có TLS, xác thực, rate limit và log đã che dữ liệu; nếu proxy bắt bearer token thì cần bổ sung hỗ trợ header trong app rồi regression lại trước khi dùng.
 
 ## 7. Vì sao không chọn Render Free cho bản nộp
