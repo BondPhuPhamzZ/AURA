@@ -1,13 +1,13 @@
 # Chạy Qwen3 VL 4B local bằng Ollama
 
-Cập nhật: 02/10/2026. Tùy chọn này bổ sung provider local để benchmark, demo ngoại tuyến hoặc làm fallback có kiểm soát. `Vision:Provider` vẫn mặc định là `OpenRouter`; fallback mặc định tắt và chỉ hoạt động khi người vận hành chủ động bật.
+Cập nhật: 12/10/2026. Tùy chọn này bổ sung provider local để benchmark, demo ngoại tuyến hoặc làm fallback có kiểm soát. `Vision:Provider` vẫn mặc định là `OpenRouter`; fallback mặc định tắt và chỉ hoạt động khi người vận hành chủ động bật.
 
 ## 1. Phạm vi và cấu hình khuyến nghị
 
 - Windows 10 22H2 trở lên, .NET 8 và SQL Server LocalDB như luồng local hiện tại.
 - RAM 16 GB: bắt đầu với `qwen3-vl:4b-instruct` Q4_K_M, một request tại một thời điểm.
 - Ổ đĩa trống: dành ít nhất 8 GB cho model, cache và log. Gói model Q4 hiện khoảng 3,3 GB nhưng RAM runtime lớn hơn dung lượng file.
-- Cấu hình 4 GB lịch sử là `ContextTokens=8192`, `MaxOutputTokens=2048`, `KeepAlive=5m`, `Think=false`. Evidence contract v2 ngày 06/10 cho thấy một số repair có thể vượt cả context 8192 hoặc output cap 2048; không tăng giữa một batch đang đo. Với GPU 16 GB, benchmark riêng 8B bằng context 16384/output 4096 theo runbook BTC. Nếu thiếu VRAM, giảm context có ghi nhận rồi chạy batch mới từ đầu.
+- Cấu hình 4 GB lịch sử `ContextTokens=8192` không còn đủ cho contract hiện tại: full batch ngày 12/10 có 10/15 `AI_RESPONSE_TRUNCATED`. Profile đã pass dùng `ContextTokens=16384`, `MaxOutputTokens=4096`, `KeepAlive=30m`, `Think=false`, timeout 600 giây và concurrency 1. Không đổi envelope giữa batch; nếu không đủ RAM/VRAM thì dừng và khai báo cấu hình mới thay vì hạ context rồi gộp kết quả.
 - Luôn dùng tag đầy đủ `qwen3-vl:8b-instruct-q4_K_M`; không dùng alias `qwen3-vl:8b`. Alias 8B có thể trỏ tới biến thể thinking và tiêu thụ output budget trước khi JSON schema hoàn tất. Adapter gửi `think=false` để extraction có tính tất định và dành output cho JSON; thinking model chỉ được benchmark ở một profile riêng, không trộn vào baseline.
 - CPU/GPU split chủ yếu làm tăng latency nếu giữ nguyên weights/quantization/context; nó
   không tự hạ độ phân giải ảnh. Các nguyên nhân giảm chất lượng gián tiếp và checklist
@@ -74,11 +74,11 @@ Tại `D:\aura\AURA\AURA`:
 dotnet user-secrets set "Vision:Provider" "Ollama"
 dotnet user-secrets set "Ollama:BaseUrl" "http://127.0.0.1:11434/"
 dotnet user-secrets set "Ollama:Model" "qwen3-vl:4b-instruct"
-dotnet user-secrets set "Ollama:ContextTokens" "8192"
-dotnet user-secrets set "Ollama:MaxOutputTokens" "2048"
+dotnet user-secrets set "Ollama:ContextTokens" "16384"
+dotnet user-secrets set "Ollama:MaxOutputTokens" "4096"
 dotnet user-secrets set "Ollama:Think" "false"
-dotnet user-secrets set "Ollama:TimeoutSeconds" "180"
-dotnet user-secrets set "Ollama:KeepAlive" "5m"
+dotnet user-secrets set "Ollama:TimeoutSeconds" "600"
+dotnet user-secrets set "Ollama:KeepAlive" "30m"
 
 dotnet build --no-restore
 dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore
@@ -112,7 +112,7 @@ Mở `/healthz`. Kỳ vọng:
 
 Kết quả kiểm soát ngày 27/09/2026 trên build semantic-hardening: năm batch liên tiếp đều đạt 5/5, tức 25/25 quyết định đúng trên 5 fixture tổng hợp; upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Ba batch có đo chi tiết mất khoảng 303-304 giây mỗi batch; TC-02 cần một lượt repair nên khoảng 100 giây và các ca còn lại khoảng 45-55 giây. Hai batch xác nhận bổ sung chưa tổng hợp latency. Đây là bằng chứng pipeline có kiểm soát, chưa phải accuracy trên hóa đơn thật độc lập.
 
-Post-policy/contract v2 ngày 06/10 chạy đúng một lượt judge set synthetic 15 ca, database/storage/port riêng và fallback tắt. Kết quả 13/15: 1 missed escalation TK-12, 1 over-escalation TK-02, 0 system error; P50/P95 89,728/136,758 giây. TK-12 vẫn đọc sai dòng tổng bị mờ thành tổng cuối nhìn thấy; TK-02 fail-safe vì repair vượt resource envelope. Do đó 4B vẫn không đạt safety gate để bật fallback tự động.
+Post-policy/contract v2 ngày 06/10 chạy profile 8K và đạt 13/15. Benchmark lại ngày 12/10 bằng digest `ee4b975b58c1`, context 16K/output 4K, `Think=false`, database/storage/port riêng và fallback tắt đạt 15/15 decision, 0 missed/over/system error, field 69/75; semantic repair xử lý TK-02 và TK-12. Processing P50/P95 101,833/213,429 giây trên máy CPU/GPU split, nên 4B đạt gate chất lượng synthetic nhưng chưa đạt gate latency/capacity để bật fallback tự động. Xem [`OLLAMA_4B_16K_RECOVERY_BENCHMARK_2026-10-12.md`](OLLAMA_4B_16K_RECOVERY_BENCHMARK_2026-10-12.md).
 
 ## 7. Dừng phiên test và tắt máy an toàn
 
@@ -167,10 +167,10 @@ Live regression ngày 02/10 đã xác minh đúng metadata trên một database 
 |---|---|---|
 | `AI_LOCAL_UNAVAILABLE` | Ollama chưa chạy hoặc port 11434 không phản hồi | Mở Ollama, kiểm `/api/tags`, không chạy hai server |
 | `AI_MODEL_UNAVAILABLE` | Chưa pull đúng tag | Chạy `ollama pull qwen3-vl:4b-instruct` |
-| `AI_TIMEOUT` | CPU chậm, thiếu RAM hoặc ảnh/context lớn | Đóng ứng dụng nặng, giảm context 8192 xuống 4096, thử một ảnh |
+| `AI_TIMEOUT` | CPU chậm, thiếu RAM hoặc ảnh/context lớn | Đóng ứng dụng nặng; giữ profile 16K đã pass hoặc dừng batch và khai báo profile mới, không hạ context rồi gộp kết quả |
 | `AI_SCHEMA_MISMATCH` | Model 4B không giữ đúng JSON Schema | Giữ fail-safe, ghi ca lỗi; không sửa expected result |
 | JSON hợp lệ nhưng sai loại chứng từ/định dạng VND | Lỗi ngữ nghĩa của model | Backend repair đúng một lần; nếu vẫn sai thì `ESCALATE_FACT`, không nhân tiền hoặc gán mã bằng suy đoán |
-| Máy swap/đơ | Nhiều model/request hoặc context quá lớn | Một model, một request, context 4096; `ollama stop qwen3-vl:4b-instruct` để giải phóng RAM |
+| Máy swap/đơ | Nhiều model/request hoặc profile 16K vượt tài nguyên máy | Dừng batch, giữ evidence lỗi, chạy `ollama stop qwen3-vl:4b-instruct`; chuyển sang máy đủ RAM/VRAM thay vì hạ context rồi gọi là cùng baseline |
 
 ## 10. Nguyên tắc đánh giá
 

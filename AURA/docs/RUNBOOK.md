@@ -111,13 +111,13 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 ### Provider Ollama local tùy chọn
 
 - Chọn bằng `Vision:Provider=Ollama`; quay lại baseline bằng `Vision:Provider=OpenRouter`.
-- Model mặc định local là `qwen3-vl:4b-instruct`; một request tại một thời điểm, context 8192 và timeout 180 giây. Đây là cấu hình máy 4 GB lịch sử, không còn đủ cho mọi semantic repair của evidence contract v2.
+- Model mặc định local là `qwen3-vl:4b-instruct`; một request tại một thời điểm. Contract hiện hành cần context 16384, output 4096 và timeout benchmark 600 giây: batch 8K ngày 12/10 có 10/15 response truncated, còn 16K hoàn tất 15/15 nhưng P95 processing 213,429 giây.
 - Fallback mặc định tắt để benchmark không trộn provider. Khi demo cần đường dự phòng, bật `Vision:FallbackEnabled=true`, giữ `Vision:Provider=OpenRouter` và đặt `Vision:FallbackProvider=Ollama` sau khi smoke Ollama.
 - Fallback chỉ chạy một lần cho lỗi hạ tầng đủ điều kiện. Lỗi schema, semantic, truncated response hoặc invalid request vẫn chuyển kiểm tra thủ công.
 - Sau JSON Schema, backend kiểm tra ngữ nghĩa tiền VND, loại chứng từ và các identifier. Dữ kiện mâu thuẫn được đọc lại đúng một lần; vẫn sai thì chuyển `ESCALATE_FACT`, không tự đoán hoặc tự nhân số tiền.
 - Hóa đơn giấy phải có ít nhất một hàng hóa/dịch vụ đọc được mới có thể tự duyệt. Nếu vùng món hàng bị che, cắt, mờ hoặc model trả `lineItems=[]`, backend repair đúng một lần rồi fail-safe `ESCALATE_FACT`; không được suy ra “không có hạng mục cấm”.
 - `/healthz` chỉ đạt `ok` khi policy, cấu hình AI, database, migration và thư mục receipt sẵn sàng; endpoint không gọi provider nên không thay cho một ảnh smoke test.
-- Baseline năm fixture ngày 27/09/2026 từng đạt 25/25 bằng Ollama 4B. Trên judge set mở rộng 15 ca ngày 29/09, Ollama đạt 14/15 và bỏ sót TK-12. Lượt post-policy/contract v2 ngày 06/10 đạt 13/15: vẫn missed TK-12, thêm over TK-02 do repair vượt context/output, 0 system error. Vì vậy Ollama 4B chỉ là đường offline/manual có giới hạn; không bật auto-fallback toàn cục.
+- Baseline năm fixture ngày 27/09/2026 từng đạt 25/25 bằng Ollama 4B. Lượt post-policy/contract v2 profile 8K ngày 06/10 đạt 13/15. Benchmark digest khóa với 16K ngày 12/10 đạt 15/15 decision, 69/75 field và 0 missed/over/system error; semantic repair xử lý được TK-02/TK-12. Tuy vậy P50/P95 processing 101,833/213,429 giây và chưa có capacity evidence trên endpoint GPU, nên chỉ coi là fallback candidate và không bật auto-fallback toàn cục.
 - Benchmark GPU BTC dùng đúng `qwen3-vl:8b-instruct-q4_K_M`, `ContextTokens=16384`, `MaxOutputTokens=4096`, `Think=false` trên database test và synthetic data. Không dùng alias `qwen3-vl:8b`, vì alias có thể trỏ tới biến thể thinking và làm JSON hết output budget. Đây là benchmark mới; không được suy ra PASS từ cấu hình trước khi chạy. Runbook phiên mượn máy được giữ ngoài repository công khai.
 - CPU/GPU off-load, context và output cap là ba biến khác nhau. AURA gửi nguyên byte ảnh,
   không resize; cách đo token/processor và điều kiện so sánh nằm tại
