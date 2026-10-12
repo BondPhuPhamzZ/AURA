@@ -117,7 +117,14 @@ try {
         $winner = $successful[0]
         $verifyEndToEndMs = [long]$winner.ElapsedMs
         try {
-            $verifyCases = @($winner.Body | ConvertFrom-Json)
+            # Windows PowerShell 5.1 can preserve a top-level JSON array as one nested
+            # pipeline object when the body came back through Start-Job remoting. Expand
+            # it explicitly so the runner reports the five cases consistently on 5.1/7.x.
+            $parsedVerifyBody = ConvertFrom-Json -InputObject ([string]$winner.Body)
+            $verifyCases = @()
+            foreach ($verifyCase in $parsedVerifyBody) {
+                $verifyCases += $verifyCase
+            }
             $verifyPassCount = @($verifyCases | Where-Object pass -eq $true).Count
             $systemErrorCount = @($verifyCases | Where-Object actual -eq 'ESCALATE_SYSTEM_ERROR').Count
         }
