@@ -5,6 +5,11 @@
 Trình bày trong khoảng **13 phút 30 giây**, giữ 90 giây dự phòng. Trọng tâm là bài toán nghiệp vụ,
 luồng con người quyết định, bằng chứng kỹ thuật và demo chạy thật. Không đọc toàn bộ chữ trên slide.
 
+**Phân biệt hai artifact:** video nộp Drive là một bản product-only tối đa 3 phút theo đề Track, không
+trình bày slide. Phần `Live demo hoặc video` bên dưới là khung onsite trong phiên thuyết trình. Nếu live
+ổn, không cần phát lại toàn bộ video nộp. Nếu live lỗi, dùng chính video 2:45–2:58 đã nộp làm fallback
+và dành thời gian còn lại để mở evidence/Audit.
+
 ## Timeline
 
 | Thời gian | Phần | Mục tiêu |
@@ -14,8 +19,9 @@ luồng con người quyết định, bằng chứng kỹ thuật và demo chạ
 | 2:45–4:20 | Slide 3 | Trình bày evidence, ranh giới claim và KPI pilot |
 | 4:20–5:30 | Slide 4 | Giải thích kiến trúc và vai trò giới hạn của model |
 | 5:30–6:30 | Slide 5 | Nêu fail-safe và phần chưa có |
-| 6:30–10:45 | Live demo hoặc video 4 phút 15 giây | Chứng minh upload, quyết định, human workflow, audit và Verify |
-| 10:45–12:30 | Kết quả và bài học | Nói rõ safety, over-escalation và concurrency |
+| 6:30–9:28 | Live demo hoặc video product-only 2 phút 58 giây | Chứng minh Verify, quyết định, human workflow, audit và Undo |
+| 9:28–11:20 | Kết quả và bài học | Nói rõ safety, over-escalation và concurrency |
+| 11:20–12:30 | User evidence | Chỉ trình bày session đã có thật; nếu chưa đủ thì công bố gate còn mở |
 | 12:30–13:30 | Kết luận | Giá trị, trạng thái hiện tại và bước pilot |
 | 13:30–15:00 | Buffer | Chuyển màn hình hoặc xử lý câu hỏi ngắn |
 
@@ -96,23 +102,27 @@ Baseline đã có queue bền vững, 163 test, Verify 5/5 dưới 90 giây, con
 4G/5G. Chúng tôi công khai phần chưa có: authentication production, PDF nhiều trang, object storage
 và ba user session chính thức.”
 
-## Demo 4 phút 15 giây
+## Demo product-only tối đa 3 phút
 
 ### Phương án chính
 
 Ưu tiên live demo, nhưng mở sẵn video dự phòng. Nếu live URL không phản hồi sau khoảng 10 giây,
 chuyển ngay sang video và nói rõ đây là bản ghi trên cùng candidate.
 
-1. **0:00–0:40 — Upload:** chọn một fixture tổng hợp hoặc receipt đã được phép sử dụng, nhập claimed
-   amount và bấm upload. Chỉ ra UI tự cuộn tới bảng, hồ sơ đi qua PENDING/PROCESSING/COMPLETED.
-2. **0:40–1:20 — Decision:** mở facts, reason và câu hỏi. Nhấn mạnh AI đọc facts, policy tạo status.
-3. **1:20–2:20 — Human workflow:** dùng một hồ sơ ESCALATE, xác nhận chuyển tiếp, chọn Đồng ý hoặc
-   Từ chối ở tab quản lý, rồi Undo.
-4. **2:20–2:50 — Audit:** mở timeline, chỉ ra AI decision, employee forward, manager decision và undo
-   nằm trong một hồ sơ.
-5. **2:50–4:05 — Verify:** chạy hoặc phát đoạn Verify 5 ca theo thời gian thật. Chỉ kết luận khi bảng
-   đủ 5/5 và hiển thị tổng 65 giây ở evidence đã khóa.
-6. **4:05–4:15 — Chốt:** “Đây là cùng pipeline production, không phải mock ngầm.”
+Video chính thức nộp Drive phải theo `submission/AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_2026-10-13.md`,
+không vượt 180 giây và không chèn slide. Không quay thêm video riêng cho Verify, kiến trúc hoặc
+evidence overlay.
+
+1. **0:00–0:12 — Mở live:** nêu một câu về vai trò của model, policy và con người.
+2. **0:12–1:32 — Verify:** bấm đúng một lần, để UI tự cuộn và giữ progress/timestamp trên màn hình;
+   chỉ kết luận khi bảng đủ 5/5.
+3. **1:32–2:08 — Decision và handoff:** mở một hồ sơ synthetic ESCALATE đã chuẩn bị, chỉ facts/reason,
+   xác nhận chuyển tiếp rồi chọn Đồng ý hoặc Từ chối ở tab quản lý.
+4. **2:08–2:28 — Audit và Undo:** chỉ timeline trong cùng hồ sơ và hoàn tác quyết định gần nhất.
+5. **2:28–2:42 — Kiến trúc ngay trên UI:** chỉ provider, status, facts và câu hỏi; giải thích SQL queue,
+   extraction và policy mà không mở slide.
+6. **2:42–2:58 — Giới hạn và chốt:** giữ AURA trên màn hình, nói rõ JPG/PNG một ảnh, chưa có RBAC/PDF
+   production và fallback live tắt.
 
 ### Chuẩn bị trước demo
 

@@ -22,7 +22,7 @@
 - Tách extraction khỏi deterministic policy giúp kết quả giải thích và unit-test được.
 - Judge set mở rộng ngày 29/09 chạy đúng upload endpoint với fallback tắt. OpenRouter/Qwen3-VL-8B đạt 15/15 quyết định, 70/75 field và P50/P95 3,614/16,459 giây. Ollama/Qwen3-VL-4B đạt 14/15 quyết định, 73/75 field và 52,238/58,318 giây; model bỏ sót escalation TK-12. Baseline lặp trên 5 fixture ngày 27/09 được giữ như bằng chứng lịch sử, không dùng thay accuracy thực tế.
 - Concurrent smoke lịch sử ngày 29/09 tiếp nhận và hoàn tất 5/5 request, HTTP accepted P95 93 ms và end-to-end P95 17,072 giây. Concurrent smoke sau guard ngày 02/10 tiếp tục hoàn tất 5/5, accepted P95 530 ms và end-to-end P95 39,380 giây.
-- 161 automated tests ở candidate hiện tại bao phủ policy/workflow/audit, hợp đồng OpenRouter/Ollama, reasoning configuration, semantic validation/repair, evidence contract v2, định danh/money role, timezone Audit, fallback/circuit breaker, shared AI capacity gate, provider cooldown/diagnostics, backoff worker, tính toàn vẹn Test Kit v2/v3/v3.1, OCR-loss policy disambiguation, executable R3-12 entertainment ground truth, UTF-8 runner guard, UI contract và negative controls cho duplicate identifier/summary pseudo-line/printed-total corroboration. Các mốc 93/102/108/120/122/124/129/133/140/142/149/159 bên dưới được giữ làm lịch sử hardening.
+- 163 automated tests ở candidate hiện tại bao phủ policy/workflow/audit, hợp đồng OpenRouter/Ollama, reasoning configuration, semantic validation/repair, evidence contract v2, định danh/money role, timezone Audit, fallback/circuit breaker, shared AI capacity gate, provider cooldown/diagnostics, backoff worker, tính toàn vẹn Test Kit v2/v3/v3.1, OCR-loss policy disambiguation, executable R3-12 entertainment ground truth, UTF-8 runner guard, UI contract, auto-scroll và negative controls cho duplicate identifier/summary pseudo-line/printed-total corroboration. Các mốc 93/102/108/120/122/124/129/133/140/142/149/159/161 bên dưới được giữ làm lịch sử hardening.
 - EF Core SQL Server/Tools và local `dotnet-ef` đã vá lên 8.0.31 trong cùng major. Checkpoint hardening 30/09 đạt 93/93 test; postfix live hardening đạt 102/102 và candidate UI ngày 04/10 đạt 108/108. NuGet không báo package vulnerable và EF không có pending model change.
 - Structured Output giảm parsing lỗi so với JSON tự do.
 - Backend phát hiện JSON đúng schema nhưng sai nghĩa như `295.199 đ -> 295.199`, `ECOMMERCE -> RIDE_HAILING`, hoặc số biên nhận bị gán vào `orderId`; model được đọc lại đúng một lần. Repair không nhận claimed amount và kết quả còn mâu thuẫn luôn đi `ESCALATE_FACT`.
@@ -61,7 +61,7 @@
 
 ## Chi phí/thời gian và sự cố thực tế
 
-- Prototype ban đầu dùng Gemini Free Tier; bản hiện tại dùng Qwen3-VL-8B-Instruct trả phí qua OpenRouter để tránh phụ thuộc quota miễn phí. Qwen3-VL-4B-Instruct được giữ làm hướng self-host sau khi benchmark tài nguyên.
+- Prototype ban đầu dùng Gemini Free Tier; bản hiện tại dùng Qwen3.8 Flash qua OpenRouter/Alibaba với reasoning `none`. Qwen3-VL-8B-Instruct được giữ làm baseline lịch sử và Qwen3-VL-4B-Instruct/Ollama chỉ là contingency local có giám sát sau benchmark tài nguyên.
 - Hệ thống không retry HTTP 429, chỉ retry tối đa một lần với lỗi 5xx tạm thời, trả mã lỗi an toàn (`AI_RATE_LIMIT`/`AI_TEMPORARILY_UNAVAILABLE`) và chuyển `ESCALATE_SYSTEM_ERROR`; không giả quyết định nghiệp vụ.
 - LocalDB chỉ dùng khi phát triển Windows. Bản production hiện dùng SQL Server và folder ảnh riêng tư được cấu hình bằng biến môi trường trên SmarterASP.NET; mã nguồn vẫn giữ Linux container, `/healthz` và migration opt-in để có thể chuyển hạ tầng sau này.
 - Test Kit v2 là baseline lịch sử. V3/v3.1 bổ sung identifier label tách bạch, readable fade đối chứng với physical ink loss, device-ID negative và hash lock; tất cả vẫn là dữ liệu tổng hợp nên không được xem là accuracy tổng quát.
@@ -71,10 +71,11 @@
 
 ## Tính năng lớn nhất cắt giảm
 
-- PDF/hóa đơn nhiều trang, antivirus, tax/e-invoice lookup, ngoại tệ và xác thực người dùng theo role chưa triển khai trong Sprint 1.
-- Không fine-tune hoặc đổi provider mặc định trong lúc chấm. OpenRouter 8B giữ vai trò primary vì judge set không bỏ sót escalation và đáp ứng thời gian demo. Ollama 4B chỉ dùng offline/manual cho tới khi xử lý TK-12 và kiểm lại tập độc lập.
+- Production evidence localization là tính năng lớn nhất bị cắt khỏi baseline. Khoanh vùng có thể tăng độ tin cậy của reviewer, nhưng nếu chưa có OCR word boxes, annotation độc lập và benchmark false-highlight thì một hộp sai vị trí có thể tạo tự tin giả. Prototype SVG tổng hợp được giữ cô lập, không nối extraction/policy và không dùng để claim production explainability.
+- PDF/hóa đơn nhiều trang, antivirus, tax/e-invoice lookup, ngoại tệ và authentication/RBAC cũng chưa triển khai. Chúng đòi hỏi thêm provenance, security và benchmark riêng.
+- Không fine-tune hoặc đổi provider mặc định trong lúc chấm. Qwen3.8 Flash/Alibaba, reasoning none là primary hiện hành; Ollama 4B chỉ dùng offline/manual vì latency cao và live fallback vẫn tắt.
 - Ưu tiên một vertical slice chạy thật: upload -> extract -> decide -> audit -> human override/undo -> tra cứu chứng từ.
 
 ## Minh bạch dữ liệu
 
-Ba mươi fixture Test Kit v2 là dữ liệu tổng hợp sinh offline bằng script; không có hóa đơn cá nhân thật. Năm ảnh đại diện được dùng cho Verify. Baseline gửi ảnh qua OpenRouter tới provider Qwen, vì vậy AURA không tuyên bố on-premise hoặc zero-cloud. Phép so sánh cùng build đã có trên judge set 15 ca, nhưng chưa có kết quả chất lượng trên tập hóa đơn thực tế độc lập đã đồng thuận và ẩn danh.
+Ba mươi fixture Test Kit v2 là dữ liệu tổng hợp sinh offline bằng script; năm ảnh đại diện được dùng cho Verify. Baseline gửi ảnh qua OpenRouter/Alibaba, vì vậy AURA không tuyên bố on-premise hoặc zero-cloud. Prospective mini-holdout 10 hóa đơn thật mới đã consent/redaction và chạy đúng một lượt đạt 8/10, 0 missed, 2 over, 0 system/provider/429 error và 28/30 field trọng yếu. Kết quả hỗ trợ supervised demo nhưng không phải production accuracy. Raw receipt và raw response vẫn nằm ngoài Git.

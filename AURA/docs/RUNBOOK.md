@@ -77,7 +77,7 @@ Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_rec
 
 Test Kit v3/v3.1 là regression namespace riêng, không thay Verify/v2. Tái tạo bằng `tools/generate_regression_receipts_v3.py --as-of-date 2026-10-06 --revision 3.0|3.1`; runner phải nhận manifest và images directory tường minh. Raw v3 đã khóa/chạy một lần; chỉ chạy v3.1 sau publish đúng candidate, recycle và health `ok`.
 
-Để bảo toàn credit: build + 161 automated test offline trước, deploy, chạy health/security smoke không ảnh, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota và quyền gửi ảnh.
+Để bảo toàn credit: build + 163 automated test offline trước, deploy, chạy health/security smoke không ảnh, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota và quyền gửi ảnh.
 
 Sau thay đổi contract giảm giá và postfix live fix, làm theo cổng `docs/LIVE_POSTFIX_INCIDENT_2026-10-01.md`. Không reset database và không chạy migration vì facts vẫn nằm trong JSON hiện có; restart queue phải dùng chính DB cũ để chứng minh độ bền.
 

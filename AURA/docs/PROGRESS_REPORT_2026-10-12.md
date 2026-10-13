@@ -1,4 +1,6 @@
-# Báo cáo tiến độ sau publish và live benchmark 12/10/2026
+# Báo cáo tiến độ lịch sử sau publish và live benchmark 12/10/2026
+
+> Đây là checkpoint lịch sử. Báo cáo nộp cuối phải dùng `docs/CURRENT_PROJECT_STATUS_2026-10-13.md`, `docs/OFFICIAL_HOLDOUT10_2026-10-13.md` và `docs/FINAL_READINESS_GAPS_2026-10-13.md`.
 
 ## Nội dung điền biểu mẫu
 

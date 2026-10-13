@@ -1,4 +1,6 @@
-# AURA — Current project status 12/10/2026
+# AURA — Historical checkpoint 12/10/2026
+
+> Tài liệu này giữ nguyên bằng chứng checkpoint ngày 12/10. Trạng thái hiện hành nằm tại `docs/CURRENT_PROJECT_STATUS_2026-10-13.md`; không dùng các số 161/161 hoặc regression 15/15 bên dưới làm headline cho bài nộp cuối.
 
 ## Kết luận điều hành
 

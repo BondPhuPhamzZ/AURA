@@ -6,9 +6,12 @@ AURA is an ASP.NET Core application for first-line employee reimbursement review
 
 | Item | Link |
 |---|---|
-| Sprint 1 video and evaluator API key | [Shared submission folder](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
-| Presentation | [AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES.pptx) |
-| Build log | [AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.docx) |
+| Live application | [AURA on SmarterASP.NET](https://bondphupham-001-site1.ltempurl.com/) |
+| Team submission folder and evaluator-only key | [Shared submission folder](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
+| Final presentation | [AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES_FINAL_2026-10-13_V2.pptx) |
+| Proposal Vietnamese | [AURA Proposal VI](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_VI_2026-10-13.pdf) |
+| Proposal English | [AURA Proposal EN](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_EN_2026-10-13.pdf) |
+| Build log | [AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG_1_PAGE_2026-10-13.pdf) |
 
 The key in the shared folder is temporary and evaluator-only. Do not commit it, paste it into source/config files, or show it in screenshots and recordings. Store it locally with .NET User Secrets and revoke/rotate it after evaluation.
 
@@ -37,7 +40,7 @@ Key capabilities:
 
 ## Verified baseline
 
-Last evidence update: 13 October 2026. Live health and the Qwen3.8 Flash Verify gate remain the frozen demo baseline; a separate prospective 10-receipt mini-holdout was completed once without reruns.
+Last evidence update: 14 October 2026. Live health and the Qwen3.8 Flash Verify gate remain the frozen demo baseline; a separate prospective 10-receipt mini-holdout was completed once without reruns.
 
 - Build: **0 warnings, 0 errors**.
 - Automated tests after the reviewer-UX/evidence-overlay prototype update: **163/163 passed**; they do not call the paid AI API.
@@ -153,7 +156,12 @@ Stop the app with `Ctrl+C`. No database reset or LocalDB deletion is required.
 - [Original-bytes 12-receipt regression](AURA/docs/REGRESSION12_ORIGINAL_BYTES_RESULT_2026-10-13.md)
 - [Sequential repeat on the same 12 receipts](AURA/docs/REGRESSION12_SEQUENTIAL_REPEAT_RESULT_2026-10-13.md)
 - [Evidence localization and reviewer overlay plan](AURA/docs/EVIDENCE_LOCALIZATION_PLAN_2026-10-13.md)
+- [User-study protocol and evidence requirements](AURA/docs/USER_STUDY_PROTOCOL_2026-10-13.md)
+- [Demo Day evidence index](AURA/docs/DEMO_DAY_EVIDENCE_INDEX_2026-10-13.md)
+- [Final readiness gaps](AURA/docs/FINAL_READINESS_GAPS_2026-10-13.md)
 - [Final 15-minute presentation and demo guide](AURA/submission/AURA_FINAL_15_MINUTE_PRESENTATION_GUIDE_2026-10-13.md)
+- [Official product-only video script](AURA/submission/AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_2026-10-13.md)
+- [Final pitch script and judge Q and A](AURA/submission/AURA_FINAL_PITCH_SCRIPT_AND_QA_2026-10-13.md)
 - [Qwen3.8 Flash live Verify gate](AURA/docs/QWEN38_FLASH_LIVE_VERIFY_2026-10-12.md)
 - [Current progress report](AURA/docs/PROGRESS_REPORT_2026-10-13.md)
 - [Live post-holdout validation](AURA/docs/LIVE_POST_HOLDOUT_VALIDATION_2026-10-06.md)

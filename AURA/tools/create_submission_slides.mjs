@@ -206,7 +206,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 {
   const s = deck.slides.add();
   s.background.fill = C.bg;
-  title(s, 3, "Bằng chứng kỹ thuật và tác động cần đo", "Kết quả regression đã có; hiệu quả vận hành chỉ kết luận sau pilot độc lập.");
+  title(s, 3, "Bằng chứng kỹ thuật và tác động cần đo", "Một missed escalation đã đổi cách AURA được xây: đo an toàn trước, rồi mới tối ưu tốc độ.");
 
   shape(s, 54, 162, 560, 232, C.surface, "rounded-xl", C.red);
   pill(s, "TRƯỚC", 76, 182, 86, C.red);
@@ -220,8 +220,8 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   text(s, "Bằng chứng đã có", 54, 428, 250, 28, 20, C.white, { bold: true });
   const evidence = [
-    ["161/161", "test offline", C.blue],
-    ["15/15", "receipt regression", C.green],
+    ["163/163", "test offline", C.blue],
+    ["8/10", "holdout mới • 0 missed", C.green],
     ["5/5", "Verify live 65s", C.violet],
   ];
   evidence.forEach((e, i) => {
@@ -241,7 +241,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
   text(s, "Baseline và target chỉ điền sau khi có dữ liệu người dùng thật.", 635, 610, 589, 34, 15, C.amber, { align: "center", bold: true });
   footer(s, 3);
-  s.speakerNotes.textFrame.setText("Nguồn cập nhật 12/10/2026: 161/161 test offline và Release build sạch. Candidate Qwen3.8 Flash qua Alibaba, reasoning none, đạt 15/15 trên post-holdout regression đã khóa: 0 missed, 0 over, 0 system error; 20/20 upstream request HTTP 200. Burst 5 upload đồng thời hoàn tất 5/5, E2E P95 41.079 giây với AI concurrency giữ ở 1. Sau publish, Verify live đạt 5/5 trong 65.004 giây, 0 system/provider error; năm client cùng bấm chỉ tạo 1 HTTP 200 và 4 HTTP 409. Đây là regression hậu chỉnh và fixture tổng hợp, không phải blind holdout hay causal model-only A/B; official holdout vẫn raw 10/15 và adjusted 11/15. Ollama 4B 16K chỉ là fallback local có giám sát vì P95 khoảng 213 giây. Ba user session và rehearsal vẫn là gate trước thi.");
+  s.speakerNotes.textFrame.setText("Nguồn hiện hành 13/10/2026: 163/163 test offline và Release build sạch. Candidate Qwen3.8 Flash qua OpenRouter/Alibaba, reasoning none. Prospective mini-holdout 10 hóa đơn mới đạt 8/10 quyết định đúng, 0 missed, 2 over fail-safe, 0 system/provider/429 error và 28/30 field trọng yếu; mẫu nhỏ và có redaction confounder, không phải production accuracy. Regression 12 ảnh byte gốc đạt 10/12; lượt chạy tuần tự lại trên dữ liệu đã biết đạt 11/12 và chỉ được dùng làm evidence ổn định. Burst 5 upload hoàn tất 5/5; AI concurrency vẫn là 1 nên queue wait tăng. Verify live đạt 5/5 trong 65.004 giây. Ollama chỉ là fallback local có giám sát. Ba user session vẫn là gate chưa hoàn tất.");
 }
 
 // Slide 4
@@ -267,7 +267,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 54, 535, 760, 100, "#0E2A3D", "rounded-xl", C.cyan);
   text(s, "VISION PROVIDER", 75, 554, 205, 24, 15, C.cyan, { bold: true });
-  text(s, "Alibaba primary • Ollama fallback opt-in • model không quyết định", 75, 584, 690, 28, 18, C.white, { bold: true });
+  text(s, "OpenRouter → Alibaba primary • Ollama local opt-in • model không quyết định", 75, 584, 690, 28, 18, C.white, { bold: true });
 
   shape(s, 856, 162, 368, 210, C.surface2, "rounded-xl", C.green);
   pill(s, "CHẠY THẬT", 880, 184, 118, C.green);
@@ -303,7 +303,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   shape(s, 842, 157, 382, 242, C.surface2, "rounded-xl", C.green);
   text(s, "ĐÃ BÀN GIAO", 869, 180, 326, 24, 15, C.green, { bold: true });
-  const todo = ["DB-backed upload queue", "161 test, build sạch", "15/15 regression, Verify 5/5", "Mobile 4G/5G đã pass"];
+  const todo = ["DB-backed upload queue", "163 test, build sạch", "Holdout 8/10 • 0 missed", "Verify 5/5 • Mobile pass"];
   todo.forEach((t, i) => {
     pill(s, `${i + 1}`, 869, 225 + i * 40, 30, C.green);
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });
@@ -316,7 +316,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   text(s, "Verify vẫn đúng 5 ca BTC; runner mở rộng không làm rối dashboard.", 842, 601, 382, 44, 14, C.amber, { align: "center", bold: true });
   footer(s, 5, "AURA • Giới hạn hiện tại, không phải lời hứa marketing");
   s.speakerNotes.textFrame.setText(
-    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ReceiptExtractionContract.cs, PolicyDecisionEngine.cs, VietnamTime.cs, tools/Invoke-ExtendedDatasetEvaluation.ps1, docs/QWEN38_FLASH_BENCHMARK_2026-10-12.md và docs/QWEN38_FLASH_LIVE_VERIFY_2026-10-12.md. Fallback vẫn opt-in và mặc định tắt. Ollama 4B digest ee4b975b58c1, context 16K, output 4K, Think=false đạt 15/15 synthetic decision nhưng P95 khoảng 213 giây; chỉ bật local sau smoke. Qwen3.8 Flash/Alibaba, reasoning none, là primary candidate: 15/15 post-holdout regression, 20/20 upstream HTTP 200, burst upload 5/5 với E2E P95 41.079 giây và Verify live 5/5 trong 65.004 giây. Vẫn chuẩn bị video/evidence dự phòng và không coi phép đo một process là production SLA.",
+    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ReceiptExtractionContract.cs, PolicyDecisionEngine.cs, VietnamTime.cs, tools/Invoke-ExtendedDatasetEvaluation.ps1, docs/CURRENT_PROJECT_STATUS_2026-10-13.md và docs/OFFICIAL_HOLDOUT10_2026-10-13.md. Fallback vẫn opt-in và mặc định tắt; Ollama chỉ bật local sau smoke. Qwen3.8 Flash qua OpenRouter/Alibaba, reasoning none, là primary candidate. Prospective holdout đạt 8/10 với 0 missed và 2 over; sequential repeat trên dữ liệu đã biết đạt 11/12; Verify live đạt 5/5 trong 65.004 giây. Burst 5 upload hoàn tất 5/5 nhưng phép đo một process không phải production SLA. Ba phiên người dùng thật, video chính thức và kiểm tra quyền Team Drive vẫn là gate mở.",
   );
 }
 

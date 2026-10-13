@@ -207,7 +207,7 @@ evidence.alignment = WD_TABLE_ALIGNMENT.CENTER
 evidence.autofit = False
 widths = [Cm(4.35), Cm(4.35), Cm(4.35), Cm(4.35)]
 headers = ("Build", "Test offline", "Regression", "Verify live")
-values = ("0 warning 0 error", "161 trên 161 pass", "15 trên 15", "5 trên 5, 65.004 giây")
+values = ("0 warning 0 error", "163 trên 163 pass", "8 trên 10, 0 missed", "5 trên 5, 65.004 giây")
 for index, width in enumerate(widths):
     evidence.columns[index].width = width
 set_table_borders(evidence)
@@ -232,11 +232,10 @@ for index, value in enumerate(values):
 
 add_body(
     document,
-    "Kết luận đo lường: Official holdout 15 hóa đơn thật, khóa nhãn và SHA-256 trước request đầu tiên, đạt raw 10 trên 15 "
-    "quyết định; review phát hiện một nhãn người sai nên adjusted view là 11 trên 15. Có một missed escalation, hai "
-    "over-escalation sau adjudication và không có system error. Candidate hậu chỉnh Qwen3.8 Flash đạt 15 trên 15, 0 missed, "
-    "0 over, 0 system error và 20 trên 20 upstream HTTP 200. Đây là regression hậu chỉnh, không phải blind holdout hay "
-    "causal model-only A/B; mẫu nhỏ này không phải accuracy production.",
+    "Kết luận đo lường: mini-holdout prospective 10 hóa đơn đã khóa trước request đầu đạt 8 trên 10 quyết định, "
+    "0 missed escalation, 2 fail-safe over-escalation, 0 system/provider/429 error và 28 trên 30 field trọng yếu. "
+    "Regression hậu chỉnh trên 12 source bytes đạt 10 trên 12; lần lặp tuần tự trên dữ liệu đã biết đạt 11 trên 12. "
+    "Các lần lặp chỉ là evidence ổn định, không phải blind holdout mới, causal model-only A/B hay accuracy production.",
     bold_lead="Kết luận đo lường: ",
 )
 
@@ -274,7 +273,7 @@ add_body(
     "desktop, mobile 390x844 và điện thoại thật 4G/5G đều đạt. Candidate ngày 12/10 trên cùng 15 receipt đạt 15 trên 15, "
     "0 missed, 0 over và 0 system error; 20 trên 20 upstream request HTTP 200. Burst 5 upload đồng thời hoàn tất 5 trên 5, "
     "E2E P95 41.079 giây với AI concurrency bằng 1. Verify live sau publish đạt 5 trên 5 trong 65.004 giây; "
-    "năm client đồng thời tạo đúng một batch thật với một HTTP 200 và bốn HTTP 409. Candidate đạt 161 test; còn ba user session và rehearsal. "
+    "năm client đồng thời tạo đúng một batch thật với một HTTP 200 và bốn HTTP 409. Candidate đạt 163 test; còn ba user session và rehearsal. "
     "Dữ liệu cá nhân thật không được đưa vào Git.",
 )
 

@@ -1,18 +1,20 @@
 # AURA — Checklist nộp bài
 
-Cập nhật: 13/10/2026. Trạng thái hiện hành nằm tại `docs/CURRENT_PROJECT_STATUS_2026-10-13.md`; mini-holdout mới ở `docs/OFFICIAL_HOLDOUT10_2026-10-13.md`. Không điền số liệu hoặc URL chưa được xác minh. Hạn khóa link nộp do đội ghi nhận là 14/10/2026; kiểm link và rehearsal trên commit freeze.
+Cập nhật: 13/10/2026. Trạng thái hiện hành nằm tại `docs/CURRENT_PROJECT_STATUS_2026-10-13.md`; mini-holdout mới ở `docs/OFFICIAL_HOLDOUT10_2026-10-13.md`. Không điền số liệu hoặc URL chưa được xác minh. Đề Track ghi khóa bài ngày **15/10/2026**, trong khi ghi nhận nội bộ trước đó là **14/10/2026**; cho tới khi Drive/email xác nhận khác, đội dùng mốc sớm hơn 14/10 làm hạn vận hành an toàn. Checklist Drive và video chính thức nằm tại `docs/FINAL_DRIVE_SUBMISSION_PACKAGE_2026-10-13.md`.
 
 ## 1. Hạng mục bàn giao
 
 | Hạng mục | Trạng thái | File/bằng chứng |
 |---|---|---|
 | Frontend/backend clone và chạy localhost | ☑ Có | README root, .NET 8, LocalDB/SQL Server, user-secrets và migration |
-| Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, 15/30 ca chạy ngoài UI bằng evaluator |
+| Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca Spec A live (3 AUTO + 2 ESCALATE), 15/30 ca chạy ngoài UI bằng evaluator. Đề chung nhắc 4 ca nhưng mục Spec A yêu cầu 5 ca; AURA dùng bộ 5 ca nghiêm ngặt hơn. |
 | Public repository và lịch sử commit | ☑ Có | `https://github.com/BondPhuPhamzZ/AURA`; cần push commit chốt sau mỗi lần cập nhật hồ sơ |
-| Public Live URL | ◐ Live technical gate pass, chờ rehearsal freeze | Health candidate, live Verify 5/5 trong 65,004 giây, multi-click gate 1×200 + 4×409, mini-holdout mới 8/10 với 0 missed/system/provider error, mobile 390 px và điện thoại thật 4G/5G đã pass; còn một rehearsal sạch và kiểm link từ thiết bị khác |
-| Video demo tối đa 3 phút (BTC ghi Optional) | ☑ Đã liên kết | Link Google Drive ở README root |
-| Đúng 5 slide | ☑ Đã dựng | `submission/AURA_5_SLIDES.pptx` |
-| Build Log một trang Word | ☑ Đã dựng | `submission/AURA_BUILD_LOG.docx` |
+| Public Live URL | ☑ Technical gate pass, còn rehearsal onsite | `https://bondphupham-001-site1.ltempurl.com/`; health HTTP 200 và `status=ok` được kiểm lại ngày 14/10, live Verify 5/5 trong 65,004 giây, multi-click gate 1×200 + 4×409, mobile 390 px và điện thoại thật 4G/5G đã pass. |
+| Proposal hiện hành | ☑ Đã viết lại song ngữ | `submission/AURA_PROPOSAL_VI_2026-10-13.pdf` và `submission/AURA_PROPOSAL_EN_2026-10-13.pdf`; không dùng hai proposal AER nghỉ phép HR cũ. |
+| Video demo chính thức tối đa 3 phút | ☐ Phải quay lại | Track coi video là hạng mục bắt buộc. `D:\aura\vid\final.mkv` dài khoảng 6 phút 43 giây và là bản cũ, không hợp lệ cho slot chính thức. Chỉ nộp một video 2:40–2:55; bản sao dự phòng không phải hạng mục thứ hai. |
+| Đúng 5 slide | ☑ Đã đồng bộ | `submission/AURA_5_SLIDES_FINAL_2026-10-13_V2.pptx`; giữ đúng 5 slide và thêm câu chuyện phát triển ở Slide 3/speaker notes. |
+| Build Log một trang | ☑ Đã đồng bộ | `submission/AURA_BUILD_LOG_1_PAGE_2026-10-13.docx` và PDF; số hiện hành là 163/163, tính năng lớn nhất cắt là evidence localization production. |
+| Evidence 3 người dùng thực tế | ☐ Chưa đóng gate | Protocol và biểu mẫu trắng đã có. Vẫn cần 3 người trực tiếp xử lý nghiệp vụ, chức danh thật, trích dẫn nguyên văn, một thay đổi sản phẩm từ feedback và một bất cập/tác động tiêu cực cụ thể. Không tự tạo persona hoặc feedback. |
 
 ## 2. File nên có trong GitHub
 
@@ -20,9 +22,11 @@ Cập nhật: 13/10/2026. Trạng thái hiện hành nằm tại `docs/CURRENT_P
 - `README.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_AND_INTEGRATION_REPORT.md`.
 - `docs/`: Build Log nguồn, deployment, runbook, test cases, model selection, measurement plan.
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
-- `submission/AURA_5_SLIDES_FINAL_2026-10-13.pptx`: deck 5 slide hiện hành; candidate Qwen3.8 Flash/Alibaba đạt 163/163 test, Release build sạch, live Verify 5/5 trong 65,004 giây và concurrency upload 5/5. Bản `AURA_5_SLIDES.pptx` được giữ làm lịch sử trước lần đồng bộ này.
+- `submission/AURA_5_SLIDES_FINAL_2026-10-13_V2.pptx`: deck 5 slide hiện hành; candidate Qwen3.8 Flash/Alibaba đạt 163/163 test, Release build sạch, live Verify 5/5 trong 65,004 giây và concurrency upload 5/5. Các bản cũ được giữ làm lịch sử.
 - `submission/AURA_FINAL_15_MINUTE_PRESENTATION_GUIDE_2026-10-13.md`: timeline nói, demo/video, câu chuyển và claim boundary cho phần Chung kết dưới 15 phút.
-- `submission/AURA_BUILD_LOG.docx`: một trang.
+- `submission/AURA_BUILD_LOG_1_PAGE_2026-10-13.docx` và PDF: Build Log một trang đã đồng bộ.
+- `submission/AURA_PROPOSAL_VI_2026-10-13.*` và `AURA_PROPOSAL_EN_2026-10-13.*`: proposal AURA song ngữ.
+- `submission/AURA_USER_FEEDBACK_FORM_2026-10-13.*`: biểu mẫu ghi nhận người dùng thật; bản trắng không phải evidence đã hoàn tất.
 - `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.
 - 5 ảnh Verify trong `wwwroot/test_data/images`, manifest Verify và gói 15 ca BGK.
 - `Dockerfile`, `.dockerignore`, `.gitignore`.
