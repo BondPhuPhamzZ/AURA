@@ -35,6 +35,17 @@ function Copy-Required {
     Copy-Item -LiteralPath $Source -Destination $Destination -Force
 }
 
+function Remove-GeneratedFile {
+    param([Parameter(Mandatory)][string]$Path)
+    $personalRoot = "$DemoRoot\Gia_Phu"
+    if (-not $Path.StartsWith($personalRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to remove a generated file outside the personal package: $Path"
+    }
+    if (Test-Path -LiteralPath $Path -PathType Leaf) {
+        Remove-Item -LiteralPath $Path -Force
+    }
+}
+
 $directories = @(
     "$DemoRoot\Evidence\00_INDEX_AND_SCOPE",
     "$DemoRoot\Evidence\01_RELEASE_GATES",
@@ -61,12 +72,48 @@ $directories = @(
 )
 $directories | ForEach-Object { Ensure-Directory -Path $_ }
 
+# These are generated copies from the previous package layout. Their original
+# sources remain in the repository/private study archive, so replacing them is
+# recoverable. Exact filenames are removed; no recursive delete is used.
+$legacyPersonalFiles = @(
+    "$DemoRoot\Gia_Phu\OnTap\00_READ_ME_FIRST.md",
+    "$DemoRoot\Gia_Phu\OnTap\01_PERSONAL_MASTER_INDEX.md",
+    "$DemoRoot\Gia_Phu\OnTap\02_FINAL_STUDY_GUIDE.md",
+    "$DemoRoot\Gia_Phu\OnTap\03_REQUEST_FLOW_AND_PROMPT_LAYERS.md",
+    "$DemoRoot\Gia_Phu\OnTap\04_SOURCE_CODE_AND_FOLDER_REFERENCE.md",
+    "$DemoRoot\Gia_Phu\OnTap\05_PROJECT_ARCHITECTURE_GUIDE.md",
+    "$DemoRoot\Gia_Phu\OnTap\06_TESTING_DATA_AND_WORKFLOW_GUIDE.md",
+    "$DemoRoot\Gia_Phu\OnTap\07_FALLBACK_AND_429_STRATEGY.md",
+    "$DemoRoot\Gia_Phu\OnTap\08_CAPACITY_AND_MULTI_JUDGE_DEFENSE.md",
+    "$DemoRoot\Gia_Phu\OnTap\09_OFFICIAL_HOLDOUT_AND_DEMO_DECISION.md",
+    "$DemoRoot\Gia_Phu\OnTap\10_REGRESSION12_ORIGINAL_BYTES_AND_CONCURRENCY.md",
+    "$DemoRoot\Gia_Phu\OnTap\11_REGRESSION12_SEQUENTIAL_REPEAT.md",
+    "$DemoRoot\Gia_Phu\OnTap\12_EVIDENCE_LOCALIZATION_DECISION.md",
+    "$DemoRoot\Gia_Phu\OnTap\13_ONSITE_FINAL_PLAYBOOK.md",
+    "$DemoRoot\Gia_Phu\Pitching_QnA\00_FINAL_PITCH_SCRIPT_AND_QA.md",
+    "$DemoRoot\Gia_Phu\Pitching_QnA\01_JUDGE_QA_REFERENCE.md",
+    "$DemoRoot\Gia_Phu\Pitching_QnA\02_SOURCE_CODE_QA.md",
+    "$DemoRoot\Gia_Phu\Pitching_QnA\03_PRESENTATION_AND_DEMO_REFERENCE.md"
+)
+$legacyPersonalFiles | ForEach-Object { Remove-GeneratedFile -Path $_ }
+
+# Remove the exact obsolete generated status copy. Historical evidence files
+# remain untouched; only the superseded "current status" duplicate is removed.
+$obsoleteCurrentStatus = "$DemoRoot\Evidence\00_INDEX_AND_SCOPE\CURRENT_PROJECT_STATUS_2026-10-13.md"
+if (Test-Path -LiteralPath $obsoleteCurrentStatus -PathType Leaf) {
+    if (-not $obsoleteCurrentStatus.StartsWith("$DemoRoot\Evidence\00_INDEX_AND_SCOPE", [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to remove status outside the expected index folder: $obsoleteCurrentStatus"
+    }
+    Remove-Item -LiteralPath $obsoleteCurrentStatus -Force
+}
+
 $copies = @(
     # Evidence index and scope
     @("$AppRoot\docs\DEMO_DAY_EVIDENCE_INDEX_2026-10-13.md", "$DemoRoot\Evidence\00_INDEX_AND_SCOPE\00_EVIDENCE_INDEX.md"),
-    @("$AppRoot\docs\CURRENT_PROJECT_STATUS_2026-10-13.md", "$DemoRoot\Evidence\00_INDEX_AND_SCOPE\CURRENT_PROJECT_STATUS_2026-10-13.md"),
+    @("$AppRoot\docs\CURRENT_PROJECT_STATUS_2026-10-14.md", "$DemoRoot\Evidence\00_INDEX_AND_SCOPE\CURRENT_PROJECT_STATUS_2026-10-14.md"),
     @("$AppRoot\docs\FINAL_READINESS_GAPS_2026-10-13.md", "$DemoRoot\Evidence\00_INDEX_AND_SCOPE\FINAL_READINESS_GAPS_2026-10-13.md"),
     @("$AppRoot\docs\FINAL_LIVE_HEALTH_RECHECK_2026-10-14.md", "$DemoRoot\Evidence\00_INDEX_AND_SCOPE\FINAL_LIVE_HEALTH_RECHECK_2026-10-14.md"),
+    @("$AppRoot\docs\DEMO_DAY_SYNC_AUDIT_2026-10-14.md", "$DemoRoot\Evidence\00_INDEX_AND_SCOPE\DEMO_DAY_SYNC_AUDIT_2026-10-14.md"),
     @("$AppRoot\submission\AURA_DEMO_DAY_PACKAGE_README_2026-10-13.md", "$DemoRoot\Evidence\00_INDEX_AND_SCOPE\README_FIRST.md"),
 
     # Release gates
@@ -118,33 +165,22 @@ $copies = @(
     @("$AppRoot\submission\USER_FEEDBACK_EVIDENCE_PENDING.md", "$DemoRoot\Evidence\08_USER_STUDY_PENDING\PENDING.md"),
     @("$AppRoot\.tmp\slides-v2\AURA_5_SLIDES_FINAL_2026-10-13_V2.validation.json", "$DemoRoot\Evidence\09_SUBMISSION_INTEGRITY\slide-validation.json"),
 
-    # Personal study set
-    @("$AppRoot\submission\AURA_PERSONAL_STUDY_INDEX_2026-10-13.md", "$DemoRoot\Gia_Phu\OnTap\00_READ_ME_FIRST.md"),
-    @("$PrivateRoot\00_AURA_PERSONAL_MASTER_INDEX.md", "$DemoRoot\Gia_Phu\OnTap\01_PERSONAL_MASTER_INDEX.md"),
-    @("$PrivateRoot\16_AURA_FINAL_STUDY_GUIDE_2026-10-07.md", "$DemoRoot\Gia_Phu\OnTap\02_FINAL_STUDY_GUIDE.md"),
-    @("$PrivateRoot\Project_Folder_Architecture\explain\01_FINAL_REQUEST_FLOW_AND_PROMPT_LAYERS.md", "$DemoRoot\Gia_Phu\OnTap\03_REQUEST_FLOW_AND_PROMPT_LAYERS.md"),
-    @("$PrivateRoot\Project_Folder_Architecture\explain\02_SOURCE_CODE_AND_FOLDER_REFERENCE.md", "$DemoRoot\Gia_Phu\OnTap\04_SOURCE_CODE_AND_FOLDER_REFERENCE.md"),
-    @("$PrivateRoot\explain\AURA_PROJECT_ARCHITECTURE_GUIDE.md", "$DemoRoot\Gia_Phu\OnTap\05_PROJECT_ARCHITECTURE_GUIDE.md"),
-    @("$PrivateRoot\explain\AURA_TESTING_DATA_AND_IMPLEMENTATION_WORKFLOW_GUIDE.md", "$DemoRoot\Gia_Phu\OnTap\06_TESTING_DATA_AND_WORKFLOW_GUIDE.md"),
-    @("$PrivateRoot\20_FALLBACK_AND_429_FINAL_STRATEGY_2026-10-12.md", "$DemoRoot\Gia_Phu\OnTap\07_FALLBACK_AND_429_STRATEGY.md"),
-    @("$PrivateRoot\21_LIVE_CAPACITY_AND_MULTI_JUDGE_DEFENSE_2026-10-12.md", "$DemoRoot\Gia_Phu\OnTap\08_CAPACITY_AND_MULTI_JUDGE_DEFENSE.md"),
-    @("$PrivateRoot\23_OFFICIAL_HOLDOUT10_AND_DEMO_DECISION_2026-10-13.md", "$DemoRoot\Gia_Phu\OnTap\09_OFFICIAL_HOLDOUT_AND_DEMO_DECISION.md"),
-    @("$PrivateRoot\25_REGRESSION12_ORIGINAL_BYTES_AND_CONCURRENCY_2026-10-13.md", "$DemoRoot\Gia_Phu\OnTap\10_REGRESSION12_ORIGINAL_BYTES_AND_CONCURRENCY.md"),
-    @("$PrivateRoot\26_REGRESSION12_SEQUENTIAL_REPEAT_2026-10-13.md", "$DemoRoot\Gia_Phu\OnTap\11_REGRESSION12_SEQUENTIAL_REPEAT.md"),
-    @("$PrivateRoot\28_EVIDENCE_LOCALIZATION_IMPLEMENTATION_DECISION_2026-10-13.md", "$DemoRoot\Gia_Phu\OnTap\12_EVIDENCE_LOCALIZATION_DECISION.md"),
-    @("$PrivateRoot\07_ONSITE_FINAL_PLAYBOOK_2026-10-06.md", "$DemoRoot\Gia_Phu\OnTap\13_ONSITE_FINAL_PLAYBOOK.md"),
+    # Personal study set: current Vietnamese-only distillation
+    @("$AppRoot\submission\AURA_PERSONAL_STUDY_INDEX_2026-10-13.md", "$DemoRoot\Gia_Phu\OnTap\00_DOC_TRUOC_2026-10-14.md"),
+    @("$AppRoot\submission\AURA_SO_TAY_ON_TAP_VI_2026-10-14.md", "$DemoRoot\Gia_Phu\OnTap\01_SO_TAY_AURA_HIEN_HANH_2026-10-14.md"),
+    @("$AppRoot\submission\AURA_CODE_FLOW_CHEATSHEET_VI_2026-10-14.md", "$DemoRoot\Gia_Phu\OnTap\02_LUONG_XU_LY_VA_MA_NGUON_2026-10-14.md"),
+    @("$AppRoot\submission\AURA_DEMO_OPERATIONS_CHECKLIST_VI_2026-10-14.md", "$DemoRoot\Gia_Phu\OnTap\03_VAN_HANH_DEMO_VA_XU_LY_SU_CO_2026-10-14.md"),
 
-    # Pitching and Q&A
-    @("$AppRoot\submission\AURA_FINAL_PITCH_SCRIPT_AND_QA_2026-10-13.md", "$DemoRoot\Gia_Phu\Pitching_QnA\00_FINAL_PITCH_SCRIPT_AND_QA.md"),
-    @("$PrivateRoot\17_AURA_FINAL_PITCH_AND_JUDGE_QA_2026-10-07.md", "$DemoRoot\Gia_Phu\Pitching_QnA\01_JUDGE_QA_REFERENCE.md"),
-    @("$PrivateRoot\18_AURA_FINAL_DEFENSE_SOURCE_CODE_QA_2026-10-07.md", "$DemoRoot\Gia_Phu\Pitching_QnA\02_SOURCE_CODE_QA.md"),
-    @("$PrivateRoot\27_FINAL_15_MINUTE_PRESENTATION_AND_DEMO_2026-10-13.md", "$DemoRoot\Gia_Phu\Pitching_QnA\03_PRESENTATION_AND_DEMO_REFERENCE.md"),
+    # Pitching and Q&A: current Vietnamese-only set
+    @("$AppRoot\submission\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI_2026-10-14.md", "$DemoRoot\Gia_Phu\Pitching_QnA\00_KICH_BAN_THUYET_TRINH_VA_QA_VI_2026-10-14.md"),
+    @("$AppRoot\submission\AURA_CODE_FLOW_CHEATSHEET_VI_2026-10-14.md", "$DemoRoot\Gia_Phu\Pitching_QnA\01_QA_KY_THUAT_VA_LUONG_XU_LY_2026-10-14.md"),
+    @("$AppRoot\submission\AURA_DEMO_OPERATIONS_CHECKLIST_VI_2026-10-14.md", "$DemoRoot\Gia_Phu\Pitching_QnA\02_CHECKLIST_DEMO_VA_SU_CO_2026-10-14.md"),
 
     # Video and presentation scripts
-    @("$AppRoot\submission\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_2026-10-13.md", "$DemoRoot\kich_ban_video\00_KICH_BAN_VIDEO_3_PHUT.md"),
+    @("$AppRoot\submission\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI_2026-10-14.md", "$DemoRoot\kich_ban_video\00_KICH_BAN_VIDEO_3_PHUT.md"),
     @("$AppRoot\submission\VIDEO_FILE_PENDING.md", "$DemoRoot\kich_ban_video\01_VIDEO_FILE_PENDING.md"),
     @("$AppRoot\submission\AURA_5_SLIDES_FINAL_2026-10-13_V2.pptx", "$DemoRoot\kich_ban_thuyettrinh_slide\AURA_5_SLIDES_FINAL_2026-10-13_V2.pptx"),
-    @("$AppRoot\submission\AURA_FINAL_PITCH_SCRIPT_AND_QA_2026-10-13.md", "$DemoRoot\kich_ban_thuyettrinh_slide\00_KICH_BAN_THUYET_TRINH_VA_QA.md"),
+    @("$AppRoot\submission\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI_2026-10-14.md", "$DemoRoot\kich_ban_thuyettrinh_slide\00_KICH_BAN_THUYET_TRINH_VA_QA.md"),
     @("$AppRoot\submission\AURA_FINAL_15_MINUTE_PRESENTATION_GUIDE_2026-10-13.md", "$DemoRoot\kich_ban_thuyettrinh_slide\01_HUONG_DAN_15_PHUT.md"),
 
     # Upload-ready package
@@ -153,12 +189,13 @@ $copies = @(
     @("$AppRoot\submission\AURA_SUBMISSION_LINKS_2026-10-13.docx", "$DemoRoot\Nop\00_READ_FIRST\AURA_SUBMISSION_LINKS.docx"),
     @("$AppRoot\submission\AURA_SUBMISSION_LINKS_2026-10-13.pdf", "$DemoRoot\Nop\00_READ_FIRST\AURA_SUBMISSION_LINKS.pdf"),
     @("$AppRoot\docs\FINAL_DRIVE_SUBMISSION_PACKAGE_2026-10-13.md", "$DemoRoot\Nop\00_READ_FIRST\FINAL_DRIVE_SUBMISSION_CHECKLIST.md"),
+    @("$AppRoot\docs\DEMO_DAY_SYNC_AUDIT_2026-10-14.md", "$DemoRoot\Nop\00_READ_FIRST\DEMO_DAY_SYNC_AUDIT_2026-10-14.md"),
     @("$AppRoot\submission\AURA_5_SLIDES_FINAL_2026-10-13_V2.pptx", "$DemoRoot\Nop\01_SLIDES\AURA_5_SLIDES_FINAL.pptx"),
     @("$AppRoot\submission\AURA_PROPOSAL_VI_2026-10-13.docx", "$DemoRoot\Nop\02_PROPOSAL\AURA_PROPOSAL_VI.docx"),
     @("$AppRoot\submission\AURA_PROPOSAL_VI_2026-10-13.pdf", "$DemoRoot\Nop\02_PROPOSAL\AURA_PROPOSAL_VI.pdf"),
     @("$AppRoot\submission\AURA_PROPOSAL_EN_2026-10-13.docx", "$DemoRoot\Nop\02_PROPOSAL\AURA_PROPOSAL_EN.docx"),
     @("$AppRoot\submission\AURA_PROPOSAL_EN_2026-10-13.pdf", "$DemoRoot\Nop\02_PROPOSAL\AURA_PROPOSAL_EN.pdf"),
-    @("$AppRoot\submission\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_2026-10-13.md", "$DemoRoot\Nop\03_VIDEO\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN.md"),
+    @("$AppRoot\submission\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI_2026-10-14.md", "$DemoRoot\Nop\03_VIDEO\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN.md"),
     @("$AppRoot\submission\VIDEO_FILE_PENDING.md", "$DemoRoot\Nop\03_VIDEO\VIDEO_FILE_PENDING.md"),
     @("$AppRoot\submission\AURA_BUILD_LOG_1_PAGE_2026-10-13.md", "$DemoRoot\Nop\04_BUILD_LOG\AURA_BUILD_LOG_1_PAGE.md"),
     @("$AppRoot\submission\AURA_BUILD_LOG_1_PAGE_2026-10-13.docx", "$DemoRoot\Nop\04_BUILD_LOG\AURA_BUILD_LOG_1_PAGE.docx"),
@@ -174,7 +211,7 @@ $copies = @(
     @("$AppRoot\submission\AURA_USER_FEEDBACK_FORM_2026-10-13.pdf", "$DemoRoot\Nop\06_USER_EVIDENCE\AURA_USER_FEEDBACK_FORM.pdf"),
     @("$AppRoot\submission\USER_FEEDBACK_EVIDENCE_PENDING.md", "$DemoRoot\Nop\06_USER_EVIDENCE\USER_FEEDBACK_EVIDENCE_PENDING.md"),
     @("$AppRoot\docs\DEMO_DAY_EVIDENCE_INDEX_2026-10-13.md", "$DemoRoot\Nop\07_EVIDENCE_SUMMARY\EVIDENCE_INDEX.md"),
-    @("$AppRoot\docs\CURRENT_PROJECT_STATUS_2026-10-13.md", "$DemoRoot\Nop\07_EVIDENCE_SUMMARY\CURRENT_PROJECT_STATUS.md"),
+    @("$AppRoot\docs\CURRENT_PROJECT_STATUS_2026-10-14.md", "$DemoRoot\Nop\07_EVIDENCE_SUMMARY\CURRENT_PROJECT_STATUS.md"),
     @("$AppRoot\docs\FINAL_LIVE_HEALTH_RECHECK_2026-10-14.md", "$DemoRoot\Nop\07_EVIDENCE_SUMMARY\FINAL_LIVE_HEALTH_RECHECK.md"),
     @("$AppRoot\docs\OFFICIAL_HOLDOUT10_2026-10-13.md", "$DemoRoot\Nop\07_EVIDENCE_SUMMARY\OFFICIAL_HOLDOUT10.md")
 )
@@ -198,16 +235,22 @@ $hashLines = foreach ($file in $hashFiles) {
 }
 [System.IO.File]::WriteAllLines("$DemoRoot\Evidence\09_SUBMISSION_INTEGRITY\SHA256SUMS.txt", $hashLines, [System.Text.UTF8Encoding]::new($false))
 
-$frozenCommit = (& git -C $RepoRoot rev-parse HEAD).Trim()
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($frozenCommit)) {
+$packageCommit = (& git -C $RepoRoot rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($packageCommit)) {
     throw 'Unable to resolve the repository HEAD for PACKAGE_STATUS.json.'
+}
+$releaseCommit = (& git -C $RepoRoot rev-list -n 1 'aura-demo-day-2026-10-14').Trim()
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($releaseCommit)) {
+    throw 'Unable to resolve release tag aura-demo-day-2026-10-14.'
 }
 
 $summary = [ordered]@{
     generatedAt = (Get-Date).ToString('o')
     demoRoot = $DemoRoot
+    contentVersion = '2026-10-14-vi-current'
     releaseTag = 'aura-demo-day-2026-10-14'
-    frozenCommit = $frozenCommit
+    releaseCommit = $releaseCommit
+    packageCommit = $packageCommit
     copiedFileCount = $copies.Count
     evidenceHashedFileCount = $hashLines.Count
     rawReceiptsCopied = $false

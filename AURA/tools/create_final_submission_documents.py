@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Iterable, List, Sequence, Tuple
 
 from docx import Document
-from docx.enum.section import WD_SECTION
+from docx.enum.section import WD_ORIENT, WD_SECTION
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
 from docx.oxml import OxmlElement
@@ -16,7 +16,7 @@ from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
@@ -157,6 +157,14 @@ def apply_doc_defaults(doc: Document, compact: bool = False) -> None:
         style.paragraph_format.keep_with_next = True
         style.paragraph_format.space_before = Pt(8 if not compact else 3)
         style.paragraph_format.space_after = Pt(4 if not compact else 1.5)
+        if name == "Title":
+            # Word's built-in Title style may inherit a bottom border from the
+            # local Office template. Remove it explicitly so native Word and
+            # PDF exports render the same clean title treatment.
+            style_p_pr = style.element.get_or_add_pPr()
+            style_borders = style_p_pr.find(qn("w:pBdr"))
+            if style_borders is not None:
+                style_p_pr.remove(style_borders)
 
     core = doc.core_properties
     core.author = ""
@@ -280,7 +288,13 @@ def add_docx_table(doc: Document, rows: Sequence[Sequence[str]], compact: bool =
     for r_idx, row in enumerate(rows):
         for c_idx in range(width):
             cell = table.cell(r_idx, c_idx)
-            set_cell_margins(cell, 45 if compact else 70, 60 if compact else 90, 45 if compact else 70, 60 if compact else 90)
+            set_cell_margins(
+                cell,
+                75 if compact else 105,
+                105 if compact else 145,
+                75 if compact else 105,
+                105 if compact else 145,
+            )
             cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
             if r_idx == 0:
                 set_cell_shading(cell, BLUE)
@@ -304,6 +318,10 @@ def add_blocks_to_docx(doc: Document, blocks: Sequence[Tuple[str, object]], comp
             if first_h1:
                 p = doc.add_paragraph(style="Title")
                 p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                title_p_pr = p._p.get_or_add_pPr()
+                title_borders = title_p_pr.find(qn("w:pBdr"))
+                if title_borders is not None:
+                    title_p_pr.remove(title_borders)
                 add_inline_runs(p, str(data))
                 first_h1 = False
             else:
@@ -355,30 +373,15 @@ def create_build_log_docx(source: Path, target: Path) -> None:
     blocks = parse_markdown(source.read_text(encoding="utf-8").splitlines())
     doc = Document()
     apply_doc_defaults(doc, compact=True)
-    title_seen = False
-    split_index = 0
-    for idx, (kind, data) in enumerate(blocks):
-        if kind == "h1" and not title_seen:
-            p = doc.add_paragraph(style="Title")
-            add_inline_runs(p, str(data))
-            title_seen = True
-            continue
-        if kind == "p" and str(data).startswith("**Track"):
-            p = doc.add_paragraph()
-            p.paragraph_format.space_after = Pt(3)
-            add_inline_runs(p, str(data))
-            split_index = idx + 1
-            break
-    section = doc.add_section(WD_SECTION.CONTINUOUS)
-    section.top_margin = Inches(0.44)
-    section.bottom_margin = Inches(0.42)
+    section = doc.sections[0]
+    section.orientation = WD_ORIENT.LANDSCAPE
+    section.page_width = Inches(11)
+    section.page_height = Inches(8.5)
+    section.top_margin = Inches(0.42)
+    section.bottom_margin = Inches(0.40)
     section.left_margin = Inches(0.48)
     section.right_margin = Inches(0.48)
-    sect_pr = section._sectPr
-    cols = sect_pr.xpath("./w:cols")[0]
-    cols.set(qn("w:num"), "2")
-    cols.set(qn("w:space"), "300")
-    add_blocks_to_docx(doc, blocks[split_index:], compact=True)
+    add_blocks_to_docx(doc, blocks, compact=True)
     doc.save(target)
 
 
@@ -515,10 +518,10 @@ def make_pdf_table(rows: Sequence[Sequence[str]], available_width: float, compac
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#" + BLUE)),
         ("GRID", (0, 0), (-1, -1), 0.45, colors.HexColor("#CFD8E3")),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 4),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-        ("TOPPADDING", (0, 0), (-1, -1), 3),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5 if compact else 7),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5 if compact else 7),
+        ("TOPPADDING", (0, 0), (-1, -1), 3.5 if compact else 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3.5 if compact else 5),
     ]
     for row_idx in range(2, len(rows), 2):
         commands.append(("BACKGROUND", (0, row_idx), (-1, row_idx), colors.HexColor("#" + PALE)))
@@ -530,7 +533,8 @@ def header_footer(canvas, doc) -> None:
     canvas.saveState()
     canvas.setFont("Arial-Bold", 7)
     canvas.setFillColor(colors.HexColor("#" + MID_BLUE))
-    canvas.drawRightString(letter[0] - 0.65 * inch, letter[1] - 0.34 * inch, "AURA  |  OrganizationAI  |  The Deciders")
+    page_width, page_height = doc.pagesize
+    canvas.drawRightString(page_width - 0.65 * inch, page_height - 0.34 * inch, "AURA  |  OrganizationAI  |  The Deciders")
     canvas.setFont("Arial", 7)
     canvas.setFillColor(colors.HexColor("#" + MUTED))
     canvas.drawRightString(letter[0] - 0.65 * inch, 0.30 * inch, f"Page {doc.page}")
@@ -546,6 +550,8 @@ def blocks_to_pdf_story(blocks: Sequence[Tuple[str, object]], width: float, comp
             story.append(Paragraph(md_inline_to_pdf(str(data)), styles["title"] if first_h1 else styles["h1"]))
             first_h1 = False
         elif kind == "h2":
+            if not compact and (str(data).startswith("6 Kết quả") or str(data).startswith("6 Verified")):
+                story.append(PageBreak())
             story.append(Paragraph(md_inline_to_pdf(str(data)), styles["h1"]))
         elif kind == "h3":
             story.append(Paragraph(md_inline_to_pdf(str(data)), styles["h2"]))
@@ -588,43 +594,21 @@ def create_general_pdf(source: Path, target: Path) -> None:
 
 
 def create_build_log_pdf(source: Path, target: Path) -> None:
-    page_w, page_h = letter
-    margin = 0.43 * inch
-    header_height = 0.63 * inch
-    footer_height = 0.28 * inch
-    gap = 0.20 * inch
-    usable_w = page_w - 2 * margin
-    col_w = (usable_w - gap) / 2
-    doc = BaseDocTemplate(str(target), pagesize=letter, leftMargin=margin, rightMargin=margin, topMargin=margin, bottomMargin=margin, title="AURA Build Log Sprint 2", author="")
-    frames = [
-        Frame(margin, page_h - margin - header_height, usable_w, header_height, id="header", leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0),
-        Frame(margin, margin + footer_height, col_w, page_h - 2 * margin - header_height - footer_height - 0.05 * inch, id="col1", leftPadding=0, rightPadding=5, topPadding=0, bottomPadding=0),
-        Frame(margin + col_w + gap, margin + footer_height, col_w, page_h - 2 * margin - header_height - footer_height - 0.05 * inch, id="col2", leftPadding=5, rightPadding=0, topPadding=0, bottomPadding=0),
-    ]
-    doc.addPageTemplates(PageTemplate(id="buildlog", frames=frames, onPage=header_footer))
+    page_w, page_h = landscape(letter)
+    margin = 0.48 * inch
+    doc = SimpleDocTemplate(
+        str(target),
+        pagesize=(page_w, page_h),
+        leftMargin=margin,
+        rightMargin=margin,
+        topMargin=0.46 * inch,
+        bottomMargin=0.40 * inch,
+        title="AURA Build Log Sprint 2",
+        author="",
+    )
     blocks = parse_markdown(source.read_text(encoding="utf-8").splitlines())
-    styles = pdf_styles(compact=True)
-    story = []
-    content_start = 0
-    for idx, (kind, data) in enumerate(blocks):
-        if kind == "h1":
-            story.append(Paragraph(md_inline_to_pdf(str(data)), styles["title"]))
-        elif kind == "p" and str(data).startswith("**Track"):
-            story.append(Paragraph(md_inline_to_pdf(str(data)), styles["meta"]))
-            story.append(FrameBreak())
-            content_start = idx + 1
-            break
-    left_blocks = []
-    right_blocks = []
-    destination = left_blocks
-    for block in blocks[content_start:]:
-        if block[0] == "h2" and str(block[1]).startswith("What changed after failure"):
-            destination = right_blocks
-        destination.append(block)
-    story.extend(blocks_to_pdf_story(left_blocks, col_w - 5, compact=True))
-    story.append(FrameBreak())
-    story.extend(blocks_to_pdf_story(right_blocks, col_w - 5, compact=True))
-    doc.build(story)
+    story = blocks_to_pdf_story(blocks, page_w - 2 * margin, compact=True)
+    doc.build(story, onFirstPage=header_footer, onLaterPages=header_footer)
 
 
 def create_feedback_form_pdf(target: Path) -> None:

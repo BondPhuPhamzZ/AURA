@@ -109,7 +109,7 @@ và ba user session chính thức.”
 Ưu tiên live demo, nhưng mở sẵn video dự phòng. Nếu live URL không phản hồi sau khoảng 10 giây,
 chuyển ngay sang video và nói rõ đây là bản ghi trên cùng candidate.
 
-Video chính thức nộp Drive phải theo `submission/AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_2026-10-13.md`,
+Video chính thức nộp Drive phải theo `submission/AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI_2026-10-14.md`,
 không vượt 180 giây và không chèn slide. Không quay thêm video riêng cho Verify, kiến trúc hoặc
 evidence overlay.
 

@@ -1,10 +1,8 @@
 # Đề xuất giải pháp AURA cho bài toán hoàn ứng
 
-**Track:** OrganizationAI
-**Đề bài:** Spec A The Escalation Referee
-**Đội:** The Deciders
-**Tác giả:** Pham Gia Phu
-**Phiên bản bằng chứng:** 13/10/2026
+**Track:** OrganizationAI | **Đề bài:** Spec A The Escalation Referee
+
+**Đội:** The Deciders | **Tác giả:** Phạm Gia Phú | **Bản chốt:** 14/10/2026
 
 ## Tóm tắt điều hành
 
@@ -136,7 +134,7 @@ Evidence overlay chỉ đi tiếp sau khi có OCR word boxes, annotation độc 
 - Runbook: `AURA/docs/RUNBOOK.md`
 - Business rules: `AURA/BUSINESS_RULES.md`
 - Workflow: `AURA/submission/AURA_WORKFLOW_SPEC.md`
-- Current status: `AURA/docs/CURRENT_PROJECT_STATUS_2026-10-13.md`
+- Current status: `AURA/docs/CURRENT_PROJECT_STATUS_2026-10-14.md`
 - User-study protocol: `AURA/docs/USER_STUDY_PROTOCOL_2026-10-13.md`
 
 ## Kết luận

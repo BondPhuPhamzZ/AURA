@@ -1,6 +1,6 @@
 # AURA Build Log Sprint 2
 
-**Track A The Escalation Referee | 13/10/2026 | Pham Gia Phu**
+**Track A The Escalation Referee | Bản chốt 14/10/2026 | Phạm Gia Phú**
 
 AURA is a supervised reimbursement-review assistant. A vision model extracts structured receipt facts, deterministic C# policy decides the route, and people remain responsible for exceptions. The system covers upload, durable background processing, review, Audit, and Undo.
 

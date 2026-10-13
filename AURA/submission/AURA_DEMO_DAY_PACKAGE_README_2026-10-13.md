@@ -1,48 +1,50 @@
-# AURA Demo Day package - read first
+# AURA Demo Day — đọc trước
 
-## What is ready
+**Trạng thái đồng bộ:** 14/10/2026. Các tệp mang ngày 06/10, 07/10, 12/10 hoặc 13/10 trong thư mục Evidence là bằng chứng lịch sử và được giữ nguyên ngày nguồn; trạng thái hiện hành nằm trong `CURRENT_PROJECT_STATUS_2026-10-14.md`.
 
-- bilingual Vietnamese and English proposal in editable DOCX and visually verified PDF;
-- exactly five presentation slides in PPTX;
-- one-page Build Log in DOCX and PDF;
-- public repository, live URL, health endpoint, Verify cases, workflow spec, runbook, and evidence index;
-- product-only three-minute video script;
-- fifteen-minute presentation script and concise judge Q&A;
-- curated evidence package without raw receipt images, API keys, private databases, or billing screenshots.
+## Những gì đã sẵn sàng
 
-## What remains a human action
+- proposal tiếng Việt và tiếng Anh ở định dạng DOCX chỉnh sửa được và PDF đã kiểm tra trực quan;
+- đúng năm slide thuyết trình trong PPTX;
+- Build Log một trang ở DOCX và PDF;
+- repository công khai, live URL, health endpoint, Verify cases, workflow spec, runbook và chỉ mục evidence;
+- kịch bản video ba phút chỉ quay sản phẩm;
+- kịch bản thuyết trình tối đa 15 phút và bộ hỏi đáp ngắn gọn;
+- gói evidence đã tuyển chọn, không chứa ảnh hóa đơn gốc, API key, database riêng tư hoặc ảnh billing.
 
-1. Record and upload the official MP4 at or below 180 seconds.
-2. Complete three consented real-user sessions and record real names, roles, confirmed verbatim feedback, one negative effect, and one feedback-derived product change.
-3. Replace the pending video link and confirm the frozen release ref in the final submission links.
-4. Confirm the latest Team Drive deadline and permissions in an incognito browser.
+## Việc con người còn phải hoàn tất
 
-## Presentation story
+1. Quay và tải lên video MP4 chính thức không quá 180 giây.
+2. Hoàn tất ba phiên người dùng thật có đồng thuận; ghi tên, vai trò, feedback nguyên văn đã xác nhận, một tác động tiêu cực và một thay đổi sản phẩm bắt nguồn từ feedback.
+3. Thay đường dẫn video đang chờ và xác nhận release ref trong tài liệu link nộp.
+4. Xác nhận hạn nộp mới nhất và quyền xem Team Drive bằng cửa sổ ẩn danh.
 
-The product story is not “the model read every receipt.” The turning point was a missed escalation where schema-valid JSON was semantically wrong. AURA then separated identifiers, raw dates, printed final totals, validation, and deterministic policy. The result is a supervised system that knows when to stop and ask a human, while preserving Audit and Undo.
+## Câu chuyện thuyết trình
 
-## Official numbers to use
+Câu chuyện không phải “model đọc được mọi hóa đơn”. Bước ngoặt là một ca missed escalation: JSON hợp schema nhưng sai ngữ nghĩa. Từ đó AURA tách định danh, ngày gốc, tổng tiền in trên hóa đơn, validation và policy tất định. Kết quả là một hệ thống có giám sát, biết dừng để hỏi con người, đồng thời giữ Audit và Undo.
 
-- Release build: 0 warnings, 0 errors.
-- Offline tests: 163/163 passed.
-- Live Verify: 5/5 in 65.004 seconds.
-- Prospective ten-receipt mini-holdout: 8/10, zero missed, two fail-safe over-escalations, no observed system/provider/429 errors.
-- Sequential known-data repeat: 11/12, zero missed, one over; stability evidence only.
-- Five distinct concurrent uploads: 5/5 completed; this demonstrates queue integrity, not the Verify latency gate or a production SLA.
+## Số liệu chính thức được phép dùng
 
-## Do not claim
+- Release build: 0 warning, 0 error.
+- Offline tests: 163/163 đạt.
+- Live Verify: 5/5 trong 65,004 giây.
+- Mini-holdout tiến cứu 10 hóa đơn: 8/10, không missed, hai ca over-escalation fail-safe, không quan sát thấy system/provider/429 error.
+- Lặp tuần tự trên dữ liệu đã biết: 11/12, không missed, một ca over; chỉ là evidence ổn định.
+- Năm upload khác nhau đồng thời: 5/5 hoàn tất; chỉ chứng minh tính toàn vẹn của hàng đợi, không phải latency gate của Verify hoặc production SLA.
 
-- production accuracy or unattended rollout readiness;
-- that 163 tests means 163 receipts;
-- that the 11/12 repeat is a new holdout;
-- production evidence highlighting, distributed provider limiting, production RBAC, safe PDF, malware scanning, or object storage;
-- completed three-user evidence until signed records exist.
+## Không được tuyên bố
 
-## Folder map
+- độ chính xác production hoặc khả năng vận hành không giám sát;
+- 163 test tương đương 163 hóa đơn;
+- lượt lặp 11/12 là holdout mới;
+- evidence highlighting production, distributed provider limiting, RBAC production, PDF an toàn, quét malware hoặc object storage;
+- evidence ba người dùng đã hoàn tất khi chưa có biên bản có xác nhận.
 
-- `Evidence`: curated technical and evaluation evidence plus SHA-256 manifest.
-- `Gia_Phu/OnTap`: personal study map, source-code flow, architecture, business rules, provider, capacity, holdout, and on-site operations.
-- `Gia_Phu/Pitching_QnA`: final pitch, likely judge questions, and concise answer patterns.
-- `kich_ban_video`: product-only recording script and pending-video gate.
-- `kich_ban_thuyettrinh_slide`: slide deck plus fifteen-minute spoken script.
-- `Nop`: upload-ready submission structure; pending human artifacts are explicitly labelled rather than fabricated.
+## Bản đồ thư mục
+
+- `Evidence`: evidence kỹ thuật/đánh giá đã tuyển chọn và manifest SHA-256.
+- `Gia_Phu/OnTap`: bộ ôn tập tiếng Việt hiện hành về flow mã nguồn, kiến trúc, nghiệp vụ, provider, capacity, holdout và vận hành tại chỗ.
+- `Gia_Phu/Pitching_QnA`: kịch bản pitch, câu hỏi BGK có thể hỏi và mẫu trả lời ngắn gọn.
+- `kich_ban_video`: kịch bản chỉ quay sản phẩm và cổng kiểm tra video đang chờ.
+- `kich_ban_thuyettrinh_slide`: slide và kịch bản nói tối đa 15 phút.
+- `Nop`: cấu trúc sẵn sàng upload; hạng mục con người chưa hoàn tất được ghi rõ thay vì bịa evidence.

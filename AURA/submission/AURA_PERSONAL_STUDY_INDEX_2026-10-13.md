@@ -1,44 +1,47 @@
-# AURA personal study index
+# Chỉ mục ôn tập cá nhân AURA
 
-## Read in this order
+**Bản chốt:** 14/10/2026
 
-1. `00_AURA_PERSONAL_MASTER_INDEX.md` - map of the private defense material.
-2. `16_AURA_FINAL_STUDY_GUIDE_2026-10-07.md` - compact end-to-end revision guide.
-3. `Project_Folder_Architecture/explain/01_FINAL_REQUEST_FLOW_AND_PROMPT_LAYERS.md` - request flow and prompt boundaries.
-4. `Project_Folder_Architecture/explain/02_SOURCE_CODE_AND_FOLDER_REFERENCE.md` - code and folder lookup.
-5. `Project_Folder_Architecture/explain/AURA_PROJECT_ARCHITECTURE_GUIDE.md` - architecture and responsibilities.
-6. `Project_Folder_Architecture/explain/AURA_TESTING_DATA_AND_IMPLEMENTATION_WORKFLOW_GUIDE.md` - test/evidence workflow.
-7. `20_FALLBACK_AND_429_FINAL_STRATEGY_2026-10-12.md` - provider limits, backoff, fallback, and claims.
-8. `21_LIVE_CAPACITY_AND_MULTI_JUDGE_DEFENSE_2026-10-12.md` - queue and concurrency defense.
-9. `23_OFFICIAL_HOLDOUT10_AND_DEMO_DECISION_2026-10-13.md` - prospective holdout interpretation.
-10. `25_REGRESSION12_ORIGINAL_BYTES_AND_CONCURRENCY_2026-10-13.md` - original-byte regression and five-upload evidence.
-11. `26_REGRESSION12_SEQUENTIAL_REPEAT_2026-10-13.md` - stability repeat and latency.
-12. `28_EVIDENCE_LOCALIZATION_IMPLEMENTATION_DECISION_2026-10-13.md` - why production highlighting was not shipped.
-13. `07_ONSITE_FINAL_PLAYBOOK_2026-10-06.md` - on-site operating checklist.
+**Đối tượng:** Phạm Gia Phú
 
-## What to remember
+**Mục đích:** ôn kiến trúc, luồng nghiệp vụ, bằng chứng và phản biện trước Demo Day.
 
-- The model extracts evidence; deterministic C# policy decides the route.
-- Policy order is FACT, then POLICY, then AUTHORITY.
-- The claimed amount is not sent to the extraction prompt.
-- The durable SQL queue survives process restarts; one in-process signal only wakes the worker.
-- AI concurrency is one to protect the upstream route. Five uploads can queue safely, but latency increases.
-- Live fallback is disabled. Ollama is a supervised local contingency, not the primary Demo Day path.
-- The prospective ten-receipt holdout is 8/10 with zero missed and two fail-safe over-escalations.
-- The 11/12 result is a repeat on known data and must not be described as a new holdout.
-- Evidence localization is an isolated synthetic prototype because false highlights would create false confidence.
+## Thứ tự đọc hiện hành
 
-## Safe claims
+1. `01_SO_TAY_AURA_HIEN_HANH_2026-10-14.md` - bức tranh tổng thể, số liệu được phép nói và ranh giới claim.
+2. `02_LUONG_XU_LY_VA_MA_NGUON_2026-10-14.md` - luồng request, queue, extraction, validation, policy, người duyệt và audit.
+3. `03_VAN_HANH_DEMO_VA_XU_LY_SU_CO_2026-10-14.md` - checklist trước khi quay, trước khi thi và phương án khi live/provider lỗi.
+4. `00_KICH_BAN_THUYET_TRINH_VA_QA_VI_2026-10-14.md` - lời thoại, user story và câu trả lời BGK.
+5. `00_KICH_BAN_VIDEO_3_PHUT_VI_2026-10-14.md` - kịch bản quay video sản phẩm.
 
-- Release build: 0 warnings, 0 errors.
-- Offline test suite: 163/163 passed.
-- Live Verify Harness: 5/5 in 65.004 seconds.
-- Current candidate: OpenRouter route to Qwen3.8 Flash through Alibaba, reasoning none.
-- Human decision, Audit, and Undo are present in the demo workflow.
+Các file mang ngày 06/10, 07/10, 12/10 hoặc 13/10 trong thư mục Evidence là bằng chứng lịch sử đúng thời điểm phát sinh. Không dùng chúng làm nguồn trạng thái hiện hành nếu số liệu khác tài liệu ngày 14/10.
 
-## No-go claims
+## Mười ý phải nhớ
 
-- Do not claim production accuracy, causal model superiority, or autonomous approval readiness.
-- Do not say 163 tests means 163 receipts.
-- Do not claim production evidence highlighting, multi-instance rate limiting, production RBAC, safe PDF, malware scanning, or object storage.
-- Do not present incomplete three-user sessions as completed evidence.
+1. Model chỉ trích xuất dữ kiện; `PolicyDecisionEngine` C# mới quyết định route.
+2. Thứ tự fail-safe là `FACT -> POLICY -> AUTHORITY`.
+3. Claimed amount không đi vào prompt trích xuất; backend so sánh sau.
+4. HTTP 202 nghĩa là request đã được kiểm tra đầu vào và lưu bền vững, chưa có nghĩa AI đã xử lý xong.
+5. SQL job là nguồn bền vững; bounded channel chỉ đánh thức worker.
+6. `VisionInvocationCoordinator` giới hạn AI concurrency trong một process; đây không phải distributed limiter.
+7. Verify có operation gate riêng nên năm click đồng thời cho một batch tạo 1 HTTP 200 và 4 HTTP 409.
+8. OpenRouter/Qwen3.8 Flash qua Alibaba, `reasoning=none`, là primary; live fallback vẫn tắt.
+9. Holdout prospective 10 ca đạt 8/10, 0 missed, 2 over; 11/12 chỉ là lần lặp stability trên dữ liệu đã biết.
+10. Evidence localization mới là prototype cô lập; chưa được trình bày như capability production.
+
+## Số liệu được phép nói
+
+- Release build: 0 warning, 0 error.
+- Offline tests: 163/163 pass; đây là test code, không phải 163 hóa đơn.
+- Live Verify: 5/5 trong 65,004 giây.
+- Prospective mini-holdout: 8/10, 0 missed, 2 fail-safe over, 0 system/provider/429 error, 28/30 field trọng yếu.
+- Regression 12 source bytes: 10/12; sequential repeat: 11/12, P95 32,903 giây. Hai kết quả này không phải holdout mới.
+- Năm upload khác nhau đồng thời: 5/5 hoàn tất, E2E P95 93,684 giây; đây là queue-integrity gate, không phải Verify SLA.
+
+## Điều tuyệt đối không được nói quá
+
+- Không claim production accuracy, model superiority nhân quả hoặc tự động duyệt không giám sát.
+- Không nói 163 test tương đương 163 hóa đơn.
+- Không claim multi-instance rate limiting, production RBAC, safe PDF, malware scanning, object storage hoặc immutable compliance audit.
+- Không nói ba phiên người dùng đã hoàn tất khi chưa có biểu mẫu và quote được xác nhận.
+- Không sửa prompt, policy, threshold, schema hoặc model sát Demo Day nếu chưa tái chạy đầy đủ gate.

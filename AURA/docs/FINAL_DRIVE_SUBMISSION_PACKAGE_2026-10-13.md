@@ -1,6 +1,6 @@
 # AURA — Gói nộp Drive Chung kết
 
-Cập nhật ngày 13/10/2026. Tài liệu này đối chiếu đề Track OrganizationAI với thông báo mới nhất của BTC về việc đưa slide, proposal, GitHub, video demo và tài liệu liên quan vào Drive của Team.
+Cập nhật đồng bộ ngày 14/10/2026. Tài liệu này đối chiếu đề Track OrganizationAI với thông báo mới nhất của BTC về việc đưa slide, proposal, GitHub, video demo và tài liệu liên quan vào Drive của Team. Các ngày cũ xuất hiện trong tên evidence là ngày phát sinh bằng chứng, không phải trạng thái hiện hành.
 
 ## 1. Kết luận về video
 
@@ -26,7 +26,7 @@ Quay một take nếu có thể. Không cắt để làm latency ngắn hơn th�
 
 ## 2. Sáu hạng mục chính thức theo đề Track
 
-| # | Hạng mục | Nội dung AURA cần cung cấp | Trạng thái 13/10 |
+| # | Hạng mục | Nội dung AURA cần cung cấp | Trạng thái 14/10 |
 |---:|---|---|---|
 | 1 | Live URL | URL công khai, không login/cài đặt; trang chủ có hướng dẫn thao tác đầu tiên | Sẵn sàng kỹ thuật: `https://bondphupham-001-site1.ltempurl.com/`; vẫn cần rehearsal cuối |
 | 2 | Verify harness + test cases + runbook | Một nút chạy 5 ca Spec A, bảng expected/actual/pass-fail/timestamp; runbook clone sạch đến lúc chạy | Sẵn sàng: 5/5 trong 65,004 giây và `docs/RUNBOOK.md` |
