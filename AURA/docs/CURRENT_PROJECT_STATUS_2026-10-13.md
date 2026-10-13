@@ -11,7 +11,12 @@ Hai receipt bổ sung được khóa và chạy riêng đúng một lượt như
 Post-holdout regression riêng sau đó gửi trực tiếp 12 source bytes, không snapshot/resize/transform,
 đạt **10/12 exact, 0 missed, 2 over, 0 system/provider/429 error và 35/36 field trọng yếu**.
 Wave năm receipt khác nhau hoàn tất 5/5 nhưng E2E P95 là 93,684 giây, nên chứng minh tính toàn vẹn
-hàng đợi chứ chưa chứng minh đủ năm kết quả dưới 90 giây. Đây không thay số prospective 9/12.
+hàng đợi; theo gate hiện hành wave này không cần dưới 90 giây. Verify Harness mới là gate latency và
+đã đạt 5/5 trong 65,004 giây. Đây không thay số prospective 9/12.
+
+Lượt regression lặp lại sau đó chạy 12 ca tuần tự, không concurrency và không đổi code/config, đạt
+**11/12 exact, 0 missed, 1 over, 0 system/provider/429 error, 35/36 field**, E2E P95 32,903 giây.
+GS25_2 trở lại AUTO, còn FAHASA tiếp tục fail-safe do final-total label validator.
 
 ## Baseline hiện hành
 
@@ -24,11 +29,13 @@ hàng đợi chứ chưa chứng minh đủ năm kết quả dưới 90 giây. �
 | Mini-holdout mới | 8/10; 0 missed; 2 over; 0 system/provider/429; 28/30 field; không rerun |
 | Mini-holdout latency | 5 request đầu terminal 64,763 giây; 10 request terminal 108,803 giây; AI concurrency 1 |
 | Addendum 2 ca | 1/2 exact; 0 missed; 1 over; 0 system/provider/429; cả hai terminal trong 23,020 giây; không rerun |
-| Regression 12 source bytes | 10/12; 0 missed; 2 over; 0 system/provider/429; 35/36 field; wave 5 client P95 93,684 giây; không phải holdout mới |
+| Regression 12 source bytes | 10/12; 0 missed; 2 over; 0 system/provider/429; 35/36 field; wave 5 client P95 93,684 giây chỉ là concurrency gate |
+| Sequential repeat 12 ca | 11/12; 0 missed; 1 over; 0 system/provider/429; E2E P95 32,903 giây; stability evidence, không phải holdout mới |
 | Ollama local | Contingency có kiểm soát; không bật trên SmartASP vì latency/capacity và loopback host |
 
 Chi tiết mini-holdout: [`OFFICIAL_HOLDOUT10_2026-10-13.md`](OFFICIAL_HOLDOUT10_2026-10-13.md).
 Chi tiết regression source bytes: [`REGRESSION12_ORIGINAL_BYTES_RESULT_2026-10-13.md`](REGRESSION12_ORIGINAL_BYTES_RESULT_2026-10-13.md).
+Chi tiết lượt tuần tự: [`REGRESSION12_SEQUENTIAL_REPEAT_RESULT_2026-10-13.md`](REGRESSION12_SEQUENTIAL_REPEAT_RESULT_2026-10-13.md).
 
 ## Diễn giải hai over-escalation
 

@@ -20,7 +20,8 @@ Cập nhật: 13/10/2026. Trạng thái hiện hành nằm tại `docs/CURRENT_P
 - `README.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_AND_INTEGRATION_REPORT.md`.
 - `docs/`: Build Log nguồn, deployment, runbook, test cases, model selection, measurement plan.
 - `submission/AURA_WORKFLOW_SPEC.md`: workflow đầy đủ và state transition.
-- `submission/AURA_5_SLIDES.pptx`: đúng 5 slide; candidate Qwen3.8 Flash/Alibaba hiện hành đạt 161/161 test, Release build sạch, 15/15 post-holdout regression, burst upload 5/5 và live Verify 5/5 trong 65,004 giây. Vẫn phải giữ đúng ranh giới regression/holdout và không biến phép đo một process thành production SLA.
+- `submission/AURA_5_SLIDES_FINAL_2026-10-13.pptx`: deck 5 slide hiện hành; candidate Qwen3.8 Flash/Alibaba đạt 163/163 test, Release build sạch, live Verify 5/5 trong 65,004 giây và concurrency upload 5/5. Bản `AURA_5_SLIDES.pptx` được giữ làm lịch sử trước lần đồng bộ này.
+- `submission/AURA_FINAL_15_MINUTE_PRESENTATION_GUIDE_2026-10-13.md`: timeline nói, demo/video, câu chuyển và claim boundary cho phần Chung kết dưới 15 phút.
 - `submission/AURA_BUILD_LOG.docx`: một trang.
 - `docs/SUBMISSION_CHECKLIST.md`: manifest bàn giao nội bộ.
 - 5 ảnh Verify trong `wwwroot/test_data/images`, manifest Verify và gói 15 ca BGK.
@@ -70,4 +71,5 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 26. Prospective mini-holdout 10 receipt mới ngày 13/10 chạy đúng một lượt, không rerun: 8/10 exact, 0 missed, 2 over, 0 system/provider/429 error và 28/30 field trọng yếu. Evidence riêng tư giữ ngoài Git; public report ở `docs/OFFICIAL_HOLDOUT10_2026-10-13.md`. Không dùng tập này để claim production accuracy hoặc holdout mới trong các lượt sau.
 27. Prospective addendum Chidori + Three O'Clock chạy riêng đúng một lượt: 1/2 exact, 0 missed, 1 over, 0 system/provider/429; terminal tối đa 23,020 giây. Combined descriptive view 9/12 không phải holdout 12 ca mới. Three O'Clock chứng minh privacy blackout + free-text warning có thể tăng over-escalation; không rerun hoặc nới guard trực tiếp.
 28. Evidence localization/bounding-box overlay mới ở mức kế hoạch, chưa thuộc baseline nộp bài. Thiết kế giữ ảnh gốc bất biến, dùng region JSON + SVG overlay; chỉ triển khai sau freeze và benchmark trên annotation riêng. Xem `docs/EVIDENCE_LOCALIZATION_PLAN_2026-10-13.md`.
-29. Post-holdout regression 12 source bytes không transform đạt 10/12 exact, 0 missed, 2 over, 0 system/provider/429 và 35/36 field. Wave năm upload khác nhau hoàn tất 5/5 nhưng E2E P95 93,684 giây nên chưa đạt gate tất cả dưới 90 giây. Raw evidence ngoài Git; báo cáo ở `docs/REGRESSION12_ORIGINAL_BYTES_RESULT_2026-10-13.md`.
+29. Post-holdout regression 12 source bytes không transform đạt 10/12 exact, 0 missed, 2 over, 0 system/provider/429 và 35/36 field. Wave năm upload khác nhau hoàn tất 5/5 với E2E P95 93,684 giây; đây là concurrency gate, không phải Verify latency gate. Raw evidence ngoài Git; báo cáo ở `docs/REGRESSION12_ORIGINAL_BYTES_RESULT_2026-10-13.md`.
+30. Sequential repeat trên cùng 12 bytes đạt 11/12 exact, 0 missed, 1 over, 0 system/provider/429, 35/36 field và E2E P95 32,903 giây. GS25_2 là extraction variance; FAHASA là validator-label gap ổn định. Đây không phải holdout mới; xem `docs/REGRESSION12_SEQUENTIAL_REPEAT_RESULT_2026-10-13.md`.

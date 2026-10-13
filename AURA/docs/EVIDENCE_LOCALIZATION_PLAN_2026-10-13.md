@@ -120,6 +120,24 @@ Tối thiểu nên annotate bốn field quan trọng trên tập development hi�
 - **NO-GO** cho claim explainability bằng bounding box cho đến khi có annotation và benchmark riêng.
 - Addendum Three O'Clock được giữ làm evidence cho backlog typed-quality-issue; không rerun và không nới warning guard trực tiếp trên ca đó.
 
+### Quy mô và ảnh hưởng kiến trúc
+
+- **P0, phạm vi nhỏ:** mở ảnh lớn trong modal/panel bằng route hiện có. Đây là thay đổi reviewer UX,
+  không đổi extraction, policy, queue hoặc database.
+- **P1, phạm vi vừa:** thêm OCR/localizer sidecar, region contract gắn image hash, storage versioned và
+  SVG overlay. Luồng quyết định vẫn giữ nguyên; localizer có thể chạy bất đồng bộ sau extraction và
+  không được block AUTO/ESCALATE.
+- **P2/P3, phạm vi lớn hơn:** annotation, benchmark unseen, authorization/RBAC, audit version và typed
+  quality issue. Chỉ giai đoạn này mới có đủ cơ sở cân nhắc region như một quality signal.
+
+Sequential repeat 12 ảnh ngày 13/10 không tạo word boxes hoặc ground-truth region nên không thay đổi
+readiness của overlay. Nó chỉ xác nhận hai lỗi quyết định hiện tại nằm ở final-total label taxonomy và
+extraction variance, không phải do thiếu lớp vẽ bounding box.
+
+Khuyến nghị trước Chung kết: giữ prototype cô lập để trình bày roadmap hoặc Q&A; không nối production
+và không dùng overlay để sửa facts/policy. Sau Chung kết, triển khai P0 trước rồi mới đo P1 trên tập
+annotation riêng.
+
 ## Prototype cô lập ngày 13/10
 
 Prototype tổng hợp, không có PII và không gọi AI đã được dựng tại

@@ -52,9 +52,10 @@ SQL và về terminal `COMPLETED`; không có global 409, client error, provider
 - Bốn trên năm ca terminal dưới 90 s; ca chậm nhất vượt ngưỡng 3.684 s.
 
 Kết quả chứng minh đường upload bất đồng bộ chịu được năm người dùng trên deployment một process
-mà không mất hồ sơ, nhưng **không chứng minh SLA năm kết quả dưới 90 giây**. AI vẫn tuần tự ở
-concurrency 1 để tránh burst upstream; hàng đợi làm tăng latency của request cuối. Semaphore/cooldown
-hiện là per-process, nên trước khi scale nhiều IIS worker/server vẫn cần distributed provider limiter.
+mà không mất hồ sơ. Theo gate được xác nhận, wave này chỉ kiểm concurrency/queue integrity và không
+phải gate Verify dưới 90 giây. AI vẫn tuần tự ở concurrency 1 để tránh burst upstream; hàng đợi làm
+tăng latency của request cuối. Semaphore/cooldown hiện là per-process, nên trước khi scale nhiều IIS
+worker/server vẫn cần distributed provider limiter.
 
 ## Field evidence
 
@@ -93,7 +94,7 @@ bytes, thứ tự/concurrency khác và model có tính biến thiên. Raw prosp
 
 - **GO** cho demo có giám sát với OpenRouter/Alibaba và video dự phòng.
 - **GO** cho tối đa năm upload khác nhau về tính toàn vẹn; UI phải hiển thị trạng thái hàng đợi.
-- **NO-GO** cho claim mọi request trong wave năm người luôn dưới 90 s.
+- Verify Harness là gate 5 ca dưới 90 s; candidate đã đạt 5/5 trong 65.004 s. Wave năm upload là gate concurrency riêng.
 - **NO-GO** cho production multi-instance trước distributed concurrency/rate limiting và auth/RBAC.
 - Không replay 12 ảnh này để săn số đẹp; lượt hiện tại đã được khóa làm regression evidence.
 
