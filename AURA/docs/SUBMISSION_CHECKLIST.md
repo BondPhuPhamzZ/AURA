@@ -1,6 +1,6 @@
 # AURA — Checklist nộp bài
 
-Cập nhật: 12/10/2026. Trạng thái hiện hành nằm tại `docs/CURRENT_PROJECT_STATUS_2026-10-12.md`; benchmark model mới ở `docs/QWEN38_FLASH_BENCHMARK_2026-10-12.md`. Không điền số liệu hoặc URL chưa được xác minh. Hạn khóa link nộp do đội ghi nhận là 14/10/2026; kiểm link và rehearsal ngày 13/10.
+Cập nhật: 13/10/2026. Trạng thái hiện hành nằm tại `docs/CURRENT_PROJECT_STATUS_2026-10-13.md`; mini-holdout mới ở `docs/OFFICIAL_HOLDOUT10_2026-10-13.md`. Không điền số liệu hoặc URL chưa được xác minh. Hạn khóa link nộp do đội ghi nhận là 14/10/2026; kiểm link và rehearsal trên commit freeze.
 
 ## 1. Hạng mục bàn giao
 
@@ -9,7 +9,7 @@ Cập nhật: 12/10/2026. Trạng thái hiện hành nằm tại `docs/CURRENT_P
 | Frontend/backend clone và chạy localhost | ☑ Có | README root, .NET 8, LocalDB/SQL Server, user-secrets và migration |
 | Verify Harness + runbook | ☑ Có | `docs/RUNBOOK.md`, 5 ca live, 15/30 ca chạy ngoài UI bằng evaluator |
 | Public repository và lịch sử commit | ☑ Có | `https://github.com/BondPhuPhamzZ/AURA`; cần push commit chốt sau mỗi lần cập nhật hồ sơ |
-| Public Live URL | ◐ Live technical gate pass, chờ rehearsal freeze | Health candidate, live Verify 5/5 trong 65,004 giây, multi-click gate 1×200 + 4×409, mobile 390 px và điện thoại thật 4G/5G đã pass; còn một rehearsal sạch và kiểm link từ thiết bị khác |
+| Public Live URL | ◐ Live technical gate pass, chờ rehearsal freeze | Health candidate, live Verify 5/5 trong 65,004 giây, multi-click gate 1×200 + 4×409, mini-holdout mới 8/10 với 0 missed/system/provider error, mobile 390 px và điện thoại thật 4G/5G đã pass; còn một rehearsal sạch và kiểm link từ thiết bị khác |
 | Video demo tối đa 3 phút (BTC ghi Optional) | ☑ Đã liên kết | Link Google Drive ở README root |
 | Đúng 5 slide | ☑ Đã dựng | `submission/AURA_5_SLIDES.pptx` |
 | Build Log một trang Word | ☑ Đã dựng | `submission/AURA_BUILD_LOG.docx` |
@@ -50,7 +50,7 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
    Post-policy/contract v2 ngày 06/10, Ollama 4B profile 8K đạt 13/15. Benchmark cô lập 16K ngày 12/10 đạt 15/15 decision, 69/75 field, 0 missed/over/system error nhưng processing P95 213,429 giây. Đây là fallback candidate về chất lượng; auto-fallback vẫn tắt vì latency/capacity và endpoint chưa đạt gate vận hành.
 7. Official holdout 15 ảnh thật đã hoàn tất đúng một lượt; mobile 4G/5G đã pass. Phản hồi ba người dùng và rehearsal vẫn là cổng chưa hoàn tất. Không thay chúng bằng số liệu fixture tổng hợp.
 8. Post-fix gate ngày 02/10 đã xác minh Phê La bị che vùng món đi `ESCALATE_FACT`, Vinamilk đủ bảy dòng hàng vẫn `AUTO_APPROVE`, Official Verify 5/5, restart giữ status/ảnh/audit, manager YES/NO/UNDO có audit và concurrent smoke 5/5 với accepted P95 530 ms, end-to-end P95 39,380 giây.
-9. Hướng dẫn BGK chạy local nằm tại `docs/JUDGE_LOCAL_SETUP.md`; trạng thái và ranh giới claim hiện hành nằm tại `docs/CURRENT_PROJECT_STATUS_2026-10-12.md`; roadmap/học liệu lịch sử vẫn giữ theo ngày để audit.
+9. Hướng dẫn BGK chạy local nằm tại `docs/JUDGE_LOCAL_SETUP.md`; trạng thái và ranh giới claim hiện hành nằm tại `docs/CURRENT_PROJECT_STATUS_2026-10-13.md`; roadmap/học liệu lịch sử vẫn giữ theo ngày để audit.
 10. Development validation bổ sung và fallback live regression nằm tại `docs/REAL_RECEIPT_VALIDATION_2026-10-02.md` và `docs/FALLBACK_REGRESSION_2026-10-02.md`. Ảnh thật/PII vẫn nằm ngoài Git; fallback baseline vẫn tắt.
 11. Evidence live hậu publish đã đóng health, security, UI browser mobile 390 px, Verify 5/5, workflow/Audit và điện thoại thật 4G/5G. Còn một rehearsal sạch và kiểm link từ thiết bị khác trước khi public URL trong README.
 12. Holdout 15 ca đã chạy một official run: raw 10/15, adjusted 11/15 do một nhãn người sai; raw bất biến. Tập ảnh từ đây chỉ là post-holdout regression, không còn blind.
@@ -67,3 +67,6 @@ Folder mẫu `D:\aura\VNG\artifact` là project tham khảo, không phải một
 23. Audit source/folder và đối chiếu feedback Sprint 1 ngày 12/10 xác nhận global upload gate đã được thay bằng durable SQL queue; hai semaphore còn lại chỉ bảo vệ Verify trùng và giới hạn capacity AI theo process; xem `docs/PROJECT_AUDIT_AND_FEEDBACK_CLOSURE_2026-10-12.md`.
 24. Candidate `qwen/qwen3.8-flash`/Alibaba, reasoning `none`, fallback tắt: real-receipt post-holdout 15/15, 0 missed/over/system error, field 30/30; concurrency upload 5/5, E2E P95 41,079 giây. Không gọi đây là blind accuracy hoặc production SLA. Raw failure reasoning-default và toàn bộ evidence vẫn được giữ ngoài Git.
 25. Live Verify sau publish candidate đạt 5/5, E2E 65,004 giây, 0 system/provider error. Mô phỏng năm client chỉ tạo một batch thật với 1 HTTP 200 + 4 HTTP 409. Lỗi parser evidence Windows PowerShell 5.1 đã được sửa từ raw body/hash mà không replay provider; xem `docs/QWEN38_FLASH_LIVE_VERIFY_2026-10-12.md`.
+26. Prospective mini-holdout 10 receipt mới ngày 13/10 chạy đúng một lượt, không rerun: 8/10 exact, 0 missed, 2 over, 0 system/provider/429 error và 28/30 field trọng yếu. Evidence riêng tư giữ ngoài Git; public report ở `docs/OFFICIAL_HOLDOUT10_2026-10-13.md`. Không dùng tập này để claim production accuracy hoặc holdout mới trong các lượt sau.
+27. Prospective addendum Chidori + Three O'Clock chạy riêng đúng một lượt: 1/2 exact, 0 missed, 1 over, 0 system/provider/429; terminal tối đa 23,020 giây. Combined descriptive view 9/12 không phải holdout 12 ca mới. Three O'Clock chứng minh privacy blackout + free-text warning có thể tăng over-escalation; không rerun hoặc nới guard trực tiếp.
+28. Evidence localization/bounding-box overlay mới ở mức kế hoạch, chưa thuộc baseline nộp bài. Thiết kế giữ ảnh gốc bất biến, dùng region JSON + SVG overlay; chỉ triển khai sau freeze và benchmark trên annotation riêng. Xem `docs/EVIDENCE_LOCALIZATION_PLAN_2026-10-13.md`.

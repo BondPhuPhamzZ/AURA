@@ -1,6 +1,6 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 2.1 — 12/10/2026
+Phiên bản: 2.2 — 13/10/2026
 Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
@@ -147,6 +147,9 @@ Checkpoint 12/10 đồng bộ default Ollama với profile 4B đã có evidence:
 - Live post-publish gate ngày 12/10 tại `2b75f3f` pass health/security/upload-negative/UI và 149/149 offline test. Verify gặp HTTP 429 ở TC-02; regression 15 receipt chạy tuần tự cách 60 giây vẫn dừng ở BH-10 sau 10 ca vì `AI_RATE_LIMIT`. Phần đã chạy có 0 missed, 1 over BH-01 và 1 system error nhưng không phải accuracy result. Demo được giới hạn một operator; DB queue có thể nhận 2–5 upload nhưng chưa tuyên bố AI concurrency/SLA.
 - Capacity hardening 12/10 xác minh 429 cũ phát sinh tại route Parasail, không phải key budget. Shared AI gate, cooldown, worker drain stop và provider metadata vẫn là lớp bảo vệ. Candidate Qwen3.8 Flash/Alibaba với reasoning none đạt 15/15 post-holdout regression, 0 missed/over/system error và 20/20 upstream HTTP 200. Burst 5 upload đồng thời hoàn tất 5/5, E2E P95 41.079 giây khi AI concurrency giữ ở 1. Đây là hậu chỉnh trên cùng ảnh/manifest nhưng khác revision, thời điểm và upstream; không được trình bày như blind holdout hay causal model-only A/B. Gate/cooldown theo process nên baseline IIS vẫn phải một worker.
 - Live Verify sau publish candidate đạt 5/5, 0 system/provider error và E2E 65,004 giây. Năm client đồng thời chỉ tạo một batch thật với 1 HTTP 200 + 4 HTTP 409. Lỗi tổng hợp Windows PowerShell 5.1 được sửa từ raw body/hash, không replay provider. Đây là synthetic demo gate, không thay holdout hoặc SLA production.
+- Prospective mini-holdout mới ngày 13/10 gồm 10 receipt thật do chủ project sở hữu, đã consent/redaction và khóa expected/hash trước request đầu tiên. Một official run duy nhất đạt 8/10 exact, 0 missed, 2 over, 0 system/provider/429 error và 28/30 field date/identifier/final-total. Năm request đầu terminal trong 64,763 giây; cả 10 trong 108,803 giây ở concurrency 1. Hai mismatch đều fail-safe; redaction confounder được công bố và không rerun. Đây là evidence cho supervised demo, không phải production accuracy.
+- Hai receipt thêm sau đó được khóa/chạy riêng như prospective addendum: 1/2 exact, 0 missed, 1 over, 0 system/provider/429 error; cả hai terminal trong 23,020 giây. Chidori đúng FACT do Chủ nhật; Three O'Clock có facts cốt lõi đúng nhưng warning về privacy blackout kích hoạt FACT. Combined descriptive view là 9/12 và không phải một holdout 12 ca mới.
+- Evidence localization/overlay chưa nằm trong pipeline. Hướng thiết kế là giữ ảnh bytes bất biến, lưu region JSON theo image SHA-256 và vẽ SVG/canvas ở reviewer UI; không dùng box để thay facts/policy trước khi có annotation và benchmark riêng.
 - Mô phỏng: 30 ảnh tổng hợp sinh offline; 5 ảnh Verify và manifest 15 ca BGK được tuyển từ ngân hàng này.
 - Ground truth tổng hợp được sinh tất định bằng Python/Pillow và khóa trong manifest. Ảnh generative AI không được dùng làm nhãn chuẩn; hóa đơn thật đã ẩn danh chỉ nằm trong holdout cục bộ ngoài Git.
 - Không dùng hóa đơn cá nhân thật trong Git. Ảnh thật tùy chọn chỉ đặt tại `test_kit/local_real` và bị `.gitignore` loại trừ.

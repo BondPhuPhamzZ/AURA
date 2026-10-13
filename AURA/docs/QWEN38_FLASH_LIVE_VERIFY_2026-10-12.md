@@ -87,5 +87,5 @@ Các file cốt lõi:
 
 - Live demo: kỹ thuật đã GO. Trước khi quay, chạy một rehearsal sạch bằng đúng commit đã push, một operator và không mở Verify song song với upload.
 - Video dự phòng: vẫn phải giữ vì OpenRouter/Alibaba là hạ tầng bên thứ ba.
-- Bộ 11 hóa đơn mới: chỉ chạy khi danh sách ảnh cuối cùng, consent/redaction, ground truth độc lập và SHA-256 manifest đã khóa. Thêm ảnh thứ 11 làm thay đổi manifest, vì vậy phải tạo phiên bản 11 ca mới trước request đầu tiên.
-- Nếu bất kỳ ảnh nào đã từng được gửi model hoặc dùng để tinh chỉnh prompt/policy, batch phải gọi là post-holdout regression, không phải blind holdout.
+- Bộ mới đã chốt còn 10 hóa đơn sau khi chủ dữ liệu loại ảnh không phù hợp, cập nhật redaction và khóa expected status/SHA-256 trước request đầu tiên. Official run ngày 13/10 đạt 8/10, 0 missed, 2 over, 0 system/provider/429 error; không rerun. Xem `OFFICIAL_HOLDOUT10_2026-10-13.md`.
+- Tập 10 ảnh từ đây không còn unseen. Mọi lượt sau phải gọi là post-holdout regression, không phải holdout mới.

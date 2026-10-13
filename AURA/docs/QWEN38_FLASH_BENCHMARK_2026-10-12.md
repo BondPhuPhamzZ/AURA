@@ -1,5 +1,7 @@
 # Qwen3.8 Flash / Alibaba benchmark — 12/10/2026
 
+> Addendum 13/10/2026: prospective mini-holdout 10 receipt mới trên đúng live candidate đạt **8/10 exact, 0 missed, 2 over, 0 system/provider/429 error và 28/30 field trọng yếu**. Kết quả này quan trọng hơn 15/15 hậu chỉnh để đánh giá generalization, nhưng mẫu vẫn nhỏ và có redaction confounder. Không thay raw benchmark ngày 12/10; xem `OFFICIAL_HOLDOUT10_2026-10-13.md`.
+
 ## Kết luận
 
 `qwen/qwen3.8-flash` qua OpenRouter/Alibaba đã vượt các cổng kỹ thuật và regression được phép chạy tại thời điểm đo:
