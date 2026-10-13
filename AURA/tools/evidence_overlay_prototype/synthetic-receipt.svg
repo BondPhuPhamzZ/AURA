@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1400" viewBox="0 0 1000 1400" role="img" aria-labelledby="title desc">
+  <title id="title">Hoa don tong hop cho prototype evidence overlay</title>
+  <desc id="desc">Du lieu hoan toan tong hop, khong chua thong tin ca nhan.</desc>
+  <rect width="1000" height="1400" fill="#eee9dc"/>
+  <rect x="82" y="36" width="836" height="1328" rx="14" fill="#fffdf7" stroke="#c9c1af" stroke-width="4"/>
+  <g fill="#1c2430" font-family="Consolas, 'Courier New', monospace">
+    <text x="500" y="128" text-anchor="middle" font-size="48" font-weight="700">AURA DEMO MART</text>
+    <text x="500" y="180" text-anchor="middle" font-size="24">DU LIEU TONG HOP - KHONG PII</text>
+    <line x1="140" y1="205" x2="860" y2="205" stroke="#586174" stroke-width="3"/>
+    <text x="145" y="260" font-size="28">SO HOA DON: SYN-2026-0012</text>
+    <text x="145" y="310" font-size="28">NGAY: 13/10/2026  09:30</text>
+    <line x1="140" y1="350" x2="860" y2="350" stroke="#586174" stroke-width="2" stroke-dasharray="10 8"/>
+    <text x="145" y="410" font-size="26" font-weight="700">MAT HANG</text>
+    <text x="855" y="410" text-anchor="end" font-size="26" font-weight="700">THANH TIEN</text>
+    <text x="145" y="475" font-size="26">So tay AURA</text>
+    <text x="855" y="475" text-anchor="end" font-size="26">42.000</text>
+    <text x="145" y="535" font-size="26">But muc xanh</text>
+    <text x="855" y="535" text-anchor="end" font-size="26">32.000</text>
+    <line x1="140" y1="590" x2="860" y2="590" stroke="#586174" stroke-width="2" stroke-dasharray="10 8"/>
+    <text x="145" y="660" font-size="28">TAM TINH</text>
+    <text x="855" y="660" text-anchor="end" font-size="28">74.000</text>
+    <text x="145" y="720" font-size="28">GIAM GIA</text>
+    <text x="855" y="720" text-anchor="end" font-size="28">-16.000</text>
+    <rect x="125" y="770" width="750" height="92" rx="8" fill="#f2f5f8"/>
+    <text x="145" y="830" font-size="34" font-weight="700">TONG THANH TOAN</text>
+    <text x="855" y="830" text-anchor="end" font-size="34" font-weight="700">58.000 VND</text>
+    <line x1="140" y1="905" x2="860" y2="905" stroke="#586174" stroke-width="2"/>
+    <text x="500" y="980" text-anchor="middle" font-size="24">CAM ON QUY KHACH</text>
+    <text x="500" y="1030" text-anchor="middle" font-size="22">Synthetic fixture v1</text>
+  </g>
+</svg>
+

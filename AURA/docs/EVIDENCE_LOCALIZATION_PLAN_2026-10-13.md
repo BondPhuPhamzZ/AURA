@@ -119,3 +119,17 @@ Tối thiểu nên annotate bốn field quan trọng trên tập development hi�
 - **NO-GO** cho việc sửa pipeline hoặc prompt ngay trước demo.
 - **NO-GO** cho claim explainability bằng bounding box cho đến khi có annotation và benchmark riêng.
 - Addendum Three O'Clock được giữ làm evidence cho backlog typed-quality-issue; không rerun và không nới warning guard trực tiếp trên ca đó.
+
+## Prototype cô lập ngày 13/10
+
+Prototype tổng hợp, không có PII và không gọi AI đã được dựng tại
+[`tools/evidence_overlay_prototype`](../tools/evidence_overlay_prototype/README.md). Prototype giữ ảnh SVG
+nguồn bất biến, kiểm schema + SHA-256 trước khi render, dùng tọa độ chuẩn hóa `0..1000`, hỗ trợ click
+hai chiều field–region, bàn phím, responsive và bật/tắt overlay. Negative control `tax` không có region
+hiển thị “không định vị được” và không tạo hộp suy đoán. Fixture cố ý chứa cả `TAM TINH 74.000`
+và `TONG THANH TOAN 58.000 VND`; region `totalAmount` chỉ trỏ dòng tổng cuối.
+
+QA browser đã phát hiện và sửa riêng một lỗi thuộc tính `hidden` trên SVG; bản sau sửa xác nhận
+`display:none` khi tắt và `display:block` khi bật. Build sạch và toàn bộ **163/163** automated test pass.
+Prototype này không nối vào route ảnh, database, extraction hoặc policy; vì vậy không làm thay đổi
+baseline nộp bài và chưa phải bằng chứng accuracy localization.

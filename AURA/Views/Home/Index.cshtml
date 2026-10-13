@@ -719,7 +719,11 @@
     }
 
     function scrollToResults() {
-        document.getElementById('unifiedResultsSection').scrollIntoView({ behavior: 'smooth' });
+        const resultsSection = document.getElementById('unifiedResultsSection');
+        if (!resultsSection) return;
+        window.requestAnimationFrame(() => {
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
     }
 
     // AJAX Upload Single File
@@ -749,6 +753,7 @@
         currentAnalysisItems = [];
         processingPlaceholderRows = 1;
         renderResultsTable();
+        scrollToResults();
 
         const form = document.getElementById('uploadForm');
         const formData = new FormData(form);
@@ -839,6 +844,7 @@
         currentAnalysisItems = [];
         processingPlaceholderRows = 5;
         renderResultsTable();
+        scrollToResults();
         
         const dummyForm = document.getElementById('verifyFormDummy');
         const formData = new FormData(dummyForm);

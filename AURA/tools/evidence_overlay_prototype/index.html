@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AURA evidence overlay prototype</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, system-ui, sans-serif; color: #182030; background: #f4f6fa; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; }
+    main { width: min(1120px, 100%); margin: 0 auto; }
+    .notice { padding: 12px 16px; border: 1px solid #9bb9e8; border-radius: 10px; background: #edf5ff; }
+    .layout { display: grid; grid-template-columns: minmax(280px, 620px) minmax(250px, 1fr); gap: 22px; margin-top: 18px; align-items: start; }
+    .viewer { position: relative; width: 100%; overflow: hidden; border: 1px solid #ccd3df; border-radius: 12px; background: #fff; box-shadow: 0 8px 28px #23304a1a; }
+    .viewer img { display: block; width: 100%; height: auto; }
+    .overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .overlay[hidden] { display: none; }
+    .region { fill: #5b7cff24; stroke: #254ee8; stroke-width: 5; vector-effect: non-scaling-stroke; cursor: pointer; }
+    .region:hover, .region:focus, .region.active { fill: #ffcc3345; stroke: #c23b15; outline: none; }
+    .panel { padding: 16px; border: 1px solid #ccd3df; border-radius: 12px; background: #fff; }
+    .facts { display: grid; gap: 9px; margin: 16px 0; }
+    .fact { width: 100%; padding: 11px 12px; text-align: left; border: 1px solid #cad2df; border-radius: 8px; background: #fff; color: inherit; cursor: pointer; }
+    .fact:hover, .fact:focus, .fact.active { border-color: #254ee8; background: #eef2ff; outline: 3px solid #254ee833; }
+    .fact small { display: block; color: #5c687d; margin-bottom: 3px; }
+    .missing { border-style: dashed; cursor: default; }
+    .controls { display: flex; gap: 9px; flex-wrap: wrap; }
+    button { font: inherit; }
+    .control { padding: 9px 12px; border-radius: 8px; border: 1px solid #8793a7; background: #fff; cursor: pointer; }
+    #status { min-height: 3em; color: #34415a; }
+    code { overflow-wrap: anywhere; }
+    @media (max-width: 760px) { body { padding: 12px; } .layout { grid-template-columns: 1fr; } }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Prototype khoanh vùng evidence</h1>
+  <p class="notice"><strong>Fixture tổng hợp.</strong> Không dùng ảnh holdout, không gọi AI và không thay đổi pipeline/decision.</p>
+  <div class="layout">
+    <div class="viewer" id="viewer">
+      <img src="synthetic-receipt.svg" alt="Hóa đơn tổng hợp dùng để kiểm tra overlay evidence">
+      <svg class="overlay" id="overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-label="Các vùng evidence trên hóa đơn"></svg>
+    </div>
+    <aside class="panel">
+      <div class="controls">
+        <button class="control" id="toggle" type="button" aria-pressed="true">Tắt overlay</button>
+        <button class="control" id="clear" type="button">Bỏ chọn</button>
+      </div>
+      <div class="facts" id="facts"></div>
+      <p id="status" role="status" aria-live="polite">Chọn một field hoặc vùng khoanh để đối chiếu.</p>
+      <details>
+        <summary>Ràng buộc an toàn đang được demo</summary>
+        <ul>
+          <li>Ảnh nguồn không bị vẽ hoặc ghi đè.</li>
+          <li>Region chỉ render khi schema và image SHA-256 hợp lệ.</li>
+          <li>Field thiếu region không tạo hộp suy đoán.</li>
+          <li>Tổng tiền trỏ vào dòng final payable, không trỏ subtotal.</li>
+        </ul>
+      </details>
+    </aside>
+  </div>
+</main>
+
+<script type="application/json" id="evidence-data">
+{
+  "imageSha256": "304DDDF3CB10519CA5908399274B3E6752F3D17AA3C804989E62C1CF9B23E653",
+  "coordinateSpace": { "width": 1000, "height": 1000, "orientationApplied": true },
+  "regions": [
+    { "id": "merchant-1", "field": "merchantName", "text": "AURA DEMO MART", "box": { "x": 220, "y": 58, "width": 560, "height": 47 }, "source": "SYNTHETIC_GROUND_TRUTH", "confidence": 1.0 },
+    { "id": "identifier-1", "field": "invoiceNumber", "text": "SO HOA DON: SYN-2026-0012", "box": { "x": 132, "y": 151, "width": 596, "height": 44 }, "source": "SYNTHETIC_GROUND_TRUTH", "confidence": 1.0 },
+    { "id": "date-1", "field": "invoiceDate", "text": "NGAY: 13/10/2026 09:30", "box": { "x": 132, "y": 187, "width": 562, "height": 43 }, "source": "SYNTHETIC_GROUND_TRUTH", "confidence": 1.0 },
+    { "id": "total-1", "field": "totalAmount", "text": "TONG THANH TOAN 58.000 VND", "box": { "x": 118, "y": 550, "width": 764, "height": 68 }, "source": "SYNTHETIC_GROUND_TRUTH", "confidence": 1.0 }
+  ],
+  "facts": [
+    { "field": "merchantName", "label": "Nhà cung cấp", "value": "AURA DEMO MART" },
+    { "field": "invoiceNumber", "label": "Số hóa đơn", "value": "SYN-2026-0012" },
+    { "field": "invoiceDate", "label": "Ngày hóa đơn", "value": "13/10/2026 09:30" },
+    { "field": "totalAmount", "label": "Tổng thanh toán", "value": "58.000 VND" },
+    { "field": "tax", "label": "Thuế", "value": "Không định vị được", "regionUnavailable": true }
+  ]
+}
+</script>
+<script>
+(() => {
+  'use strict';
+  const data = JSON.parse(document.getElementById('evidence-data').textContent);
+  const allowedFields = new Set(['merchantName', 'invoiceNumber', 'invoiceDate', 'totalAmount', 'tax']);
+  const validHash = /^[A-F0-9]{64}$/.test(data.imageSha256);
+  const validSpace = data.coordinateSpace?.width === 1000 && data.coordinateSpace?.height === 1000 && data.coordinateSpace?.orientationApplied === true;
+  const ids = new Set();
+  const validRegions = validHash && validSpace && data.regions.every(region => {
+    const b = region.box;
+    const validBox = b && [b.x, b.y, b.width, b.height].every(Number.isFinite) && b.x >= 0 && b.y >= 0 && b.width > 0 && b.height > 0 && b.x + b.width <= 1000 && b.y + b.height <= 1000;
+    const valid = !ids.has(region.id) && allowedFields.has(region.field) && validBox && Number.isFinite(region.confidence) && region.confidence >= 0 && region.confidence <= 1;
+    ids.add(region.id);
+    return valid;
+  });
+  if (!validRegions) {
+    document.getElementById('overlay').hidden = true;
+    document.getElementById('status').textContent = 'Region contract không hợp lệ; overlay đã fail-closed.';
+    return;
+  }
+
+  const overlay = document.getElementById('overlay');
+  const facts = document.getElementById('facts');
+  const status = document.getElementById('status');
+  const svgNs = 'http://www.w3.org/2000/svg';
+
+  function clearSelection() {
+    document.querySelectorAll('.active').forEach(node => node.classList.remove('active'));
+    status.textContent = 'Chọn một field hoặc vùng khoanh để đối chiếu.';
+  }
+
+  function selectField(field) {
+    clearSelection();
+    const region = data.regions.find(candidate => candidate.field === field);
+    const fact = facts.querySelector(`[data-field="${field}"]`);
+    fact?.classList.add('active');
+    if (!region) {
+      status.textContent = `${fact?.dataset.label ?? field}: không định vị được; hệ thống không vẽ hộp suy đoán.`;
+      return;
+    }
+    overlay.querySelector(`[data-field="${field}"]`)?.classList.add('active');
+    status.textContent = `${fact?.dataset.label ?? field}: “${region.text}” — nguồn ${region.source}, confidence ${region.confidence.toFixed(2)}.`;
+  }
+
+  data.regions.forEach(region => {
+    const rect = document.createElementNS(svgNs, 'rect');
+    Object.entries(region.box).forEach(([key, value]) => rect.setAttribute(key, String(value)));
+    rect.setAttribute('rx', '10');
+    rect.setAttribute('class', 'region');
+    rect.setAttribute('data-field', region.field);
+    rect.setAttribute('tabindex', '0');
+    rect.setAttribute('role', 'button');
+    rect.setAttribute('aria-label', `Evidence ${region.field}: ${region.text}`);
+    rect.addEventListener('click', () => selectField(region.field));
+    rect.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectField(region.field); }
+    });
+    overlay.appendChild(rect);
+  });
+
+  data.facts.forEach(fact => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `fact${fact.regionUnavailable ? ' missing' : ''}`;
+    button.dataset.field = fact.field;
+    button.dataset.label = fact.label;
+    button.innerHTML = `<small>${fact.label}</small><strong>${fact.value}</strong>`;
+    button.addEventListener('click', () => selectField(fact.field));
+    facts.appendChild(button);
+  });
+
+  document.getElementById('clear').addEventListener('click', clearSelection);
+  document.getElementById('toggle').addEventListener('click', event => {
+    const shouldHide = !overlay.hasAttribute('hidden');
+    overlay.toggleAttribute('hidden', shouldHide);
+    event.currentTarget.setAttribute('aria-pressed', String(!shouldHide));
+    event.currentTarget.textContent = shouldHide ? 'Bật overlay' : 'Tắt overlay';
+    clearSelection();
+  });
+})();
+</script>
+</body>
+</html>
