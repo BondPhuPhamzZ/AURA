@@ -53,7 +53,7 @@ SmarterASP.NET / IIS / ASP.NET Core 8
              │
              ▼
     ConfiguredVisionExtractor
-       ├── chính: OpenRouter → Qwen3-VL-8B-Instruct
+       ├── chính: OpenRouter → Qwen3.8 Flash, route Alibaba, reasoning none
        └── fallback có cờ bật: Ollama → Qwen3-VL-4B-Instruct
 ```
 
@@ -111,7 +111,7 @@ Khi một hồ sơ có nhiều vấn đề, precedence là `FACT > POLICY > AUTH
 
 ## 6. Hợp đồng provider vision
 
-- `Vision__Provider=OpenRouter` là mặc định và giữ nguyên bản deploy Sprint 1. Endpoint dùng OpenRouter Chat Completions qua HTTPS với `qwen/qwen3-vl-8b-instruct`.
+- `Vision__Provider=OpenRouter` là mặc định. Candidate hiện hành dùng OpenRouter Chat Completions qua HTTPS với `qwen/qwen3.8-flash`, route Alibaba và `reasoning=none`.
 - `Vision__Provider=Ollama` gọi REST local `http://127.0.0.1:11434/api/chat` với `qwen3-vl:4b-instruct`. HTTP chỉ được chấp nhận trên loopback; endpoint khác phải dùng HTTPS.
 - Cả hai provider nhận cùng policy, JSON Schema và parser. Điều này cho phép benchmark model mà không đổi controller hoặc policy engine.
 - OpenRouter không retry HTTP 429 và retry tối đa một lần cho 5xx. Cả hai adapter chỉ semantic-repair tối đa một lần khi đã có JSON hợp lệ nhưng tự mâu thuẫn; đây không phải retry mù lỗi mạng.
@@ -165,7 +165,7 @@ Recycle application pool chỉ nạp lại biến môi trường hiện có. Kh�
 ## 10. Bằng chứng xác minh hiện tại
 
 - Build .NET 8 sạch, 0 warning và 0 error tại lần kiểm tra gần nhất.
-- 159 automated tests pass ở checkpoint ứng viên ngày 12/10, gồm policy, workflow, audit, Verify/Test Kit integrity, hợp đồng OpenRouter/Ollama v2, provenance dòng tổng/ngày gốc, chuẩn hóa giây/AM-PM, semantic validation/repair, định danh chứng từ giấy, taxonomy personal-item, đối chiếu giảm giá/VAT đã gồm, guard line-item, fallback/circuit breaker, provider cooldown/capacity coordination, backoff worker, UI contract, timezone Audit và negative controls cho exact duplicate/summary pseudo-line/printed-total corroboration.
+- 163 automated tests pass ở checkpoint ứng viên ngày 13/10, gồm policy, workflow, audit, Verify/Test Kit integrity, hợp đồng OpenRouter/Ollama v2, provenance dòng tổng/ngày gốc, chuẩn hóa giây/AM-PM, semantic validation/repair, định danh chứng từ giấy, taxonomy personal-item, đối chiếu giảm giá/VAT đã gồm, guard line-item, fallback/circuit breaker, provider cooldown/capacity coordination, backoff worker, auto-scroll UI contract, timezone Audit và negative controls cho exact duplicate/summary pseudo-line/printed-total corroboration.
 - Official blind holdout thật ngày 06/10 giữ nguyên raw evidence: 10/15 quyết định đúng (66,67% raw); sau khi post-hoc xác nhận BH-04 bị khóa nhãn sai vì ảnh in Chủ nhật, view adjudicated là 11/15 (73,33%). Một missed escalation nghiêm trọng ở Circle K cho thấy model suy tổng 21.000 từ subtotal/items dù giá trị dòng Total bị rách; các mismatch khác lộ lỗi giờ có giây, ngày `04-10-26`, money role và PTT/Mã CQT. Vì vậy accuracy claim và unattended pilot vẫn NO-GO. Contract v2/P0-P1 hậu holdout giải quyết deterministic gates nêu trên và phải được deploy rồi chạy post-holdout regression; 15 ảnh cũ không còn được gọi là blind sau lượt official.
 - Build sau hardening: 0 warning, 0 error; EF báo không có model change chưa migration. LocalDB đã áp migration thành công.
 - EF Core SQL Server/Tools và local `dotnet-ef` đã được vá đồng bộ lên 8.0.31; NuGet vulnerability scan không còn advisory trong app và test project tại thời điểm kiểm tra.
@@ -173,6 +173,7 @@ Recycle application pool chỉ nạp lại biến môi trường hiện có. Kh�
 - Test Kit v3 giữ v2 bất biến và tạo thêm 15 synthetic receipt có identifier label tách riêng, readable-fade/physical-ink-loss pair và image hash lock. Live OpenRouter v3 tại commit `64cd610` hoàn tất 15/15 request, raw 11/15 decision, 142/145 field, 0 system error, P50/P95 9,235/37,917 giây. Raw lộ hai deterministic safety gap (OCR `Bìa`→`Bia`, prefix `RCF`) và một fixture precondition sai; raw không bị relabel. V3.1 là revision mới sau hardening context-aware, pass 133/133 offline test và còn chờ publish/live gate.
 - Forensic regression ngày 12/10 tại commit `d0440f2` xác nhận bằng OpenRouter thật rằng BH-03/BH-14/BH-15 không còn over-escalation. BH-01 vẫn fail-safe do model chọn tiền mặt/tiền thối/VAT sai vai trò; backend không dựng total từ phép cộng. Batch 15 ca có 5 HTTP 429 và do đó không phải accuracy result; lịch sử 11/15 ngày 07/10 vẫn là số so sánh chính cho tới live post-publish gate.
 - Live post-publish gate ngày 12/10 tại `2b75f3f` pass health 3/3, security-negative 4/4, upload-negative 2/2, UI và offline 149/149. Verify gặp HTTP 429 ở TC-02; một regression tuần tự cách 60 giây vẫn bị 429 tại BH-10 và dừng ở 10/15. Đây là operational capacity failure, không phải policy accuracy result. Upload 2–5 hồ sơ vẫn được DB queue tiếp nhận bền vững nhưng AI xử lý tuần tự, còn Verify chỉ cho một lượt trên instance; chưa có cơ sở SLA hoặc multi-user AI capacity.
+- Candidate Qwen3.8 Flash/Alibaba sau capacity hardening đạt Verify 5/5 và post-holdout 15/15 trên tập cũ, không có 429; các số này là regression, không phải blind claim. Regression riêng ngày 13/10 đọc trực tiếp 12 file source đã biết, không transform, đạt 10/12 exact, 0 missed, 2 over, 0 system/provider/429 error, 0 fallback và 35/36 field trọng yếu. Năm upload khác nhau đồng thời hoàn tất 5/5; upload-accept P95 5,913 giây nhưng E2E P95 93,684 giây. Queue một process giữ toàn vẹn, song chưa đạt claim cả năm kết quả dưới 90 giây và chưa bao phủ multi-instance vì AI gate/cooldown vẫn per-process.
 - Development validation cùng ngày bổ sung Oppa AUTO có repair, Texas AUTO không repair và Phê La che món FACT. Một fallback regression dùng database test riêng cũng xác minh primary OpenRouter lỗi `AI_NOT_CONFIGURED` được chuyển đúng một lần sang Ollama, audit provider đúng và hoàn tất sau 84,425 giây E2E. Fallback vẫn tắt trong baseline vì đây mới là một ca và Ollama còn missed escalation TK-12.
 - Baseline ngày 27/09 trên đúng 5 fixture vẫn được giữ như bằng chứng hồi quy lịch sử: Ollama đạt 25/25 qua năm batch và OpenRouter đạt 15/15 qua ba batch. Không dùng baseline lặp này để thay cho judge set hoặc accuracy trên dữ liệu thật. Xem `docs/LIVE_VALIDATION_2026-09-29.md`.
 - `tools/Test-DemoReadiness.ps1` kiểm đúng `AuraDb`, LocalDB, policy, storage, cấu hình AI, migration và health trước khi demo mà không in secret. Script kiểm cả exit code lẫn nội dung lỗi của `sqllocaldb` vì công cụ có thể trả code 0 dù registry user-instance bị lỗi; `-DiagnoseLocalDb` chỉ thu thập thông tin read-only.

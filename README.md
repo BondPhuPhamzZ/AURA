@@ -40,12 +40,13 @@ Key capabilities:
 Last evidence update: 13 October 2026. Live health and the Qwen3.8 Flash Verify gate remain the frozen demo baseline; a separate prospective 10-receipt mini-holdout was completed once without reruns.
 
 - Build: **0 warnings, 0 errors**.
-- Automated tests after Alibaba/Qwen3.8 Flash hardening: **161/161 passed**; they do not call the paid AI API.
+- Automated tests after the reviewer-UX/evidence-overlay prototype update: **163/163 passed**; they do not call the paid AI API.
 - Official Verify Harness: **5/5** with the expected 3 approve / 2 escalate split.
 - Historical locked synthetic judge set: OpenRouter **15/15 decisions**, Ollama **14/15**. The post-contract OpenRouter v2 run reached **14/15** and still missed TK-12; the physical-ink-loss v3.1 safety set reached **13/15** with zero missed escalations and zero system errors.
 - The 12 October Qwen3.8 Flash candidate completed the same 15 locked post-holdout real receipts at **15/15**, with zero missed/over/system errors and 30/30 critical fields. Five concurrent uploads completed with 41.079-second P95 at AI concurrency 1. This is post-adjustment regression evidence, not a new blind holdout or production SLA.
 - A new owner-supplied, redacted and pre-locked 10-receipt mini-holdout completed **8/10 exact**, with **0 missed escalations, 2 fail-safe over-escalations, 0 system/provider/429 errors observed, and 28/30 core date/identifier/total fields**. The first five accepted requests were terminal by 64.763 seconds and all ten by 108.803 seconds at AI concurrency 1. It was run once with no replay; disclosed redaction interactions prevent treating it as production accuracy.
 - A separately locked two-receipt prospective addendum completed **1/2 exact**, with **0 missed escalations, 1 fail-safe over-escalation and 0 system/provider/429 errors**. Three O'Clock's core facts were correct, but a free-text warning about the privacy blackout triggered FACT review. The descriptive combined view is 9/12; it is not a new twelve-case holdout and neither package may be reused for a blind claim.
+- A disclosed post-holdout regression then sent the same 12 **source bytes directly**, without snapshot/resize/transform: **10/12 exact, 0 missed, 2 over, 0 system/provider/429 errors, 35/36 critical fields**. Five different concurrent uploads completed 5/5, but E2E P95 was **93.684 seconds**, so this validates queue integrity rather than a five-results-under-90-seconds SLA.
 - After publish/recycle, the live Qwen3.8 Flash Verify Harness completed **5/5** in **65.004 seconds** with no system/provider error. Five simultaneous clients produced one HTTP 200 and four HTTP 409 responses, so duplicate clicks did not create duplicate AI batches on the single-process demo deployment.
 - SmartASP post-holdout gate: home and health 5/5, DB/storage/migration, upload/security-negative checks, browser mobile UI and Verify OpenRouter 5/5 passed. Human workflow also passed 2/2 with synthetic fixtures: policy reject/undo and fact approve/undo.
 - Live concurrency: **2/2 + 5/5 completed**; end-to-end P95 **20.941 / 23.290 seconds**. The accepted timer includes antiforgery GET/setup/network, so it is not a pure POST SLO.
@@ -135,7 +136,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore
 dotnet ef migrations has-pending-model-changes --no-build
 ```
 
-Expected for the current candidate: build 0 warnings/errors, 161/161 tests passed, and no model change pending migration.
+Expected for the current candidate: build 0 warnings/errors, 163/163 tests passed, and no model change pending migration.
 
 Stop the app with `Ctrl+C`. No database reset or LocalDB deletion is required.
 
@@ -148,6 +149,7 @@ Stop the app with `Ctrl+C`. No database reset or LocalDB deletion is required.
 - [Dataset and extended evaluation](AURA/docs/DATASET_EVALUATION_GUIDE.md)
 - [Current verified status](AURA/docs/CURRENT_PROJECT_STATUS_2026-10-13.md)
 - [Official 10-receipt mini-holdout](AURA/docs/OFFICIAL_HOLDOUT10_2026-10-13.md)
+- [Original-bytes 12-receipt regression](AURA/docs/REGRESSION12_ORIGINAL_BYTES_RESULT_2026-10-13.md)
 - [Evidence localization and reviewer overlay plan](AURA/docs/EVIDENCE_LOCALIZATION_PLAN_2026-10-13.md)
 - [Qwen3.8 Flash live Verify gate](AURA/docs/QWEN38_FLASH_LIVE_VERIFY_2026-10-12.md)
 - [Current progress report](AURA/docs/PROGRESS_REPORT_2026-10-13.md)

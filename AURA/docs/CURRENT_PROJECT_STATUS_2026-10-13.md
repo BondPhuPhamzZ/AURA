@@ -8,20 +8,27 @@ Prospective mini-holdout 10 hóa đơn thật mới đã hoàn tất đúng mộ
 
 Hai receipt bổ sung được khóa và chạy riêng đúng một lượt như prospective addendum: **1/2 exact, 0 missed, 1 over, 0 system/provider/429 error**. Three O'Clock được trích xuất đúng toàn bộ dữ kiện cốt lõi nhưng warning tự do về dải che riêng tư kích hoạt FACT. Combined descriptive view là **9/12**, không phải một holdout 12 ca mới.
 
+Post-holdout regression riêng sau đó gửi trực tiếp 12 source bytes, không snapshot/resize/transform,
+đạt **10/12 exact, 0 missed, 2 over, 0 system/provider/429 error và 35/36 field trọng yếu**.
+Wave năm receipt khác nhau hoàn tất 5/5 nhưng E2E P95 là 93,684 giây, nên chứng minh tính toàn vẹn
+hàng đợi chứ chưa chứng minh đủ năm kết quả dưới 90 giây. Đây không thay số prospective 9/12.
+
 ## Baseline hiện hành
 
 | Hạng mục | Kết quả và ranh giới |
 |---|---|
 | Live health | `status=ok`; OpenRouter/Qwen3.8 Flash; reasoning none; DB/migration/storage OK; concurrency 1; fallback false |
-| Offline suite | Release build 0 warning/error; 161/161 automated tests tại baseline đã freeze |
+| Offline suite | Build 0 warning/error; 163/163 automated tests sau UX auto-scroll + prototype overlay cô lập; không gọi paid AI API |
 | Live Verify | 5/5; 65,004 giây; 0 system/provider error; 5 client tạo 1×200 + 4×409 |
 | Post-holdout regression cũ | 15/15 trên 15 receipt đã biết; 30/30 field; không phải blind accuracy |
 | Mini-holdout mới | 8/10; 0 missed; 2 over; 0 system/provider/429; 28/30 field; không rerun |
 | Mini-holdout latency | 5 request đầu terminal 64,763 giây; 10 request terminal 108,803 giây; AI concurrency 1 |
 | Addendum 2 ca | 1/2 exact; 0 missed; 1 over; 0 system/provider/429; cả hai terminal trong 23,020 giây; không rerun |
+| Regression 12 source bytes | 10/12; 0 missed; 2 over; 0 system/provider/429; 35/36 field; wave 5 client P95 93,684 giây; không phải holdout mới |
 | Ollama local | Contingency có kiểm soát; không bật trên SmartASP vì latency/capacity và loopback host |
 
 Chi tiết mini-holdout: [`OFFICIAL_HOLDOUT10_2026-10-13.md`](OFFICIAL_HOLDOUT10_2026-10-13.md).
+Chi tiết regression source bytes: [`REGRESSION12_ORIGINAL_BYTES_RESULT_2026-10-13.md`](REGRESSION12_ORIGINAL_BYTES_RESULT_2026-10-13.md).
 
 ## Diễn giải hai over-escalation
 

@@ -1,6 +1,6 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 2.2 — 13/10/2026
+Phiên bản: 2.3 — 13/10/2026
 Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
@@ -41,17 +41,18 @@ flowchart LR
 5. Server đặt tên file bằng GUID, lưu ngoài `wwwroot`, tính SHA-256 và kiểm ảnh trùng.
 6. Chế độ demo vẫn cho phép ảnh trùng; cờ trùng được ghi nhận. Production có thể bật `DecisionPolicy:EscalateDuplicateReceipts=true`.
 7. Server commit hồ sơ `PENDING` cùng audit `AI_QUEUED`, trả `202 Accepted` và `statusUrl`; UI không giữ request HTTP trong lúc AI suy luận.
-8. Worker claim job bằng update có điều kiện, đặt lease và tăng attempt. DB là nguồn sự thật nên job còn lại sau refresh hoặc app restart.
-9. Qwen đọc ảnh và trả `ReceiptExtractionDto`. Khi bật fallback, chỉ lỗi hạ tầng trong allowlist mới chuyển một lần sang provider dự phòng; schema/semantic/request invalid không kích hoạt fallback.
-10. Backend kiểm tra semantic trước policy bằng evidence contract v2. Mỗi kết quả mới phải có chuỗi ngày nguyên văn và provenance của số tiền cuối; chỉ `PRINTED_FINAL_TOTAL` cùng dòng evidence chứa đúng nhãn/số in trực tiếp mới có thể tự duyệt. Dòng Total bị cắt/rách, số chỉ suy từ subtotal/items, evidence thiếu hoặc không khớp đều repair tối đa một lần rồi `ESCALATE_FACT`. Backend chuẩn hóa lossless `HH:mm:ss`/AM-PM về `HH:mm` và ngày Việt Nam day-first từ chuỗi gốc; vì vậy `09:46:21` không che nhánh POLICY và `04-10-26` không bị hiểu thành 10/04. VND chính là số nguyên đồng, nhưng VAT đã được in là bao gồm có thể giữ phần lẻ hỗ trợ và không được cộng lần hai. Tiền khách đưa, tiền thối, VAT đã gồm, điểm/tích lũy không phải discount/total. Hóa đơn giấy phải có ít nhất một hàng hóa/dịch vụ đọc được; vùng món bị che/mờ/cắt hoặc `lineItems=[]` không chứng minh “không có hạng mục cấm”. `invoiceNumber`, `receiptNumber`, `transactionReference` được tách khỏi Mã CQT, serial, số chứng từ và POS; PTT trên phiếu tính tiền là `receiptNumber`. Facts lưu repair metadata; lỗi còn lại luôn fail-safe.
-11. Policy C# đối chiếu dữ kiện và số tiền khai báo:
+8. Ngay khi bắt đầu xử lý, UI tự cuộn tới bảng kết quả và hiển thị trạng thái hàng đợi để nhân viên theo dõi; hành vi này không chờ AI hoàn tất.
+9. Worker claim job bằng update có điều kiện, đặt lease và tăng attempt. DB là nguồn sự thật nên job còn lại sau refresh hoặc app restart.
+10. Qwen đọc ảnh và trả `ReceiptExtractionDto`. Khi bật fallback, chỉ lỗi hạ tầng trong allowlist mới chuyển một lần sang provider dự phòng; schema/semantic/request invalid không kích hoạt fallback.
+11. Backend kiểm tra semantic trước policy bằng evidence contract v2. Mỗi kết quả mới phải có chuỗi ngày nguyên văn và provenance của số tiền cuối; chỉ `PRINTED_FINAL_TOTAL` cùng dòng evidence chứa đúng nhãn/số in trực tiếp mới có thể tự duyệt. Dòng Total bị cắt/rách, số chỉ suy từ subtotal/items, evidence thiếu hoặc không khớp đều repair tối đa một lần rồi `ESCALATE_FACT`. Backend chuẩn hóa lossless `HH:mm:ss`/AM-PM về `HH:mm` và ngày Việt Nam day-first từ chuỗi gốc; vì vậy `09:46:21` không che nhánh POLICY và `04-10-26` không bị hiểu thành 10/04. VND chính là số nguyên đồng, nhưng VAT đã được in là bao gồm có thể giữ phần lẻ hỗ trợ và không được cộng lần hai. Tiền khách đưa, tiền thối, VAT đã gồm, điểm/tích lũy không phải discount/total. Hóa đơn giấy phải có ít nhất một hàng hóa/dịch vụ đọc được; vùng món bị che/mờ/cắt hoặc `lineItems=[]` không chứng minh “không có hạng mục cấm”. `invoiceNumber`, `receiptNumber`, `transactionReference` được tách khỏi Mã CQT, serial, số chứng từ và POS; PTT trên phiếu tính tiền là `receiptNumber`. Facts lưu repair metadata; lỗi còn lại luôn fail-safe.
+12. Policy C# đối chiếu dữ kiện và số tiền khai báo:
    - dữ kiện đáng tin cậy, đúng policy và trong thẩm quyền → `AUTO_APPROVE`;
    - thiếu/mâu thuẫn dữ kiện → `ESCALATE_FACT`; nếu đồng thời có hạng mục cấm, lý do vẫn hiển thị policy finding thứ cấp để quản lý không bỏ sót;
    - ngoài chính sách → `ESCALATE_POLICY`;
    - vượt thẩm quyền → `ESCALATE_AUTHORITY`;
    - AI/provider lỗi → `ESCALATE_SYSTEM_ERROR`.
-12. Worker lưu facts, quyết định, latency, provider chính/provider phục vụ, fallback flag và sự kiện audit trong một lần `SaveChanges`.
-13. UI poll `GET /Applicant/Status/{id}` mỗi giây. `sessionStorage` giữ status URL để tiếp tục theo dõi sau refresh trong cùng tab.
+13. Worker lưu facts, quyết định, latency, provider chính/provider phục vụ, fallback flag và sự kiện audit trong một lần `SaveChanges`.
+14. UI poll `GET /Applicant/Status/{id}` mỗi giây. `sessionStorage` giữ status URL để tiếp tục theo dõi sau refresh trong cùng tab.
 
 ## 4. Workflow B — Verify Harness 5 ca
 
@@ -60,7 +61,7 @@ flowchart LR
 3. Các ảnh chạy tuần tự, cách nhau 4 giây để giảm nguy cơ rate limit.
 4. Mỗi ca đi qua cùng extractor và policy production; bảng hiển thị expected, actual, PASS/FAIL, lý do, câu hỏi, latency và timestamp.
 5. Khi gặp lỗi provider mang tính hệ thống/quota/schema, harness dừng gọi AI cho các ca còn lại để bảo vệ credit; các ca sau nhận `ESCALATE_SYSTEM_ERROR`, không tạo PASS giả.
-6. Sau khi hoàn tất, giao diện tự cuộn đến bảng kết quả. Các ca chuyển tiếp vẫn cần nhân viên xác nhận trước khi xuất hiện ở tab quản lý.
+6. Ngay khi batch bắt đầu, giao diện tự cuộn đến bảng kết quả để người dùng thấy trạng thái chạy; sau khi hoàn tất, bảng được cập nhật đầy đủ. Các ca chuyển tiếp vẫn cần nhân viên xác nhận trước khi xuất hiện ở tab quản lý.
 7. `WorkflowOperationGate` chỉ cho một batch Verify chạy trong mỗi process. Click đồng thời khác nhận HTTP 409 và không tạo thêm AI call. Live candidate 12/10 xác nhận 1 HTTP 200 + 4 HTTP 409; batch thắng đạt 5/5 trong 65,004 giây.
 
 ## 5. Workflow C — Human-in-the-loop
@@ -149,6 +150,7 @@ Checkpoint 12/10 đồng bộ default Ollama với profile 4B đã có evidence:
 - Live Verify sau publish candidate đạt 5/5, 0 system/provider error và E2E 65,004 giây. Năm client đồng thời chỉ tạo một batch thật với 1 HTTP 200 + 4 HTTP 409. Lỗi tổng hợp Windows PowerShell 5.1 được sửa từ raw body/hash, không replay provider. Đây là synthetic demo gate, không thay holdout hoặc SLA production.
 - Prospective mini-holdout mới ngày 13/10 gồm 10 receipt thật do chủ project sở hữu, đã consent/redaction và khóa expected/hash trước request đầu tiên. Một official run duy nhất đạt 8/10 exact, 0 missed, 2 over, 0 system/provider/429 error và 28/30 field date/identifier/final-total. Năm request đầu terminal trong 64,763 giây; cả 10 trong 108,803 giây ở concurrency 1. Hai mismatch đều fail-safe; redaction confounder được công bố và không rerun. Đây là evidence cho supervised demo, không phải production accuracy.
 - Hai receipt thêm sau đó được khóa/chạy riêng như prospective addendum: 1/2 exact, 0 missed, 1 over, 0 system/provider/429 error; cả hai terminal trong 23,020 giây. Chidori đúng FACT do Chủ nhật; Three O'Clock có facts cốt lõi đúng nhưng warning về privacy blackout kích hoạt FACT. Combined descriptive view là 9/12 và không phải một holdout 12 ca mới.
+- Post-holdout regression ảnh gốc trên đúng 12 file đã biết, có consent cụ thể và không qua copy/crop/resize/snapshot/annotation, đạt 10/12 exact, 0 missed, 2 over, 0 system/provider/429 error, 0 fallback và 35/36 field trọng yếu. Wave đầu gồm năm receipt khác nhau hoàn tất 5/5 với upload-accept P95 5,913 giây nhưng E2E P95 93,684 giây; vì vậy chỉ chứng minh queue một process không mất hồ sơ, không chứng minh SLA năm kết quả dưới 90 giây. Kết quả này không thay prospective baseline 9/12 và không phải causal A/B.
 - Evidence localization/overlay chưa nằm trong pipeline. Hướng thiết kế là giữ ảnh bytes bất biến, lưu region JSON theo image SHA-256 và vẽ SVG/canvas ở reviewer UI; không dùng box để thay facts/policy trước khi có annotation và benchmark riêng.
 - Mô phỏng: 30 ảnh tổng hợp sinh offline; 5 ảnh Verify và manifest 15 ca BGK được tuyển từ ngân hàng này.
 - Ground truth tổng hợp được sinh tất định bằng Python/Pillow và khóa trong manifest. Ảnh generative AI không được dùng làm nhãn chuẩn; hóa đơn thật đã ẩn danh chỉ nằm trong holdout cục bộ ngoài Git.
@@ -156,4 +158,4 @@ Checkpoint 12/10 đồng bộ default Ollama với profile 4B đã có evidence:
 
 ## 10. Giới hạn hiện tại
 
-Chưa có authentication/role thật, trường mục đích công tác/khách hàng/cost center để phân biệt một khoản cà phê cá nhân với khoản tiếp khách, PDF/nhiều trang, antivirus, tax/e-invoice lookup, ngoại tệ, object storage, SignalR, immutable audit ở tầng database, distributed circuit breaker, rate limiting public endpoint và benchmark trên tập dữ liệu độc lập lớn. Ba trường người gửi là metadata demo, không phải danh tính đã xác thực. Image resize chưa bật trước khi có benchmark chứng minh không làm giảm khả năng đọc chữ nhỏ. Hệ thống không tự suy “chi cá nhân” từ tên món nếu policy doanh nghiệp chưa cung cấp context và danh mục được duyệt.
+Chưa có authentication/role thật, trường mục đích công tác/khách hàng/cost center để phân biệt một khoản cà phê cá nhân với khoản tiếp khách, PDF/nhiều trang, antivirus, tax/e-invoice lookup, ngoại tệ, object storage, SignalR, immutable audit ở tầng database, distributed circuit breaker/provider limiter, rate limiting public endpoint và benchmark trên tập dữ liệu độc lập lớn. Ba trường người gửi là metadata demo, không phải danh tính đã xác thực. Image resize chưa bật trước khi có benchmark chứng minh không làm giảm khả năng đọc chữ nhỏ. Hệ thống không tự suy “chi cá nhân” từ tên món nếu policy doanh nghiệp chưa cung cấp context và danh mục được duyệt.
