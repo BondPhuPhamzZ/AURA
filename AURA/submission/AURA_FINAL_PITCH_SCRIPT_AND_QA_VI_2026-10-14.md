@@ -1,6 +1,7 @@
 # Kịch bản thuyết trình và phản biện AURA
 
-**Bản chốt:** 14/10/2026  
+**Bản chốt:** 14/10/2026
+
 **Mục tiêu:** trình bày trong 13 phút 30 giây, chừa 90 giây cho chuyển màn hình hoặc gián đoạn ngắn.
 
 ## Phân bổ thời gian

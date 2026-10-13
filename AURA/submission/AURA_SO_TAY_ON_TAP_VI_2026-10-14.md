@@ -1,7 +1,9 @@
 # Sổ tay AURA hiện hành
 
-**Cập nhật:** 14/10/2026  
-**Release đóng băng:** `aura-demo-day-2026-10-14`  
+**Cập nhật:** 14/10/2026
+
+**Release đóng băng:** `aura-demo-day-2026-10-14`
+
 **Commit:** `efc65d835a3b271369ed07c0a129533d1a0b5264`
 
 ## 1 AURA giải quyết vấn đề gì
