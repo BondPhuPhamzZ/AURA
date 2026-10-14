@@ -12,7 +12,8 @@ AURA là ứng dụng ASP.NET Core hỗ trợ bước thẩm định đầu tiê
 | Proposal tiếng Việt | [AURA Proposal VI](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_VI.pdf) |
 | Proposal tiếng Anh | [AURA Proposal EN](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_EN.pdf) |
 | Build Log | [AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.pdf) |
-| Video demo chính thức | [Video AURA dưới 3 phút](https://drive.google.com/file/d/14Co4QjnoDeYPTORXcxi1u-r1MOuX2KM0/view?usp=sharing) |
+| Video demo chung kết | [Thư mục final video trên Google Drive](https://drive.google.com/drive/folders/1-v_I_FpoobrhNGtE3szcpjnNS6Hy5KA4?usp=sharing) |
+| Health/readiness | [Live `/healthz`](https://bondphupham-001-site1.ltempurl.com/healthz) |
 
 Nếu BGK cần evaluation key, hãy chia sẻ bằng kênh riêng. Không commit key, không ghi vào source/config và không để xuất hiện trong ảnh hoặc video. Lưu key bằng .NET User Secrets và thu hồi hoặc xoay key sau đánh giá.
 
@@ -46,20 +47,12 @@ Cập nhật evidence gần nhất: 14/10/2026. Health live và gate Verify Qwen
 - Build: **0 warning, 0 error**.
 - Test tự động sau cập nhật UX reviewer và prototype evidence overlay: **163/163 pass**; test offline không gọi AI API trả phí.
 - Verify Harness chính thức: **5/5** với đúng 3 approve và 2 escalate.
-- Synthetic judge set lịch sử đã khóa: OpenRouter **15/15 quyết định**, Ollama **14/15**. OpenRouter v2 hậu contract đạt **14/15** và còn sai TK-12; safety set physical-ink-loss v3.1 đạt **13/15**, không có missed escalation hoặc system error.
-- Candidate Qwen3.8 Flash ngày 12/10 hoàn tất lại 15 receipt post-holdout đã biết với **15/15**, 0 missed/over/system error và 30/30 critical field. Năm upload đồng thời có P95 41,079 giây ở AI concurrency 1. Đây là post-adjustment regression, không phải blind holdout mới hoặc production SLA.
 - Mini-holdout 10 receipt mới do chủ dự án cung cấp, redaction và khóa trước đạt **8/10 exact**, **0 missed, 2 fail-safe over, 0 lỗi system/provider/429 và 28/30 field date/identifier/total cốt lõi**. Năm request đầu về terminal trong 64,763 giây và cả mười trong 108,803 giây ở AI concurrency 1. Bộ này chỉ chạy một lần; tương tác redaction được công bố nên không được gọi là production accuracy.
-- Addendum prospective riêng hai receipt đạt **1/2 exact**, **0 missed, 1 fail-safe over và 0 lỗi system/provider/429**. Core facts của Three O'Clock đúng, nhưng free-text warning về vùng che privacy kích hoạt FACT review. Góc nhìn gộp mô tả là 9/12; đây không phải holdout 12 ca mới và không bộ nào được tái sử dụng cho claim blind.
 - Post-holdout regression sau đó gửi cùng 12 **source bytes nguyên bản**, không snapshot/resize/transform: **10/12 exact, 0 missed, 2 over, 0 lỗi system/provider/429, 35/36 critical field**. Năm upload khác nhau đồng thời hoàn tất 5/5 với E2E P95 **93,684 giây**. Lần này chỉ kiểm queue integrity, không phải yêu cầu latency Verify.
 - Lần lặp tuần tự sau trên cùng known bytes đạt **11/12 exact**, **0 missed, 1 over, 0 lỗi system/provider/429 và E2E P95 32,903 giây**. GS25_2 trở lại AUTO còn FAHASA vẫn fail-safe. Đây là stability evidence, không phải holdout mới hay phép đo accuracy độc lập.
 - Sau publish/recycle, Verify Harness Qwen3.8 Flash trên live đạt **5/5 trong 65,004 giây**, không có system/provider error. Năm client bấm đồng thời tạo một HTTP 200 và bốn HTTP 409, nên click trùng không tạo thêm AI batch trên deployment một process.
-- Gate SmarterASP hậu holdout: home và health 5/5, DB/storage/migration, upload/security-negative, mobile UI và Verify OpenRouter 5/5 đều pass. Human workflow cũng pass 2/2 bằng synthetic fixture: policy reject/undo và fact approve/undo.
-- Concurrency live: **2/2 + 5/5 hoàn tất**; E2E P95 **20,941 / 23,290 giây**. Timer bao gồm antiforgery GET/setup/network nên không phải POST SLO thuần.
-- Real holdout khóa một lần trước đó đạt **10/15 raw decision match** với một missed escalation, ba over-escalation và 0 system error. Post-hoc review phát hiện một locked label sai, cho phân tích adjudicated 11/15 mà không đổi raw evidence. Điểm 28/30 field chỉ đo currency và total, không phải full extraction accuracy.
-- Post-holdout regression sau đó trên cùng 15 receipt đạt **11/15**, 0 missed escalation, bốn over-escalation và 0 system error. Đây là regression evidence, không phải blind holdout mới.
-- Kết quả holdout dẫn tới evidence contract v2: provenance cho printed final total, raw-date verification, guard tiền/mã định danh cấp hai, chuẩn hóa thời gian và taxonomy personal item mở rộng. Contract v2 được deploy tại `1f4b3c9`.
-- Lỗi timezone Audit ở deployment cũ đã được sửa và xác minh live: event mới và lịch sử hiển thị theo giờ Việt Nam trong khi database tiếp tục dùng UTC làm nguồn sự thật.
-- Fallback cô lập OpenRouter sang Ollama pass 1/1 nhưng mất **84,425 giây**. Vì vậy fallback vẫn tắt trong baseline demo chính thức.
+
+Chi tiết các phép đo lịch sử, manifest và ranh giới claim nằm trong [tổng hợp evidence](AURA/docs/EVALUATION_EVIDENCE.md), tránh biến README thành nhật ký benchmark.
 
 Các kết quả trên chỉ hỗ trợ demo có giám sát, không hỗ trợ claim production accuracy. Hai tập receipt thật đã trở thành known data và không thể tái sử dụng cho một holdout mới. Accuracy claim và rollout không giám sát vẫn NO-GO. Test 4G/5G trên điện thoại thật đã pass; các gate còn lại là ba phiên người dùng có giám sát và rehearsal có bấm giờ trên commit đóng băng.
 

@@ -1,5 +1,20 @@
 # Protocol đánh giá AURA với người dùng thực tế
 
+## Mốc điều phối của BTC ngày 15-16/10/2026
+
+Theo thông báo mới nhất của BTC, đội cần đặt bộ nội dung gửi doanh nghiệp lên Team Drive trước **19:00 ngày 15/10/2026**. Bộ gửi đi nên gồm link live, mô tả vai trò AURA, tác vụ ngắn cho người dùng, phạm vi consent và các câu hỏi trải nghiệm. BTC dự kiến chuyển phản hồi về cho đội khoảng trước **13:00 ngày 16/10/2026**. Đội được tiếp tục chỉnh code sau ngày 15/10, nhưng chỉ được gọi đây là user evidence sau khi nhận dữ liệu thật và kiểm tra đủ điều kiện bên dưới.
+
+Sau khi nhận feedback:
+
+1. giữ nguyên phản hồi gốc và thời điểm nhận;
+2. tách blocker, vấn đề khả dụng và đề xuất tính năng;
+3. chọn tối đa một thay đổi rủi ro thấp có acceptance criterion rõ;
+4. giữ evidence trước thay đổi, triển khai trên nhánh riêng và chạy lại gate liên quan;
+5. ghi commit, evidence sau thay đổi và tác động tiêu cực;
+6. chỉ cập nhật proposal, Slide 3/5 và claim user evidence khi các record thực sự tồn tại.
+
+Không thay prompt, policy, threshold, schema hoặc model chỉ từ một nhận xét định tính sát giờ thi. Các thay đổi đó cần evaluation riêng và full regression gate.
+
 ## Mục đích và điều kiện hoàn tất
 
 Protocol này dùng để hoàn tất gate user evidence của OrganizationAI Sprint 2 mà không tạo người dùng hoặc feedback giả. Một gói hoàn chỉnh phải có ba người thật đang trực tiếp nộp hoàn ứng, kiểm tra kế toán/hành chính hoặc phê duyệt quản lý trong công việc. Mỗi record cần họ tên và chức danh thật, consent bằng văn bản, feedback nguyên văn được người tham gia xác nhận, một thay đổi sản phẩm truy vết tới commit hoặc evidence trước-sau và ít nhất một tác động tiêu cực cụ thể.
@@ -38,6 +53,19 @@ Thời lượng mục tiêu: 20 đến 25 phút.
 | Kết thúc | 3 phút | Xếp ưu tiên thay đổi và xác nhận phạm vi được công bố | Ưu tiên và consent công bố |
 
 Không hướng dẫn thao tác trừ khi người tham gia bị chặn. Ghi nhận điểm bị chặn trước khi hỗ trợ.
+
+## Bộ câu hỏi gửi doanh nghiệp
+
+1. Sau lần dùng đầu tiên, anh/chị hiểu AURA hỗ trợ bước nào và ai là người quyết định cuối không?
+2. Trạng thái `Đã xếp hàng AI/Đang xử lý` có đủ rõ để anh/chị biết hồ sơ chưa bị treo không?
+3. Với ca ngoại lệ, lý do và câu hỏi mà AURA đưa ra có đủ để quyết định bước tiếp theo không?
+4. Anh/chị có tìm được thao tác chuyển tiếp, duyệt/từ chối, Audit và Undo mà không cần hướng dẫn không?
+5. Phần nào giúp giảm thời gian hoặc giảm sai sót nhiều nhất?
+6. Phần nào gây do dự, hiểu nhầm hoặc buộc anh/chị mở lại hóa đơn?
+7. Nếu dùng trong công việc thật, tác động tiêu cực hoặc rủi ro lớn nhất là gì?
+8. Một thay đổi duy nhất anh/chị muốn đội ưu tiên trước pilot là gì?
+
+Mỗi câu trả lời cần gắn với vai trò người tham gia. Nếu BTC chỉ chuyển một bản tổng hợp ẩn danh, ghi rõ giới hạn này và không biến câu diễn giải của đội thành quote nguyên văn.
 
 ## Chỉ số bắt buộc
 
