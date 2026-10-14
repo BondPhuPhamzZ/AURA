@@ -7,7 +7,7 @@ AURA là ứng dụng ASP.NET Core hỗ trợ bước thẩm định đầu tiê
 | Hạng mục | Liên kết |
 |---|---|
 | Ứng dụng live | [AURA trên SmarterASP.NET](https://bondphupham-001-site1.ltempurl.com/) |
-| Thư mục nộp bài của đội và evaluation key chỉ dành cho BGK | [Team Drive](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
+| Thư mục nộp video Sprint 1 và evaluation key chỉ dành cho BGK | [Team Drive](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
 | Slide chung kết | [AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES_FINAL.pptx) |
 | Proposal tiếng Việt | [AURA Proposal VI](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_VI.pdf) |
 | Proposal tiếng Anh | [AURA Proposal EN](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_EN.pdf) |
