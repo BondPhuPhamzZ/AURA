@@ -16,6 +16,8 @@ Thư mục này chỉ chứa các tài liệu kỹ thuật hiện hành dành ch
 | `EVIDENCE_LOCALIZATION_PLAN.md` | Tính khả thi của overlay khoanh vùng và giới hạn chưa-production |
 | `USER_STUDY_PROTOCOL.md` | Protocol lấy ý kiến ba người dùng dựa trên consent |
 | `SUBMISSION_CHECKLIST.md` | Checklist nộp bài và rehearsal cuối |
+| `../BUSINESS_RULES.md` | Bản tiếng Anh chuẩn đang đồng bộ với model contract và policy hiện hành |
+| `../BUSINESS_RULES_VI.md` | Bảng dịch tiếng Việt và câu hỏi xin góp ý business rule từ BGK/doanh nghiệp |
 
 Hóa đơn thô, raw provider response, API dashboard, database, secret và dữ liệu định danh cá nhân được chủ động loại khỏi Git. Gói evidence riêng tư giữ nguyên timestamp và hash ban đầu; không đổi tên hoặc tạo lại để làm chúng trông mới hơn.
 

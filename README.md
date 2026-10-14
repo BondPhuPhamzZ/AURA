@@ -40,6 +40,15 @@ Khả năng chính:
 - Verify Harness chạy năm ca chính thức trong một thao tác: ba ca duyệt và hai ca chuyển tiếp.
 - Danh tính người gửi, thao tác quản lý, provider metadata, lý do và Undo đều có thể audit.
 
+## Business rules đang áp dụng
+
+| Bản | Vai trò |
+|---|---|
+| [BUSINESS_RULES.md - English](AURA/BUSINESS_RULES.md) | Bản chuẩn đang áp dụng cho contract của model Qwen3.8 Flash và policy hiện hành |
+| [BUSINESS_RULES_VI.md - Tiếng Việt](AURA/BUSINESS_RULES_VI.md) | Bảng dịch để BGK và người nghiệp vụ đối chiếu, gồm câu hỏi xin feedback về rule |
+
+Ứng dụng không đọc trực tiếp Markdown lúc chạy. Các ràng buộc extraction tương đương được mã hóa trong `ReceiptExtractionContract.cs`; quyết định được thực thi tất định trong `PolicyDecisionEngine.cs`. Vì vậy model đọc facts nhưng không có quyền tự thay hoặc tự áp dụng policy phê duyệt.
+
 ## Baseline đã xác minh
 
 Cập nhật evidence gần nhất: 14/10/2026. Health live và gate Verify Qwen3.8 Flash là baseline demo đã đóng băng; mini-holdout prospective 10 hóa đơn là một lần chạy riêng, không rerun.
@@ -144,7 +153,8 @@ Dừng app bằng `Ctrl+C`. Không cần reset database hoặc xóa LocalDB.
 - [Chỉ mục tài liệu kỹ thuật](AURA/docs/README.md)
 - [Hướng dẫn BGK chạy local và xử lý lỗi](AURA/docs/JUDGE_LOCAL_SETUP.md)
 - [Kiến trúc và tích hợp](AURA/ARCHITECTURE_AND_INTEGRATION_REPORT.md)
-- [Quy tắc nghiệp vụ](AURA/BUSINESS_RULES.md)
+- [Business rules tiếng Anh - bản chuẩn hiện hành](AURA/BUSINESS_RULES.md)
+- [Bảng business rules tiếng Việt](AURA/BUSINESS_RULES_VI.md)
 - [Đặc tả workflow](AURA/submission/AURA_WORKFLOW_SPEC.md)
 - [Hướng dẫn dataset và đánh giá mở rộng](AURA/docs/DATASET_EVALUATION_GUIDE.md)
 - [Trạng thái đã xác minh hiện hành](AURA/docs/CURRENT_PROJECT_STATUS.md)

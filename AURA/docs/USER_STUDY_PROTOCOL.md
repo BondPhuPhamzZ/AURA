@@ -64,6 +64,7 @@ Không hướng dẫn thao tác trừ khi người tham gia bị chặn. Ghi nh�
 6. Phần nào gây do dự, hiểu nhầm hoặc buộc anh/chị mở lại hóa đơn?
 7. Nếu dùng trong công việc thật, tác động tiêu cực hoặc rủi ro lớn nhất là gì?
 8. Một thay đổi duy nhất anh/chị muốn đội ưu tiên trước pilot là gì?
+9. Với business rule hiện tại, các mốc 90 ngày, 06:00-22:00, 1.000.000 VND, danh mục cấm và evidence bắt buộc đã phù hợp chưa; rule nào nên cấu hình theo phòng ban, cấp duyệt hoặc loại chi phí?
 
 Mỗi câu trả lời cần gắn với vai trò người tham gia. Nếu BTC chỉ chuyển một bản tổng hợp ẩn danh, ghi rõ giới hạn này và không biến câu diễn giải của đội thành quote nguyên văn.
 

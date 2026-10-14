@@ -88,6 +88,7 @@ $requiredCopies = @(
     @("$AppRoot\docs\JUDGE_LOCAL_SETUP.md", "$DemoRoot\Nop\05_GITHUB_AND_RUNBOOK\JUDGE_LOCAL_SETUP.md"),
     @("$AppRoot\docs\TEST_CASES.md", "$DemoRoot\Nop\05_GITHUB_AND_RUNBOOK\TEST_CASES.md"),
     @("$AppRoot\BUSINESS_RULES.md", "$DemoRoot\Nop\05_GITHUB_AND_RUNBOOK\BUSINESS_RULES.md"),
+    @("$AppRoot\BUSINESS_RULES_VI.md", "$DemoRoot\Nop\05_GITHUB_AND_RUNBOOK\BUSINESS_RULES_VI.md"),
     @("$AppRoot\submission\AURA_WORKFLOW_SPEC.md", "$DemoRoot\Nop\05_GITHUB_AND_RUNBOOK\AURA_WORKFLOW_SPEC.md"),
     @("$AppRoot\docs\USER_STUDY_PROTOCOL.md", "$DemoRoot\Nop\06_USER_EVIDENCE\USER_STUDY_PROTOCOL.md"),
     @("$AppRoot\submission\AURA_USER_FEEDBACK_FORM.docx", "$DemoRoot\Nop\06_USER_EVIDENCE\AURA_USER_FEEDBACK_FORM.docx"),
