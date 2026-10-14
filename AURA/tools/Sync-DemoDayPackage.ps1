@@ -90,6 +90,7 @@ $requiredCopies = @(
     @("$AppRoot\docs\JUDGE_LOCAL_SETUP.md", "$DemoRoot\Nop\05_GITHUB_AND_RUNBOOK\JUDGE_LOCAL_SETUP.md"),
     @("$AppRoot\docs\TEST_CASES.md", "$DemoRoot\Nop\05_GITHUB_AND_RUNBOOK\TEST_CASES.md"),
     @("$AppRoot\BUSINESS_RULES.md", "$DemoRoot\Nop\05_GITHUB_AND_RUNBOOK\BUSINESS_RULES.md"),
+    @("$AppRoot\submission\AURA_WORKFLOW_SPEC.md", "$DemoRoot\Nop\05_GITHUB_AND_RUNBOOK\AURA_WORKFLOW_SPEC.md"),
     @("$AppRoot\docs\USER_STUDY_PROTOCOL.md", "$DemoRoot\Nop\06_USER_EVIDENCE\USER_STUDY_PROTOCOL.md"),
     @("$AppRoot\submission\AURA_USER_FEEDBACK_FORM.docx", "$DemoRoot\Nop\06_USER_EVIDENCE\AURA_USER_FEEDBACK_FORM.docx"),
     @("$AppRoot\submission\AURA_USER_FEEDBACK_FORM.pdf", "$DemoRoot\Nop\06_USER_EVIDENCE\AURA_USER_FEEDBACK_FORM.pdf"),
@@ -105,7 +106,13 @@ foreach ($entry in $requiredCopies) {
 # remains available under phanbien/ and is copied only to the private rehearsal
 # folders above.
 $legacyPersonalTargets = @(
-    "$DemoRoot\Nop\03_VIDEO\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md"
+    "$DemoRoot\Nop\00_READ_FIRST\README_FIRST.md",
+    "$DemoRoot\Nop\03_VIDEO\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md",
+    "$DemoRoot\Nop\03_VIDEO\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN.md",
+    "$DemoRoot\Nop\03_VIDEO\VIDEO_FILE_PENDING.md",
+    "$DemoRoot\Nop\04_BUILD_LOG\AURA_BUILD_LOG_1_PAGE.md",
+    "$DemoRoot\Nop\04_BUILD_LOG\AURA_BUILD_LOG_1_PAGE.docx",
+    "$DemoRoot\Nop\04_BUILD_LOG\AURA_BUILD_LOG_1_PAGE.pdf"
 )
 foreach ($target in $legacyPersonalTargets) {
     $fullTarget = [System.IO.Path]::GetFullPath($target)
@@ -155,7 +162,7 @@ $summary = [ordered]@{
     requiredCopiedFileCount = $requiredCopies.Count
     evidenceHashedFileCount = $hashLines.Count
     rawReceiptsCopied = $false
-    officialVideoPending = $true
+    officialVideoPending = $false
     threeUserEvidencePending = $true
 }
 [System.IO.File]::WriteAllText(
