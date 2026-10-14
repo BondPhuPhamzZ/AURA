@@ -1,65 +1,65 @@
-# AURA final submission checklist
+# Checklist nộp bài chính thức AURA
 
-**Updated:** 14/10/2026
+**Cập nhật:** 14/10/2026
 
-**Current state:** `CURRENT_PROJECT_STATUS.md`
+**Trạng thái hiện hành:** `CURRENT_PROJECT_STATUS.md`
 
-**Submission manifest:** `../submission/README.md`
+**Danh mục gói nộp:** `../submission/README.md`
 
-## Required deliverables
+## Hạng mục bắt buộc
 
-| Deliverable | Status | Final source |
+| Hạng mục | Trạng thái | Nguồn chốt |
 |---|---|---|
-| Public source repository and README | Ready | repository root `README.md` |
-| Live application | Technical gate passed; final onsite rehearsal pending | URL in README |
-| Five-slide deck | Ready | `../submission/AURA_5_SLIDES_FINAL.pptx` |
-| Proposal, Vietnamese and English | Ready | `../submission/AURA_PROPOSAL_VI.*`, `../submission/AURA_PROPOSAL_EN.*` |
-| One-page project Build Log | Ready | `../submission/AURA_BUILD_LOG.*` |
-| Product demo video, maximum 3 minutes | Ready and uploaded | URL in `../submission/AURA_SUBMISSION_LINKS.*` |
-| Verify Harness and evaluator instructions | Ready | `docs/JUDGE_LOCAL_SETUP.md`, `docs/RUNBOOK.md` |
-| Three real-user feedback records | Open gate | `USER_STUDY_PROTOCOL.md`, feedback form in `../submission/` |
-| Team Drive permissions and final links | Uploaded; incognito permission check pending | `../submission/AURA_SUBMISSION_LINKS.*` |
+| Repository source công khai và README | Sẵn sàng | `README.md` ở root repository |
+| Ứng dụng live | Đã qua gate kỹ thuật; còn rehearsal tại địa điểm thi | URL trong README |
+| Slide 5 trang | Sẵn sàng | `../submission/AURA_5_SLIDES_FINAL.pptx` |
+| Proposal tiếng Việt và tiếng Anh | Sẵn sàng | `../submission/AURA_PROPOSAL_VI.*`, `../submission/AURA_PROPOSAL_EN.*` |
+| Build Log một trang của toàn dự án | Sẵn sàng | `../submission/AURA_BUILD_LOG.*` |
+| Video demo sản phẩm tối đa 3 phút | Đã upload | URL trong `../submission/AURA_SUBMISSION_LINKS.*` |
+| Verify Harness và hướng dẫn BGK | Sẵn sàng | `JUDGE_LOCAL_SETUP.md`, `RUNBOOK.md` |
+| Ba biên bản phản hồi người dùng thật | Gate còn mở | `USER_STUDY_PROTOCOL.md`, biểu mẫu trong `../submission/` |
+| Quyền Team Drive và liên kết cuối | Đã upload; còn kiểm tra ẩn danh lần cuối | `../submission/AURA_SUBMISSION_LINKS.*` |
 
-## Team Drive folder map
+## Sơ đồ thư mục Team Drive
 
-| Drive folder | Upload from repository | Required action |
+| Thư mục Drive | File lấy từ repository | Việc cần làm |
 |---|---|---|
-| `00_READ_FIRST` | `../submission/AURA_SUBMISSION_LINKS.pdf` and a short folder `README.md` | Keep one current PDF only; verify every URL in an incognito window |
-| `01_SLIDES` | `../submission/AURA_5_SLIDES_FINAL.pptx` | Ready |
-| `02_PROPOSAL` | `../submission/AURA_PROPOSAL_VI.pdf`, `../submission/AURA_PROPOSAL_EN.pdf` | Ready |
-| `03_VIDEO` | Official MP4 linked by `../submission/AURA_SUBMISSION_LINKS.*` | Keep one file clearly marked as the official under-three-minute video |
-| `04_BUILD_LOG` | `../submission/AURA_BUILD_LOG.pdf` | Ready; this is the single project-wide one-page Build Log |
-| `05_GITHUB_AND_RUNBOOK` | repository root `README.md`, `RUNBOOK.md`, `JUDGE_LOCAL_SETUP.md`, `TEST_CASES.md`, `../BUSINESS_RULES.md`, `../submission/AURA_WORKFLOW_SPEC.md` | Upload the six files; do not copy source code or secrets into Drive |
-| `06_USER_EVIDENCE_PENDING` | `USER_STUDY_PROTOCOL.md`, `../submission/AURA_USER_FEEDBACK_FORM.docx`, `../submission/AURA_USER_FEEDBACK_FORM.pdf` | Upload templates now; add only consented, authentic records later |
-| `07_EVIDENCE_SUMMARY` | `CURRENT_PROJECT_STATUS.md`, `EVALUATION_EVIDENCE.md` | Upload both current summaries |
+| `00_READ_FIRST` | `../submission/AURA_SUBMISSION_LINKS.pdf` và `README.md` ngắn | Chỉ giữ một PDF hiện hành; mở từng URL trong cửa sổ ẩn danh |
+| `01_SLIDES` | `../submission/AURA_5_SLIDES_FINAL.pptx` | Sẵn sàng |
+| `02_PROPOSAL` | `../submission/AURA_PROPOSAL_VI.pdf`, `../submission/AURA_PROPOSAL_EN.pdf` | Sẵn sàng |
+| `03_VIDEO` | MP4 chính thức được dẫn trong `../submission/AURA_SUBMISSION_LINKS.*` | Đánh dấu rõ một video dưới 3 phút là bản chính thức; các video hóa đơn thật chỉ là bổ sung |
+| `04_BUILD_LOG` | `../submission/AURA_BUILD_LOG.pdf` | Chỉ dùng một Build Log một trang cho toàn dự án |
+| `05_GITHUB_AND_RUNBOOK` | README root, `RUNBOOK.md`, `JUDGE_LOCAL_SETUP.md`, `TEST_CASES.md`, `../BUSINESS_RULES.md`, `../submission/AURA_WORKFLOW_SPEC.md` | Upload sáu file; không sao chép source code hoặc secret vào Drive |
+| `06_USER_EVIDENCE_PENDING` | `USER_STUDY_PROTOCOL.md`, `../submission/AURA_USER_FEEDBACK_FORM.docx`, `../submission/AURA_USER_FEEDBACK_FORM.pdf` | Upload template; chỉ thêm record thật có consent khi đã thu thập |
+| `07_EVIDENCE_SUMMARY` | `CURRENT_PROJECT_STATUS.md`, `EVALUATION_EVIDENCE.md` | Upload hai bản tổng hợp hiện hành |
 
-## Before recording or presenting
+## Trước khi trình bày
 
-1. Use the frozen Qwen3.8 Flash candidate with reasoning `none` and live fallback off.
-2. Check `/healthz`: status ok, database/storage/migrations healthy, provider/model correct.
-3. Run the five-case Verify Harness once; it must finish under 90 seconds with 3 AUTO and 2 ESCALATE.
-4. Do not run Verify concurrently with an upload benchmark or another Verify batch.
-5. Hide browser history, API dashboards, secrets, console output containing keys, and real receipt PII.
-6. Rehearse the recovery path: refresh first, inspect status/Audit, then use the prerecorded demo if the upstream provider is unavailable.
+1. Dùng candidate Qwen3.8 Flash đã đóng băng với reasoning `none` và live fallback tắt.
+2. Kiểm `/healthz`: status ok; database, storage và migration khỏe; provider/model đúng.
+3. Chạy Verify Harness 5 ca đúng một lần; kết quả phải dưới 90 giây với 3 AUTO và 2 ESCALATE.
+4. Không chạy Verify đồng thời với benchmark upload hoặc một Verify batch khác.
+5. Ẩn browser history, API dashboard, secret, console có key và PII hóa đơn thật.
+6. Ôn phương án dự phòng: refresh trước, kiểm status/Audit, sau đó dùng video đã quay nếu upstream provider không sẵn sàng.
 
-## Before uploading to Team Drive
+## Trước khi chốt Team Drive
 
-1. Populate every folder in the map above; keep one final copy of each logical deliverable.
-2. Keep DOCX/PPTX source files in the team folder only when requested; use PDFs as the default review format.
-3. Open every link in an incognito window using an account without owner privileges.
-4. Confirm the video duration is at most 180 seconds and plays with audible narration.
-5. Confirm the repository contains no real receipts, API keys, user secrets, databases, publish profiles, provider payloads, or billing screenshots.
-6. Record the final Git commit and Drive upload time; do not silently replace evidence after the deadline.
+1. Điền đủ các thư mục trong bảng trên và chỉ giữ một bản cuối cho mỗi hạng mục.
+2. Chỉ giữ DOCX/PPTX trên Team Drive khi BTC cần file nguồn; PDF là định dạng đọc mặc định.
+3. Mở mọi liên kết bằng cửa sổ ẩn danh hoặc tài khoản không có quyền owner.
+4. Xác nhận video chính thức không quá 180 giây và có lời thoại nghe rõ.
+5. Xác nhận repository không chứa hóa đơn thật, API key, user secrets, database, publish profile, provider payload hoặc ảnh billing.
+6. Ghi lại commit Git cuối và thời điểm upload Drive; không âm thầm thay evidence sau hạn nộp.
 
-## Claim boundaries for judges
+## Ranh giới claim khi trả lời BGK
 
-- Say `163/163 offline tests`, not `163 receipts`.
-- Say `8/10 prospective mini-holdout, 0 missed, 2 fail-safe over`, not production accuracy.
-- Say `five concurrent uploads completed`, not a five-user production SLA.
-- Say `single-process AI capacity control`; distributed limiting remains roadmap work.
-- Say evidence localization is an isolated prototype, not a production capability.
-- State plainly that the three-user gate is pending until signed/confirmed evidence exists.
+- Nói `163/163 test offline`, không nói `163 hóa đơn`.
+- Nói `mini-holdout prospective 8/10, 0 missed, 2 fail-safe over`, không nói production accuracy.
+- Nói `năm upload đồng thời đã hoàn tất`, không gọi đó là production SLA cho năm người dùng.
+- Nói `kiểm soát AI capacity trong một process`; distributed limiting vẫn là roadmap.
+- Nói evidence localization là prototype cô lập, chưa phải capability production.
+- Nói rõ gate ba người dùng vẫn pending cho tới khi có record và trích dẫn được xác nhận.
 
-## Files excluded from Git and public Drive folders
+## File không được đưa lên Git hoặc Drive công khai
 
-API keys, production connection strings, `.env`, user secrets, publish credentials, `.vs/`, `bin/`, `obj/`, `.tmp/`, local databases, raw receipts, unredacted screenshots, raw provider responses, and billing/key dashboards.
+API key, production connection string, `.env`, user secrets, publish credential, `.vs/`, `bin/`, `obj/`, `.tmp/`, database local, hóa đơn thật, ảnh chưa redaction, raw provider response và ảnh billing/key dashboard.

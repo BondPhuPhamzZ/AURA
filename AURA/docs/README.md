@@ -1,24 +1,24 @@
-# AURA technical documentation
+# Tài liệu kỹ thuật AURA
 
-This folder contains only the active, judge-facing technical documentation. Historical progress reports and dated snapshots were removed from the active tree to prevent conflicting instructions; they remain recoverable from Git history and the frozen release tag.
+Thư mục này chỉ chứa các tài liệu kỹ thuật hiện hành dành cho BGK. Các báo cáo tiến độ cũ và snapshot theo ngày đã được đưa khỏi cây tài liệu đang dùng để tránh hướng dẫn mâu thuẫn; nội dung vẫn có thể truy xuất từ Git history và release tag đóng băng.
 
-| Document | Purpose |
+| Tài liệu | Mục đích |
 |---|---|
-| `CURRENT_PROJECT_STATUS.md` | Single source of truth for the current verified baseline and open gates |
-| `EVALUATION_EVIDENCE.md` | Consolidated map of public results, claim boundaries, and private raw-evidence locations |
-| `RUNBOOK.md` | Operating and recovery procedure |
-| `JUDGE_LOCAL_SETUP.md` | Local setup for evaluators |
-| `DEPLOYMENT.md` | Deployment configuration and safety boundaries |
-| `LOCAL_OLLAMA.md` | Optional supervised local contingency |
-| `TEST_CASES.md` | Test inventory and expected behavior |
-| `DATASET_EVALUATION_GUIDE.md` | Dataset, manifest, and evaluation protocol |
-| `MEASUREMENT_PLAN.md` | Metrics and interpretation rules |
-| `EVIDENCE_LOCALIZATION_PLAN.md` | Bounding-box overlay feasibility and non-production boundary |
-| `USER_STUDY_PROTOCOL.md` | Consent-based three-user study protocol |
-| `SUBMISSION_CHECKLIST.md` | Final submission and rehearsal checklist |
+| `CURRENT_PROJECT_STATUS.md` | Nguồn sự thật duy nhất về baseline đã xác minh và các gate còn mở |
+| `EVALUATION_EVIDENCE.md` | Bản đồ kết quả công khai, ranh giới claim và vị trí evidence thô riêng tư |
+| `RUNBOOK.md` | Quy trình vận hành và khôi phục |
+| `JUDGE_LOCAL_SETUP.md` | Hướng dẫn BGK chạy AURA tại máy local |
+| `DEPLOYMENT.md` | Cấu hình triển khai và ranh giới an toàn |
+| `LOCAL_OLLAMA.md` | Phương án local có giám sát, không bắt buộc |
+| `TEST_CASES.md` | Danh mục test và hành vi kỳ vọng |
+| `DATASET_EVALUATION_GUIDE.md` | Dataset, manifest và protocol đánh giá |
+| `MEASUREMENT_PLAN.md` | Metric và quy tắc diễn giải |
+| `EVIDENCE_LOCALIZATION_PLAN.md` | Tính khả thi của overlay khoanh vùng và giới hạn chưa-production |
+| `USER_STUDY_PROTOCOL.md` | Protocol lấy ý kiến ba người dùng dựa trên consent |
+| `SUBMISSION_CHECKLIST.md` | Checklist nộp bài và rehearsal cuối |
 
-Raw receipts, raw provider responses, API dashboards, databases, secrets, and personally identifying material are intentionally excluded from Git. Private evidence packages keep their original timestamps and hashes; they are not renamed or regenerated to appear newer.
+Hóa đơn thô, raw provider response, API dashboard, database, secret và dữ liệu định danh cá nhân được chủ động loại khỏi Git. Gói evidence riêng tư giữ nguyên timestamp và hash ban đầu; không đổi tên hoặc tạo lại để làm chúng trông mới hơn.
 
-An older date inside `DATASET_EVALUATION_GUIDE.md`, `DEPLOYMENT.md`, `LOCAL_OLLAMA.md`, or `TEST_CASES.md` records the date of that protocol or measurement baseline. It is not a signal that the current candidate still uses an older model. Current configuration and release gates live in `CURRENT_PROJECT_STATUS.md`; current public measurements live in `EVALUATION_EVIDENCE.md`.
+Ngày cũ trong `DATASET_EVALUATION_GUIDE.md`, `DEPLOYMENT.md`, `LOCAL_OLLAMA.md` hoặc `TEST_CASES.md` là ngày của protocol hay baseline đo tương ứng, không có nghĩa candidate hiện tại vẫn dùng model cũ. Cấu hình và release gate hiện hành nằm trong `CURRENT_PROJECT_STATUS.md`; số liệu công khai hiện hành nằm trong `EVALUATION_EVIDENCE.md`.
 
-Submission artifacts are indexed separately in `../submission/README.md`.
+Các artifact nộp bài được lập chỉ mục riêng tại `../submission/README.md`.

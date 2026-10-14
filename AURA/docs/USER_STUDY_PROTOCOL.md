@@ -1,80 +1,80 @@
-# AURA user study protocol
+# Protocol đánh giá AURA với người dùng thực tế
 
-## Purpose and completion rule
+## Mục đích và điều kiện hoàn tất
 
-This protocol closes the OrganizationAI Sprint 2 user-evidence gate without fabricating participants or feedback. A completed package must contain three people who directly handle reimbursement submission, accounting review, or manager approval in real work. Each record needs the participant's real name and job title, written consent, verbatim feedback confirmed by that participant, one product change traced to a commit or before and after evidence, and at least one concrete negative effect.
+Protocol này dùng để hoàn tất gate user evidence của OrganizationAI Sprint 2 mà không tạo người dùng hoặc feedback giả. Một gói hoàn chỉnh phải có ba người thật đang trực tiếp nộp hoàn ứng, kiểm tra kế toán/hành chính hoặc phê duyệt quản lý trong công việc. Mỗi record cần họ tên và chức danh thật, consent bằng văn bản, feedback nguyên văn được người tham gia xác nhận, một thay đổi sản phẩm truy vết tới commit hoặc evidence trước-sau và ít nhất một tác động tiêu cực cụ thể.
 
-The project owner does not count as all three participants. Synthetic personas, paraphrased quotations presented as verbatim, or retrospective signatures on text the participant did not review are not acceptable.
+Chủ dự án không thể thay cho cả ba người tham gia. Không dùng persona giả, không trình bày câu diễn giải lại như trích dẫn nguyên văn và không xin chữ ký hồi tố cho nội dung người tham gia chưa đọc.
 
-## Participant criteria
+## Tiêu chí chọn người tham gia
 
-Recruit at least three people across the real workflow where possible:
+Nếu có thể, mời ít nhất ba người đại diện cho các bước khác nhau trong workflow:
 
-1. a submitter who prepares reimbursement claims;
-2. an accounting or administrative reviewer who checks receipts;
-3. a manager or budget owner who decides exceptions.
+1. người nộp hồ sơ hoàn ứng;
+2. nhân sự kế toán hoặc hành chính kiểm chứng từ;
+3. quản lý hoặc người giữ ngân sách quyết định ngoại lệ.
 
-If two participants share the same role, document why the sample still represents meaningful operational viewpoints. Do not recruit someone whose only exposure is watching the pitch.
+Nếu hai người có cùng vai trò, ghi rõ vì sao mẫu vẫn phản ánh được góc nhìn vận hành có ý nghĩa. Không tính người chỉ xem buổi pitching mà chưa tự thao tác sản phẩm.
 
-## Data and privacy
+## Dữ liệu và quyền riêng tư
 
-- Use synthetic receipts and synthetic employee names during the session.
-- Do not record API keys, billing dashboards, user secrets, real databases, or private provider logs.
-- Ask permission separately for screen/audio recording and for publishing the participant's name, role, and quotation.
-- Store signed forms in the private Team Drive. Commit only the blank protocol/template and an anonymized aggregate if consent does not permit publication.
-- Stop the session if the participant reveals third-party personal or organizational data.
+- Dùng hóa đơn tổng hợp và tên nhân viên giả trong phiên test.
+- Không ghi hình API key, billing dashboard, user secret, database thật hoặc log provider riêng tư.
+- Xin phép riêng cho việc ghi màn hình/âm thanh và cho việc công bố tên, vai trò, trích dẫn.
+- Lưu form đã ký trong Team Drive riêng tư. Chỉ commit template trống và bản tổng hợp ẩn danh nếu consent không cho phép công bố danh tính.
+- Dừng phiên nếu người tham gia vô tình hiển thị dữ liệu cá nhân hoặc dữ liệu tổ chức của bên thứ ba.
 
-## Session plan for each participant
+## Kịch bản cho mỗi người tham gia
 
-Target duration: 20 to 25 minutes.
+Thời lượng mục tiêu: 20 đến 25 phút.
 
-| Phase | Time | Participant task | Moderator evidence |
+| Giai đoạn | Thời gian | Tác vụ của người tham gia | Evidence người điều phối ghi nhận |
 |---|---:|---|---|
-| Introduction and consent | 3 min | Read purpose, data handling, and voluntary participation statement | Signed consent and recording choice |
-| Routine case | 4 min | Upload a clear synthetic receipt, enter the claim, locate the result | Task success, time, hesitation, help needed |
-| Exception case | 5 min | Inspect an `ESCALATE_*` result and explain the question in their own words | Comprehension, evidence used, missing context |
-| Human workflow | 5 min | Forward the case, answer Yes or No as manager, inspect Audit, then Undo | Outcome correctness and audit comprehension |
-| Open feedback | 5 min | Identify the most useful part, the most confusing part, and one negative effect | Participant-written or confirmed verbatim quote |
-| Closing | 3 min | Rank change requests and confirm what may be published | Priority and publication consent |
+| Giới thiệu và consent | 3 phút | Đọc mục đích, cách xử lý dữ liệu và nguyên tắc tự nguyện | Consent đã ký và lựa chọn ghi hình |
+| Ca thường quy | 4 phút | Upload receipt tổng hợp rõ, nhập claim và tìm kết quả | Hoàn tất hay không, thời gian, do dự, mức trợ giúp |
+| Ca ngoại lệ | 5 phút | Xem một kết quả `ESCALATE_*` và giải thích câu hỏi bằng lời của mình | Mức hiểu, evidence đã dùng, ngữ cảnh còn thiếu |
+| Human workflow | 5 phút | Chuyển tiếp, trả lời Yes/No như quản lý, xem Audit rồi Undo | Kết quả đúng và mức hiểu audit |
+| Phản hồi mở | 5 phút | Nêu phần hữu ích nhất, khó hiểu nhất và một tác động tiêu cực | Câu nguyên văn do người tham gia viết hoặc xác nhận |
+| Kết thúc | 3 phút | Xếp ưu tiên thay đổi và xác nhận phạm vi được công bố | Ưu tiên và consent công bố |
 
-Do not coach through the interface unless the participant is blocked. Record the block before giving help.
+Không hướng dẫn thao tác trừ khi người tham gia bị chặn. Ghi nhận điểm bị chặn trước khi hỗ trợ.
 
-## Required measures
+## Chỉ số bắt buộc
 
-For every task, record:
+Với mỗi tác vụ, ghi:
 
-- completion success without help, with help, or not completed;
-- start and finish time;
-- number of wrong clicks or navigation reversals;
-- whether the participant understood who made the decision: model, policy, submitter, or manager;
-- whether the escalation question was actionable without reopening the source receipt;
-- confidence score from 1 to 5 and the reason for that score.
+- hoàn tất không cần trợ giúp, có trợ giúp hoặc không hoàn tất;
+- thời gian bắt đầu và kết thúc;
+- số click sai hoặc lần quay lại điều hướng;
+- người tham gia có hiểu ai ra quyết định hay không: model, policy, nhân viên hoặc quản lý;
+- câu hỏi escalation có đủ để hành động mà không mở lại hóa đơn hay không;
+- điểm tự tin từ 1 đến 5 và lý do.
 
-For the complete session, record one positive observation and one negative impact. Valid negative impacts include AI wait time, review work arriving in bursts, a new confirmation step, automation bias, reduced direct communication, or additional training burden. “No negative impact” does not satisfy the track evidence requirement.
+Mỗi phiên phải có một quan sát tích cực và một tác động tiêu cực. Tác động tiêu cực hợp lệ có thể là thời gian chờ AI, công việc review dồn theo đợt, thêm bước xác nhận, automation bias, giảm trao đổi trực tiếp hoặc tăng nhu cầu đào tạo. Câu “không có tác động tiêu cực” không đáp ứng yêu cầu evidence của track.
 
-## Verbatim feedback rule
+## Quy tắc feedback nguyên văn
 
-The participant must write the quotation themselves or review the exact sentence and mark it confirmed. Keep Vietnamese wording as given, including informal language. A translated English version may be added beneath it but must be labeled as a translation.
+Người tham gia phải tự viết câu trích dẫn hoặc đọc chính xác câu đó và đánh dấu đã xác nhận. Giữ nguyên cách nói tiếng Việt, kể cả cách diễn đạt đời thường. Có thể thêm bản dịch tiếng Anh bên dưới nhưng phải ghi rõ là bản dịch.
 
-Use this statement before confirmation:
+Dùng câu xác nhận sau:
 
-> I confirm that the quotation below reflects my own feedback after using AURA in this session. I understand where it will be shared and may withdraw permission before the submission deadline.
+> Tôi xác nhận câu trích dẫn bên dưới phản ánh đúng phản hồi của tôi sau khi sử dụng AURA trong phiên này. Tôi hiểu nội dung sẽ được chia sẻ ở đâu và có thể rút lại quyền cho phép trước hạn nộp bài.
 
-## Turning feedback into one traceable change
+## Chuyển feedback thành một thay đổi truy vết được
 
-After all three sessions:
+Sau ba phiên:
 
-1. group observations by workflow step;
-2. select one change supported by at least one direct observation and safe before freeze;
-3. write an acceptance criterion before implementation;
-4. preserve before evidence;
-5. implement and test without altering ground truth or model-evaluation data;
-6. record the commit SHA and after evidence;
-7. ask the originating participant to review the change when practical.
+1. nhóm quan sát theo từng bước workflow;
+2. chọn một thay đổi được ít nhất một quan sát trực tiếp hỗ trợ và an toàn trước khi freeze;
+3. viết acceptance criterion trước khi triển khai;
+4. giữ evidence trước thay đổi;
+5. triển khai và test mà không sửa ground truth hoặc dữ liệu đánh giá model;
+6. ghi commit SHA và evidence sau thay đổi;
+7. nhờ người đã nêu vấn đề xem lại thay đổi nếu khả thi.
 
-Do not claim that the existing auto-scroll or evidence-overlay prototype came from these sessions unless a dated participant record actually supports that causal statement.
+Không nói auto-scroll hoặc evidence-overlay prototype hiện tại xuất phát từ user study trừ khi có record người tham gia kèm ngày chứng minh quan hệ nhân quả đó.
 
-## Private evidence package
+## Cấu trúc gói evidence riêng tư
 
 ```text
 USER_STUDY_EVIDENCE/
@@ -92,20 +92,20 @@ USER_STUDY_EVIDENCE/
     manifest.sha256
 ```
 
-Each participant folder should contain the signed form, task timing sheet, confirmed quotation, observation notes, and optional consented recording. Keep recordings private unless the participant explicitly permits wider sharing.
+Mỗi thư mục người tham gia cần có form đã ký, bảng thời gian tác vụ, câu trích dẫn đã xác nhận, ghi chú quan sát và bản ghi hình nếu consent cho phép. Giữ recording ở chế độ riêng tư trừ khi người tham gia cho phép chia sẻ rộng hơn.
 
-## Aggregate report
+## Báo cáo tổng hợp
 
-The public report should state the sample size and roles, not present the sample as statistically representative. Report median task time only if all three sessions measured the same task. Include all failures, assistance, and negative feedback. Distinguish observed behavior from the moderator's interpretation.
+Báo cáo công khai phải nêu quy mô mẫu và vai trò, không trình bày mẫu nhỏ như đại diện thống kê. Chỉ báo cáo median task time khi cả ba phiên đo cùng một tác vụ. Ghi cả thất bại, trợ giúp và phản hồi tiêu cực. Tách quan sát trực tiếp khỏi diễn giải của người điều phối.
 
-## Final completion checklist
+## Checklist hoàn tất
 
-- [ ] Three eligible participants with real identities and roles.
-- [ ] Written consent and publication scope for each participant.
-- [ ] Same core task script and synthetic data for all sessions.
-- [ ] Task success, timing, help, comprehension, and confidence recorded.
-- [ ] One confirmed verbatim quote from each participant.
-- [ ] At least one concrete negative effect documented.
-- [ ] One change traced from feedback to acceptance criterion, commit, and before/after evidence.
-- [ ] Private evidence manifest generated.
-- [ ] Public proposal, Slide 3, Slide 5, Build Log, README, and pitch synchronized only after the evidence exists.
+- [ ] Ba người tham gia đủ điều kiện, có danh tính và vai trò thật.
+- [ ] Consent bằng văn bản và phạm vi công bố của từng người.
+- [ ] Cùng một core task script và dữ liệu tổng hợp cho cả ba phiên.
+- [ ] Ghi task success, thời gian, trợ giúp, mức hiểu và độ tự tin.
+- [ ] Một trích dẫn nguyên văn được xác nhận từ mỗi người.
+- [ ] Ít nhất một tác động tiêu cực cụ thể.
+- [ ] Một thay đổi truy vết từ feedback tới acceptance criterion, commit và evidence trước-sau.
+- [ ] Manifest toàn vẹn cho gói evidence riêng tư.
+- [ ] Chỉ đồng bộ proposal, Slide 3, Slide 5, Build Log, README và pitch sau khi evidence thực sự tồn tại.

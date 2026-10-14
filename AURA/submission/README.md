@@ -1,20 +1,20 @@
-# AURA final submission package
+# Gói nộp bài chính thức AURA
 
-This directory contains one current version of each logical deliverable. Stable filenames intentionally replace dated duplicates so README links and Drive copies do not drift.
+Thư mục này chỉ giữ một phiên bản hiện hành cho mỗi hạng mục. Tên file ổn định thay cho nhiều bản theo ngày để liên kết trong README và bản sao trên Drive không bị lệch nhau.
 
-| Logical deliverable | Final files |
+| Hạng mục | File chốt |
 |---|---|
-| Five-slide deck | `AURA_5_SLIDES_FINAL.pptx` |
-| Vietnamese proposal | `AURA_PROPOSAL_VI.md`, `.docx`, `.pdf` |
-| English proposal | `AURA_PROPOSAL_EN.md`, `.docx`, `.pdf` |
-| Project-wide one-page Build Log | `AURA_BUILD_LOG.md`, `.docx`, `.pdf` |
-| Submission links | `AURA_SUBMISSION_LINKS.md`, `.docx`, `.pdf` |
-| Official demo video | Stored in Team Drive; URL is recorded in `AURA_SUBMISSION_LINKS.*` |
-| User-feedback form | `AURA_USER_FEEDBACK_FORM.docx`, `.pdf` |
-| Workflow specification | `AURA_WORKFLOW_SPEC.md` |
+| Slide 5 trang | `AURA_5_SLIDES_FINAL.pptx` |
+| Proposal tiếng Việt | `AURA_PROPOSAL_VI.md`, `.docx`, `.pdf` |
+| Proposal tiếng Anh | `AURA_PROPOSAL_EN.md`, `.docx`, `.pdf` |
+| Build Log một trang của toàn dự án | `AURA_BUILD_LOG.md`, `.docx`, `.pdf` |
+| Danh sách liên kết nộp bài | `AURA_SUBMISSION_LINKS.md`, `.docx`, `.pdf` |
+| Video demo chính thức | Lưu trên Team Drive; URL nằm trong `AURA_SUBMISSION_LINKS.*` |
+| Phiếu phản hồi người dùng | `AURA_USER_FEEDBACK_FORM.docx`, `.pdf` |
+| Đặc tả workflow | `AURA_WORKFLOW_SPEC.md` |
 
-The three Build Log files are formats of the same project-wide document, not separate sprint logs. Historical versions remain in Git history rather than beside the final deliverables.
+Ba file Build Log là ba định dạng của cùng một tài liệu toàn dự án, không phải các sprint log riêng. Phiên bản lịch sử được giữ trong Git history thay vì đặt cạnh bản chốt.
 
-Personal study notes, the recording script, pitch script and judge Q&A are intentionally kept outside this submission package in `../phanbien/`.
+Tài liệu ôn tập cá nhân, kịch bản quay video, kịch bản pitching và Q&A của BGK được giữ riêng tại `../phanbien/`, không nằm trong gói submission.
 
-The official video file is stored in Team Drive, not Git. User-study evidence is complete only after three consented participants, verbatim confirmed feedback, one traceable product change, and one documented negative effect. Never add API keys, real receipts, raw provider payloads, databases, billing screenshots, or secrets to this folder.
+Video chính thức nằm trên Team Drive, không đưa vào Git. User evidence chỉ hoàn tất sau khi có ba người tham gia đã đồng ý, feedback nguyên văn được xác nhận, một thay đổi sản phẩm truy vết được và một tác động tiêu cực được ghi nhận. Không đưa API key, hóa đơn thật, raw provider payload, database, ảnh billing hoặc secret vào thư mục này.

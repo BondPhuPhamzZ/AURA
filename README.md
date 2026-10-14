@@ -1,81 +1,81 @@
-# AURA - Automated Underwriting & Reimbursement AI
+# AURA - AI thẩm định hoàn ứng có kiểm soát
 
-AURA is an ASP.NET Core application for first-line employee reimbursement review. A vision model reads receipt facts, but a deterministic C# policy engine makes the final decision: automatically approve clear routine cases or escalate uncertain, out-of-policy, and over-authority cases to a human reviewer.
+AURA là ứng dụng ASP.NET Core hỗ trợ bước thẩm định đầu tiên trong quy trình hoàn ứng của nhân viên. Vision model đọc dữ kiện trên hóa đơn, nhưng policy engine C# tất định mới quyết định hướng xử lý: tự động đi tiếp với ca thường quy rõ ràng hoặc chuyển các ca bất định, ngoài chính sách và vượt thẩm quyền cho người duyệt.
 
-## Submission
+## Hồ sơ nộp bài
 
-| Item | Link |
+| Hạng mục | Liên kết |
 |---|---|
-| Live application | [AURA on SmarterASP.NET](https://bondphupham-001-site1.ltempurl.com/) |
-| Team submission folder and evaluator-only key | [Shared submission folder](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
-| Final presentation | [AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES_FINAL.pptx) |
-| Proposal Vietnamese | [AURA Proposal VI](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_VI.pdf) |
-| Proposal English | [AURA Proposal EN](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_EN.pdf) |
-| Build log | [AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.pdf) |
-| Official demo video | [AURA demo under 3 minutes](https://drive.google.com/file/d/14Co4QjnoDeYPTORXcxi1u-r1MOuX2KM0/view?usp=sharing) |
+| Ứng dụng live | [AURA trên SmarterASP.NET](https://bondphupham-001-site1.ltempurl.com/) |
+| Thư mục nộp bài của đội và evaluation key chỉ dành cho BGK | [Team Drive](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
+| Slide chung kết | [AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES_FINAL.pptx) |
+| Proposal tiếng Việt | [AURA Proposal VI](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_VI.pdf) |
+| Proposal tiếng Anh | [AURA Proposal EN](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_EN.pdf) |
+| Build Log | [AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.pdf) |
+| Video demo chính thức | [Video AURA dưới 3 phút](https://drive.google.com/file/d/14Co4QjnoDeYPTORXcxi1u-r1MOuX2KM0/view?usp=sharing) |
 
-If an evaluator key is required, share it separately from public documents. Do not commit it, paste it into source/config files, or show it in screenshots and recordings. Store it locally with .NET User Secrets and revoke/rotate it after evaluation.
+Nếu BGK cần evaluation key, hãy chia sẻ bằng kênh riêng. Không commit key, không ghi vào source/config và không để xuất hiện trong ảnh hoặc video. Lưu key bằng .NET User Secrets và thu hồi hoặc xoay key sau đánh giá.
 
-## Core workflow
+## Luồng xử lý cốt lõi
 
 ```text
-Upload JPG/PNG receipt
--> save request and return HTTP 202
--> database-backed worker calls Qwen Vision
--> semantic validation and at most one repair
--> deterministic C# policy decision
--> AUTO_APPROVE or ESCALATE_FACT/POLICY/AUTHORITY/SYSTEM_ERROR
--> employee forwards exception
--> manager approves, rejects, or undoes
--> audit trail records the lifecycle
+Upload hóa đơn JPG/PNG
+-> lưu hồ sơ và trả HTTP 202
+-> worker dùng database gọi Qwen Vision
+-> semantic validation và tối đa một lần repair
+-> policy C# tất định quyết định
+-> AUTO_APPROVE hoặc ESCALATE_FACT/POLICY/AUTHORITY/SYSTEM_ERROR
+-> nhân viên chuyển tiếp ngoại lệ
+-> quản lý duyệt, từ chối hoặc hoàn tác
+-> audit trail ghi lại toàn bộ vòng đời
 ```
 
-Key capabilities:
+Khả năng chính:
 
-- OpenRouter/Qwen3.8 Flash on Alibaba, with reasoning disabled for deterministic extraction, is the default receipt reader; Ollama/Qwen3-VL-4B is an optional local contingency.
-- SQL-backed processing survives refresh/restart and avoids blocking the upload request.
-- The model extracts structured facts; it never has final approval authority.
-- Missing, contradictory, or unreadable evidence fails safe to human review.
-- Verify Harness runs the official five cases in one action: three approvals and two escalations.
-- Submitter identity, manager actions, provider metadata, reasons, and undo are auditable.
+- OpenRouter/Qwen3.8 Flash qua Alibaba, với reasoning tắt để extraction ổn định, là bộ đọc hóa đơn mặc định; Ollama/Qwen3-VL-4B là phương án local tùy chọn.
+- Xử lý nền dựa trên SQL vẫn tiếp tục sau refresh hoặc restart và không giữ request upload trong lúc chờ AI.
+- Model chỉ trích xuất facts có cấu trúc; model không có quyền phê duyệt cuối.
+- Evidence thiếu, mâu thuẫn hoặc không đọc được luôn fail-safe về người duyệt.
+- Verify Harness chạy năm ca chính thức trong một thao tác: ba ca duyệt và hai ca chuyển tiếp.
+- Danh tính người gửi, thao tác quản lý, provider metadata, lý do và Undo đều có thể audit.
 
-## Verified baseline
+## Baseline đã xác minh
 
-Last evidence update: 14 October 2026. Live health and the Qwen3.8 Flash Verify gate remain the frozen demo baseline; a separate prospective 10-receipt mini-holdout was completed once without reruns.
+Cập nhật evidence gần nhất: 14/10/2026. Health live và gate Verify Qwen3.8 Flash là baseline demo đã đóng băng; mini-holdout prospective 10 hóa đơn là một lần chạy riêng, không rerun.
 
-- Build: **0 warnings, 0 errors**.
-- Automated tests after the reviewer-UX/evidence-overlay prototype update: **163/163 passed**; they do not call the paid AI API.
-- Official Verify Harness: **5/5** with the expected 3 approve / 2 escalate split.
-- Historical locked synthetic judge set: OpenRouter **15/15 decisions**, Ollama **14/15**. The post-contract OpenRouter v2 run reached **14/15** and still missed TK-12; the physical-ink-loss v3.1 safety set reached **13/15** with zero missed escalations and zero system errors.
-- The 12 October Qwen3.8 Flash candidate completed the same 15 locked post-holdout real receipts at **15/15**, with zero missed/over/system errors and 30/30 critical fields. Five concurrent uploads completed with 41.079-second P95 at AI concurrency 1. This is post-adjustment regression evidence, not a new blind holdout or production SLA.
-- A new owner-supplied, redacted and pre-locked 10-receipt mini-holdout completed **8/10 exact**, with **0 missed escalations, 2 fail-safe over-escalations, 0 system/provider/429 errors observed, and 28/30 core date/identifier/total fields**. The first five accepted requests were terminal by 64.763 seconds and all ten by 108.803 seconds at AI concurrency 1. It was run once with no replay; disclosed redaction interactions prevent treating it as production accuracy.
-- A separately locked two-receipt prospective addendum completed **1/2 exact**, with **0 missed escalations, 1 fail-safe over-escalation and 0 system/provider/429 errors**. Three O'Clock's core facts were correct, but a free-text warning about the privacy blackout triggered FACT review. The descriptive combined view is 9/12; it is not a new twelve-case holdout and neither package may be reused for a blind claim.
-- A disclosed post-holdout regression then sent the same 12 **source bytes directly**, without snapshot/resize/transform: **10/12 exact, 0 missed, 2 over, 0 system/provider/429 errors, 35/36 critical fields**. Five different concurrent uploads completed 5/5 with E2E P95 **93.684 seconds**. This wave tests queue integrity, not the Verify latency requirement.
-- A later sequential repeat on the same known bytes completed **11/12 exact**, with **0 missed, 1 over, 0 system/provider/429 errors and E2E P95 32.903 seconds**. GS25_2 returned to AUTO while FAHASA remained fail-safe; this is stability evidence, not a new holdout or an independent accuracy result.
-- After publish/recycle, the live Qwen3.8 Flash Verify Harness completed **5/5** in **65.004 seconds** with no system/provider error. Five simultaneous clients produced one HTTP 200 and four HTTP 409 responses, so duplicate clicks did not create duplicate AI batches on the single-process demo deployment.
-- SmartASP post-holdout gate: home and health 5/5, DB/storage/migration, upload/security-negative checks, browser mobile UI and Verify OpenRouter 5/5 passed. Human workflow also passed 2/2 with synthetic fixtures: policy reject/undo and fact approve/undo.
-- Live concurrency: **2/2 + 5/5 completed**; end-to-end P95 **20.941 / 23.290 seconds**. The accepted timer includes antiforgery GET/setup/network, so it is not a pure POST SLO.
-- The one-time locked real holdout produced **10/15 raw decision matches** (one missed escalation, three over-escalations, zero system errors). A post-hoc review found one locked label error, giving an adjudicated analysis of 11/15 without changing raw evidence. The 28/30 field score measured only currency and total, not full extraction accuracy.
-- A later post-holdout regression on the same 15 receipts reached **11/15**, with zero missed escalations, four over-escalations and zero system errors. It is regression evidence, not a new blind holdout.
-- Holdout findings led to evidence contract v2: printed-final-total provenance, raw-date verification, second-level money/identifier guards, time normalization and expanded personal-item taxonomy. Contract v2 is deployed on `1f4b3c9`.
-- The Audit timezone defect found on the earlier deployment is fixed and live-verified: new and historical events render in Vietnam time while UTC remains the database source of truth.
-- Isolated OpenRouter-to-Ollama fallback passed 1/1, but took **84.425 seconds**. Fallback therefore remains disabled in the official demo baseline.
+- Build: **0 warning, 0 error**.
+- Test tự động sau cập nhật UX reviewer và prototype evidence overlay: **163/163 pass**; test offline không gọi AI API trả phí.
+- Verify Harness chính thức: **5/5** với đúng 3 approve và 2 escalate.
+- Synthetic judge set lịch sử đã khóa: OpenRouter **15/15 quyết định**, Ollama **14/15**. OpenRouter v2 hậu contract đạt **14/15** và còn sai TK-12; safety set physical-ink-loss v3.1 đạt **13/15**, không có missed escalation hoặc system error.
+- Candidate Qwen3.8 Flash ngày 12/10 hoàn tất lại 15 receipt post-holdout đã biết với **15/15**, 0 missed/over/system error và 30/30 critical field. Năm upload đồng thời có P95 41,079 giây ở AI concurrency 1. Đây là post-adjustment regression, không phải blind holdout mới hoặc production SLA.
+- Mini-holdout 10 receipt mới do chủ dự án cung cấp, redaction và khóa trước đạt **8/10 exact**, **0 missed, 2 fail-safe over, 0 lỗi system/provider/429 và 28/30 field date/identifier/total cốt lõi**. Năm request đầu về terminal trong 64,763 giây và cả mười trong 108,803 giây ở AI concurrency 1. Bộ này chỉ chạy một lần; tương tác redaction được công bố nên không được gọi là production accuracy.
+- Addendum prospective riêng hai receipt đạt **1/2 exact**, **0 missed, 1 fail-safe over và 0 lỗi system/provider/429**. Core facts của Three O'Clock đúng, nhưng free-text warning về vùng che privacy kích hoạt FACT review. Góc nhìn gộp mô tả là 9/12; đây không phải holdout 12 ca mới và không bộ nào được tái sử dụng cho claim blind.
+- Post-holdout regression sau đó gửi cùng 12 **source bytes nguyên bản**, không snapshot/resize/transform: **10/12 exact, 0 missed, 2 over, 0 lỗi system/provider/429, 35/36 critical field**. Năm upload khác nhau đồng thời hoàn tất 5/5 với E2E P95 **93,684 giây**. Lần này chỉ kiểm queue integrity, không phải yêu cầu latency Verify.
+- Lần lặp tuần tự sau trên cùng known bytes đạt **11/12 exact**, **0 missed, 1 over, 0 lỗi system/provider/429 và E2E P95 32,903 giây**. GS25_2 trở lại AUTO còn FAHASA vẫn fail-safe. Đây là stability evidence, không phải holdout mới hay phép đo accuracy độc lập.
+- Sau publish/recycle, Verify Harness Qwen3.8 Flash trên live đạt **5/5 trong 65,004 giây**, không có system/provider error. Năm client bấm đồng thời tạo một HTTP 200 và bốn HTTP 409, nên click trùng không tạo thêm AI batch trên deployment một process.
+- Gate SmarterASP hậu holdout: home và health 5/5, DB/storage/migration, upload/security-negative, mobile UI và Verify OpenRouter 5/5 đều pass. Human workflow cũng pass 2/2 bằng synthetic fixture: policy reject/undo và fact approve/undo.
+- Concurrency live: **2/2 + 5/5 hoàn tất**; E2E P95 **20,941 / 23,290 giây**. Timer bao gồm antiforgery GET/setup/network nên không phải POST SLO thuần.
+- Real holdout khóa một lần trước đó đạt **10/15 raw decision match** với một missed escalation, ba over-escalation và 0 system error. Post-hoc review phát hiện một locked label sai, cho phân tích adjudicated 11/15 mà không đổi raw evidence. Điểm 28/30 field chỉ đo currency và total, không phải full extraction accuracy.
+- Post-holdout regression sau đó trên cùng 15 receipt đạt **11/15**, 0 missed escalation, bốn over-escalation và 0 system error. Đây là regression evidence, không phải blind holdout mới.
+- Kết quả holdout dẫn tới evidence contract v2: provenance cho printed final total, raw-date verification, guard tiền/mã định danh cấp hai, chuẩn hóa thời gian và taxonomy personal item mở rộng. Contract v2 được deploy tại `1f4b3c9`.
+- Lỗi timezone Audit ở deployment cũ đã được sửa và xác minh live: event mới và lịch sử hiển thị theo giờ Việt Nam trong khi database tiếp tục dùng UTC làm nguồn sự thật.
+- Fallback cô lập OpenRouter sang Ollama pass 1/1 nhưng mất **84,425 giây**. Vì vậy fallback vẫn tắt trong baseline demo chính thức.
 
-These results support a supervised demo, not production accuracy. Both real-receipt sets are now known and cannot be reused for a new holdout claim. Accuracy claims and unattended rollout remain NO-GO. Real-phone 4G/5G passed; the remaining evidence gates are three supervised user sessions and timed rehearsals on the frozen commit.
+Các kết quả trên chỉ hỗ trợ demo có giám sát, không hỗ trợ claim production accuracy. Hai tập receipt thật đã trở thành known data và không thể tái sử dụng cho một holdout mới. Accuracy claim và rollout không giám sát vẫn NO-GO. Test 4G/5G trên điện thoại thật đã pass; các gate còn lại là ba phiên người dùng có giám sát và rehearsal có bấm giờ trên commit đóng băng.
 
-## Run locally
+## Chạy tại máy local
 
-### Requirements
+### Yêu cầu
 
 - Windows 10/11.
 - .NET 8 SDK.
 - SQL Server Express LocalDB (`MSSQLLocalDB`).
 - PowerShell.
-- An evaluator OpenRouter key from the shared submission folder.
+- Evaluation key OpenRouter lấy từ thư mục nộp bài được chia sẻ riêng.
 
-Ollama is not required for the default setup.
+Ollama không bắt buộc cho cấu hình mặc định.
 
-### 1. Clone and restore tools
+### 1. Clone và restore tool
 
 ```powershell
 git clone https://github.com/BondPhuPhamzZ/AURA.git
@@ -85,9 +85,9 @@ dotnet tool restore
 dotnet restore
 ```
 
-### 2. Configure local secrets
+### 2. Cấu hình secret local
 
-Replace `OPENROUTER_EVALUATION_KEY` with the evaluator key. User Secrets stores it outside Git.
+Thay `OPENROUTER_EVALUATION_KEY` bằng evaluation key. User Secrets lưu giá trị này ngoài Git.
 
 ```powershell
 dotnet user-secrets set "OpenRouter:ApiKey" "OPENROUTER_EVALUATION_KEY"
@@ -98,42 +98,42 @@ dotnet user-secrets set "Vision:FallbackEnabled" "false"
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\mssqllocaldb;Database=AuraDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0"
 ```
 
-Do not run `dotnet user-secrets list` while sharing or recording the screen because it may print the key.
+Không chạy `dotnet user-secrets list` khi chia sẻ hoặc quay màn hình vì lệnh có thể in key.
 
-### 3. Start LocalDB and update the database
+### 3. Khởi động LocalDB và cập nhật database
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb
 dotnet ef database update
 ```
 
-The pre-app check must report `READY: 0 failures`. A warning caused by `-SkipHttp` is expected. A LocalDB registry-inspection warning is diagnostic only; do not delete registry keys, the LocalDB instance, or MDF files to silence it.
+Pre-app check phải báo `READY: 0 failures`. Warning do chủ động dùng `-SkipHttp` là bình thường. Warning kiểm tra registry LocalDB chỉ mang tính chẩn đoán; không xóa registry key, LocalDB instance hoặc MDF chỉ để làm warning biến mất.
 
-### 4. Run AURA
+### 4. Chạy AURA
 
 ```powershell
 dotnet run
 ```
 
-Open `http://localhost:5000` or the listening URL printed by .NET.
+Mở `http://localhost:5000` hoặc URL mà .NET in ra.
 
-In a second PowerShell window, return to the same folder containing `AURA.csproj`, then verify the running app:
+Trong cửa sổ PowerShell thứ hai, trở lại thư mục có `AURA.csproj` rồi kiểm ứng dụng đang chạy:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb
 ```
 
-Expected: `READY: 0 failures`, health `status=ok`, database and storage available, no pending migration, provider `OpenRouter`, and `fallbackEnabled=false`.
+Kỳ vọng: `READY: 0 failures`, health `status=ok`, database và storage available, không có pending migration, provider `OpenRouter`, `fallbackEnabled=false`.
 
-### 5. Use the application
+### 5. Dùng ứng dụng
 
-1. Select **Chạy Verify Harness (90s)** to run the official five cases.
-2. Or upload one JPG/PNG receipt, enter the claimed amount, and select **AI tự động kiểm**.
-3. For an `ESCALATE_*` result, select **Chuyển tiếp**.
-4. In **Quản lý**, approve or reject the request.
-5. Open **Lịch sử hành vi** to inspect the audit trail or undo the latest manager action.
+1. Chọn **Chạy Verify Harness (90s)** để chạy năm ca chính thức.
+2. Hoặc upload một receipt JPG/PNG, nhập claimed amount và chọn **AI tự động kiểm**.
+3. Với kết quả `ESCALATE_*`, chọn **Chuyển tiếp**.
+4. Trong **Quản lý**, duyệt hoặc từ chối hồ sơ.
+5. Mở **Lịch sử hành vi** để xem audit trail hoặc Undo quyết định quản lý gần nhất.
 
-### 6. Run offline tests
+### 6. Chạy test offline
 
 ```powershell
 dotnet build AURA.csproj --no-restore
@@ -141,33 +141,33 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore
 dotnet ef migrations has-pending-model-changes --no-build
 ```
 
-Expected for the current candidate: build 0 warnings/errors, 163/163 tests passed, and no model change pending migration.
+Kỳ vọng cho candidate hiện hành: build 0 warning/error, 163/163 test pass và không có model change cần migration.
 
-Stop the app with `Ctrl+C`. No database reset or LocalDB deletion is required.
+Dừng app bằng `Ctrl+C`. Không cần reset database hoặc xóa LocalDB.
 
-## Important documents
+## Tài liệu quan trọng
 
-- [Submission package index](AURA/submission/README.md)
-- [Technical documentation index](AURA/docs/README.md)
-- [Judge local setup and troubleshooting](AURA/docs/JUDGE_LOCAL_SETUP.md)
-- [Architecture and integration](AURA/ARCHITECTURE_AND_INTEGRATION_REPORT.md)
-- [Business rules](AURA/BUSINESS_RULES.md)
-- [Workflow specification](AURA/submission/AURA_WORKFLOW_SPEC.md)
-- [Dataset and extended evaluation](AURA/docs/DATASET_EVALUATION_GUIDE.md)
-- [Current verified status](AURA/docs/CURRENT_PROJECT_STATUS.md)
-- [Consolidated evaluation evidence](AURA/docs/EVALUATION_EVIDENCE.md)
-- [Evidence localization and reviewer overlay plan](AURA/docs/EVIDENCE_LOCALIZATION_PLAN.md)
-- [User-study protocol and evidence requirements](AURA/docs/USER_STUDY_PROTOCOL.md)
-- [Submission checklist](AURA/docs/SUBMISSION_CHECKLIST.md)
-- [Optional local Ollama setup](AURA/docs/LOCAL_OLLAMA.md)
+- [Chỉ mục gói nộp bài](AURA/submission/README.md)
+- [Chỉ mục tài liệu kỹ thuật](AURA/docs/README.md)
+- [Hướng dẫn BGK chạy local và xử lý lỗi](AURA/docs/JUDGE_LOCAL_SETUP.md)
+- [Kiến trúc và tích hợp](AURA/ARCHITECTURE_AND_INTEGRATION_REPORT.md)
+- [Quy tắc nghiệp vụ](AURA/BUSINESS_RULES.md)
+- [Đặc tả workflow](AURA/submission/AURA_WORKFLOW_SPEC.md)
+- [Hướng dẫn dataset và đánh giá mở rộng](AURA/docs/DATASET_EVALUATION_GUIDE.md)
+- [Trạng thái đã xác minh hiện hành](AURA/docs/CURRENT_PROJECT_STATUS.md)
+- [Tổng hợp bằng chứng đánh giá](AURA/docs/EVALUATION_EVIDENCE.md)
+- [Kế hoạch khoanh vùng evidence](AURA/docs/EVIDENCE_LOCALIZATION_PLAN.md)
+- [Protocol đánh giá ba người dùng](AURA/docs/USER_STUDY_PROTOCOL.md)
+- [Checklist nộp bài](AURA/docs/SUBMISSION_CHECKLIST.md)
+- [Thiết lập Ollama local tùy chọn](AURA/docs/LOCAL_OLLAMA.md)
 
-## Current limitations
+## Giới hạn hiện tại
 
-- Supports one JPG/PNG receipt up to 5 MB; PDF and multi-page documents are not supported.
-- OpenRouter requires Internet and available provider credit.
-- Ollama fallback is opt-in and is not the official concurrent-capacity path.
-- Production deployment still requires authentication/RBAC, managed durable receipt storage, retention/privacy controls, backup/restore, monitoring, and malware scanning.
+- Mỗi lần nhận một receipt JPG/PNG tối đa 5 MB; chưa hỗ trợ PDF hoặc tài liệu nhiều trang.
+- OpenRouter cần Internet và provider credit khả dụng.
+- Ollama fallback là opt-in và không phải đường capacity chính thức cho concurrency.
+- Production vẫn cần authentication/RBAC, receipt storage quản lý tập trung, chính sách retention/privacy, backup/restore, monitoring và malware scanning.
 
-## Author
+## Tác giả
 
-**Pham Gia Phu** - The Deciders, VNG Track, MLAI Hackathon 2026.
+**Phạm Gia Phú** - The Deciders, VNG Track, MLAI Hackathon 2026.

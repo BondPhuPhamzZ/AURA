@@ -1,33 +1,33 @@
-# AURA final submission links
+# Liên kết nộp bài AURA
 
-## Project
+## Thông tin dự án
 
-- Project: AURA Automated Underwriting and Reimbursement AI
-- Team: The Deciders
+- Dự án: AURA Automated Underwriting and Reimbursement AI
+- Đội: The Deciders
 - Track: OrganizationAI
-- Challenge: Spec A The Escalation Referee
-- Author: Pham Gia Phu
+- Đề bài: Spec A The Escalation Referee
+- Tác giả: Phạm Gia Phú
 
-## Access
+## Truy cập
 
-- Live application: https://bondphupham-001-site1.ltempurl.com/
+- Ứng dụng live: https://bondphupham-001-site1.ltempurl.com/
 - Health endpoint: https://bondphupham-001-site1.ltempurl.com/healthz
-- Public repository: https://github.com/BondPhuPhamzZ/AURA
-- Frozen release ref: `aura-demo-day-2026-10-14` (tag is created from the final synchronized commit and pushed with the repository)
-- Official video: https://drive.google.com/file/d/14Co4QjnoDeYPTORXcxi1u-r1MOuX2KM0/view?usp=sharing
+- Repository công khai: https://github.com/BondPhuPhamzZ/AURA
+- Release đóng băng: `aura-demo-day-2026-10-14` (tag được tạo từ commit đã đồng bộ cuối cùng và push cùng repository)
+- Video chính thức: https://drive.google.com/file/d/14Co4QjnoDeYPTORXcxi1u-r1MOuX2KM0/view?usp=sharing
 
-## First action for judges
+## Thao tác đầu tiên dành cho BGK
 
-Open the live application, select **Chạy Verify Harness**, and wait for the table to complete three routine approvals and two escalations. Then open one escalated request, select **Chuyển tiếp**, answer it in **Quản lý**, and inspect **Lịch sử hành vi** and **Undo**.
+Mở ứng dụng live, chọn **Chạy Verify Harness** và chờ bảng hoàn tất ba ca duyệt thường quy cùng hai ca chuyển tiếp. Sau đó mở một hồ sơ cần chuyển tiếp, chọn **Chuyển tiếp**, xử lý tại tab **Quản lý**, rồi kiểm tra **Lịch sử hành vi** và **Undo**.
 
-## Current evidence boundary
+## Ranh giới của bằng chứng hiện tại
 
-- 163/163 refers to offline automated tests, not 163 receipts.
-- Live Verify completed 5/5 in 65.004 seconds.
-- The prospective ten-receipt mini-holdout completed 8/10 with zero missed escalations, two over-escalations, and no observed system, provider, or HTTP 429 errors.
-- The 11/12 sequential result is a stability repeat on known data, not a new holdout.
-- The candidate is a supervised MVP and does not support production accuracy or unattended rollout claims.
+- 163/163 là số test offline, không phải 163 hóa đơn.
+- Verify live hoàn tất 5/5 trong 65,004 giây.
+- Mini-holdout prospective 10 hóa đơn đạt 8/10, không có missed escalation, có hai over-escalation và không quan sát thấy lỗi system/provider/HTTP 429.
+- Kết quả tuần tự 11/12 là lần lặp ổn định trên known data, không phải holdout mới.
+- Candidate là MVP có giám sát, không hỗ trợ claim production accuracy hoặc triển khai không cần con người.
 
-## Data and secrets
+## Dữ liệu và bí mật
 
-Do not place API keys, user secrets, raw personal receipts, provider billing screenshots, private logs, or production connection strings in this Drive package. The evaluator key, if required, must be shared separately and revoked after evaluation.
+Không đưa API key, user secrets, hóa đơn cá nhân gốc, ảnh billing provider, log riêng tư hoặc connection string production vào gói Drive này. Nếu BGK cần evaluation key, hãy chia sẻ bằng kênh riêng và thu hồi sau đánh giá.

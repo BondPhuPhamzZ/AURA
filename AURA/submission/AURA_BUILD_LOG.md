@@ -1,43 +1,43 @@
-# AURA Project Build Log
+# Nhật ký xây dựng dự án AURA
 
 **Track A The Escalation Referee | Bản chốt 14/10/2026 | Phạm Gia Phú**
 
-AURA is a supervised reimbursement-review assistant. A vision model extracts structured receipt facts, deterministic C# policy decides the route, and people remain responsible for exceptions. The system covers upload, durable background processing, review, Audit, and Undo.
+AURA là trợ lý thẩm định tuyến đầu có con người giám sát cho quy trình hoàn ứng. Vision model trích xuất dữ kiện có cấu trúc từ hóa đơn, policy C# tất định quyết định hướng xử lý, còn con người chịu trách nhiệm với ngoại lệ. Hệ thống bao phủ upload, xử lý nền bền vững, duyệt thủ công, Audit và Undo.
 
-## How I used AI
+## Tôi đã dùng AI như thế nào
 
-Qwen3.8 Flash through OpenRouter and Alibaba, with reasoning disabled, reads one JPG or PNG and returns a strict JSON contract. Codex helped trace code paths, design tests, review refactors, and synchronize documentation. I accepted changes only after build, tests, and evidence review. The model never receives approval authority.
+Qwen3.8 Flash qua OpenRouter và Alibaba, với reasoning tắt, đọc một ảnh JPG/PNG và trả về hợp đồng JSON nghiêm ngặt. Codex hỗ trợ truy luồng code, thiết kế test, rà soát refactor và đồng bộ tài liệu. Tôi chỉ giữ thay đổi sau khi build, chạy test và kiểm tra evidence. Model không có quyền phê duyệt.
 
-## Where AI helped
+## AI đã giúp ở đâu
 
-- Fast code navigation exposed the difference between an in-memory signal and the durable SQL job queue.
-- Generated test cases expanded coverage for field roles, arithmetic, date evidence, fallback, concurrency, Audit, and UI contracts.
-- Vision extraction handled varied receipt layouts while policy remained replaceable and testable.
+- Truy code nhanh đã làm rõ sự khác nhau giữa tín hiệu trong bộ nhớ và hàng đợi công việc bền vững trong SQL.
+- Các test được bổ sung bao phủ vai trò trường dữ liệu, số học, evidence ngày tháng, fallback, concurrency, Audit và hợp đồng UI.
+- Vision extraction xử lý nhiều bố cục hóa đơn trong khi policy vẫn có thể thay thế và kiểm thử độc lập.
 
-## Where AI cost time or money
+## AI đã làm tốn thời gian hoặc chi phí ở đâu
 
-Provider names and model slugs changed, and earlier routes produced 404 or intermittent 429 errors. Schema-valid outputs also contained semantic errors such as the wrong money unit or identifier role. A reasoning-enabled request used its completion budget without returning usable JSON. These failures required provider diagnostics, a strict schema, semantic validation, a single repair attempt, cooldown, and explicit claim boundaries. Paid API reruns were avoided once data became known.
+Tên provider và model slug từng thay đổi; một số route cũ trả 404 hoặc lỗi 429 không ổn định. Output đúng schema vẫn có thể sai nghĩa, chẳng hạn nhầm đơn vị tiền hoặc vai trò mã định danh. Một request bật reasoning đã dùng hết completion budget nhưng không trả JSON dùng được. Các lỗi này buộc dự án phải có chẩn đoán provider, schema nghiêm ngặt, semantic validation, đúng một lần repair, cooldown và ranh giới claim rõ ràng. Khi dữ liệu đã trở thành known data, dự án không chạy lại API trả phí để săn số đẹp.
 
-## What changed after failure
+## Điều gì thay đổi sau thất bại
 
-The first real-receipt holdout exposed a missed escalation even though the response parsed. I replaced “valid JSON is enough” with evidence contract v2: identifiers have distinct roles, dates preserve raw evidence, discounts are explicit, and an amount can auto-approve only when a printed final-total line corroborates it. Unresolved uncertainty becomes FACT review. The policy priority remains `FACT → POLICY → AUTHORITY`.
+Holdout hóa đơn thật đầu tiên phát hiện một missed escalation dù response parse thành công. Tôi thay giả định “JSON hợp lệ là đủ” bằng evidence contract v2: mỗi mã định danh có vai trò riêng, ngày tháng giữ chuỗi gốc, khoản giảm giá có trường riêng và số tiền chỉ được tự duyệt khi có dòng tổng cuối in rõ để đối chứng. Bất định chưa giải quyết được chuyển sang FACT review. Thứ tự policy vẫn là `FACT -> POLICY -> AUTHORITY`.
 
-## Verified evidence
+## Bằng chứng đã xác minh
 
-| Gate | Current result |
+| Gate | Kết quả hiện tại |
 |---|---:|
-| Release build | 0 warnings, 0 errors |
-| Offline tests | 163/163 passed |
-| Live Verify | 5/5 in 65.004 seconds |
-| Prospective mini-holdout | 8/10, 0 missed, 2 over, 0 system/provider/429 errors |
-| Sequential known-data repeat | 11/12, 0 missed, 1 over; stability evidence only |
+| Release build | 0 warning, 0 error |
+| Test offline | 163/163 pass |
+| Verify live | 5/5 trong 65,004 giây |
+| Mini-holdout prospective | 8/10, 0 missed, 2 over, 0 lỗi system/provider/429 |
+| Lặp tuần tự trên known data | 11/12, 0 missed, 1 over; chỉ là evidence ổn định |
 
-The prospective sample is small and redacted. It supports a supervised demo, not production accuracy. Three real-user sessions remain incomplete.
+Mẫu prospective nhỏ và đã redaction. Kết quả đủ hỗ trợ demo có giám sát, không phải production accuracy. Ba phiên người dùng thực tế vẫn chưa hoàn tất.
 
-## Largest feature cut
+## Tính năng lớn nhất đã cắt
 
-I cut production evidence localization from the final baseline. Highlighting where a fact appears could improve reviewer confidence, but without word-level OCR, independent annotations, and a false-highlight benchmark it could point to the wrong amount and create false confidence. A synthetic hash-bound SVG prototype remains isolated from extraction and policy. PDF, production RBAC, malware scanning, object storage, and distributed rate limiting also remain roadmap items.
+Tôi chưa đưa evidence localization vào baseline production. Việc khoanh vùng dữ kiện có thể tăng độ tin cậy của reviewer, nhưng khi chưa có word-level OCR, annotation độc lập và benchmark false-highlight, hệ thống có thể trỏ nhầm số tiền và tạo tự tin sai. Prototype SVG gắn với hash ảnh tổng hợp vẫn được giữ tách biệt với extraction và policy. PDF, production RBAC, malware scanning, object storage và distributed rate limiting cũng nằm trong roadmap.
 
-## Next gate
+## Gate tiếp theo
 
-Complete three consented user sessions, preserve verbatim feedback, trace one change to a commit, and report one negative operational impact. Then reduce over-escalation with independent positive and negative fixtures without weakening the missed-escalation guard.
+Hoàn tất ba phiên người dùng có đồng ý tham gia, giữ feedback nguyên văn, truy vết một thay đổi tới commit và ghi nhận ít nhất một tác động vận hành tiêu cực. Sau đó mới giảm over-escalation bằng fixture dương/âm độc lập mà không làm yếu guard chống missed escalation.

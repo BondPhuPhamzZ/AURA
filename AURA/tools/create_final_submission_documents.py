@@ -113,7 +113,7 @@ def set_cell_margins(cell, top=70, start=90, bottom=70, end=90) -> None:
 
 def add_page_field(paragraph) -> None:
     paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    run = paragraph.add_run("Page ")
+    run = paragraph.add_run("Trang ")
     run.font.name = "Arial"
     run.font.size = Pt(8)
     run.font.color.rgb = RGBColor.from_string(MUTED)
@@ -443,14 +443,14 @@ def create_feedback_form_docx(target: Path) -> None:
     add_docx_table(
         doc,
         [
-            ["Người dùng", "Vai trò", "Trích dẫn được phép công bố", "Negative effect", "Ưu tiên"],
+            ["Người dùng", "Vai trò", "Trích dẫn được phép công bố", "Tác động tiêu cực", "Ưu tiên"],
             ["1", "", "", "", ""],
             ["2", "", "", "", ""],
             ["3", "", "", "", ""],
         ],
     )
     add_form_field(doc, "Thay đổi sản phẩm đã chọn và lý do:", 3)
-    add_form_field(doc, "Commit / before-after evidence:", 2)
+    add_form_field(doc, "Commit / bằng chứng trước-sau:", 2)
     add_form_field(doc, "Điều gì không thay đổi và vì sao:", 2)
     add_form_field(doc, "Người tổng hợp, ngày xác nhận:", 1)
     doc.save(target)
@@ -541,7 +541,7 @@ def header_footer(canvas, doc) -> None:
     canvas.drawRightString(page_width - 0.65 * inch, page_height - 0.34 * inch, "AURA  |  OrganizationAI  |  The Deciders")
     canvas.setFont("Arial", 7)
     canvas.setFillColor(colors.HexColor("#" + MUTED))
-    canvas.drawRightString(letter[0] - 0.65 * inch, 0.30 * inch, f"Page {doc.page}")
+    canvas.drawRightString(letter[0] - 0.65 * inch, 0.30 * inch, f"Trang {doc.page}")
     canvas.restoreState()
 
 
@@ -607,7 +607,7 @@ def create_build_log_pdf(source: Path, target: Path) -> None:
         rightMargin=margin,
         topMargin=0.46 * inch,
         bottomMargin=0.40 * inch,
-        title="AURA Project Build Log",
+        title="Nhật ký xây dựng dự án AURA",
         author="",
     )
     blocks = parse_markdown(source.read_text(encoding="utf-8").splitlines())
@@ -619,7 +619,7 @@ def create_feedback_form_pdf(target: Path) -> None:
     margin = 0.58 * inch
     width = letter[0] - 2 * margin
     styles = pdf_styles()
-    doc = SimpleDocTemplate(str(target), pagesize=letter, leftMargin=margin, rightMargin=margin, topMargin=0.54 * inch, bottomMargin=0.48 * inch, title="AURA user feedback form", author="")
+    doc = SimpleDocTemplate(str(target), pagesize=letter, leftMargin=margin, rightMargin=margin, topMargin=0.54 * inch, bottomMargin=0.48 * inch, title="Phiếu ghi nhận phản hồi người dùng AURA", author="")
     story = [
         Paragraph("AURA - Phiếu ghi nhận phản hồi người dùng", styles["title"]),
         Paragraph("Biểu mẫu trống cho ba phiên đánh giá thực tế. Dùng hóa đơn tổng hợp; không ghi API key, dữ liệu nội bộ hoặc thông tin nhạy cảm. Mỗi người tham gia phải đọc và xác nhận nguyên văn trước khi trích dẫn.", styles["body"]),
@@ -657,13 +657,13 @@ def create_feedback_form_pdf(target: Path) -> None:
     story.append(PageBreak())
     story.append(Paragraph("Bảng tổng hợp minh bạch", styles["h1"]))
     story.append(make_pdf_table([
-        ["Người dùng", "Vai trò", "Trích dẫn được phép công bố", "Negative effect", "Ưu tiên"],
+        ["Người dùng", "Vai trò", "Trích dẫn được phép công bố", "Tác động tiêu cực", "Ưu tiên"],
         ["1", "", "", "", ""],
         ["2", "", "", "", ""],
         ["3", "", "", "", ""],
     ], width))
     story.extend(field("Thay đổi sản phẩm đã chọn và lý do:", 3))
-    story.extend(field("Commit / before-after evidence:", 2))
+    story.extend(field("Commit / bằng chứng trước-sau:", 2))
     story.extend(field("Điều gì không thay đổi và vì sao:", 2))
     story.extend(field("Người tổng hợp, ngày xác nhận:", 1))
     doc.build(story, onFirstPage=header_footer, onLaterPages=header_footer)
