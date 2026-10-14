@@ -11,7 +11,7 @@ Cập nhật: 12/10/2026. Tùy chọn này bổ sung provider local để benchm
 - Luôn dùng tag đầy đủ `qwen3-vl:8b-instruct-q4_K_M`; không dùng alias `qwen3-vl:8b`. Alias 8B có thể trỏ tới biến thể thinking và tiêu thụ output budget trước khi JSON schema hoàn tất. Adapter gửi `think=false` để extraction có tính tất định và dành output cho JSON; thinking model chỉ được benchmark ở một profile riêng, không trộn vào baseline.
 - CPU/GPU split chủ yếu làm tăng latency nếu giữ nguyên weights/quantization/context; nó
   không tự hạ độ phân giải ảnh. Các nguyên nhân giảm chất lượng gián tiếp và checklist
-  evidence nằm tại [`VISION_INPUT_AND_OFFLOAD_GUIDE_2026-10-07.md`](VISION_INPUT_AND_OFFLOAD_GUIDE_2026-10-07.md).
+  giới hạn input và offload được tóm tắt tại [`RUNBOOK.md`](RUNBOOK.md).
 - Không mở port 11434 ra Internet. AURA chỉ chấp nhận HTTP Ollama trên loopback hoặc HTTPS khi cấu hình endpoint khác.
 
 Ollama là lựa chọn local cho một người dùng và demo. vLLM chỉ nên cân nhắc khi có NVIDIA GPU server và cần throughput/concurrency cao.
@@ -112,7 +112,7 @@ Mở `/healthz`. Kỳ vọng:
 
 Kết quả kiểm soát ngày 27/09/2026 trên build semantic-hardening: năm batch liên tiếp đều đạt 5/5, tức 25/25 quyết định đúng trên 5 fixture tổng hợp; upload thủ công `HoaDon1.jpg` đạt `AUTO_APPROVE` 3/3. Ba batch có đo chi tiết mất khoảng 303-304 giây mỗi batch; TC-02 cần một lượt repair nên khoảng 100 giây và các ca còn lại khoảng 45-55 giây. Hai batch xác nhận bổ sung chưa tổng hợp latency. Đây là bằng chứng pipeline có kiểm soát, chưa phải accuracy trên hóa đơn thật độc lập.
 
-Post-policy/contract v2 ngày 06/10 chạy profile 8K và đạt 13/15. Benchmark lại ngày 12/10 bằng digest `ee4b975b58c1`, context 16K/output 4K, `Think=false`, database/storage/port riêng và fallback tắt đạt 15/15 decision, 0 missed/over/system error, field 69/75; semantic repair xử lý TK-02 và TK-12. Processing P50/P95 101,833/213,429 giây trên máy CPU/GPU split, nên 4B đạt gate chất lượng synthetic nhưng chưa đạt gate latency/capacity để bật fallback tự động. Xem [`OLLAMA_4B_16K_RECOVERY_BENCHMARK_2026-10-12.md`](OLLAMA_4B_16K_RECOVERY_BENCHMARK_2026-10-12.md).
+Post-policy/contract v2 ngày 06/10 chạy profile 8K và đạt 13/15. Benchmark lại ngày 12/10 bằng digest `ee4b975b58c1`, context 16K/output 4K, `Think=false`, database/storage/port riêng và fallback tắt đạt 15/15 decision, 0 missed/over/system error, field 69/75; semantic repair xử lý TK-02 và TK-12. Processing P50/P95 101,833/213,429 giây trên máy CPU/GPU split, nên 4B đạt gate chất lượng synthetic nhưng chưa đạt gate latency/capacity để bật fallback tự động. Xem [`EVALUATION_EVIDENCE.md`](EVALUATION_EVIDENCE.md).
 
 ## 7. Dừng phiên test và tắt máy an toàn
 
@@ -160,7 +160,7 @@ dotnet user-secrets set "Vision:FallbackProvider" "Ollama"
 
 Audit phải ghi `PrimaryProvider=OpenRouter`, `ServedProvider=Ollama` và `FallbackUsed=True` nếu fallback thực sự được dùng. Không bật cấu hình này trên hosted server nếu Ollama chỉ chạy ở laptop, vì loopback của server không trỏ về laptop.
 
-Live regression ngày 02/10 đã xác minh đúng metadata trên một database test cô lập: primary cố ý tạo `AI_NOT_CONFIGURED`, Ollama phục vụ thật, 1/1 ca hoàn tất trong 84,425 giây E2E và không có validation issue. Xem quy trình an toàn, lệnh tái lập và giới hạn claim tại [`FALLBACK_REGRESSION_2026-10-02.md`](FALLBACK_REGRESSION_2026-10-02.md). Kết quả này không thay quyết định giữ fallback tắt trong baseline demo.
+Live regression ngày 02/10 đã xác minh đúng metadata trên một database test cô lập: primary cố ý tạo `AI_NOT_CONFIGURED`, Ollama phục vụ thật, 1/1 ca hoàn tất trong 84,425 giây E2E và không có validation issue. Số liệu và giới hạn claim được giữ tại [`EVALUATION_EVIDENCE.md`](EVALUATION_EVIDENCE.md). Kết quả này không thay quyết định giữ fallback tắt trong baseline demo.
 
 ## 9. Lỗi thường gặp
 

@@ -316,7 +316,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   text(s, "Verify vẫn đúng 5 ca BTC; runner mở rộng không làm rối dashboard.", 842, 601, 382, 44, 14, C.amber, { align: "center", bold: true });
   footer(s, 5, "AURA • Giới hạn hiện tại, không phải lời hứa marketing");
   s.speakerNotes.textFrame.setText(
-    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ReceiptExtractionContract.cs, PolicyDecisionEngine.cs, VietnamTime.cs, tools/Invoke-ExtendedDatasetEvaluation.ps1, docs/CURRENT_PROJECT_STATUS_2026-10-13.md và docs/OFFICIAL_HOLDOUT10_2026-10-13.md. Fallback vẫn opt-in và mặc định tắt; Ollama chỉ bật local sau smoke. Qwen3.8 Flash qua OpenRouter/Alibaba, reasoning none, là primary candidate. Prospective holdout đạt 8/10 với 0 missed và 2 over; sequential repeat trên dữ liệu đã biết đạt 11/12; Verify live đạt 5/5 trong 65.004 giây. Burst 5 upload hoàn tất 5/5 nhưng phép đo một process không phải production SLA. Ba phiên người dùng thật, video chính thức và kiểm tra quyền Team Drive vẫn là gate mở.",
+    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ReceiptExtractionContract.cs, PolicyDecisionEngine.cs, VietnamTime.cs, tools/Invoke-ExtendedDatasetEvaluation.ps1, docs/CURRENT_PROJECT_STATUS.md và docs/EVALUATION_EVIDENCE.md. Fallback vẫn opt-in và mặc định tắt; Ollama chỉ bật local sau smoke. Qwen3.8 Flash qua OpenRouter/Alibaba, reasoning none, là primary candidate. Prospective holdout đạt 8/10 với 0 missed và 2 over; sequential repeat trên dữ liệu đã biết đạt 11/12; Verify live đạt 5/5 trong 65.004 giây. Burst 5 upload hoàn tất 5/5 nhưng phép đo một process không phải production SLA. Ba phiên người dùng thật, video chính thức và kiểm tra quyền Team Drive vẫn là gate mở.",
   );
 }
 

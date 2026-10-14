@@ -8,10 +8,10 @@ AURA is an ASP.NET Core application for first-line employee reimbursement review
 |---|---|
 | Live application | [AURA on SmarterASP.NET](https://bondphupham-001-site1.ltempurl.com/) |
 | Team submission folder and evaluator-only key | [Shared submission folder](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
-| Final presentation | [AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES_FINAL_2026-10-13_V2.pptx) |
-| Proposal Vietnamese | [AURA Proposal VI](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_VI_2026-10-13.pdf) |
-| Proposal English | [AURA Proposal EN](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_EN_2026-10-13.pdf) |
-| Build log | [AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG_1_PAGE_2026-10-13.pdf) |
+| Final presentation | [AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES_FINAL.pptx) |
+| Proposal Vietnamese | [AURA Proposal VI](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_VI.pdf) |
+| Proposal English | [AURA Proposal EN](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_EN.pdf) |
+| Build log | [AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.pdf) |
 
 The key in the shared folder is temporary and evaluator-only. Do not commit it, paste it into source/config files, or show it in screenshots and recordings. Store it locally with .NET User Secrets and revoke/rotate it after evaluation.
 
@@ -146,31 +146,21 @@ Stop the app with `Ctrl+C`. No database reset or LocalDB deletion is required.
 
 ## Important documents
 
+- [Submission package index](AURA/submission/README.md)
+- [Technical documentation index](AURA/docs/README.md)
 - [Judge local setup and troubleshooting](AURA/docs/JUDGE_LOCAL_SETUP.md)
 - [Architecture and integration](AURA/ARCHITECTURE_AND_INTEGRATION_REPORT.md)
 - [Business rules](AURA/BUSINESS_RULES.md)
 - [Workflow specification](AURA/submission/AURA_WORKFLOW_SPEC.md)
 - [Dataset and extended evaluation](AURA/docs/DATASET_EVALUATION_GUIDE.md)
-- [Current verified status](AURA/docs/CURRENT_PROJECT_STATUS_2026-10-14.md)
-- [Official 10-receipt mini-holdout](AURA/docs/OFFICIAL_HOLDOUT10_2026-10-13.md)
-- [Original-bytes 12-receipt regression](AURA/docs/REGRESSION12_ORIGINAL_BYTES_RESULT_2026-10-13.md)
-- [Sequential repeat on the same 12 receipts](AURA/docs/REGRESSION12_SEQUENTIAL_REPEAT_RESULT_2026-10-13.md)
-- [Evidence localization and reviewer overlay plan](AURA/docs/EVIDENCE_LOCALIZATION_PLAN_2026-10-13.md)
-- [User-study protocol and evidence requirements](AURA/docs/USER_STUDY_PROTOCOL_2026-10-13.md)
-- [Demo Day evidence index](AURA/docs/DEMO_DAY_EVIDENCE_INDEX_2026-10-13.md)
-- [Final readiness gaps](AURA/docs/FINAL_READINESS_GAPS_2026-10-13.md)
-- [Final 15-minute presentation and demo guide](AURA/submission/AURA_FINAL_15_MINUTE_PRESENTATION_GUIDE_2026-10-13.md)
-- [Official product-only video script (Vietnamese)](AURA/submission/AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI_2026-10-14.md)
-- [Final pitch script and judge Q and A (Vietnamese)](AURA/submission/AURA_FINAL_PITCH_SCRIPT_AND_QA_VI_2026-10-14.md)
-- [Qwen3.8 Flash live Verify gate](AURA/docs/QWEN38_FLASH_LIVE_VERIFY_2026-10-12.md)
-- [Current progress report](AURA/docs/PROGRESS_REPORT_2026-10-13.md)
-- [Live post-holdout validation](AURA/docs/LIVE_POST_HOLDOUT_VALIDATION_2026-10-06.md)
-- [Official holdout postmortem](AURA/docs/OFFICIAL_HOLDOUT_POSTMORTEM_2026-10-06.md)
-- [Blind holdout locking guide](AURA/docs/HOLDOUT_LOCKING_GUIDE_2026-10-05.md)
+- [Current verified status](AURA/docs/CURRENT_PROJECT_STATUS.md)
+- [Consolidated evaluation evidence](AURA/docs/EVALUATION_EVIDENCE.md)
+- [Evidence localization and reviewer overlay plan](AURA/docs/EVIDENCE_LOCALIZATION_PLAN.md)
+- [User-study protocol and evidence requirements](AURA/docs/USER_STUDY_PROTOCOL.md)
+- [Submission checklist](AURA/docs/SUBMISSION_CHECKLIST.md)
+- [Official product-only video script (Vietnamese)](AURA/submission/AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md)
+- [Final pitch script and judge Q and A (Vietnamese)](AURA/submission/AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md)
 - [Optional local Ollama setup](AURA/docs/LOCAL_OLLAMA.md)
-- [Deployment decision](AURA/docs/DEPLOYMENT_DECISION_2026-10-02.md)
-- [Current roadmap and acceptance gates](AURA/docs/NEXT_IMPLEMENTATION_ROADMAP_2026-10-07.md)
-- [Manual phone, user-session and rehearsal gates](AURA/docs/MANUAL_FINAL_GATES_2026-10-06.md)
 
 ## Current limitations
 

@@ -286,14 +286,18 @@ def add_docx_table(doc: Document, rows: Sequence[Sequence[str]], compact: bool =
     tbl_header.set(qn("w:val"), "true")
     tr_pr.append(tbl_header)
     for r_idx, row in enumerate(rows):
+        row_pr = table.rows[r_idx]._tr.get_or_add_trPr()
+        cant_split = OxmlElement("w:cantSplit")
+        cant_split.set(qn("w:val"), "true")
+        row_pr.append(cant_split)
         for c_idx in range(width):
             cell = table.cell(r_idx, c_idx)
             set_cell_margins(
                 cell,
-                75 if compact else 105,
-                105 if compact else 145,
-                75 if compact else 105,
-                105 if compact else 145,
+                75 if compact else 120,
+                105 if compact else 180,
+                75 if compact else 120,
+                105 if compact else 180,
             )
             cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
             if r_idx == 0:
@@ -603,7 +607,7 @@ def create_build_log_pdf(source: Path, target: Path) -> None:
         rightMargin=margin,
         topMargin=0.46 * inch,
         bottomMargin=0.40 * inch,
-        title="AURA Build Log Sprint 2",
+        title="AURA Project Build Log",
         author="",
     )
     blocks = parse_markdown(source.read_text(encoding="utf-8").splitlines())
@@ -671,9 +675,8 @@ def main() -> int:
     args = parser.parse_args()
     register_pdf_fonts()
     jobs = [
-        ("AURA_PROPOSAL_VI_2026-10-13.md", "AURA_PROPOSAL_VI_2026-10-13"),
-        ("AURA_PROPOSAL_EN_2026-10-13.md", "AURA_PROPOSAL_EN_2026-10-13"),
-        ("AURA_SUBMISSION_LINKS_2026-10-13.md", "AURA_SUBMISSION_LINKS_2026-10-13"),
+        ("AURA_PROPOSAL_VI.md", "AURA_PROPOSAL_VI"),
+        ("AURA_PROPOSAL_EN.md", "AURA_PROPOSAL_EN"),
     ]
     for source_name, stem in jobs:
         source = SUBMISSION / source_name
@@ -681,13 +684,11 @@ def main() -> int:
             create_general_docx(source, TMP / f"{stem}.docx")
         if args.format in ("pdf", "all"):
             create_general_pdf(source, SUBMISSION / f"{stem}.pdf")
-    build_source = SUBMISSION / "AURA_BUILD_LOG_1_PAGE_2026-10-13.md"
+    build_source = SUBMISSION / "AURA_BUILD_LOG.md"
     if args.format in ("docx", "all"):
-        create_build_log_docx(build_source, TMP / "AURA_BUILD_LOG_1_PAGE_2026-10-13.docx")
-        create_feedback_form_docx(TMP / "AURA_USER_FEEDBACK_FORM_2026-10-13.docx")
+        create_build_log_docx(build_source, TMP / "AURA_BUILD_LOG.docx")
     if args.format in ("pdf", "all"):
-        create_build_log_pdf(build_source, SUBMISSION / "AURA_BUILD_LOG_1_PAGE_2026-10-13.pdf")
-        create_feedback_form_pdf(SUBMISSION / "AURA_USER_FEEDBACK_FORM_2026-10-13.pdf")
+        create_build_log_pdf(build_source, SUBMISSION / "AURA_BUILD_LOG.pdf")
     return 0
 
 

@@ -16,9 +16,9 @@ Ngày 20/09/2026, provider Gemini cũ đạt 5/5 trên fixture v1. Fixture v2 đ
 
 Năm ca Verify chính thức không thay đổi trong hardening ngày 28/09/2026. Pipeline upload thật đã chuyển sang background processing; cần chạy bổ sung các ca vận hành dưới đây mà không sửa expected result của TC-01..TC-05.
 
-Gói 15/30 ca không có nút riêng trên dashboard. `tools/Invoke-ExtendedDatasetEvaluation.ps1` đọc manifest, gọi đúng upload endpoint cho từng ảnh/claimed amount, poll trạng thái và ghi evidence CSV/JSON. Ngày 29/09/2026, judge set 15 ca đã chạy thật với fallback tắt: OpenRouter đạt 15/15 quyết định, Ollama đạt 14/15 và bỏ sót escalation TK-12. Post-policy/contract v2 ngày 06/10, Ollama 4B đạt 13/15: missed TK-12, over TK-02, 0 system error. Gói 30 ca chưa chạy vì không cần cho phần trình bày; xem `LIVE_VALIDATION_2026-09-29.md` và `LOCAL_OLLAMA.md`.
+Gói 15/30 ca không có nút riêng trên dashboard. `tools/Invoke-ExtendedDatasetEvaluation.ps1` đọc manifest, gọi đúng upload endpoint cho từng ảnh/claimed amount, poll trạng thái và ghi evidence CSV/JSON. Ngày 29/09/2026, judge set 15 ca đã chạy thật với fallback tắt: OpenRouter đạt 15/15 quyết định, Ollama đạt 14/15 và bỏ sót escalation TK-12. Post-policy/contract v2 ngày 06/10, Ollama 4B đạt 13/15: missed TK-12, over TK-02, 0 system error. Gói 30 ca chưa chạy vì không cần cho phần trình bày; xem `EVALUATION_EVIDENCE.md` và `LOCAL_OLLAMA.md`.
 
-Test Kit v3/v3.1 là namespace riêng tại `test_kit/v3*`, không thay gói trên. Raw live v3: 11/15 decision, 142/145 field, 0 system error; xem `REGRESSION_TEST_KIT_V3_LIVE_RESULT_2026-10-06.md`. V3.1 sửa ground-truth precondition R3-12 bằng ảnh/hash mới và chỉ được chạy sau publish; raw v3 không chạy lại hoặc relabel.
+Test Kit v3/v3.1 là namespace riêng tại `test_kit/v3*`, không thay gói trên. Raw live v3: 11/15 decision, 142/145 field, 0 system error; xem `EVALUATION_EVIDENCE.md`. V3.1 sửa ground-truth precondition R3-12 bằng ảnh/hash mới và chỉ được chạy sau publish; raw v3 không chạy lại hoặc relabel.
 
 | ID vận hành | Kịch bản | Kỳ vọng |
 |---|---|---|

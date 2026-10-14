@@ -1,6 +1,6 @@
 # Deploy AURA và xác minh Live URL
 
-Live URL đã dùng để smoke Sprint 1: `https://bondphupham-001-site1.ltempurl.com/`. BTC xác nhận phần trình diễn Chung kết chạy trên laptop cá nhân, nhưng brief vẫn yêu cầu đường truy cập công khai cho bản bàn giao. Vì vậy localhost là đường demo chính; Live URL là cổng bàn giao riêng và phải được smoke lại sau mỗi bản hardening. Hosting trial có thể chậm hoặc gián đoạn nên không dùng nó làm đường trình diễn duy nhất. Quyết định nền tảng, lộ trình 15 ngày và điều kiện mượn GPU nằm tại [`DEPLOYMENT_DECISION_2026-10-02.md`](DEPLOYMENT_DECISION_2026-10-02.md).
+Live URL đã dùng để smoke Sprint 1: `https://bondphupham-001-site1.ltempurl.com/`. BTC xác nhận phần trình diễn Chung kết chạy trên laptop cá nhân, nhưng brief vẫn yêu cầu đường truy cập công khai cho bản bàn giao. Vì vậy localhost là đường demo chính; Live URL là cổng bàn giao riêng và phải được smoke lại sau mỗi bản hardening. Hosting trial có thể chậm hoặc gián đoạn nên không dùng nó làm đường trình diễn duy nhất. Baseline và ranh giới vận hành hiện hành nằm tại [`CURRENT_PROJECT_STATUS.md`](CURRENT_PROJECT_STATUS.md).
 
 ## Trang index mặc định của SmarterASP.NET
 
@@ -121,7 +121,7 @@ Chỉ bật stdout startup log khi cần chẩn đoán, tải log về rồi t�
 
 Hosted deployment không thể gọi Ollama trên laptop qua `127.0.0.1`; loopback khi đó là chính server hosting. Chỉ bật fallback Ollama nếu model chạy trên cùng server hoặc một endpoint HTTPS riêng đã được bảo vệ. Bản demo trên máy cá nhân có thể bật fallback vì ASP.NET và Ollama cùng máy.
 
-Profile local đã pass synthetic gate dùng timeout 600 giây, context 16384, output 4096, keep-alive 30 phút và `Think=false`. Vì đường fallback có thể chạy sau timeout primary rồi còn semantic repair, đặt riêng `ReceiptProcessing__LeaseSeconds=1800` khi dùng local contingency; không thay lease public baseline nếu không cần. Chi tiết và rollback xem [`COMPETITION_FAILOVER_AND_429_STRATEGY_2026-10-12.md`](COMPETITION_FAILOVER_AND_429_STRATEGY_2026-10-12.md).
+Profile local đã pass synthetic gate dùng timeout 600 giây, context 16384, output 4096, keep-alive 30 phút và `Think=false`. Vì đường fallback có thể chạy sau timeout primary rồi còn semantic repair, đặt riêng `ReceiptProcessing__LeaseSeconds=1800` khi dùng local contingency; không thay lease public baseline nếu không cần. Chi tiết cấu hình và rollback xem [`LOCAL_OLLAMA.md`](LOCAL_OLLAMA.md) và [`RUNBOOK.md`](RUNBOOK.md).
 
 Implementation hiện tại cho phép `Ollama:BaseUrl` là HTTPS từ xa nhưng chưa có cấu hình bearer/API-key riêng cho Ollama. Vì vậy **không public trực tiếp cổng 11434** và không trỏ production AURA tới một endpoint Ollama Internet chưa có lớp bảo vệ. POC GPU phải dùng private network/VPN hoặc reverse proxy có TLS, xác thực, rate limit và log đã che dữ liệu; nếu proxy bắt bearer token thì cần bổ sung hỗ trợ header trong app rồi regression lại trước khi dùng.
 

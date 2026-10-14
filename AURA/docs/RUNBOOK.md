@@ -61,7 +61,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadin
 
 Nếu `/healthz` treo hoặc `databaseAvailable=false` và log ứng dụng đồng thời có `SQL Network Interfaces, error: 50`, `0x89C50118` hoặc `Cannot create an automatic instance`, đây **không còn là warning**: runtime registration của LocalDB đang chặn kết nối. Quy trình phục hồi an toàn là đóng AURA; sao lưu cả `AuraDb.mdf` và `AuraDb_log.ldf`; export `HKCU\Software\Microsoft\Microsoft SQL Server\UserInstances`; đối chiếu từng `InstanceProcessId` với process thực tế và chỉ xóa entry runtime đã stale; chạy `sqllocaldb start MSSQLLocalDB`; rồi attach lại hai file `AuraDb` nếu instance mới báo `Cannot open database "AuraDb"`. Không xóa toàn bộ instance/folder, không xóa MDF và không dùng GUID registry lấy từ máy khác. Sau đó khởi động đúng `dotnet run --launch-profile AURA` và chỉ coi phục hồi hoàn tất khi `/healthz` trả `status=ok`, database true và pending migration bằng 0.
 
-Nếu warning chỉ xuất hiện trong execution context bị giới hạn nhưng full preflight vẫn có `0 failures` và health xác nhận database, lưu cả warning lẫn health làm bằng chứng minh bạch; không cố sửa registry sát giờ demo. Xem ma trận test và lịch freeze tại `docs/FINAL_DEMO_TEST_PLAN_2026-10-01.md`.
+Nếu warning chỉ xuất hiện trong execution context bị giới hạn nhưng full preflight vẫn có `0 failures` và health xác nhận database, lưu cả warning lẫn health làm bằng chứng minh bạch; không cố sửa registry sát giờ demo. Xem ma trận test tại `docs/TEST_CASES.md` và lịch freeze tại `docs/SUBMISSION_CHECKLIST.md`.
 
 Mở URL được in trong terminal. Không truy cập `/Verify` để tìm trang riêng; nút Verify nằm ngay trên trang chủ. `/Applicant` và `/Verify` chủ động chuyển về `/`.
 
@@ -79,7 +79,7 @@ Test Kit v3/v3.1 là regression namespace riêng, không thay Verify/v2. Tái t�
 
 Để bảo toàn credit: build + 163 automated test offline trước, deploy, chạy health/security smoke không ảnh, sau đó chỉ chạy **một lượt** Verify 5 ảnh trước khi quay video. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota và quyền gửi ảnh.
 
-Sau thay đổi contract giảm giá và postfix live fix, làm theo cổng `docs/LIVE_POSTFIX_INCIDENT_2026-10-01.md`. Không reset database và không chạy migration vì facts vẫn nằm trong JSON hiện có; restart queue phải dùng chính DB cũ để chứng minh độ bền.
+Sau thay đổi contract giảm giá hoặc sửa lỗi live, làm theo cổng build/test/health trong `docs/CURRENT_PROJECT_STATUS.md` và `docs/SUBMISSION_CHECKLIST.md`. Không reset database và không chạy migration nếu facts vẫn nằm trong JSON hiện có; restart queue phải dùng chính DB cũ để chứng minh độ bền.
 
 Sau official holdout 06/10, extraction mới dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Candidate hiện tại còn chuyển timestamp Audit từ UTC sang giờ Việt Nam rõ ràng, không phụ thuộc timezone host. Trước publish phải đạt Release build sạch, 163/163 test và `dotnet ef migrations has-pending-model-changes` trả không có thay đổi. Thứ tự SmartASP an toàn: backup/kiểm biến môi trường, bổ sung `OpenRouter__Model=qwen/qwen3.8-flash` và `OpenRouter__ReasoningEffort=none` → recycle ngay trước publish để nhả file lock → Visual Studio Web Deploy Release → chờ `Publish succeeded` → recycle lại → đợi 10–30 giây → `/healthz` phải HTTP 200, `status=ok`, database/storage true, pending migration 0, model/reasoning đúng. Sau đó chạy đúng một synthetic smoke trước khi Verify; không bật migration startup hoặc fallback.
 
@@ -105,7 +105,7 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 
 ### Model OpenRouter cho demo
 
-- Mặc định demo: `qwen/qwen3.8-flash` qua endpoint Alibaba, reasoning `none`, hỗ trợ vision và structured output bằng JSON Schema. Candidate ngày 12/10 đạt 15/15 post-holdout regression và năm upload P95 41,079 giây; xem `QWEN38_FLASH_BENCHMARK_2026-10-12.md`.
+- Mặc định demo: `qwen/qwen3.8-flash` qua endpoint Alibaba, reasoning `none`, hỗ trợ vision và structured output bằng JSON Schema. Candidate ngày 12/10 đạt 15/15 post-holdout regression và năm upload P95 41,079 giây; xem `EVALUATION_EVIDENCE.md`.
 - Không bỏ `ReasoningEffort=none`: reasoning mặc định đã dùng hết output cap 4096 và tạo `AI_RESPONSE_TRUNCATED`. Không tăng output cap để che căn nguyên.
 - `qwen/qwen3-vl-8b-instruct` được giữ làm rollback/baseline lịch sử; endpoint Parasail của model này đã phát sinh 429 trong các lượt live ngày 12/10.
 - Qwen3-VL-4B-Instruct là ứng viên self-host tiếp theo, nhưng không được khai báo như route OpenRouter khi catalog chưa cung cấp endpoint đó.
@@ -128,7 +128,7 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 - Benchmark GPU BTC dùng đúng `qwen3-vl:8b-instruct-q4_K_M`, `ContextTokens=16384`, `MaxOutputTokens=4096`, `Think=false` trên database test và synthetic data. Không dùng alias `qwen3-vl:8b`, vì alias có thể trỏ tới biến thể thinking và làm JSON hết output budget. Đây là benchmark mới; không được suy ra PASS từ cấu hình trước khi chạy. Runbook phiên mượn máy được giữ ngoài repository công khai.
 - CPU/GPU off-load, context và output cap là ba biến khác nhau. AURA gửi nguyên byte ảnh,
   không resize; cách đo token/processor và điều kiện so sánh nằm tại
-  [`VISION_INPUT_AND_OFFLOAD_GUIDE_2026-10-07.md`](VISION_INPUT_AND_OFFLOAD_GUIDE_2026-10-07.md).
+  [`LOCAL_OLLAMA.md`](LOCAL_OLLAMA.md).
 - Xem hướng dẫn cài, giới hạn RAM và rollback tại `docs/LOCAL_OLLAMA.md`.
 
 ### Khi OpenRouter/Qwen trả lỗi
@@ -205,7 +205,7 @@ Khi deploy public, ứng dụng phải chạy sau HTTPS/reverse proxy. Container
 - Ảnh lớn hơn 5 MB bị chặn với thông báo dễ hiểu, không xuất hiện lỗi `Unexpected end of JSON input`. Giới hạn multipart có phần đệm cho antiforgery/boundary nhưng controller vẫn khóa riêng file ở 5 MB.
 - Verify đạt 5/5 trong thời gian demo cho phép. Evidence live candidate hiện hành là 65,004 giây E2E. Timeout cấu hình là 90 giây cho OpenRouter và 600 giây cho Ollama 4B 16K; đây là chốt lỗi kỹ thuật, không phải SLA production.
 
-Chiến lược tách public/local, cấu hình lease cho inference chậm và giới hạn của provider failover nằm tại [`COMPETITION_FAILOVER_AND_429_STRATEGY_2026-10-12.md`](COMPETITION_FAILOVER_AND_429_STRATEGY_2026-10-12.md).
+Chiến lược tách public/local, cấu hình lease cho inference chậm và giới hạn của provider failover nằm tại [`DEPLOYMENT.md`](DEPLOYMENT.md), [`LOCAL_OLLAMA.md`](LOCAL_OLLAMA.md) và [`CURRENT_PROJECT_STATUS.md`](CURRENT_PROJECT_STATUS.md).
 - Audit hiển thị input, action, timestamp, reason; chuyển tiếp/Đồng ý/Từ chối/undo hoạt động.
 - Ca `ESCALATE_*` xuất hiện ở cửa sổ nhân viên trước; bấm **Chuyển tiếp** rồi mới xuất hiện ở cửa sổ quản lý.
 - Nhân viên có thể chuyển từng hồ sơ hoặc **Chuyển tiếp tất cả**; mỗi hồ sơ phải có audit `EMPLOYEE_FORWARDED_TO_MANAGER`.

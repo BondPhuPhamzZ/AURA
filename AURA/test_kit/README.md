@@ -11,7 +11,7 @@ Tái tạo v3 bằng:
 <python-with-pillow> tools/generate_regression_receipts_v3.py --as-of-date 2026-10-06
 ```
 
-`v3/judge-manifest.json` khóa SHA-256 từng ảnh, expected decision, expected facts và lý do ground truth. Runner phải dừng trước request đầu tiên nếu bất kỳ hash nào lệch. Xem `docs/REGRESSION_TEST_KIT_V3.md` trước khi chạy.
+`v3/judge-manifest.json` khóa SHA-256 từng ảnh, expected decision, expected facts và lý do ground truth. Runner phải dừng trước request đầu tiên nếu bất kỳ hash nào lệch. Xem `docs/DATASET_EVALUATION_GUIDE.md` trước khi chạy.
 
 Raw v3 đã chạy đúng một lần trên live OpenRouter ngày 06/10 và được giữ bất biến. Revision `v3_1/` chỉ sửa precondition khách quan của R3-12 bằng cách in riêng `Số biên nhận` và `Số chứng từ`; nó không ghi đè ảnh/hash/kết quả v3. Tái tạo revision bằng:
 

@@ -25,5 +25,5 @@ open `http://127.0.0.1:8765/`. No external network request or package install is
 This prototype does not claim OCR/localization accuracy. Production integration still
 requires word-level OCR boxes, deterministic evidence-text matching, image-hash binding,
 authorization on the receipt route, an annotated development set, and a separately locked
-unseen evaluation set. See `docs/EVIDENCE_LOCALIZATION_PLAN_2026-10-13.md`.
+unseen evaluation set. See `docs/EVIDENCE_LOCALIZATION_PLAN.md`.
 
