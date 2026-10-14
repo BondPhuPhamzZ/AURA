@@ -11,8 +11,8 @@
 1. `AURA_STUDY_GUIDE_VI.md` - bức tranh tổng thể, số liệu được phép nói và ranh giới claim.
 2. `AURA_CODE_FLOW_VI.md` - luồng request, queue, extraction, validation, policy, người duyệt và audit.
 3. `AURA_DEMO_OPERATIONS_VI.md` - checklist trước khi quay, trước khi thi và phương án khi live/provider lỗi.
-4. `../submission/AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md` - lời thoại, user story và câu trả lời BGK.
-5. `../submission/AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md` - kịch bản quay video sản phẩm.
+4. `AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md` - lời thoại, user story và câu trả lời BGK.
+5. `AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md` - kịch bản quay video sản phẩm.
 
 Các gói evidence mang timestamp ngoài repository là bằng chứng lịch sử đúng thời điểm phát sinh. Không dùng chúng làm nguồn trạng thái hiện hành nếu số liệu khác `../docs/CURRENT_PROJECT_STATUS.md`.
 

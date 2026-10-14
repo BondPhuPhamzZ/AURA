@@ -15,7 +15,7 @@
 | Five-slide deck | Ready | `../submission/AURA_5_SLIDES_FINAL.pptx` |
 | Proposal, Vietnamese and English | Ready | `../submission/AURA_PROPOSAL_VI.*`, `../submission/AURA_PROPOSAL_EN.*` |
 | One-page project Build Log | Ready | `../submission/AURA_BUILD_LOG.*` |
-| Product demo video, maximum 3 minutes | Must record/upload final cut | script: `../submission/AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md` |
+| Product demo video, maximum 3 minutes | Must record/upload final cut | personal recording guide: `../phanbien/AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md` |
 | Verify Harness and evaluator instructions | Ready | `docs/JUDGE_LOCAL_SETUP.md`, `docs/RUNBOOK.md` |
 | Three real-user feedback records | Open gate | `USER_STUDY_PROTOCOL.md`, feedback form in `../submission/` |
 | Team Drive permissions and final links | Manual gate | `../submission/AURA_SUBMISSION_LINKS.*` |

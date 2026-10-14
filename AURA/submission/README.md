@@ -11,9 +11,9 @@ This directory contains one current version of each logical deliverable. Stable 
 | Submission links | `AURA_SUBMISSION_LINKS.md`, `.docx`, `.pdf` |
 | User-feedback form | `AURA_USER_FEEDBACK_FORM.docx`, `.pdf` |
 | Workflow specification | `AURA_WORKFLOW_SPEC.md` |
-| Three-minute product video script | `AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md` |
-| Final pitch and judge Q&A | `AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md` |
 
 The three Build Log files are formats of the same project-wide document, not separate sprint logs. Historical versions remain in Git history rather than beside the final deliverables.
+
+Personal study notes, the recording script, pitch script and judge Q&A are intentionally kept outside this submission package in `../phanbien/`.
 
 The official video file is stored in Team Drive, not Git. User-study evidence is complete only after three consented participants, verbatim confirmed feedback, one traceable product change, and one documented negative effect. Never add API keys, real receipts, raw provider payloads, databases, billing screenshots, or secrets to this folder.

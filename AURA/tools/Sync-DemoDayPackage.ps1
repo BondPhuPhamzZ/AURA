@@ -60,17 +60,17 @@ $requiredCopies = @(
     @("$AppRoot\submission\AURA_USER_FEEDBACK_FORM.docx", "$DemoRoot\Evidence\08_USER_STUDY_PENDING\AURA_USER_FEEDBACK_FORM.docx"),
     @("$AppRoot\submission\AURA_USER_FEEDBACK_FORM.pdf", "$DemoRoot\Evidence\08_USER_STUDY_PENDING\AURA_USER_FEEDBACK_FORM.pdf"),
 
-    # Personal Vietnamese study set
-    @("$AppRoot\personal\README.md", "$DemoRoot\Gia_Phu\OnTap\README.md"),
-    @("$AppRoot\personal\AURA_STUDY_GUIDE_VI.md", "$DemoRoot\Gia_Phu\OnTap\AURA_STUDY_GUIDE_VI.md"),
-    @("$AppRoot\personal\AURA_CODE_FLOW_VI.md", "$DemoRoot\Gia_Phu\OnTap\AURA_CODE_FLOW_VI.md"),
-    @("$AppRoot\personal\AURA_DEMO_OPERATIONS_VI.md", "$DemoRoot\Gia_Phu\OnTap\AURA_DEMO_OPERATIONS_VI.md"),
-    @("$AppRoot\submission\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md", "$DemoRoot\Gia_Phu\Pitching_QnA\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md"),
+    # Personal Vietnamese study and rebuttal set
+    @("$AppRoot\phanbien\README.md", "$DemoRoot\Gia_Phu\OnTap\README.md"),
+    @("$AppRoot\phanbien\AURA_STUDY_GUIDE_VI.md", "$DemoRoot\Gia_Phu\OnTap\AURA_STUDY_GUIDE_VI.md"),
+    @("$AppRoot\phanbien\AURA_CODE_FLOW_VI.md", "$DemoRoot\Gia_Phu\OnTap\AURA_CODE_FLOW_VI.md"),
+    @("$AppRoot\phanbien\AURA_DEMO_OPERATIONS_VI.md", "$DemoRoot\Gia_Phu\OnTap\AURA_DEMO_OPERATIONS_VI.md"),
+    @("$AppRoot\phanbien\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md", "$DemoRoot\Gia_Phu\Pitching_QnA\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md"),
 
     # Video and presentation
-    @("$AppRoot\submission\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md", "$DemoRoot\kich_ban_video\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md"),
+    @("$AppRoot\phanbien\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md", "$DemoRoot\kich_ban_video\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md"),
     @("$AppRoot\submission\AURA_5_SLIDES_FINAL.pptx", "$DemoRoot\kich_ban_thuyettrinh_slide\AURA_5_SLIDES_FINAL.pptx"),
-    @("$AppRoot\submission\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md", "$DemoRoot\kich_ban_thuyettrinh_slide\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md"),
+    @("$AppRoot\phanbien\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md", "$DemoRoot\kich_ban_thuyettrinh_slide\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md"),
 
     # Upload-ready package
     @("$AppRoot\submission\README.md", "$DemoRoot\Nop\00_READ_FIRST\README.md"),
@@ -82,7 +82,6 @@ $requiredCopies = @(
     @("$AppRoot\submission\AURA_PROPOSAL_VI.pdf", "$DemoRoot\Nop\02_PROPOSAL\AURA_PROPOSAL_VI.pdf"),
     @("$AppRoot\submission\AURA_PROPOSAL_EN.docx", "$DemoRoot\Nop\02_PROPOSAL\AURA_PROPOSAL_EN.docx"),
     @("$AppRoot\submission\AURA_PROPOSAL_EN.pdf", "$DemoRoot\Nop\02_PROPOSAL\AURA_PROPOSAL_EN.pdf"),
-    @("$AppRoot\submission\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md", "$DemoRoot\Nop\03_VIDEO\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md"),
     @("$AppRoot\submission\AURA_BUILD_LOG.md", "$DemoRoot\Nop\04_BUILD_LOG\AURA_BUILD_LOG.md"),
     @("$AppRoot\submission\AURA_BUILD_LOG.docx", "$DemoRoot\Nop\04_BUILD_LOG\AURA_BUILD_LOG.docx"),
     @("$AppRoot\submission\AURA_BUILD_LOG.pdf", "$DemoRoot\Nop\04_BUILD_LOG\AURA_BUILD_LOG.pdf"),
@@ -100,6 +99,22 @@ $requiredCopies = @(
 
 foreach ($entry in $requiredCopies) {
     Copy-Required -Source $entry[0] -Destination $entry[1]
+}
+
+# Remove obsolete personal guidance from the upload-ready package. The source
+# remains available under phanbien/ and is copied only to the private rehearsal
+# folders above.
+$legacyPersonalTargets = @(
+    "$DemoRoot\Nop\03_VIDEO\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md"
+)
+foreach ($target in $legacyPersonalTargets) {
+    $fullTarget = [System.IO.Path]::GetFullPath($target)
+    if (-not $fullTarget.StartsWith($DemoRoot + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to remove path outside Demo Day root: $fullTarget"
+    }
+    if (Test-Path -LiteralPath $fullTarget -PathType Leaf) {
+        Remove-Item -LiteralPath $fullTarget -Force
+    }
 }
 
 # Copy only non-sensitive machine-readable summaries when the private evidence workspace is present.
