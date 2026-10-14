@@ -9,6 +9,7 @@ This directory contains one current version of each logical deliverable. Stable 
 | English proposal | `AURA_PROPOSAL_EN.md`, `.docx`, `.pdf` |
 | Project-wide one-page Build Log | `AURA_BUILD_LOG.md`, `.docx`, `.pdf` |
 | Submission links | `AURA_SUBMISSION_LINKS.md`, `.docx`, `.pdf` |
+| Official demo video | Stored in Team Drive; URL is recorded in `AURA_SUBMISSION_LINKS.*` |
 | User-feedback form | `AURA_USER_FEEDBACK_FORM.docx`, `.pdf` |
 | Workflow specification | `AURA_WORKFLOW_SPEC.md` |
 

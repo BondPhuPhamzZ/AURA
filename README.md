@@ -12,8 +12,9 @@ AURA is an ASP.NET Core application for first-line employee reimbursement review
 | Proposal Vietnamese | [AURA Proposal VI](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_VI.pdf) |
 | Proposal English | [AURA Proposal EN](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_EN.pdf) |
 | Build log | [AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.pdf) |
+| Official demo video | [AURA demo under 3 minutes](https://drive.google.com/file/d/14Co4QjnoDeYPTORXcxi1u-r1MOuX2KM0/view?usp=sharing) |
 
-The key in the shared folder is temporary and evaluator-only. Do not commit it, paste it into source/config files, or show it in screenshots and recordings. Store it locally with .NET User Secrets and revoke/rotate it after evaluation.
+If an evaluator key is required, share it separately from public documents. Do not commit it, paste it into source/config files, or show it in screenshots and recordings. Store it locally with .NET User Secrets and revoke/rotate it after evaluation.
 
 ## Core workflow
 
@@ -158,8 +159,6 @@ Stop the app with `Ctrl+C`. No database reset or LocalDB deletion is required.
 - [Evidence localization and reviewer overlay plan](AURA/docs/EVIDENCE_LOCALIZATION_PLAN.md)
 - [User-study protocol and evidence requirements](AURA/docs/USER_STUDY_PROTOCOL.md)
 - [Submission checklist](AURA/docs/SUBMISSION_CHECKLIST.md)
-- [Official product-only video script (Vietnamese)](AURA/submission/AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md)
-- [Final pitch script and judge Q and A (Vietnamese)](AURA/submission/AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md)
 - [Optional local Ollama setup](AURA/docs/LOCAL_OLLAMA.md)
 
 ## Current limitations

@@ -14,7 +14,7 @@
 - Health endpoint: https://bondphupham-001-site1.ltempurl.com/healthz
 - Public repository: https://github.com/BondPhuPhamzZ/AURA
 - Frozen release ref: `aura-demo-day-2026-10-14` (tag is created from the final synchronized commit and pushed with the repository)
-- Official video: add the Team Drive link after recording and upload
+- Official video: https://drive.google.com/file/d/14Co4QjnoDeYPTORXcxi1u-r1MOuX2KM0/view?usp=sharing
 
 ## First action for judges
 
