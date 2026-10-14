@@ -15,6 +15,6 @@ Thư mục này chỉ giữ một phiên bản hiện hành cho mỗi hạng m�
 
 Ba file Build Log là ba định dạng của cùng một tài liệu toàn dự án, không phải các sprint log riêng. Phiên bản lịch sử được giữ trong Git history thay vì đặt cạnh bản chốt.
 
-Tài liệu ôn tập cá nhân, kịch bản quay video, kịch bản pitching và Q&A của BGK được giữ riêng tại `../phanbien/`, không nằm trong gói submission.
+Tài liệu ôn tập cá nhân, kịch bản quay video, kịch bản pitching và Q&A của BGK được giữ ngoài repository tại `D:\aura\phan_bien`, không nằm trong gói submission.
 
 Video chính thức nằm trên Team Drive, không đưa vào Git. User evidence chỉ hoàn tất sau khi có ba người tham gia đã đồng ý, feedback nguyên văn được xác nhận, một thay đổi sản phẩm truy vết được và một tác động tiêu cực được ghi nhận. Không đưa API key, hóa đơn thật, raw provider payload, database, ảnh billing hoặc secret vào thư mục này.

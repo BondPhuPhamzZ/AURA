@@ -6,6 +6,7 @@ $AppRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $AppRoot '..')).Path
 $DemoRoot = 'D:\aura\demo_Day'
 $EvidenceRoot = 'D:\aura\demo_evidence'
+$PersonalRoot = 'D:\aura\phan_bien'
 
 if (-not $DemoRoot.Equals('D:\aura\demo_Day', [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "Unsafe DemoRoot: $DemoRoot"
@@ -60,17 +61,14 @@ $requiredCopies = @(
     @("$AppRoot\submission\AURA_USER_FEEDBACK_FORM.docx", "$DemoRoot\Evidence\08_USER_STUDY_PENDING\AURA_USER_FEEDBACK_FORM.docx"),
     @("$AppRoot\submission\AURA_USER_FEEDBACK_FORM.pdf", "$DemoRoot\Evidence\08_USER_STUDY_PENDING\AURA_USER_FEEDBACK_FORM.pdf"),
 
-    # Personal Vietnamese study and rebuttal set
-    @("$AppRoot\phanbien\README.md", "$DemoRoot\Gia_Phu\OnTap\README.md"),
-    @("$AppRoot\phanbien\AURA_STUDY_GUIDE_VI.md", "$DemoRoot\Gia_Phu\OnTap\AURA_STUDY_GUIDE_VI.md"),
-    @("$AppRoot\phanbien\AURA_CODE_FLOW_VI.md", "$DemoRoot\Gia_Phu\OnTap\AURA_CODE_FLOW_VI.md"),
-    @("$AppRoot\phanbien\AURA_DEMO_OPERATIONS_VI.md", "$DemoRoot\Gia_Phu\OnTap\AURA_DEMO_OPERATIONS_VI.md"),
-    @("$AppRoot\phanbien\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md", "$DemoRoot\Gia_Phu\Pitching_QnA\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md"),
+    # Personal material stays outside Git; Demo Day receives only the two final guides.
+    @("$PersonalRoot\AURA_ON_TAP_TOAN_DIEN_VI.md", "$DemoRoot\Gia_Phu\Final\AURA_ON_TAP_TOAN_DIEN_VI.md"),
+    @("$PersonalRoot\AURA_HUONG_DAN_THUYET_TRINH_5_SLIDE_VI.md", "$DemoRoot\Gia_Phu\Presentation\AURA_HUONG_DAN_THUYET_TRINH_5_SLIDE_VI.md"),
 
     # Video and presentation
-    @("$AppRoot\phanbien\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md", "$DemoRoot\kich_ban_video\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md"),
+    @("$PersonalRoot\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md", "$DemoRoot\kich_ban_video\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md"),
     @("$AppRoot\submission\AURA_5_SLIDES_FINAL.pptx", "$DemoRoot\kich_ban_thuyettrinh_slide\AURA_5_SLIDES_FINAL.pptx"),
-    @("$AppRoot\phanbien\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md", "$DemoRoot\kich_ban_thuyettrinh_slide\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md"),
+    @("$PersonalRoot\AURA_HUONG_DAN_THUYET_TRINH_5_SLIDE_VI.md", "$DemoRoot\kich_ban_thuyettrinh_slide\AURA_HUONG_DAN_THUYET_TRINH_5_SLIDE_VI.md"),
 
     # Upload-ready package
     @("$AppRoot\submission\README.md", "$DemoRoot\Nop\00_READ_FIRST\README.md"),
@@ -103,7 +101,7 @@ foreach ($entry in $requiredCopies) {
 }
 
 # Remove obsolete personal guidance from the upload-ready package. The source
-# remains available under phanbien/ and is copied only to the private rehearsal
+# remains available outside Git under D:\aura\phan_bien and is copied only to the private rehearsal
 # folders above.
 $legacyPersonalTargets = @(
     "$DemoRoot\Nop\00_READ_FIRST\README_FIRST.md",
@@ -112,7 +110,25 @@ $legacyPersonalTargets = @(
     "$DemoRoot\Nop\03_VIDEO\VIDEO_FILE_PENDING.md",
     "$DemoRoot\Nop\04_BUILD_LOG\AURA_BUILD_LOG_1_PAGE.md",
     "$DemoRoot\Nop\04_BUILD_LOG\AURA_BUILD_LOG_1_PAGE.docx",
-    "$DemoRoot\Nop\04_BUILD_LOG\AURA_BUILD_LOG_1_PAGE.pdf"
+    "$DemoRoot\Nop\04_BUILD_LOG\AURA_BUILD_LOG_1_PAGE.pdf",
+
+    # Old, duplicated personal rehearsal files superseded by the two final guides.
+    "$DemoRoot\Gia_Phu\OnTap\00_DOC_TRUOC_2026-10-14.md",
+    "$DemoRoot\Gia_Phu\OnTap\01_SO_TAY_AURA_HIEN_HANH_2026-10-14.md",
+    "$DemoRoot\Gia_Phu\OnTap\02_LUONG_XU_LY_VA_MA_NGUON_2026-10-14.md",
+    "$DemoRoot\Gia_Phu\OnTap\03_VAN_HANH_DEMO_VA_XU_LY_SU_CO_2026-10-14.md",
+    "$DemoRoot\Gia_Phu\OnTap\AURA_CODE_FLOW_VI.md",
+    "$DemoRoot\Gia_Phu\OnTap\AURA_DEMO_OPERATIONS_VI.md",
+    "$DemoRoot\Gia_Phu\OnTap\AURA_STUDY_GUIDE_VI.md",
+    "$DemoRoot\Gia_Phu\OnTap\README.md",
+    "$DemoRoot\Gia_Phu\Pitching_QnA\00_KICH_BAN_THUYET_TRINH_VA_QA_VI_2026-10-14.md",
+    "$DemoRoot\Gia_Phu\Pitching_QnA\01_QA_KY_THUAT_VA_LUONG_XU_LY_2026-10-14.md",
+    "$DemoRoot\Gia_Phu\Pitching_QnA\02_CHECKLIST_DEMO_VA_SU_CO_2026-10-14.md",
+    "$DemoRoot\Gia_Phu\Pitching_QnA\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md",
+    "$DemoRoot\kich_ban_thuyettrinh_slide\00_KICH_BAN_THUYET_TRINH_VA_QA.md",
+    "$DemoRoot\kich_ban_thuyettrinh_slide\01_HUONG_DAN_15_PHUT.md",
+    "$DemoRoot\kich_ban_thuyettrinh_slide\AURA_5_SLIDES_FINAL_2026-10-13_V2.pptx",
+    "$DemoRoot\kich_ban_thuyettrinh_slide\AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md"
 )
 foreach ($target in $legacyPersonalTargets) {
     $fullTarget = [System.IO.Path]::GetFullPath($target)

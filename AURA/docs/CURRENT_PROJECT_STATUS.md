@@ -48,4 +48,4 @@ FAHASA còn over ổn định do validator chưa chấp nhận chắc chắn nh�
 
 ## Cách đọc ngày trong gói Demo Day
 
-Các gói evidence có timestamp ngoài repository là bằng chứng lịch sử bất biến, không được sửa ngày để tạo cảm giác đây là phép đo mới. Nguồn trạng thái hiện hành là tài liệu này; bản tổng hợp số liệu công khai nằm tại `EVALUATION_EVIDENCE.md`. Bộ `phanbien/` chỉ chứa tài liệu ôn tập, kịch bản và Q&A cá nhân bằng tiếng Việt, không phải evidence đánh giá hay hồ sơ nộp.
+Các gói evidence có timestamp ngoài repository là bằng chứng lịch sử bất biến, không được sửa ngày để tạo cảm giác đây là phép đo mới. Nguồn trạng thái hiện hành là tài liệu này; bản tổng hợp số liệu công khai nằm tại `EVALUATION_EVIDENCE.md`. Tài liệu ôn tập, kịch bản và Q&A cá nhân được giữ ngoài repository tại `D:\aura\phan_bien`; chúng không phải evidence đánh giá hay hồ sơ nộp.
