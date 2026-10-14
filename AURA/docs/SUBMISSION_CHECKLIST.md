@@ -51,15 +51,6 @@
 5. Xác nhận repository không chứa hóa đơn thật, API key, user secrets, database, publish profile, provider payload hoặc ảnh billing.
 6. Ghi lại commit Git cuối và thời điểm upload Drive; không âm thầm thay evidence sau hạn nộp.
 
-## Ranh giới claim khi trả lời BGK
-
-- Nói `163/163 test offline`, không nói `163 hóa đơn`.
-- Nói `mini-holdout prospective 8/10, 0 missed, 2 fail-safe over`, không nói production accuracy.
-- Nói `năm upload đồng thời đã hoàn tất`, không gọi đó là production SLA cho năm người dùng.
-- Nói `kiểm soát AI capacity trong một process`; distributed limiting vẫn là roadmap.
-- Nói evidence localization là prototype cô lập, chưa phải capability production.
-- Nói rõ gate ba người dùng vẫn pending cho tới khi có record và trích dẫn được xác nhận.
-
 ## File không được đưa lên Git hoặc Drive công khai
 
 API key, production connection string, `.env`, user secrets, publish credential, `.vs/`, `bin/`, `obj/`, `.tmp/`, database local, hóa đơn thật, ảnh chưa redaction, raw provider response và ảnh billing/key dashboard.
