@@ -39,7 +39,7 @@ submission/*.mkv
 # Private study, pitch and competition-strategy material lives in D:/aura/phan_bien.
 # Keep the public repository limited to product, verification and submission artifacts.
 phanbien/
-BUSINESS_RULES_VI.md
+/BUSINESS_RULES_VI.md
 docs/AURA_FINAL_DEFENSE_SOURCE_CODE_QA_*.md
 docs/AURA_FINAL_PITCH_AND_JUDGE_QA_*.md
 docs/AURA_FINAL_STUDY_GUIDE_*.md

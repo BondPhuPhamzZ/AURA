@@ -45,9 +45,9 @@ Khả năng chính:
 | Bản | Vai trò |
 |---|---|
 | [BUSINESS_RULES.md - English](AURA/BUSINESS_RULES.md) | Bản chuẩn đang áp dụng cho contract của model Qwen3.8 Flash và policy hiện hành |
-| `D:\aura\rule\BUSINESS_RULES_VI.md` - Tiếng Việt | Bản dịch tham khảo được giữ ngoài repository và ngoài runtime để tránh nhầm với policy nguồn |
+| [BUSINESS_RULES_VI.md - Tiếng Việt](AURA/docs/BUSINESS_RULES_VI.md) | Bản dịch công khai để BGK rà soát nhanh; bị loại rõ ràng khỏi build output và gói publish |
 
-Ứng dụng không đọc trực tiếp Markdown lúc chạy. Các ràng buộc extraction tương đương được mã hóa trong `ReceiptExtractionContract.cs`; quyết định được thực thi tất định trong `PolicyDecisionEngine.cs`. Vì vậy model đọc facts nhưng không có quyền tự thay hoặc tự áp dụng policy phê duyệt.
+Runtime chỉ đọc đúng đường dẫn `BUSINESS_RULES.md` được cấu hình và chèn bản tiếng Anh này vào system prompt để model trích xuất dữ kiện theo schema. Quyết định cuối được thực thi tất định trong `PolicyDecisionEngine.cs`, nên model không có quyền tự thay policy phê duyệt. Bản tiếng Việt chỉ phục vụ tra cứu và không được đưa vào build output hoặc gói publish.
 
 ## Baseline đã xác minh
 
@@ -154,7 +154,7 @@ Dừng app bằng `Ctrl+C`. Không cần reset database hoặc xóa LocalDB.
 - [Hướng dẫn BGK chạy local và xử lý lỗi](AURA/docs/JUDGE_LOCAL_SETUP.md)
 - [Kiến trúc và tích hợp](AURA/ARCHITECTURE_AND_INTEGRATION_REPORT.md)
 - [Business rules tiếng Anh - bản chuẩn hiện hành](AURA/BUSINESS_RULES.md)
-- Bảng business rules tiếng Việt: `D:\aura\rule\BUSINESS_RULES_VI.md` (tài liệu local, không thuộc runtime/Git)
+- [Business rules tiếng Việt - bản dịch dành cho BGK](AURA/docs/BUSINESS_RULES_VI.md)
 - [Đặc tả workflow](AURA/submission/AURA_WORKFLOW_SPEC.md)
 - [Hướng dẫn dataset và đánh giá mở rộng](AURA/docs/DATASET_EVALUATION_GUIDE.md)
 - [Trạng thái đã xác minh hiện hành](AURA/docs/CURRENT_PROJECT_STATUS.md)

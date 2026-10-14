@@ -33,6 +33,11 @@
     <None Update="BUSINESS_RULES.md"
           CopyToOutputDirectory="PreserveNewest"
           CopyToPublishDirectory="PreserveNewest" />
+    <!-- Public Vietnamese reference for judges. It must never become a runtime
+         policy candidate or be included in a deployment package. -->
+    <None Update="docs\BUSINESS_RULES_VI.md"
+          CopyToOutputDirectory="Never"
+          CopyToPublishDirectory="Never" />
   </ItemGroup>
 
 </Project>
