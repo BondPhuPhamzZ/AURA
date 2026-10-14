@@ -19,4 +19,6 @@ This folder contains only the active, judge-facing technical documentation. Hist
 
 Raw receipts, raw provider responses, API dashboards, databases, secrets, and personally identifying material are intentionally excluded from Git. Private evidence packages keep their original timestamps and hashes; they are not renamed or regenerated to appear newer.
 
+An older date inside `DATASET_EVALUATION_GUIDE.md`, `DEPLOYMENT.md`, `LOCAL_OLLAMA.md`, or `TEST_CASES.md` records the date of that protocol or measurement baseline. It is not a signal that the current candidate still uses an older model. Current configuration and release gates live in `CURRENT_PROJECT_STATUS.md`; current public measurements live in `EVALUATION_EVIDENCE.md`.
+
 Submission artifacts are indexed separately in `../submission/README.md`.

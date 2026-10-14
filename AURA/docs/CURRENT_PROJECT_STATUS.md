@@ -2,7 +2,7 @@
 
 ## Kết luận
 
-Candidate kỹ thuật đã đủ điều kiện quay video và demo có giám sát. Release đang đóng băng tại tag `aura-demo-day-2026-10-14`, commit `efc65d835a3b271369ed07c0a129533d1a0b5264`. Không thay prompt, policy, threshold, schema hoặc model trước Demo Day trừ khi tái hiện được blocker và chấp nhận chạy lại toàn bộ gate.
+Candidate kỹ thuật đã đủ điều kiện nộp và demo có giám sát. Bản runtime được đóng băng tại tag `aura-demo-day-2026-10-14`, commit `efc65d835a3b271369ed07c0a129533d1a0b5264`; các commit sau tag chỉ đồng bộ tài liệu hoặc UX đã kiểm thử. Video chính thức dưới 180 giây đã quay, tải lên Team Drive và được liên kết trong `../submission/AURA_SUBMISSION_LINKS.*`. Không thay prompt, policy, threshold, schema hoặc model trước Demo Day trừ khi tái hiện được blocker và chấp nhận chạy lại toàn bộ gate.
 
 ## Cấu hình live
 
@@ -41,10 +41,10 @@ FAHASA còn over ổn định do validator chưa chấp nhận chắc chắn nh�
 
 ## Gate con người còn mở
 
-1. Quay video chính thức tối đa 180 giây và rà secret/PII theo từng khung hình.
-2. Hoàn tất ba phiên user study thật, có consent, quote nguyên văn, một thay đổi truy vết được và một negative effect.
-3. Upload Team Drive, kiểm quyền bằng cửa sổ ẩn danh và xác nhận deadline mới nhất.
-4. Rehearsal có bấm giờ trên đúng release đóng băng.
+1. Hoàn tất ba phiên user study thật, có consent, quote nguyên văn, một thay đổi truy vết được và một negative effect.
+2. Bổ sung các file runbook/evidence còn thiếu vào Team Drive, kiểm quyền bằng cửa sổ ẩn danh và xác nhận deadline mới nhất.
+3. Rehearsal có bấm giờ trên đúng release đóng băng.
+4. Publish/recycle lại bản web hiện hành nếu cần trình diễn auto-scroll mới; sau đó chỉ chạy health và một smoke có kiểm soát, không săn lại số benchmark.
 
 ## Cách đọc ngày trong gói Demo Day
 

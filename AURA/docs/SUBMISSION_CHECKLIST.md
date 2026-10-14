@@ -15,10 +15,23 @@
 | Five-slide deck | Ready | `../submission/AURA_5_SLIDES_FINAL.pptx` |
 | Proposal, Vietnamese and English | Ready | `../submission/AURA_PROPOSAL_VI.*`, `../submission/AURA_PROPOSAL_EN.*` |
 | One-page project Build Log | Ready | `../submission/AURA_BUILD_LOG.*` |
-| Product demo video, maximum 3 minutes | Must record/upload final cut | personal recording guide: `../phanbien/AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md` |
+| Product demo video, maximum 3 minutes | Ready and uploaded | URL in `../submission/AURA_SUBMISSION_LINKS.*` |
 | Verify Harness and evaluator instructions | Ready | `docs/JUDGE_LOCAL_SETUP.md`, `docs/RUNBOOK.md` |
 | Three real-user feedback records | Open gate | `USER_STUDY_PROTOCOL.md`, feedback form in `../submission/` |
-| Team Drive permissions and final links | Manual gate | `../submission/AURA_SUBMISSION_LINKS.*` |
+| Team Drive permissions and final links | Uploaded; incognito permission check pending | `../submission/AURA_SUBMISSION_LINKS.*` |
+
+## Team Drive folder map
+
+| Drive folder | Upload from repository | Required action |
+|---|---|---|
+| `00_READ_FIRST` | `../submission/AURA_SUBMISSION_LINKS.pdf` and a short folder `README.md` | Keep one current PDF only; verify every URL in an incognito window |
+| `01_SLIDES` | `../submission/AURA_5_SLIDES_FINAL.pptx` | Ready |
+| `02_PROPOSAL` | `../submission/AURA_PROPOSAL_VI.pdf`, `../submission/AURA_PROPOSAL_EN.pdf` | Ready |
+| `03_VIDEO` | Official MP4 linked by `../submission/AURA_SUBMISSION_LINKS.*` | Keep one file clearly marked as the official under-three-minute video |
+| `04_BUILD_LOG` | `../submission/AURA_BUILD_LOG.pdf` | Ready; this is the single project-wide one-page Build Log |
+| `05_GITHUB_AND_RUNBOOK` | repository root `README.md`, `RUNBOOK.md`, `JUDGE_LOCAL_SETUP.md`, `TEST_CASES.md`, `../BUSINESS_RULES.md`, `../submission/AURA_WORKFLOW_SPEC.md` | Upload the six files; do not copy source code or secrets into Drive |
+| `06_USER_EVIDENCE_PENDING` | `USER_STUDY_PROTOCOL.md`, `../submission/AURA_USER_FEEDBACK_FORM.docx`, `../submission/AURA_USER_FEEDBACK_FORM.pdf` | Upload templates now; add only consented, authentic records later |
+| `07_EVIDENCE_SUMMARY` | `CURRENT_PROJECT_STATUS.md`, `EVALUATION_EVIDENCE.md` | Upload both current summaries |
 
 ## Before recording or presenting
 
@@ -31,7 +44,7 @@
 
 ## Before uploading to Team Drive
 
-1. Upload one final copy of the slide deck, both proposal PDFs, Build Log PDF, video, GitHub URL, live URL, and any required track form.
+1. Populate every folder in the map above; keep one final copy of each logical deliverable.
 2. Keep DOCX/PPTX source files in the team folder only when requested; use PDFs as the default review format.
 3. Open every link in an incognito window using an account without owner privileges.
 4. Confirm the video duration is at most 180 seconds and plays with audible narration.
