@@ -1,156 +1,123 @@
-# Kịch bản thuyết trình và phản biện AURA
+# Kịch bản pitching và Q&A cốt lõi AURA
 
 **Bản chốt:** 14/10/2026
 
-**Mục tiêu:** trình bày trong 13 phút 30 giây, chừa 90 giây cho chuyển màn hình hoặc gián đoạn ngắn.
+**Mục tiêu:** hoàn tất phần trình bày trong khoảng 13 phút 30 giây, kể cả video dưới 3 phút, và giữ 90 giây dự phòng.
+
+## Một câu phải nhớ
+
+**AURA dùng AI để đọc dữ kiện, dùng policy C# tất định để quyết định hướng xử lý và giữ con người chịu trách nhiệm với ngoại lệ.**
 
 ## Phân bổ thời gian
 
-| Thời gian | Nội dung | Kết quả cần đạt |
+| Thời gian | Nội dung | Điều BGK cần nhớ |
 |---:|---|---|
-| 0:00-1:15 | Slide 1 và câu chuyện sản phẩm | Nêu đúng bài toán là ranh giới quyết định, không chỉ OCR |
-| 1:15-2:45 | Slide 2 | Giải thích workflow và hai quyết định của con người |
-| 2:45-4:25 | Slide 3 | Trình bày evidence trung thực và cách đo |
-| 4:25-5:35 | Slide 4 | Kiến trúc thật, dữ liệu mô phỏng được công bố |
-| 5:35-6:35 | Slide 5 | Failure behavior, giới hạn và roadmap |
-| 6:35-9:33 | Video demo hoặc chuỗi live tương đương | Verify, escalation, quản lý, Audit và Undo |
-| 9:33-11:20 | Diễn giải evidence | Over-escalation, concurrency và claim boundary |
-| 11:20-12:30 | User evidence | Chỉ trình bày phiên đã thực sự hoàn tất |
-| 12:30-13:30 | Kết luận | Go/no-go hiện tại và bước pilot có kiểm soát |
-| 13:30-15:00 | Buffer | Chuyển màn hình hoặc tương tác ngắn với BGK |
+| 0:00-1:10 | Câu chuyện mở đầu và Slide 1 | Bài toán khó là ranh giới quyết định, không chỉ OCR |
+| 1:10-2:35 | Slide 2 | HTTP 202, SQL queue, hai điểm quyết định của con người |
+| 2:35-4:00 | Slide 3 | Evidence được nói đúng ranh giới |
+| 4:00-5:05 | Slide 4 | Model thay được, policy không đổi |
+| 5:05-6:00 | Slide 5 | Fail-safe, giới hạn hiện tại |
+| 6:00-9:00 | Video chính thức | Verify, escalation, quản lý, Audit và Undo |
+| 9:00-11:10 | Giải thích evidence và concurrency | 8/10 prospective; 11/12 chỉ là stability; queue integrity khác SLA |
+| 11:10-12:25 | User evidence hoặc kế hoạch pilot | Chỉ nói những phiên thực sự đã hoàn tất |
+| 12:25-13:30 | Kết luận | Supervised MVP; bước tiếp theo là pilot có kiểm soát |
+| 13:30-15:00 | Dự phòng | Chuyển màn hình hoặc xử lý sự cố |
 
-## Câu chuyện mở đầu
+## Câu chuyện mở đầu 45 giây
 
-“Khi bắt đầu AURA, em nghĩ phần khó nhất là đọc hóa đơn. Lượt holdout hóa đơn thật đầu tiên đã thay đổi cách em nhìn bài toán: model có thể trả JSON hợp lệ nhưng vẫn gán sai ý nghĩa cho một con số hoặc mã định danh. Vấn đề thật sự là biết khi nào bằng chứng đã đủ và khi nào tự động hóa phải dừng.”
+“Ban đầu em nghĩ phần khó nhất là đọc hóa đơn. Nhưng holdout hóa đơn thật đầu tiên cho thấy model có thể trả JSON hợp lệ mà vẫn gán sai ý nghĩa cho một con số hoặc mã định danh. Khi đó em nhận ra vấn đề chính không chỉ là OCR, mà là biết khi nào bằng chứng đã đủ và khi nào tự động hóa phải dừng.”
 
-“Từ thất bại đó, em tách vision extraction khỏi approval policy, bổ sung provenance và semantic validation, giới hạn repair còn một lần và giữ con người ở ranh giới ngoại lệ. AURA vì vậy không chỉ trình diễn một output AI đẹp; nó là một workflow có trách nhiệm và có thể kiểm toán.”
+“Vì vậy em tách vision extraction khỏi approval policy, thêm semantic validation và provenance, chỉ cho repair một lần và giữ người quản lý ở ranh giới ngoại lệ. AURA không giao quyền duyệt cho AI; AURA biến hồ sơ thành dữ kiện có thể kiểm tra và câu hỏi có thể quyết định.”
 
-Không bổ sung câu chuyện doanh nghiệp hoặc lời người dùng chưa có biên bản thật.
-
-## Lời thoại theo slide
+## Lời thoại ngắn theo slide
 
 ### Slide 1
 
-“Một hồ sơ hoàn ứng phải đi qua đọc hóa đơn, đối chiếu policy, hỏi quản lý và lưu vết. Nút thắt không chỉ là OCR, mà là thiếu một nguyên tắc nhất quán để xác định khi nào evidence đã đủ.”
-
-“AURA chia trách nhiệm hẹp: Qwen đọc dữ kiện; policy C# tất định quyết định route; con người xử lý ngoại lệ; hệ thống giữ timeline.”
+“Một hồ sơ hoàn ứng đi qua đọc chứng từ, đối chiếu policy, hỏi quản lý và lưu vết. AURA chia trách nhiệm rõ: Qwen đọc facts, C# policy quyết định route, con người xử lý ngoại lệ và Audit giữ timeline.”
 
 ### Slide 2
 
-“Upload kiểm file, lưu request PENDING và trả HTTP 202. Worker dựa trên SQL claim job bằng lease nên refresh hoặc recycle không xóa công việc. Model trả facts có cấu trúc, semantic validation có thể yêu cầu một repair, rồi policy tạo route cuối.”
-
-“Quyết định người thứ nhất là nhân viên xác nhận chuyển tiếp. Quyết định thứ hai là quản lý trả lời câu hỏi cụ thể. Undo tạo event mới thay vì xóa lịch sử.”
+“Upload được kiểm tra và lưu PENDING vào SQL rồi server trả HTTP 202. Worker claim job bằng lease nên refresh hoặc recycle không làm mất công việc. Model trả facts, semantic validation kiểm tra, policy mới chọn AUTO hay ESCALATE. Nhân viên xác nhận chuyển tiếp; quản lý trả lời câu hỏi; Undo thêm event mới thay vì xóa lịch sử.”
 
 ### Slide 3
 
-“Candidate hiện tại có Release build sạch và 163 trên 163 test offline. Đây là test code, không phải 163 hóa đơn. Verify Harness live đạt 5 trên 5 trong 65,004 giây.”
-
-“Mini-holdout prospective 10 hóa đơn đạt 8 trên 10 quyết định chính xác, 0 missed escalation, 2 fail-safe over-escalation và không quan sát system/provider/429 error. Em không gọi đây là production accuracy. Lần lặp sau trên dữ liệu đã biết đạt 11 trên 12 và chỉ được ghi là stability evidence.”
+“Release build sạch và 163/163 test offline. Đây là test code, không phải 163 hóa đơn. Verify live đạt 5/5 trong 65,004 giây. Mini-holdout prospective 10 hóa đơn đạt 8/10, không có missed escalation, có hai fail-safe over. Em không gọi đây là production accuracy. Kết quả 11/12 về sau chỉ là stability trên known data.”
 
 ### Slide 4
 
-“AURA là ASP.NET Core vertical slice. SQL lưu request, job, result và audit. OpenRouter route Qwen3.8 Flash tới Alibaba để extraction. Policy engine không phụ thuộc model.”
-
-“Năm ảnh Verify và test kit mở rộng là dữ liệu synthetic được công bố. Upload, provider call, validation, policy, review workflow và audit vẫn chạy qua application thật.”
+“AURA là ASP.NET Core vertical slice. SQL giữ request, job, result và audit. OpenRouter route Qwen3.8 Flash tới Alibaba để extraction. Policy engine không phụ thuộc model nên đổi model không tự làm đổi luật duyệt.”
 
 ### Slide 5
 
-“Provider timeout hoặc 429 không bao giờ trở thành approval. Fallback chỉ chạy khi được bật và lỗi thuộc nhóm hạ tầng cho phép. Schema hoặc semantic failure chỉ được repair một lần, sau đó dừng ở FACT. Live host giữ fallback tắt.”
+“Timeout, 429 hoặc semantic failure không thể biến thành approval. Fallback chỉ chạy khi bật và lỗi thuộc allowlist hạ tầng. Baseline hiện tại chưa có production RBAC, PDF nhiều trang, object storage hay distributed provider limiter. Evidence localization mới là prototype cô lập.”
 
-“Giới hạn hiện tại gồm một JPG/PNG, chưa có production RBAC, safe multipage PDF, managed object storage hoặc distributed provider limiter. Evidence localization vẫn là prototype cô lập.”
+## Ba số liệu bắt buộc nói đúng
 
-## Diễn giải sau demo
+- `163/163`: test offline của code, không phải số hóa đơn.
+- `8/10`: mini-holdout prospective, 0 missed, 2 fail-safe over; mẫu nhỏ, chưa phải production accuracy.
+- `5/5 trong 65,004 giây`: Verify live đạt yêu cầu 5 ca dưới 90 giây.
 
-“Năm upload khác nhau cùng lúc hoàn tất 5 trên 5, không mất request. E2E P95 là 93,684 giây vì một AI permit tuần tự hóa inference. Đây là gate queue integrity, không phải Verify latency gate.”
+Nếu cần nói concurrency: năm upload khác nhau hoàn tất 5/5 với E2E P95 93,684 giây ở AI concurrency 1. Đây là queue-integrity evidence, không phải production SLA cho năm người.
 
-“FAHASA là over-escalation còn ổn định. Model đọc đúng field trọng yếu nhưng validator chưa chấp nhận chắc chắn nhãn ‘Thanh toán’ là final-payable evidence. Nếu thêm keyword rộng, hệ thống có thể nhầm payment-method hoặc tiền khách đưa thành tổng cuối. Vì vậy em đóng băng candidate và chỉ thay guard sau khi có fixture dương và âm độc lập.”
+## Mười hai câu Q&A ưu tiên
 
-## Câu hỏi phản biện cốt lõi
+### 1. Vì sao cần AI nếu C# policy mới quyết định
 
-### Vì sao cần AI nếu C# policy mới quyết định
+Layout hóa đơn thay đổi nhiều. Vision model xử lý perception để tạo facts và evidence; C# áp rule ổn định, test được. AI đọc, code quyết định route, con người giữ authority.
 
-Layout và cách in trên hóa đơn biến thiên. Vision model chuyển input thị giác thành facts và evidence; C# áp dụng rule ổn định, test được. AI xử lý perception, code và con người giữ authority.
+### 2. Vì sao không để model approve trực tiếp
 
-### Vì sao không để model approve trực tiếp
+Output đúng schema vẫn có thể sai nghĩa. Nếu thành phần có thể đọc sai cũng có quyền duyệt thì hệ thống mất lớp kiểm soát quan trọng nhất.
 
-Schema-valid vẫn có thể sai nghĩa. AURA kiểm role của identifier, evidence, money và date bằng lớp độc lập. Trao quyền approve cho chính thành phần có thể đọc sai sẽ loại bỏ kiểm soát quan trọng nhất.
+### 3. Vì sao FACT ưu tiên POLICY và AUTHORITY
 
-### Vì sao FACT ưu tiên hơn POLICY hoặc AUTHORITY
+Policy và authority đều phụ thuộc dữ kiện đáng tin. Khi total, date, merchant hoặc identifier chưa chắc, AURA phải xác lập facts trước.
 
-Kết luận policy và authority phụ thuộc facts đáng tin. Khi total, date, merchant hoặc identifier chưa chắc chắn, AURA hỏi con người xác lập facts trước.
+### 4. Vì sao 8/10 vẫn có ý nghĩa
 
-### 163 test có phải 163 hóa đơn không
+Kết quả chưa đủ cho production không giám sát. Nó có giá trị cho supervised MVP vì không có missed escalation hoặc system error; hai mismatch đều fail-safe và được công bố như chi phí vận hành.
 
-Không. Đó là unit/integration test offline cho policy, contract, queue, fallback, audit và UI contract. Receipt accuracy được báo riêng trên dataset đã khóa.
+### 5. Có chạy lại holdout để lấy số đẹp không
 
-### Vì sao 8 trên 10 vẫn có ý nghĩa
+Không. Tập 10 ca được khóa nhãn và hash trước request đầu, rồi chạy một lần. Các lượt trên bytes đã biết được ghi là regression hoặc stability, không thay số prospective.
 
-Chưa đủ cho production không giám sát. Nó có giá trị cho supervised MVP vì không có missed escalation hoặc system error và hai mismatch đều fail-safe. Hai over vẫn là chi phí vận hành phải giảm bằng dữ liệu unseen.
+### 6. Vì sao không vá FAHASA ngay
 
-### Có chạy lại holdout để săn số đẹp không
+Mở rộng keyword `Thanh toán` có thể nhầm payment method, tiền khách đưa hoặc tiền thối thành tổng cuối. Thay đổi an toàn cần fixture dương và âm độc lập. Giữ một over minh bạch an toàn hơn tạo fail-open.
 
-Không. Package 10 ca được khóa nhãn và hash trước request đầu rồi chạy một lần. Các lượt sau trên bytes đã biết được ghi rõ là regression hoặc stability và không thay kết quả prospective.
+### 7. HTTP 202 và polling nghĩa là gì
 
-### Vì sao không vá FAHASA trước chung kết
+HTTP 202 cho biết hồ sơ đã được kiểm tra đầu vào và lưu bền vững, chưa có nghĩa AI đã xử lý xong. UI poll `statusUrl` để hiện PENDING/PROCESSING rồi cập nhật kết quả cuối; request upload không phải mở chờ AI.
 
-Keyword patch đơn giản có thể nhầm tender, tiền khách đưa hoặc tiền thối thành final total. Thay đổi an toàn cần fixture final-payable dương và fixture tender/change/subtotal âm. Giữ một over minh bạch an toàn hơn tạo fail-open.
+### 8. Refresh hoặc recycle có làm mất job không
 
-### Khi OpenRouter trả 429 thì sao
+Signal RAM có thể mất nhưng row PENDING vẫn ở SQL. Worker có thể đọc lại hoặc reclaim khi lease hết hạn.
 
-Lỗi được phân loại là hạ tầng. Shared AI permit và cooldown ngăn request amplification. Khi live fallback tắt, request dừng bằng system escalation, không bịa business decision.
+### 9. Năm giám khảo upload cùng lúc có được không
 
-### Năm giám khảo upload cùng lúc có được không
+Năm upload khác nhau được nhận vào SQL và đã hoàn tất không mất job. AI concurrency 1 khiến request sau chờ lâu hơn. Kết quả này chứng minh queue integrity trên một process, chưa chứng minh multi-instance production capacity.
 
-Năm upload khác nhau được nhận vào SQL và hoàn tất không mất job. Inference chạy concurrency một nên request sau phải chờ. Kết quả chứng minh queue integrity trên một process, chưa phải production SLA hoặc multi-instance capacity.
+### 10. Vì sao Verify thứ hai nhận 409
 
-### Vì sao Verify thứ hai nhận 409
+Verify là benchmark độc quyền. Gate trong process chỉ cho một batch thật chạy, nên nhiều click không biến 5 ca thành 25 AI call.
 
-Verify là benchmark operation độc quyền. Gate trong process cho một batch thật chạy và từ chối click trùng để năm giám khảo không nhân năm ca thành 25 AI call.
+### 11. Khi provider trả 429 hoặc timeout thì sao
 
-### SemaphoreSlim còn là queue chính không
+Shared permit và cooldown giảm request amplification. Khi live fallback tắt, hồ sơ dừng bằng system escalation thay vì tạo business decision giả.
 
-Không. SQL row là nguồn job bền vững; bounded channel chỉ đánh thức worker. Gate trong process vẫn dùng để giới hạn Verify và provider capacity, nhưng khi scale nhiều process phải có distributed limiter.
+### 12. Evidence overlay đã là production explainability chưa
 
-### Ollama có sẵn sàng làm live fallback không
+Chưa. Prototype mới chứng minh interaction và contract region gắn với hash ảnh. Production còn cần word-level OCR, annotation độc lập, unseen set, region recall và false-highlight benchmark.
 
-Ollama là contingency local có giám sát. Profile 4B khóa đã pass gate quality synthetic nhưng latency cao; SmarterASP không thể gọi loopback laptop. Vì vậy public live fallback vẫn tắt.
+## Câu hỏi dự phòng một dòng
 
-### HTTP 202 nghĩa là gì
+- **Claimed amount có vào prompt không?** Không; tránh anchoring. Backend so sánh sau khi model đọc độc lập.
+- **Audit có bất biến tuyệt đối không?** Ứng dụng append event và Undo không xóa lịch sử; production vẫn cần quyền append hạn chế, retention và WORM/hash chain.
+- **SHA-256 có chứng minh hóa đơn thật không?** Không; hash chỉ chứng minh byte identity trong package.
+- **Ollama có phải live fallback không?** Không; là contingency local có giám sát và latency cao. SmarterASP không gọi được loopback trên laptop.
+- **Thêm PDF có đơn giản không?** Không; cần signature check, page limit, malware scan, rasterization cô lập, page provenance, retention và benchmark mới.
+- **Rủi ro lớn nhất còn lại?** Ba phiên user evidence và giới hạn capacity một process; chỉ claim sau khi có bằng chứng thật.
 
-Server đã validate và persist request, chưa hoàn tất AI processing. Client poll status URL trong lúc worker xử lý SQL job.
+## Kết luận 25 giây
 
-### Refresh hoặc recycle có làm mất claim không
-
-Signal RAM có thể mất nhưng PENDING row vẫn còn. Lease hết hạn và worker cycle sau có thể reclaim. Đây là phần đã có test và persistence check.
-
-### Audit có bất biến không
-
-Application append event và Undo không xóa lịch sử, nhưng chưa phải immutable compliance store. Production cần restricted append permission, retention bên ngoài và WORM hoặc hash chain.
-
-### SHA-256 có chứng minh hóa đơn thật không
-
-Không. SHA-256 chứng minh byte identity trong evidence package, không xác minh nhà phát hành và không nhận diện nội dung sau resize hoặc chụp lại.
-
-### Vì sao không gửi claimed amount vào prompt
-
-Để tránh model bị neo theo câu trả lời của nhân viên. Model đọc tổng in độc lập, backend so sánh hai giá trị sau.
-
-### Có thể hỗ trợ PDF chỉ bằng cách thêm extension không
-
-Không. Cần MIME/signature check, page/size limit, malware scan, sandboxed rasterization, page provenance, aggregation rule, retention và benchmark mới.
-
-### Evidence overlay đã là production explainability chưa
-
-Chưa. Prototype mới chứng minh interaction design và hash-bound region contract. Nó còn thiếu word-level OCR, independent annotation, unseen set, region recall và false-highlight measurement.
-
-### Tính năng lớn nhất đã cắt là gì
-
-Production evidence localization. Nếu highlight nhầm amount, reviewer có thể tự tin sai. Prototype được giữ cô lập cho tới khi có evaluation gate riêng.
-
-### Rủi ro nộp bài lớn nhất hiện tại là gì
-
-Ba phiên user evidence. Technical candidate và artifact đã sẵn sàng, nhưng track yêu cầu danh tính/vai trò thật, feedback nguyên văn, một thay đổi truy vết được và một tác động tiêu cực. Chỉ được claim sau khi thu thật.
-
-## Kết luận
-
-“AURA không cố thay người phê duyệt. Nó biến hóa đơn thành facts có thể truy vết, dùng policy tất định để route, dừng khi không chắc chắn và giữ quyết định con người trong audit. Evidence hiện tại đủ cho supervised demo; bước tiếp theo là pilot có kiểm soát, không phải vận hành production không giám sát.”
+“AURA không cố thay người phê duyệt. Hệ thống biến hóa đơn thành facts có thể truy vết, dùng policy tất định để route, dừng khi không chắc chắn và giữ quyết định con người trong Audit. Evidence hiện tại đủ cho supervised demo. Bước tiếp theo là pilot có kiểm soát cùng ba người dùng thật, không phải rollout production không giám sát.”

@@ -45,3 +45,11 @@ Các gói evidence mang timestamp ngoài repository là bằng chứng lịch s�
 - Không claim multi-instance rate limiting, production RBAC, safe PDF, malware scanning, object storage hoặc immutable compliance audit.
 - Không nói ba phiên người dùng đã hoàn tất khi chưa có biểu mẫu và quote được xác nhận.
 - Không sửa prompt, policy, threshold, schema hoặc model sát Demo Day nếu chưa tái chạy đầy đủ gate.
+
+## Lịch ôn sau khi nộp file
+
+1. Đọc `AURA_STUDY_GUIDE_VI.md` và tự nói lại bản nhớ 60 giây mà không nhìn tài liệu.
+2. Tập slide theo `AURA_FINAL_PITCH_SCRIPT_AND_QA_VI.md` hai vòng: một vòng đúng 13 phút 30 giây, một vòng rút còn 11 phút để có phương án dự phòng.
+3. Nhờ một người hỏi ngẫu nhiên 12 câu Q&A ưu tiên; mỗi câu trả lời trong 20 đến 35 giây.
+4. Rehearsal cả chuyển màn hình sang video và phương án dùng video khi live/provider lỗi.
+5. Trước khi rời nhà: laptop, sạc, chuột, CCCD/thẻ sinh viên, áo BTC, video bitrate thấp và bản PDF offline.

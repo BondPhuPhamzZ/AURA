@@ -69,4 +69,12 @@ Prototype hiện chỉ minh họa overlay SVG gắn với hash ảnh và region 
 
 ## 8 Trạng thái sẵn sàng
 
-Đủ cơ sở quay video và demo có giám sát trên release đóng băng. Các gate con người còn mở là: quay video chính thức tối đa 180 giây, thu ba phiên user study thật, kiểm quyền Team Drive bằng cửa sổ ẩn danh và rehearsal có bấm giờ. Không thay logic trước khi các việc này hoàn tất.
+Video chính thức dưới 180 giây đã hoàn tất và được upload. Gói submission cũng đã được sắp xếp. Việc còn lại trước chung kết là thay các tài liệu tiếng Việt mới trên Drive, kiểm mọi link bằng cửa sổ ẩn danh, thu ba phiên user study thật khi BTC/doanh nghiệp điều phối và rehearsal có bấm giờ. Không thay prompt, policy, threshold, schema hoặc model trừ khi có blocker tái hiện được và chấp nhận chạy lại toàn bộ gate.
+
+## 9 Bản nhớ 60 giây
+
+1. **Định vị:** AI đọc facts; C# policy quyết định route; con người xử lý ngoại lệ.
+2. **Độ bền:** upload trả 202 sau khi ghi SQL; polling chỉ cập nhật UI; worker dùng lease để reclaim.
+3. **An toàn:** semantic validation, một repair, rồi fail-safe; thứ tự `FACT -> POLICY -> AUTHORITY`.
+4. **Evidence:** 163/163 test offline; Verify 5/5 trong 65,004 giây; prospective 8/10 với 0 missed và 2 over.
+5. **Ranh giới:** concurrency hiện chứng minh không mất job trên một process; evidence overlay chưa production; ba user session còn pending.
