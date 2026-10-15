@@ -89,7 +89,7 @@ function addPersonIcon(surface, name, x, y, color) {
 function createLayout(pageNumber, specialFooter = false) {
   const layout = deck.layouts.add(`AURA_CONTENT_${pageNumber}`);
   addLine(layout, "Layout_Divider", M, 116, CONTENT_W, 0, C.line, 1);
-  addText(layout, "Layout_Footer", "AURA • Track VNG • 15/10/2026", M, 686, 540, 16, 10, C.muted);
+  addText(layout, "Layout_Footer", "AURA • Track VNG • 16/10/2026", M, 686, 540, 16, 10, C.muted);
   if (specialFooter) addText(layout, "Layout_LimitFooter", "Giới hạn hiện tại, không phải lời hứa marketing", 320, 686, 640, 16, 10, C.muted, { align: "center" });
   addText(layout, "Layout_PageNumber", String(pageNumber), 1160, 684, 62, 18, 10, C.muted, { bold: true, align: "right" });
   return layout;
@@ -111,155 +111,202 @@ function addRightArrow(surface, name, x, y, w = 22, h = 18, color = C.line) {
 }
 
 {
-  const s = addSlide(1, "Hoàn ứng hôm nay: nhiều điểm chờ, ít bằng chứng", "AURA biến ngoại lệ thành câu hỏi có thể quyết định — không giao quyền duyệt cho AI.");
-  const steps = [["Gửi hóa đơn", "Ảnh + số tiền"], ["Đọc thủ công", "Dễ sai định dạng"], ["Đối chiếu policy", "Phụ thuộc người xử lý"], ["Hỏi quản lý", "Thiếu câu hỏi cụ thể"], ["Lưu lịch sử", "Khó truy vết"]];
+  const s = addSlide(1, "Quy trình hoàn ứng hiện tại: năm điểm chờ thiếu bằng chứng", "Khoảng trống nằm ở ngoại lệ: người duyệt phải tự ghép dữ kiện, quy định và lịch sử.");
+  const steps = [
+    ["Gửi chứng từ", "Ảnh, số tiền và metadata nằm rời nhau."],
+    ["Đọc thủ công", "Tên, ngày, mã và tổng tiền dễ bị bỏ sót."],
+    ["Đối chiếu quy định", "FACT và POLICY dễ bị trộn khi giải thích."],
+    ["Hỏi cấp trên", "Câu hỏi thiếu dữ kiện để trả lời CÓ / KHÔNG."],
+    ["Ghi lịch sử", "Khó nối input, facts, route và người quyết định."],
+  ];
   const stepW = 216;
   const gap = 18;
   steps.forEach(([label, pain], i) => {
     const x = M + i * (stepW + gap);
-    const painful = i >= 3;
-    addShape(s, `S1_Flow_${i + 1}`, x, 145, stepW, 112, painful ? C.cardAccent : C.card, painful ? C.amber : C.line);
-    addIndexIcon(s, `S1_FlowIcon_${i + 1}`, String(i + 1).padStart(2, "0"), x + 14, 160, painful ? C.amber : C.teal);
-    addText(s, `S1_FlowLabel_${i + 1}`, label, x + 58, 160, stepW - 72, 28, 17, C.text, { bold: true, valign: "middle" });
-    addText(s, `S1_FlowPain_${i + 1}`, pain, x + 14, 210, stepW - 28, 22, 13, painful ? C.amber : C.muted, { bold: painful });
-    if (i < steps.length - 1) addRightArrow(s, `S1_Arrow_${i + 1}`, x + stepW + 1, 191, 16, 18);
+    const accent = i >= 3 ? C.amber : C.teal;
+    addShape(s, `S1_Flow_${i + 1}`, x, 150, stepW, 230, C.card, i >= 3 ? C.amber : C.line);
+    addIndexIcon(s, `S1_FlowIcon_${i + 1}`, String(i + 1).padStart(2, "0"), x + 16, 170, accent);
+    addText(s, `S1_FlowLabel_${i + 1}`, label, x + 16, 220, stepW - 32, 48, 18, C.text, { bold: true, valign: "middle" });
+    addLine(s, `S1_FlowRule_${i + 1}`, x + 16, 282, stepW - 32, 0, C.line, 1);
+    addText(s, `S1_FlowPain_${i + 1}`, pain, x + 16, 302, stepW - 32, 60, 15, i >= 3 ? C.amber : C.muted, { bold: i >= 3, valign: "middle" });
+    if (i < steps.length - 1) addRightArrow(s, `S1_Arrow_${i + 1}`, x + stepW + 1, 254, 16, 22);
   });
-  addText(s, "S1_PillarsLabel", "BA TRỤ CỘT", M, 298, 180, 22, 13, C.muted, { bold: true });
-  const pillars = [["AI đọc", "Trích facts có cấu trúc; không suy đoán.", C.blue, "AI"], ["Policy quyết định", "C# tất định; đầu vào nghi vấn không auto.", C.amber, "C#"], ["Con người chịu trách nhiệm", "Xử lý ngoại lệ; có thể hoàn tác.", C.teal, "H"]];
-  const pillarW = 368;
-  pillars.forEach(([label, detail, accent, icon], i) => {
-    const x = M + i * (pillarW + 30);
-    addShape(s, `S1_Pillar_${i + 1}`, x, 330, pillarW, 104, C.card, C.line);
-    addIndexIcon(s, `S1_PillarIcon_${i + 1}`, icon, x + 18, 350, accent);
-    addText(s, `S1_PillarLabel_${i + 1}`, label, x + 68, 345, pillarW - 88, 26, 18, C.text, { bold: true });
-    addText(s, `S1_PillarDetail_${i + 1}`, detail, x + 68, 378, pillarW - 88, 36, 15, C.muted);
-  });
-  addShape(s, "S1_QuotePanel", M, 474, CONTENT_W, 154, C.cardAccent, C.line);
-  addLine(s, "S1_QuoteAccent", M + 28, 500, 0, 94, C.amber, 4);
-  addText(s, "S1_Quote", "“Không phải OCR — mà là biết khi nào phải dừng và hỏi người.”", M + 62, 500, 1060, 78, 28, C.text, { bold: true, valign: "middle" });
-  addText(s, "S1_QuoteTag", "AURA = facts có cấu trúc + policy tất định + human accountability", M + 62, 580, 980, 24, 14, C.muted);
-  s.speakerNotes.text = ["MỞ: Hoàn ứng không chỉ là bài toán đọc chữ; điểm đau thật nằm ở chỗ ngoại lệ chờ người xử lý và thiếu bằng chứng truy vết.", "AURA nhận ảnh hóa đơn và claimed amount, nhưng không giao quyền duyệt cho model. AI chỉ trích facts; PolicyDecisionEngine C# route; nhân viên và quản lý chịu trách nhiệm ở nhánh ngoại lệ.", "Thông điệp cần giữ: không phải OCR — mà là biết khi nào phải dừng và hỏi người.", "Nguồn: submission/AURA_PROPOSAL_VI.md; submission/BUSINESS_RULES.md; submission/AURA_WORKFLOW_SPEC.md.", "CHUYỂN: Tiếp theo là cách chín gate biến nguyên tắc này thành pipeline chạy thật."].join("\n\n");
+  addShape(s, "S1_GapBand", M, 414, CONTENT_W, 112, C.cardAccent, C.amber);
+  addText(s, "S1_GapLabel", "KHOẢNG TRỐNG CẦN GIẢI QUYẾT", M + 24, 434, 310, 22, 14, C.amber, { bold: true });
+  addText(s, "S1_GapText", "Ngoại lệ chưa được đóng gói thành câu hỏi có đủ dữ kiện, quy định và audit để quản lý quyết định nhanh.", M + 24, 468, CONTENT_W - 48, 38, 20, C.text, { bold: true, valign: "middle" });
+  addLine(s, "S1_BridgeRule", M, 560, CONTENT_W, 0, C.line, 1);
+  addText(s, "S1_Bridge", "AURA chuẩn hóa facts, route bằng policy C# và giữ quyền quyết định ngoại lệ cho con người.", M, 586, CONTENT_W, 42, 20, C.green, { bold: true, align: "center", valign: "middle" });
+  s.speakerNotes.text = ["MỞ: Quy trình hoàn ứng hiện tại có năm điểm chờ. Vấn đề không chỉ là đọc chữ, mà là người duyệt phải tự ghép dữ kiện, quy định và lịch sử trước khi quyết định.", "Ảnh, claimed amount và metadata nằm rời nhau. Việc đọc thủ công dễ bỏ sót trường trọng yếu. Khi đối chiếu, FACT và POLICY dễ bị trộn. Câu hỏi chuyển cấp thường thiếu ngữ cảnh, còn lịch sử khó nối từ đầu vào tới người chịu trách nhiệm.", "Khoảng trống mà AURA giải quyết là đóng gói ngoại lệ thành một hồ sơ có facts, policy route và audit. Đây là dòng cầu nối sang giải pháp, chưa phải claim tác động.", "Nguồn: submission/AURA_PROPOSAL_VI.md; submission/BUSINESS_RULES.md; submission/AURA_WORKFLOW_SPEC.md.", "CHUYỂN: Slide tiếp theo cho thấy hệ thống xử lý ở đâu và con người quyết định ở đâu."].join("\n\n");
 }
 
 {
-  const s = addSlide(2, "Pipeline E2E: async trước, AI đọc, policy quyết định", "Chín gate chạy thật; con người chỉ quyết định ở nhánh ngoại lệ.");
-  const phases = [["A", "NHẬN & XẾP HÀNG", "1–3", "JPG/PNG ≤ 5 MB\nMIME/magic • private + SHA\nSQL PENDING + audit", C.teal], ["B", "CHẠY NỀN", "4–5", "HTTP 202 + statusUrl\nWorker lease 600s\nReclaim sau restart", C.teal], ["C", "AI ĐỌC", "6–7", "1 AI call đồng thời\nSchema → DTO → semantic\nRepair ≤ 1", C.blue], ["D", "POLICY C#", "8", "PolicyDecisionEngine\nroute theo rules\nkhông dựa confidence", C.amber]];
-  const phaseW = 220;
-  const phaseGap = 18;
-  phases.forEach(([letter, label, gates, detail, accent], i) => {
-    const x = M + i * (phaseW + phaseGap);
-    addShape(s, `S2_Phase_${letter}`, x, 158, phaseW, 224, C.card, C.line);
-    addIndexIcon(s, `S2_PhaseIcon_${letter}`, letter, x + 16, 176, accent);
-    addText(s, `S2_PhaseLabel_${letter}`, label, x + 62, 176, 136, 24, 14, C.text, { bold: true, valign: "middle" });
-    addPill(s, `S2_Gates_${letter}`, `GATE ${gates}`, x + 16, 222, 92, accent);
-    addText(s, `S2_PhaseDetail_${letter}`, detail, x + 16, 270, phaseW - 32, 88, 15, C.muted, { valign: "middle" });
-    if (i < phases.length - 1) addRightArrow(s, `S2_PhaseArrow_${i + 1}`, x + phaseW + 1, 255, 16, 24);
-  });
-  const outcomeX = 1010;
-  addRightArrow(s, "S2_PolicyToOutcome", 990, 257, 18, 24, C.amber);
-  addShape(s, "S2_Auto", outcomeX, 158, 212, 96, C.cardAccent, C.green);
-  addPill(s, "S2_AutoPill", "AUTO_APPROVE", outcomeX + 16, 172, 132, C.green);
-  addText(s, "S2_AutoText", "Ca rõ ràng\nGhi lịch sử; không chờ quản lý", outcomeX + 16, 210, 180, 38, 14, C.text, { bold: true });
-  addShape(s, "S2_Escalate", outcomeX, 278, 212, 144, C.cardAccent, C.amber);
-  addPill(s, "S2_EscalatePill", "GATE 9 • ESCALATE_*", outcomeX + 16, 292, 170, C.amber);
-  addPersonIcon(s, "S2_EmployeeIcon", outcomeX + 16, 334, C.amber);
-  addText(s, "S2_Employee", "Nhân viên chuyển tiếp", outcomeX + 54, 336, 145, 20, 13, C.text, { bold: true });
-  addPersonIcon(s, "S2_ManagerIcon", outcomeX + 16, 369, C.amber);
-  addText(s, "S2_Manager", "Quản lý YES / NO", outcomeX + 54, 371, 145, 20, 13, C.text, { bold: true });
-  addLine(s, "S2_AutoDown", 1116, 255, 0, 252, C.green, 1.5);
-  addLine(s, "S2_EscalateDown", 1116, 423, 0, 84, C.amber, 1.5);
-  addShape(s, "S2_AuditBand", 772, 500, 450, 112, C.cardAccent, C.line);
-  addPill(s, "S2_AuditPill", "AUDIT / UNDO", 792, 518, 124, C.teal);
-  addText(s, "S2_AuditText", "Append-only timeline  •  Undo = event mới", 938, 519, 256, 26, 15, C.text, { bold: true, valign: "middle" });
-  addText(s, "S2_AuditWhy", "Hai nhánh cùng để lại bằng chứng; UI luôn đọc trạng thái từ hồ sơ bền vững.", 792, 562, 402, 28, 14, C.muted);
-  addShape(s, "S2_PrincipleBand", M, 426, 680, 186, C.card, C.line);
-  addText(s, "S2_PrincipleKicker", "NGUYÊN TẮC", M + 20, 446, 180, 20, 13, C.muted, { bold: true });
-  addText(s, "S2_Principle", "Request nhận nhanh bằng HTTP 202.\nWorker xử lý nền.\nAI trả facts; policy mới trả route.", M + 20, 481, 620, 90, 22, C.text, { bold: true });
-  s.speakerNotes.text = ["MỞ: Pipeline này ưu tiên phản hồi nhanh cho người dùng nhưng giữ xử lý AI ở nền và ghi trạng thái vào SQL.", "Gate 1–3 kiểm extension, MIME, magic bytes, giới hạn 5 MB; lưu private, tính SHA-256, ghi PENDING và AI_QUEUED. Gate 4 trả HTTP 202 + statusUrl để UI poll. Gate 5 worker claim bằng lease 600 giây và có thể reclaim sau restart.", "Gate 6–7 dùng VisionInvocationCoordinator để lấy một AI permit; OpenRouter gọi qwen/qwen3.8-flash qua route Alibaba với reasoning none. Adapter parse JSON Schema thành ReceiptExtractionDto; semantic validator kiểm mâu thuẫn; repair tối đa một lần.", "Gate 8 là PolicyDecisionEngine C#. Gate 9 chỉ xuất hiện ở ESCALATE_*: nhân viên chuyển tiếp rồi quản lý YES/NO. AUTO_APPROVE và ESCALATE đều về audit timeline; Undo tạo event mới.", "Nguồn: submission/AURA_WORKFLOW_SPEC.md; docs/RUNBOOK.md; ReceiptProcessingWorker.cs; ReceiptProcessingQueue.cs; VisionInvocationCoordinator.cs.", "CHUYỂN: Pipeline có vẻ hợp lý, nhưng slide tiếp theo chỉ giữ lại những gì đã đo được và tách phần còn PENDING."].join("\n\n");
+  const s = addSlide(2, "Pipeline E2E và ranh giới quyết định", "Ba vùng Đầu vào, Xử lý, Đầu ra; hai làn cho Hệ thống và Con người.");
+  const labelW = 126;
+  const colW = 326;
+  const colGap = 14;
+  const colX = [M + labelW + 14, M + labelW + 14 + colW + colGap, M + labelW + 14 + (colW + colGap) * 2];
+  ["ĐẦU VÀO", "XỬ LÝ", "ĐẦU RA"].forEach((label, i) => addText(s, `S2_Column_${i + 1}`, label, colX[i], 140, colW, 24, 15, C.muted, { bold: true, align: "center" }));
+  addShape(s, "S2_SystemLabel", M, 176, labelW, 244, C.cardAccent, C.teal);
+  addText(s, "S2_SystemLabelText", "HỆ THỐNG", M + 12, 176, labelW - 24, 244, 16, C.teal, { bold: true, align: "center", valign: "middle" });
+  addShape(s, "S2_HumanLabel", M, 438, labelW, 142, C.cardAccent, C.green);
+  addText(s, "S2_HumanLabelText", "CON NGƯỜI", M + 12, 438, labelW - 24, 142, 16, C.green, { bold: true, align: "center", valign: "middle" });
+
+  addShape(s, "S2_InputSystem", colX[0], 176, colW, 244, C.card, C.line);
+  addPill(s, "S2_PhaseA", "PHA A • GATE 1–3", colX[0] + 18, 194, 150, C.teal);
+  addText(s, "S2_PhaseATitle", "Nhận và xếp hàng", colX[0] + 18, 238, colW - 36, 28, 19, C.text, { bold: true });
+  addText(s, "S2_PhaseADetail", "JPG/PNG ≤ 5 MB\nMIME + magic bytes\nPrivate storage + SHA-256\nSQL PENDING + AI_QUEUED", colX[0] + 18, 282, colW - 36, 106, 16, C.muted, { valign: "middle" });
+
+  addShape(s, "S2_ProcessSystem", colX[1], 176, colW, 244, C.card, C.line);
+  addPill(s, "S2_PhaseB", "PHA B • GATE 4–5", colX[1] + 18, 194, 150, C.teal);
+  addText(s, "S2_PhaseBDetail", "HTTP 202 + statusUrl\nWorker lease 600s; reclaim sau restart", colX[1] + 18, 232, colW - 36, 62, 15, C.text, { bold: true, valign: "middle" });
+  addLine(s, "S2_ProcessDivider", colX[1] + 18, 306, colW - 36, 0, C.line, 1);
+  addPill(s, "S2_PhaseC", "PHA C • GATE 6–7", colX[1] + 18, 322, 150, C.blue);
+  addText(s, "S2_PhaseCDetail", "AI permit 1 • Schema → DTO\nSemantic validation • repair tối đa 1 lần", colX[1] + 18, 360, colW - 36, 50, 15, C.text, { bold: true, valign: "middle" });
+
+  addShape(s, "S2_OutputSystem", colX[2], 176, colW, 244, C.card, C.line);
+  addPill(s, "S2_PhaseD", "PHA D • GATE 8", colX[2] + 18, 194, 132, C.amber);
+  addText(s, "S2_PhaseDTitle", "PolicyDecisionEngine C#", colX[2] + 18, 238, colW - 36, 30, 18, C.text, { bold: true });
+  addText(s, "S2_PhaseDDetail", "Route theo business rules\nKhông dùng confidence để tự đổi policy", colX[2] + 18, 278, colW - 36, 50, 15, C.muted, { valign: "middle" });
+  addShape(s, "S2_AutoBranch", colX[2] + 18, 346, 132, 52, C.cardAccent, C.green);
+  addText(s, "S2_AutoBranchText", "AUTO_APPROVE\nGhi lịch sử", colX[2] + 26, 354, 116, 36, 13, C.green, { bold: true, align: "center", valign: "middle" });
+  addShape(s, "S2_EscalateBranch", colX[2] + 166, 346, 142, 52, C.cardAccent, C.amber);
+  addText(s, "S2_EscalateBranchText", "ESCALATE_*\nChờ người xử lý", colX[2] + 174, 354, 126, 36, 13, C.amber, { bold: true, align: "center", valign: "middle" });
+
+  addShape(s, "S2_InputHuman", colX[0], 438, colW, 142, C.cardAccent, C.green);
+  addText(s, "S2_InputHumanTitle", "Người gửi", colX[0] + 18, 458, colW - 36, 26, 17, C.text, { bold: true });
+  addText(s, "S2_InputHumanDetail", "Chọn ảnh, nhập claimed amount và metadata.", colX[0] + 18, 500, colW - 36, 48, 15, C.muted, { valign: "middle" });
+  addShape(s, "S2_ProcessHuman", colX[1], 438, colW, 142, C.cardAccent, C.green);
+  addText(s, "S2_ProcessHumanTitle", "Người vận hành", colX[1] + 18, 458, colW - 36, 26, 17, C.text, { bold: true });
+  addText(s, "S2_ProcessHumanDetail", "Thấy trạng thái đã xếp hàng và tiếp tục thao tác; không chờ request AI.", colX[1] + 18, 495, colW - 36, 58, 15, C.muted, { valign: "middle" });
+  addShape(s, "S2_OutputHuman", colX[2], 438, colW, 142, C.cardAccent, C.green);
+  addPill(s, "S2_Gate9", "GATE 9", colX[2] + 18, 454, 82, C.green);
+  addText(s, "S2_OutputHumanDetail", "Nhân viên chuyển tiếp\nQuản lý trả lời CÓ / KHÔNG\nUndo ghi thêm event mới", colX[2] + 116, 452, colW - 134, 88, 15, C.text, { bold: true, valign: "middle" });
+
+  addShape(s, "S2_AuthorityBand", M, 606, CONTENT_W, 48, C.cardAccent, C.line);
+  addText(s, "S2_AuthorityAI", "AI: FACT", M + 20, 619, 300, 22, 16, C.blue, { bold: true, align: "center" });
+  addText(s, "S2_AuthorityPolicy", "C# ENGINE: POLICY", M + 432, 619, 300, 22, 16, C.amber, { bold: true, align: "center" });
+  addText(s, "S2_AuthorityHuman", "NHÂN VIÊN / QUẢN LÝ: AUTHORITY", M + 808, 619, 336, 22, 16, C.green, { bold: true, align: "center" });
+  s.speakerNotes.text = ["MỞ: Sơ đồ chia rõ ba vùng và hai làn để thấy hệ thống làm gì, con người quyết định ở đâu.", "Pha A kiểm file, lưu riêng tư, tính SHA-256, rồi ghi PENDING cùng AI_QUEUED vào SQL. Người gửi chỉ cung cấp ảnh, claimed amount và metadata.", "Pha B trả HTTP 202 cùng statusUrl. UI poll trạng thái, còn worker dùng lease 600 giây để xử lý bền vững. Pha C lấy một AI permit, gọi OpenRouter tới Qwen3.8 Flash qua Alibaba, parse JSON Schema thành DTO, semantic validate và repair tối đa một lần.", "Pha D dùng PolicyDecisionEngine C# để route. AUTO_APPROVE ghi lịch sử. ESCALATE_* mở Gate 9: nhân viên chuyển tiếp, quản lý trả lời CÓ hoặc KHÔNG, Undo tạo event mới.", "Ranh giới quyền hạn: AI trả FACT; C# áp POLICY; con người giữ AUTHORITY.", "Nguồn: submission/AURA_WORKFLOW_SPEC.md; docs/RUNBOOK.md; ReceiptProcessingWorker.cs; ReceiptProcessingQueue.cs; VisionInvocationCoordinator.cs.", "CHUYỂN: Kiến trúc đã rõ, nhưng tác động chỉ được trình bày khi có đối chứng trước và sau."].join("\n\n");
 }
 
 {
-  const s = addSlide(3, "Đã đo được gì — và chưa dám khẳng định gì", "Không suy ROI từ fixture; dùng cùng nhiệm vụ, cùng người, cùng tiêu chí.");
-  const metrics = [["163/163", "OFFLINE TESTS", "Release build sạch", C.blue], ["8/10", "10 HÓA ĐƠN MỚI", "0 missed • 2 over fail-safe", C.green], ["5/5", "VERIFY LIVE", "65.004s", C.teal]];
-  const cardW = 246;
-  metrics.forEach(([value, label, detail, accent], i) => {
-    const x = M + i * (cardW + 22);
-    addShape(s, `S3_Metric_${i + 1}`, x, 162, cardW, 258, C.card, C.line);
-    addText(s, `S3_MetricLabel_${i + 1}`, label, x + 18, 184, cardW - 36, 22, 13, C.muted, { bold: true, align: "center" });
-    addText(s, `S3_MetricValue_${i + 1}`, value, x + 10, 222, cardW - 20, 76, value.length > 4 ? 54 : 60, accent, { bold: true, align: "center", valign: "middle" });
-    addLine(s, `S3_MetricRule_${i + 1}`, x + 30, 316, cardW - 60, 0, accent, 2);
-    addText(s, `S3_MetricDetail_${i + 1}`, detail, x + 18, 342, cardW - 36, 42, 15, C.text, { bold: true, align: "center", valign: "middle" });
-  });
-  const pendingX = 880;
-  addShape(s, "S3_Pending", pendingX, 162, 342, 364, C.cardAccent, C.amber, 6);
-  addPill(s, "S3_PendingPill", "ĐANG CHỜ ĐO • PENDING", pendingX + 22, 182, 194, C.amber);
-  addText(s, "S3_PendingMetrics", "ΔT   +   ΔH", pendingX + 22, 230, 298, 48, 30, C.text, { bold: true, align: "center" });
-  addText(s, "S3_PendingUsers", "3 người dùng • phản hồi dự kiến 16/10", pendingX + 22, 286, 298, 24, 14, C.amber, { bold: true, align: "center" });
-  addText(s, "S3_MethodLabel", "PAIRED METHOD", pendingX + 22, 334, 160, 20, 12, C.muted, { bold: true });
-  const method = ["Cùng người / cùng task", "Timestamp + số lần chạm", "So median trước / sau", "Giữ feedback tiêu cực"];
-  method.forEach((line, i) => {
-    addIndexIcon(s, `S3_MethodIcon_${i + 1}`, String(i + 1), pendingX + 22, 366 + i * 35, C.amber);
-    addText(s, `S3_MethodText_${i + 1}`, line, pendingX + 68, 372 + i * 35, 248, 20, 13, C.text, { bold: true });
-  });
-  addShape(s, "S3_HonestyBand", M, 464, 790, 112, C.cardAccent, C.line);
-  addText(s, "S3_HonestyKicker", "CÁCH ĐỌC ĐÚNG", M + 22, 484, 170, 20, 13, C.green, { bold: true });
-  addText(s, "S3_HonestyText", "8/10 là mini-holdout mẫu nhỏ. Verify là fixture kỹ thuật.\nKhông số nào ở đây là production accuracy hay ROI.", M + 22, 518, 742, 44, 18, C.text, { bold: true });
-  addText(s, "S3_Caption", "Mẫu nhỏ — không phải production accuracy.", M, 612, CONTENT_W, 24, 15, C.amber, { bold: true, align: "center" });
-  s.speakerNotes.text = ["MỞ: Tôi tách rõ ba mốc đã đo và một phần chưa đo để tránh biến fixture thành câu chuyện ROI.", "Đã đo: 163/163 test offline, Release build sạch. Prospective mini-holdout 10 hóa đơn mới đạt 8/10 quyết định đúng, 0 missed escalation, 2 over-escalation fail-safe; mẫu nhỏ, không phải production accuracy. Verify live đạt 5/5 trong 65.004 giây.", "Công thức phương pháp nằm ở ghi chú, không phải một điểm số: U_AURA = <ΔT, ΔH, E_missed, E_over, A_trace>. ΔT là thời gian route; ΔH là số lần chạm; E_missed/E_over là hai loại lỗi quyết định; A_trace là mức đủ dấu vết.", "Regression 12 ảnh byte gốc đạt 10/12 và lượt tuần tự 11/12 chỉ là stability evidence trên dữ liệu đã biết, không phải holdout mới và không dùng làm headline accuracy.", "ΔT và ΔH vẫn PENDING, chờ paired feedback từ 3 người dùng dự kiến 16/10. Không suy ROI trước dữ liệu.", "Nguồn: docs/EVALUATION_EVIDENCE.md; docs/CURRENT_PROJECT_STATUS.md; docs/MEASUREMENT_PLAN.md.", "CHUYỂN: Để hiểu vì sao model có thể thay mà policy không đổi, ta nhìn kiến trúc theo bốn lớp."].join("\n\n");
-}
-
-{
-  const s = addSlide(4, "Kiến trúc triển khai: model thay được, policy đứng yên", "ASP.NET Core + SQL chạy thật; fixture/runner được phân định rõ là mô phỏng.");
-  addPill(s, "S4_LiveBadge", "CHẠY THẬT", M, 142, 116, C.green);
-  const layers = [["GIAO DIỆN", "Razor MVC • HTTP 202 • polling", C.teal], ["QUEUE / WORKER", "SQL job • lease 600s • retry / circuit", C.teal], ["AI ADAPTER + CONTRACT", "OpenRouter → Qwen3.8 Flash • Schema → DTO → semantic → repair ≤ 1", C.blue], ["POLICY + DỮ LIỆU", "PolicyDecisionEngine C# • EF Core • SQL Server • private storage • Undo event", C.amber]];
-  layers.forEach(([label, detail, accent], i) => {
-    const y = 186 + i * 80;
-    addShape(s, `S4_Layer_${i + 1}`, M, y, 754, 62, C.card, C.line);
-    addPill(s, `S4_LayerPill_${i + 1}`, label, M + 16, y + 17, i === 2 ? 202 : 166, accent);
-    addText(s, `S4_LayerText_${i + 1}`, detail, M + (i === 2 ? 238 : 202), y + 18, i === 2 ? 492 : 526, 28, 14, C.text, { bold: true, valign: "middle" });
-    if (i < layers.length - 1) addLine(s, `S4_LayerConnector_${i + 1}`, M + 377, y + 62, 0, 18, C.line, 1.5);
-  });
-  addShape(s, "S4_TestCard", 844, 142, 378, 364, C.cardAccent, C.amber);
-  addPill(s, "S4_TestBadge", "MÔ PHỎNG / TEST", 866, 162, 166, C.amber);
-  const simulated = ["30 ảnh tổng hợp", "5 fixture Verify trên UI", "Runner ngoài dashboard"];
-  simulated.forEach((item, i) => {
-    addIndexIcon(s, `S4_TestIcon_${i + 1}`, String(i + 1), 866, 222 + i * 52, C.amber);
-    addText(s, `S4_TestText_${i + 1}`, item, 912, 228 + i * 52, 278, 22, 16, C.text, { bold: true });
-  });
-  addLine(s, "S4_TestDivider", 866, 390, 332, 0, C.line, 1);
-  addText(s, "S4_TestCaveat", "Không phải receipt thật / user evidence.\nKhông claim production SLA.", 866, 414, 332, 58, 16, C.muted, { bold: true });
-  addShape(s, "S4_AuthorityBand", M, 532, CONTENT_W, 108, C.cardAccent, C.line);
-  addText(s, "S4_AuthorityLabel", "RANH GIỚI QUYỀN HẠN", M + 20, 548, 222, 20, 13, C.muted, { bold: true });
-  const nodes = [["AI trả facts", C.blue], ["Policy C# route", C.amber], ["Người quyết định ngoại lệ", C.teal]];
-  nodes.forEach(([label, accent], i) => {
-    const x = M + 260 + i * 280;
-    addShape(s, `S4_AuthorityNode_${i + 1}`, x, 562, 220, 52, C.card, accent);
-    addText(s, `S4_AuthorityNodeText_${i + 1}`, label, x + 12, 577, 196, 22, 16, C.text, { bold: true, align: "center" });
-    if (i < nodes.length - 1) addRightArrow(s, `S4_AuthorityArrow_${i + 1}`, x + 230, 580, 30, 18);
-  });
-  s.speakerNotes.text = ["MỞ: Kiến trúc tách extraction khỏi decision để đổi model không tự thay đổi business policy.", "Lớp giao diện dùng Razor MVC, HTTP 202 và polling. Queue/Worker lưu job trong SQL, dùng lease 600 giây, retry và circuit state. AI Adapter gọi OpenRouter → qwen/qwen3.8-flash/Alibaba; contract parse JSON Schema thành ReceiptExtractionDto, semantic validate và repair tối đa một lần. PolicyDecisionEngine C# route; EF Core/SQL Server/private storage lưu hồ sơ và event Undo.", "Baseline live: fallback Ollama mặc định tắt. Model có thể thay và làm facts thay đổi, nhưng không tự đổi policy vì mọi provider phải qua cùng contract, semantic gate và PolicyDecisionEngine.", "Phần mô phỏng/test được tách rõ: 30 ảnh tổng hợp, 5 fixture Verify trên UI, runner ngoài dashboard. Đây không phải receipt thật, user evidence hay SLA.", "Repository và localhost runbook: https://github.com/BondPhuPhamzZ/AURA ; docs/RUNBOOK.md ; docs/JUDGE_LOCAL_SETUP.md.", "CHUYỂN: Cuối cùng, tôi trình bày các failure mode hiện tại và cách baseline dừng an toàn."].join("\n\n");
-}
-
-{
-  const s = addSlide(5, "Giới hạn, tình huống lỗi và bước tiếp theo", "Baseline có người giám sát: lỗi phải dừng an toàn và để lại bằng chứng.");
-  const values = [["TÌNH HUỐNG", "AURA PHẢN ỨNG"], ["JSON / semantic sai", "Repair đúng 1 lần → FACT fail-safe"], ["429 / timeout", "Fallback chỉ khi bật → audit provider"], ["App restart", "DB job + lease → worker reclaim"], ["5 upload đồng thời", "5/5 hoàn tất • P95 93.684s • chưa là SLA"], ["Ảnh mơ hồ / giả", "FACT ưu tiên • không auto-approve"]];
-  const table = s.tables.add({ rows: values.length, columns: 2, left: M, top: 152, width: 710, height: 418, columnWidths: [232, 478], values });
-  table.name = "S5_LimitsTable";
+  const s = addSlide(3, "Đối chiếu trước và sau: phương pháp đã khóa, kết quả còn PENDING", "Không suy tác động từ fixture; chỉ kết luận khi hai phía dùng cùng nhiệm vụ và tiêu chí.");
+  const values = [
+    ["CHỈ SỐ", "CÁCH ĐO GIỐNG NHAU", "TRƯỚC: THỦ CÔNG", "SAU: AURA", "TRẠNG THÁI"],
+    ["ΔT\nThời gian đến kết quả cuối", "Timestamp; lấy median", "Chưa đo", "Chưa đo", "PENDING"],
+    ["ΔH\nSố lần chạm", "Đếm thao tác mỗi hồ sơ", "Chưa đo", "Chưa đo", "PENDING"],
+    ["E_missed\nBỏ sót ca cần chuyển", "So với đáp án chuẩn", "Chưa đo", "0/10", "Thiếu baseline"],
+    ["E_over\nChuyển thừa", "So với đáp án chuẩn", "Chưa đo", "2/10", "Thiếu baseline"],
+    ["A_trace\nĐủ dấu vết", "Kiểm tra audit timeline", "Chưa đo", "Có timeline", "Thiếu baseline"],
+  ];
+  const table = s.tables.add({ rows: values.length, columns: 5, left: M, top: 148, width: CONTENT_W, height: 304, columnWidths: [190, 282, 200, 190, 302], values });
+  table.name = "S3_BeforeAfterTable";
   table.borders.assign({ style: "solid", fill: C.line, width: 1 });
-  table.cells.block({ row: 0, column: 0, rowCount: values.length, columnCount: 2 }).assign({ fill: C.card, textStyle: { typeface: FONT, fontSize: 14, color: C.text }, margins: { top: 8, right: 12, bottom: 8, left: 12 } });
-  table.cells.block({ row: 0, column: 0, rowCount: 1, columnCount: 2 }).assign({ fill: C.cardAccent, textStyle: { typeface: FONT, fontSize: 13, bold: true, color: C.muted } });
-  table.cells.block({ row: 1, column: 0, rowCount: 5, columnCount: 1 }).assign({ textStyle: { typeface: FONT, fontSize: 14, bold: true, color: C.text } });
-  table.getCell(4, 1).text.style = { typeface: FONT, fontSize: 14, bold: true, color: C.amber };
-  table.rows[0].height = 48;
-  for (let r = 1; r < values.length; r++) table.rows[r].height = 74;
-  addShape(s, "S5_OpenCard", 806, 152, 416, 246, C.cardAccent, C.amber);
-  addPill(s, "S5_OpenPill", "CÒN MỞ", 828, 172, 98, C.amber);
-  addText(s, "S5_OpenText", "• Phản hồi 3 người dùng: chờ 16/10\n• Limiter / lock mới ở một process\n• PDF • RBAC • object storage\n• Evidence overlay mới là prototype", 828, 222, 370, 144, 16, C.text, { bold: true });
-  addShape(s, "S5_NextCard", 806, 426, 416, 144, C.cardAccent, C.green);
-  addPill(s, "S5_NextPill", "BƯỚC TIẾP THEO", 828, 446, 154, C.green);
-  addText(s, "S5_NextText", "Sau feedback: chọn 1 thay đổi truy vết → chạy lại build / test / Verify.\nKhông tune bằng holdout.", 828, 490, 370, 64, 16, C.text, { bold: true });
-  addText(s, "S5_SafetyLine", "Fail-safe trước • audit đầy đủ • claim đúng phạm vi", M, 610, CONTENT_W, 24, 18, C.amber, { bold: true, align: "center" });
-  s.speakerNotes.text = ["MỞ: Baseline hiện tại không che giấu failure mode; mỗi lỗi phải dừng an toàn và để lại bằng chứng.", "JSON hoặc semantic invalid được repair đúng một lần, sau đó FACT fail-safe. 429/timeout chỉ dùng fallback khi cấu hình bật và luôn audit provider. App restart không mất row SQL; worker mới reclaim khi lease hết hạn.", "Burst 5 upload khác nhau hoàn tất 5/5, E2E P95 93.684 giây. Đây là queue integrity trên một process, không phải production SLA. Limiter, cooldown, circuit state và Verify lock hiện vẫn theo process; multi-instance cần distributed coordination.", "Ảnh mơ hồ/giả ưu tiên ESCALATE_FACT, không auto-approve. Evidence overlay mới là prototype cô lập, chưa nằm trong production pipeline.", "Sau feedback 3 người dùng: chọn đúng một thay đổi có traceability, rồi chạy lại Release build, 163 test và Verify. Không tune bằng holdout.", "Nguồn: docs/CURRENT_PROJECT_STATUS.md; docs/EVALUATION_EVIDENCE.md; docs/RUNBOOK.md; submission/AURA_WORKFLOW_SPEC.md.", "CHUYỂN/KẾT: AURA không hứa thay người duyệt; AURA làm ngoại lệ rõ hơn, dừng đúng lúc và để lại audit trail cho quyết định có trách nhiệm."].join("\n\n");
+  table.cells.block({ row: 0, column: 0, rowCount: values.length, columnCount: 5 }).assign({ fill: C.card, textStyle: { typeface: FONT, fontSize: 13, color: C.text }, margins: { top: 7, right: 10, bottom: 7, left: 10 } });
+  table.cells.block({ row: 0, column: 0, rowCount: 1, columnCount: 5 }).assign({ fill: C.cardAccent, textStyle: { typeface: FONT, fontSize: 12, bold: true, color: C.muted } });
+  table.cells.block({ row: 1, column: 0, rowCount: 5, columnCount: 1 }).assign({ textStyle: { typeface: FONT, fontSize: 13, bold: true, color: C.text } });
+  table.cells.block({ row: 1, column: 2, rowCount: 5, columnCount: 1 }).assign({ textStyle: { typeface: FONT, fontSize: 13, bold: true, color: C.amber } });
+  table.cells.block({ row: 1, column: 3, rowCount: 5, columnCount: 1 }).assign({ textStyle: { typeface: FONT, fontSize: 14, bold: true, color: C.green } });
+  table.cells.block({ row: 1, column: 4, rowCount: 5, columnCount: 1 }).assign({ textStyle: { typeface: FONT, fontSize: 12, bold: true, color: C.amber } });
+  table.rows[0].height = 42;
+  for (let r = 1; r < values.length; r++) table.rows[r].height = 52;
+
+  addShape(s, "S3_ProtocolBand", M, 472, CONTENT_W, 104, C.cardAccent, C.line);
+  addText(s, "S3_ProtocolLabel", "GIAO THỨC ĐO TÁC ĐỘNG", M + 18, 486, 260, 20, 13, C.green, { bold: true });
+  addText(s, "S3_ProtocolLine1", "3 người dùng × cùng 3 nhiệm vụ × cùng bộ hóa đơn; so median trước và sau; giữ cả phản hồi tiêu cực.", M + 18, 516, CONTENT_W - 36, 26, 16, C.text, { bold: true });
+  addText(s, "S3_ProtocolLine2", "Ngưỡng đạt / không đạt sẽ được khóa trước khi mở kết quả. Hiện chưa có record người dùng thật.", M + 18, 548, CONTENT_W - 36, 20, 14, C.amber, { bold: true });
+
+  addShape(s, "S3_TechnicalStrip", M, 596, CONTENT_W, 52, C.card, C.line);
+  addText(s, "S3_TechnicalLabel", "BẰNG CHỨNG KỸ THUẬT, KHÔNG PHẢI TÁC ĐỘNG", M + 16, 611, 390, 20, 12, C.muted, { bold: true });
+  addText(s, "S3_TechnicalValues", "163/163 offline tests    5/5 Verify live    65.004s", M + 430, 608, CONTENT_W - 446, 26, 16, C.teal, { bold: true, align: "right" });
+  s.speakerNotes.text = ["MỞ: Slide này dùng bảng đối chiếu thật. Mỗi hàng là một chỉ số; hai phía phải cùng cách đo.", "ΔT là thời gian đến kết quả cuối và ΔH là số lần chạm. E_missed và E_over so với cùng đáp án chuẩn. A_trace kiểm tra liệu quyết định có đủ audit timeline hay không.", "Phía AURA đã có 0/10 missed, 2/10 over và audit timeline trên mini-holdout. Phía thủ công chưa đo trên cùng bộ hóa đơn, nên ba hàng này mới có một nửa bằng chứng. ΔT và ΔH chưa có số ở cả hai phía trong user study.", "Giao thức: ba người dùng làm cùng ba nhiệm vụ trên cùng bộ hóa đơn; so median trước và sau; giữ phản hồi tiêu cực. Team phải khóa ngưỡng đạt hoặc không đạt trước khi nhận kết quả, không chọn ngưỡng sau khi thấy số.", "163/163, Verify 5/5 và 65.004 giây là bằng chứng kỹ thuật, không phải tác động người dùng hoặc ROI.", "Nguồn: docs/EVALUATION_EVIDENCE.md; docs/USER_STUDY_PROTOCOL.md; docs/MEASUREMENT_PLAN.md.", "CHUYỂN: Tiếp theo là kiến trúc triển khai và ranh giới giữa thành phần chạy thật với dữ liệu mô phỏng."].join("\n\n");
+}
+
+{
+  const s = addSlide(4, "Kiến trúc triển khai và phạm vi evidence", "Nhãn CHẠY THẬT hoặc MÔ PHỎNG / TEST nằm trực tiếp trên từng khối.");
+  const leftW = 770;
+  const layers = [
+    ["GIAO DIỆN", "Razor MVC • HTTP 202 • polling trạng thái", C.teal],
+    ["QUEUE / WORKER", "SQL job • lease 600s • retry / circuit", C.teal],
+    ["AI ADAPTER + CONTRACT", "OpenRouter • Qwen3.8 Flash • Schema → DTO → semantic → repair ≤ 1", C.blue],
+    ["POLICY + DỮ LIỆU", "PolicyDecisionEngine C# • EF Core • SQL Server • private storage • Undo event", C.amber],
+  ];
+  layers.forEach(([label, detail, accent], i) => {
+    const y = 150 + i * 92;
+    addShape(s, `S4_Layer_${i + 1}`, M, y, leftW, 74, C.card, C.line);
+    addPill(s, `S4_LiveBadge_${i + 1}`, "CHẠY THẬT", M + 16, y + 10, 110, C.green);
+    addText(s, `S4_LayerLabel_${i + 1}`, label, M + 148, y + 12, 210, 24, 15, accent, { bold: true, valign: "middle" });
+    addText(s, `S4_LayerText_${i + 1}`, detail, M + 148, y + 40, leftW - 170, 24, 14, C.text, { bold: true, valign: "middle" });
+    if (i < layers.length - 1) addLine(s, `S4_LayerConnector_${i + 1}`, M + leftW / 2, y + 74, 0, 18, C.line, 1.5);
+  });
+
+  const testX = 856;
+  addShape(s, "S4_TestBoundary", testX, 150, 366, 350, C.cardAccent, C.amber);
+  addText(s, "S4_TestTitle", "DỮ LIỆU VÀ PROTOTYPE", testX + 20, 168, 326, 24, 15, C.amber, { bold: true });
+  const simulated = [
+    ["30 ảnh tổng hợp", "Dữ liệu synthetic dùng cho test"],
+    ["5 fixture Verify", "Bộ minh họa chạy trên UI"],
+    ["Evidence overlay", "Prototype gắn hash; chưa nối extraction"],
+  ];
+  simulated.forEach(([label, detail], i) => {
+    const y = 210 + i * 88;
+    addShape(s, `S4_TestItem_${i + 1}`, testX + 20, y, 326, 70, C.card, C.line);
+    addPill(s, `S4_TestBadge_${i + 1}`, "MÔ PHỎNG / TEST", testX + 32, y + 10, 148, C.amber);
+    addText(s, `S4_TestLabel_${i + 1}`, label, testX + 194, y + 10, 138, 24, 14, C.text, { bold: true, valign: "middle" });
+    addText(s, `S4_TestDetail_${i + 1}`, detail, testX + 32, y + 42, 290, 20, 13, C.muted, { valign: "middle" });
+  });
+
+  addShape(s, "S4_DeploymentBand", M, 544, CONTENT_W, 82, C.cardAccent, C.line);
+  addText(s, "S4_DeploymentLabel", "MÔ HÌNH TRIỂN KHAI HIỆN TẠI", M + 20, 560, 310, 20, 13, C.muted, { bold: true });
+  addText(s, "S4_DeploymentText", "localhost • một process • AI qua OpenRouter / Alibaba • fallback Ollama mặc định tắt", M + 20, 590, CONTENT_W - 40, 24, 17, C.text, { bold: true });
+  s.speakerNotes.text = ["MỞ: Slide này phân định trực tiếp thành phần chạy thật với dữ liệu và prototype mô phỏng.", "Bốn lớp chạy thật gồm giao diện Razor MVC, queue/worker trong SQL, AI adapter cùng evidence contract, và PolicyDecisionEngine C# với dữ liệu bền vững. Model có thể thay, nhưng mọi facts vẫn phải qua contract, semantic gate và cùng policy engine.", "Ba khối mô phỏng hoặc test là 30 ảnh tổng hợp, 5 fixture Verify và evidence overlay prototype. Overlay hiện chỉ gắn với hash, chưa nối vào extraction hoặc policy và chưa có benchmark localization trên ảnh unseen.", "Mô hình triển khai hiện tại là localhost, một process; AI gọi qua OpenRouter tới route Alibaba; fallback Ollama mặc định tắt.", "Nguồn: submission/AURA_WORKFLOW_SPEC.md; docs/EVALUATION_EVIDENCE.md; docs/RUNBOOK.md; docs/CURRENT_PROJECT_STATUS.md.", "CHUYỂN: Kiến trúc đã xác định rõ phạm vi; slide cuối nêu lỗi đã quan sát và điều kiện để mở rộng an toàn."].join("\n\n");
+}
+
+{
+  const s = addSlide(5, "Lỗi đã quan sát, hạn chế còn lại và hướng xử lý", "Mỗi vấn đề có nguyên nhân, phản ứng an toàn và điều kiện xác nhận trước khi mở rộng.");
+  const leftX = M;
+  const leftW = 560;
+  const rightX = 642;
+  const rightW = 580;
+  addText(s, "S5_ObservedHeading", "1. LỖI ĐÃ QUAN SÁT", leftX, 138, leftW, 24, 15, C.amber, { bold: true });
+  addText(s, "S5_RoadmapHeading", "2. HẠN CHẾ CÒN LẠI                         3. HƯỚNG XỬ LÝ TIẾP THEO", rightX, 138, rightW, 24, 14, C.green, { bold: true });
+
+  const observed = [
+    ["EVIDENCE", "NGUYÊN NHÂN VÀ PHẢN ỨNG CỦA HỆ THỐNG"],
+    ["2/10\nover-escalation", "FAHASA: nhãn ‘Thanh toán’ bị validator từ chối. GS25_2: model bỏ tên cửa hàng gần vùng che. AURA chuyển FACT để người duyệt kiểm tra; 0 missed, 0 lỗi provider."],
+    ["2/30\nfield trọng yếu sai", "Phương Nam: vùng che làm mất ngày và model suy diễn nhầm identifier. Quyết định vẫn FACT; evidence công bố rõ confounder, không ghi đè raw."],
+    ["10/12\nregression known data", "Vẫn gặp hai failure mode trên. Lượt tuần tự 11/12 cho thấy extraction variance; không tune bằng chính 12 ảnh đã biết."],
+  ];
+  const observedTable = s.tables.add({ rows: observed.length, columns: 2, left: leftX, top: 170, width: leftW, height: 420, columnWidths: [150, 410], values: observed });
+  observedTable.name = "S5_ObservedErrorsTable";
+  observedTable.borders.assign({ style: "solid", fill: C.line, width: 1 });
+  observedTable.cells.block({ row: 0, column: 0, rowCount: observed.length, columnCount: 2 }).assign({ fill: C.card, textStyle: { typeface: FONT, fontSize: 12, color: C.text }, margins: { top: 7, right: 9, bottom: 7, left: 9 } });
+  observedTable.cells.block({ row: 0, column: 0, rowCount: 1, columnCount: 2 }).assign({ fill: C.cardAccent, textStyle: { typeface: FONT, fontSize: 12, bold: true, color: C.muted } });
+  observedTable.cells.block({ row: 1, column: 0, rowCount: 3, columnCount: 1 }).assign({ textStyle: { typeface: FONT, fontSize: 14, bold: true, color: C.amber } });
+  observedTable.rows[0].height = 42;
+  for (let r = 1; r < observed.length; r++) observedTable.rows[r].height = 126;
+
+  const roadmap = [
+    ["HẠN CHẾ", "HƯỚNG XỬ LÝ VÀ GATE XÁC NHẬN"],
+    ["Feedback 3 user còn PENDING", "Chạy paired protocol; khóa ngưỡng trước kết quả. Gate: 3 record có consent và giữ feedback tiêu cực."],
+    ["Limiter / lock theo process", "Đưa limiter, cooldown, circuit và Verify lock ra storage phân tán. Gate: test capacity multi-instance."],
+    ["PDF + object storage", "Thêm PDF ingestion và private object store. Gate: MIME, AV và retrieval regression đều pass."],
+    ["RBAC", "Lập role matrix và authorization tests. Gate: thao tác sai quyền bị chặn và có audit."],
+    ["Overlay mới là prototype", "Chuẩn hóa bounding box + fallback low-confidence. Gate: localization QA trên receipt unseen."],
+  ];
+  const roadmapTable = s.tables.add({ rows: roadmap.length, columns: 2, left: rightX, top: 170, width: rightW, height: 420, columnWidths: [206, 374], values: roadmap });
+  roadmapTable.name = "S5_RoadmapTable";
+  roadmapTable.borders.assign({ style: "solid", fill: C.line, width: 1 });
+  roadmapTable.cells.block({ row: 0, column: 0, rowCount: roadmap.length, columnCount: 2 }).assign({ fill: C.card, textStyle: { typeface: FONT, fontSize: 12, color: C.text }, margins: { top: 6, right: 8, bottom: 6, left: 8 } });
+  roadmapTable.cells.block({ row: 0, column: 0, rowCount: 1, columnCount: 2 }).assign({ fill: C.cardAccent, textStyle: { typeface: FONT, fontSize: 12, bold: true, color: C.muted } });
+  roadmapTable.cells.block({ row: 1, column: 0, rowCount: 5, columnCount: 1 }).assign({ textStyle: { typeface: FONT, fontSize: 12, bold: true, color: C.amber } });
+  roadmapTable.cells.block({ row: 1, column: 1, rowCount: 5, columnCount: 1 }).assign({ textStyle: { typeface: FONT, fontSize: 12, color: C.text } });
+  roadmapTable.rows[0].height = 42;
+  for (let r = 1; r < roadmap.length; r++) roadmapTable.rows[r].height = 75;
+
+  addShape(s, "S5_PrincipleBand", M, 610, CONTENT_W, 44, C.cardAccent, C.line);
+  addText(s, "S5_PrincipleText", "Giữ fail-safe, không tune bằng holdout; mọi cải tiến phải có fixture độc lập và gate xác nhận.", M + 16, 622, CONTENT_W - 32, 20, 15, C.text, { bold: true, align: "center" });
+  s.speakerNotes.text = ["MỞ: Slide cuối tách ba phần: lỗi đã quan sát, hạn chế còn lại và điều kiện xác nhận cho bước tiếp theo.", "Trong mini-holdout, hai over-escalation là FAHASA và GS25_2. FAHASA bị validator từ chối nhãn ‘Thanh toán 91.500 đ’; GS25_2 bị thiếu merchantName gần vùng che. Hệ thống dừng ở FACT để người duyệt kiểm tra, nên không có missed escalation hay provider error.", "Hai trên ba mươi field trọng yếu sai là hai field của Phương Nam: ngày bị vùng che cắt và identifier bị suy diễn quá mức. Quyết định vẫn đúng FACT; đây là redaction confounder phải công bố riêng, không đồng nhất với hai ca over-escalation.", "Regression trên 12 ảnh đã biết đạt 10/12 với cùng hai failure mode. Lượt tuần tự 11/12 cho thấy variance, nên không dùng chính các ảnh này để nới guard.", "Lộ trình có gate cụ thể: user study có consent và feedback tiêu cực; distributed coordination trước multi-instance; PDF/object storage qua kiểm MIME, AV và retrieval; RBAC qua authorization test; overlay qua localization QA trên receipt unseen.", "Nguồn: docs/EVALUATION_EVIDENCE.md; D:/aura/demo_evidence/22_NewRealReceipt_ForHoldout/holdout10_evidence_v3_2026-10-13/09_documentation_update/mismatch-register.corrected-utf8.json; D:/aura/demo_evidence/22_NewRealReceipt_ForHoldout/regression12_original_bytes_v1_2026-10-13/07_analysis/REGRESSION12_ORIGINAL_BYTES_RESULT_2026-10-13.md.", "KẾT: AURA hiện phù hợp cho demo có giám sát. Bước tiếp theo chỉ được coi là đạt khi qua gate đã định trước."].join("\n\n");
 }
 
 for (let i = 0; i < deck.slides.length; i++) {
@@ -274,7 +321,7 @@ await (await PresentationFile.exportPptx(deck)).save(candidatePath);
 const expectedSlideSizeEmu = "12192000,6858000";
 const result = await finalizePresentation({
   explicitTotalSlideCount: 5,
-  requiredNativeTableOwnerSlides: [5],
+  requiredNativeTableOwnerSlides: [3, 5],
   requiredNativeChartOwnerSlides: [],
   workspaceDir: WORKSPACE_DIR,
   candidatePath,
@@ -282,7 +329,7 @@ const result = await finalizePresentation({
   pythonExecutable: RUNTIME_PYTHON,
   integrityValidatorPath: path.join(SKILL_DIR, "container_tools/inspect_presentation_package_integrity.py"),
   layoutValidatorPath: path.join(SKILL_DIR, "container_tools/inspect_presentation_layout_geometry.py"),
-  layoutArgs: ["--expected-slide-size-emu", expectedSlideSizeEmu, "--validate-bullet-geometry", "--validate-heading-fit", "--require-native-table-slide", "5"],
+  layoutArgs: ["--expected-slide-size-emu", expectedSlideSizeEmu, "--validate-bullet-geometry", "--validate-heading-fit", "--require-native-table-slide", "3", "--require-native-table-slide", "5"],
   fontPolicy: { basis: "user_request", families: [FONT] },
   verifyArtifactToolImport: true,
   receiptPath: path.join(stagingDir, "AURA_5_SLIDES_REDESIGN.validation.json"),
