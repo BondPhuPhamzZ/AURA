@@ -22,18 +22,18 @@ const font = resolvePresentationFont();
 const deck = Presentation.create({ slideSize: { width: 1280, height: 720 } });
 
 const C = {
-  bg: "#081426",
-  surface: "#10223B",
-  surface2: "#142A47",
-  line: "#2A4262",
-  white: "#F5F8FF",
-  muted: "#9FB1CA",
-  blue: "#4D8DFF",
-  cyan: "#22D3EE",
-  green: "#2DD4A7",
-  amber: "#F8C14C",
-  red: "#FF6B7A",
-  violet: "#A78BFA",
+  bg: "#091522",
+  surface: "#112338",
+  surface2: "#162A42",
+  line: "#31445C",
+  white: "#F4F7FB",
+  muted: "#A6B3C4",
+  blue: "#5F8FD8",
+  cyan: "#45A9BE",
+  green: "#4FAF91",
+  amber: "#C59A4A",
+  red: "#D96B76",
+  violet: "#7E78B8",
 };
 
 function shape(slide, x, y, w, h, fill = C.surface, radius = 6, line = C.line) {
@@ -122,7 +122,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
     ["Hỏi quản lý", "Thiếu câu hỏi cụ thể"],
     ["Lưu lịch sử", "Khó truy vết"],
   ];
-  const accents = [C.blue, C.violet, C.amber, C.red, C.muted];
+  const accents = [C.blue, C.blue, C.blue, C.blue, C.blue];
   for (let i = 0; i < steps.length; i++) {
     const x = 55 + i * 184;
     step(s, i + 1, steps[i][0], x, 178, 158, accents[i], steps[i][1]);
@@ -144,7 +144,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   text(s, "Thiết kế lại quy trình", 55, 342, 400, 34, 24, C.white, { bold: true });
   const principles = [
     ["AI đọc", "Qwen trích dữ kiện có cấu trúc", C.blue],
-    ["Policy quyết định", "C# tất định: FACT → POLICY → AUTHORITY", C.green],
+    ["Policy quyết định", "C# tất định: FACT → POLICY → AUTHORITY", C.cyan],
     ["Con người chịu trách nhiệm", "Quản lý xử lý ngoại lệ và có thể hoàn tác", C.amber],
   ];
   principles.forEach((p, i) => {
@@ -166,13 +166,13 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   const topFlow = [
     ["1  INPUT", "JPG/PNG ≤ 5 MB\nclaim + metadata", C.blue],
-    ["2  INTAKE GATE", "extension • MIME • magic\nprivate store + SHA-256", C.cyan],
-    ["3  DURABLE ENQUEUE", "SQL PENDING\n+ audit AI_QUEUED", C.violet],
-    ["4  ASYNC UI", "HTTP 202 + statusUrl\nUI poll • không giữ request", C.amber],
+    ["2  INTAKE GATE", "extension • MIME • magic\nprivate store + SHA-256", C.blue],
+    ["3  DURABLE ENQUEUE", "SQL PENDING\n+ audit AI_QUEUED", C.blue],
+    ["4  ASYNC UI", "HTTP 202 + statusUrl\nUI poll • không giữ request", C.cyan],
   ];
   topFlow.forEach((f, i) => {
     const x = 54 + i * 295;
-    shape(s, x, 153, 267, 118, C.surface, 6, f[2]);
+    shape(s, x, 153, 267, 118, C.surface, 6, C.line);
     pill(s, f[0], x + 14, 168, 150, f[2]);
     text(s, f[1], x + 14, 211, 239, 46, 15, C.muted, { align: "center", valign: "middle" });
     if (i < topFlow.length - 1) {
@@ -183,14 +183,14 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   s.shapes.add({ geometry: "downArrow", position: { left: 1167, top: 275, width: 28, height: 31 }, fill: C.line, line: { fill: C.line, width: 0 } });
 
   const workerFlow = [
-    ["5  WORKER LEASE", "claim job • lease 600s\nreclaim sau restart", C.cyan, 939],
+    ["5  WORKER LEASE", "claim job • lease 600s\nreclaim sau restart", C.blue, 939],
     ["6  AI PERMIT", "1 AI call đồng thời\nOpenRouter → Qwen3.8", C.blue, 644],
-    ["7  CONTRACT GATE", "JSON Schema → DTO\nsemantic • repair ≤1", C.violet, 349],
-    ["8  POLICY C#", "AUTO_APPROVE\nhoặc ESCALATE_*", C.green, 54],
+    ["7  CONTRACT GATE", "JSON Schema → DTO\nsemantic • repair ≤1", C.blue, 349],
+    ["8  POLICY C#", "AUTO_APPROVE\nhoặc ESCALATE_*", C.amber, 54],
   ];
   workerFlow.forEach((f, i) => {
     const x = f[3];
-    shape(s, x, 307, 267, 118, C.surface, 6, f[2]);
+    shape(s, x, 307, 267, 118, C.surface, 6, C.line);
     pill(s, f[0], x + 14, 322, 156, f[2]);
     text(s, f[1], x + 14, 365, 239, 46, 15, C.muted, { align: "center", valign: "middle" });
     if (i < workerFlow.length - 1) {
@@ -199,17 +199,17 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   });
 
   s.shapes.add({ geometry: "downArrow", position: { left: 176, top: 429, width: 28, height: 28 }, fill: C.line, line: { fill: C.line, width: 0 } });
-  shape(s, 54, 466, 294, 138, "#12352F", 6, C.green);
+  shape(s, 54, 466, 294, 138, C.surface2, 6, C.line);
   pill(s, "AUTO_APPROVE", 72, 483, 150, C.green);
   text(s, "Ca rõ ràng", 72, 526, 250, 25, 19, C.white, { bold: true });
   text(s, "ghi lịch sử • không chờ quản lý", 72, 560, 250, 24, 14, C.muted);
 
-  shape(s, 382, 466, 570, 138, "#33263A", 6, C.amber);
+  shape(s, 382, 466, 570, 138, C.surface2, 6, C.line);
   pill(s, "9  ESCALATE_*", 400, 483, 160, C.amber);
   text(s, "Điểm người #1: nhân viên chuyển tiếp", 400, 526, 520, 24, 18, C.white, { bold: true });
   text(s, "Điểm người #2: quản lý YES / NO", 400, 558, 520, 24, 18, C.white, { bold: true });
 
-  shape(s, 986, 466, 238, 138, "#102A3E", 6, C.cyan);
+  shape(s, 986, 466, 238, 138, C.surface2, 6, C.line);
   pill(s, "AUDIT / UNDO", 1004, 483, 150, C.cyan);
   text(s, "Append-only timeline", 1004, 526, 202, 24, 17, C.white, { bold: true, align: "center" });
   text(s, "Undo = event mới", 1004, 560, 202, 22, 14, C.muted, { align: "center" });
@@ -226,17 +226,17 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   s.background.fill = C.bg;
   title(s, 3, "Đối chiếu trước–sau: khẳng định nào đã có bằng chứng?", "Không suy ROI từ fixture; dùng cùng nhiệm vụ, cùng người và cùng tiêu chí.");
 
-  shape(s, 54, 158, 354, 222, C.surface, 6, C.red);
-  pill(s, "TRƯỚC — THỦ CÔNG", 74, 178, 158, C.red);
+  shape(s, 54, 158, 354, 222, C.surface2, 6, C.line);
+  pill(s, "TRƯỚC — THỦ CÔNG", 74, 178, 158, C.line, C.white);
   text(s, "Sẽ đo trên 3 người dùng", 74, 226, 312, 28, 22, C.white, { bold: true });
   text(s, "Cùng 3 nhiệm vụ:\n• gửi hồ sơ\n• xử lý ngoại lệ\n• kiểm tra / hoàn tác", 74, 267, 312, 96, 16, C.muted);
 
-  shape(s, 435, 158, 370, 222, C.surface, 6, C.green);
-  pill(s, "SAU — AURA", 455, 178, 128, C.green);
+  shape(s, 435, 158, 370, 222, C.surface2, 6, C.line);
+  pill(s, "SAU — AURA", 455, 178, 128, C.blue);
   text(s, "Nguồn đo có truy vết", 455, 226, 328, 28, 22, C.white, { bold: true });
   text(s, "HTTP 202 / status timestamps\nroute terminal + Audit / Undo\n8/10 prospective • 0 missed\n2 over-escalation fail-safe", 455, 267, 328, 92, 16, C.muted);
 
-  shape(s, 832, 158, 392, 222, "#102A3E", 6, C.cyan);
+  shape(s, 832, 158, 392, 222, C.surface2, 6, C.line);
   pill(s, "KHUNG ĐO", 852, 178, 110, C.cyan);
   text(s, "U_AURA = <ΔT, ΔH, E_missed,\nE_over, A_trace>", 852, 225, 350, 58, 21, C.white, { bold: true, align: "center", valign: "middle" });
   text(s, "ΔT: thời gian route • ΔH: số lần chạm\nE: lỗi quyết định • A: đủ dấu vết", 852, 299, 350, 54, 14, C.muted, { align: "center" });
@@ -245,11 +245,11 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   const evidence = [
     ["163/163", "test offline", C.blue],
     ["8/10", "0 missed • 2 over", C.green],
-    ["5/5", "Verify 65.004s", C.violet],
+    ["5/5", "Verify 65.004s", C.blue],
   ];
   evidence.forEach((e, i) => {
     const x = 54 + i * 185;
-    shape(s, x, 458, 164, 122, C.surface2, 6, e[2]);
+    shape(s, x, 458, 164, 122, C.surface2, 6, C.line);
     text(s, e[0], x + 12, 477, 140, 38, 30, e[2], { align: "center", bold: true });
     text(s, e[1], x + 10, 526, 144, 34, 14, C.muted, { align: "center", bold: true, valign: "middle" });
   });
@@ -270,14 +270,14 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 
   const layers = [
     ["GIAO DIỆN", "Razor MVC • HTTP 202 • status polling", C.blue, 54, 154, 760],
-    ["QUEUE / WORKER", "SQL job • lease 600s • retry / circuit state", C.cyan, 54, 220, 760],
-    ["AI ADAPTER", "permit 1 → OpenRouter → Qwen3.8 Flash / Alibaba", C.violet, 54, 286, 760],
-    ["CONTRACT", "JSON Schema → ReceiptExtractionDto → semantic → repair ≤1", C.green, 54, 352, 760],
+    ["QUEUE / WORKER", "SQL job • lease 600s • retry / circuit state", C.blue, 54, 220, 760],
+    ["AI ADAPTER", "permit 1 → OpenRouter → Qwen3.8 Flash / Alibaba", C.blue, 54, 286, 760],
+    ["CONTRACT", "JSON Schema → ReceiptExtractionDto → semantic → repair ≤1", C.blue, 54, 352, 760],
     ["DECISION", "PolicyDecisionEngine C# → AUTO / ESCALATE → human review", C.amber, 54, 418, 760],
-    ["DỮ LIỆU / AUDIT", "EF Core • SQL Server • private storage • Undo event", C.red, 54, 484, 760],
+    ["DỮ LIỆU / AUDIT", "EF Core • SQL Server • private storage • Undo event", C.blue, 54, 484, 760],
   ];
   layers.forEach(([label, detail, accent, x, y, w], i) => {
-    shape(s, x, y, w, 52, C.surface, 6, accent);
+    shape(s, x, y, w, 52, C.surface, 6, C.line);
     pill(s, label, x + 14, y + 11, 146, accent);
     text(s, detail, x + 178, y + 13, w - 196, 26, 16, C.white, { bold: true });
     if (i < layers.length - 1) {
@@ -289,11 +289,11 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   text(s, "RANH GIỚI QUYỀN HẠN", 75, 582, 230, 22, 14, C.cyan, { bold: true });
   text(s, "AI trả facts; policy C# route; nhân viên/quản lý quyết định ngoại lệ.", 75, 607, 690, 22, 17, C.white, { bold: true });
 
-  shape(s, 856, 154, 368, 218, C.surface2, 6, C.green);
+  shape(s, 856, 154, 368, 218, C.surface2, 6, C.line);
   pill(s, "CHẠY THẬT", 880, 176, 118, C.green);
   text(s, "Upload + validation\nSQL queue + worker\nVision provider + contract\nPolicy C# + Audit + Undo", 880, 225, 305, 128, 19, C.white, { bold: true });
 
-  shape(s, 856, 397, 368, 238, C.surface2, 6, C.amber);
+  shape(s, 856, 397, 368, 238, C.surface2, 6, C.line);
   pill(s, "MÔ PHỎNG / TEST", 880, 419, 156, C.amber);
   text(s, "30 ảnh tổng hợp\n5 fixture Verify trên UI\nrunner mở rộng ngoài dashboard", 880, 469, 305, 92, 19, C.white, { bold: true });
   text(s, "Không phải receipt thật / user evidence\nKhông claim production SLA", 880, 573, 305, 46, 14, C.muted);
@@ -308,20 +308,20 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   title(s, 5, "Giới hạn, tình huống lỗi và bước tiếp theo", "Baseline có người giám sát: lỗi phải dừng an toàn và để lại bằng chứng.");
 
   const risks = [
-    ["JSON / semantic sai", "Repair đúng 1 lần • rồi FACT fail-safe", C.violet],
-    ["429 / timeout", "Fallback chỉ khi bật • audit provider", C.red],
-    ["App restart", "DB job + lease • worker reclaim", C.cyan],
-    ["5 upload đồng thời", "Queue hoàn tất 5/5 • P95 93.684s • chưa là SLA", C.amber],
-    ["Ảnh mơ hồ / giả", "FACT ưu tiên • không auto-approve", C.blue],
+    ["JSON / semantic sai", "Repair đúng 1 lần • rồi FACT fail-safe", C.line, C.white],
+    ["429 / timeout", "Fallback chỉ khi bật • audit provider", C.red, C.bg],
+    ["App restart", "DB job + lease • worker reclaim", C.line, C.white],
+    ["5 upload đồng thời", "Queue hoàn tất 5/5 • P95 93.684s • chưa là SLA", C.amber, C.bg],
+    ["Ảnh mơ hồ / giả", "FACT ưu tiên • không auto-approve", C.line, C.white],
   ];
   risks.forEach((r, i) => {
     const y = 157 + i * 84;
     shape(s, 54, y, 746, 66, C.surface, 6, C.line);
-    pill(s, r[0], 72, y + 18, 180, r[2]);
+    pill(s, r[0], 72, y + 18, 180, r[2], r[3]);
     text(s, r[1], 276, y + 19, 500, 28, 17, C.white, { bold: true });
   });
 
-  shape(s, 842, 157, 382, 242, C.surface2, 6, C.green);
+  shape(s, 842, 157, 382, 242, C.surface2, 6, C.line);
   text(s, "ĐÃ BÀN GIAO", 869, 180, 326, 24, 15, C.green, { bold: true });
   const todo = ["DB-backed queue + HTTP 202", "163/163 test • build sạch", "Holdout 8/10 • 0 missed", "Verify 5/5 • 65.004s"];
   todo.forEach((t, i) => {
@@ -329,7 +329,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });
   });
 
-  shape(s, 842, 424, 382, 172, "#342334", 6, C.red);
+  shape(s, 842, 424, 382, 172, C.surface2, 6, C.line);
   text(s, "RỦI RO / ĐIỀU KIỆN CÒN MỞ", 869, 447, 326, 24, 15, C.red, { bold: true });
   text(s, "• phản hồi 3 người dùng: chờ 16/10\n• limiter/lock mới ở một process\n• PDF • RBAC • object storage\n• evidence overlay mới là prototype", 869, 485, 326, 96, 15, C.white, { bold: true });
 
