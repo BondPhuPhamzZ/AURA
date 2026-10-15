@@ -36,7 +36,7 @@ const C = {
   violet: "#A78BFA",
 };
 
-function shape(slide, x, y, w, h, fill = C.surface, radius = "rounded-xl", line = C.line) {
+function shape(slide, x, y, w, h, fill = C.surface, radius = 6, line = C.line) {
   return slide.shapes.add({
     geometry: "rect",
     position: { left: x, top: y, width: w, height: h },
@@ -68,7 +68,7 @@ function text(slide, value, x, y, w, h, size = 24, color = C.white, opts = {}) {
 }
 
 function pill(slide, label, x, y, w, fill, color = C.bg) {
-  const p = shape(slide, x, y, w, 30, fill, "rounded-xl", fill);
+  const p = shape(slide, x, y, w, 30, fill, 15, fill);
   p.text = label;
   p.text.style = {
     typeface: font,
@@ -96,13 +96,13 @@ function title(slide, number, heading, subheading) {
   return line;
 }
 
-function footer(slide, number, source = "AURA • Track A • 12/10/2026") {
+function footer(slide, number, source = "AURA • Track VNG • 15/10/2026") {
   text(slide, source, 54, 686, 950, 18, 12, C.muted);
   text(slide, String(number), 1170, 684, 54, 20, 13, C.muted, { align: "right", bold: true });
 }
 
 function step(slide, n, label, x, y, w, accent, detail = "") {
-  const card = shape(slide, x, y, w, 106, C.surface, "rounded-xl", C.line);
+  const card = shape(slide, x, y, w, 106, C.surface, 6, C.line);
   pill(slide, String(n).padStart(2, "0"), x + 14, y + 14, 42, accent);
   text(slide, label, x + 15, y + 52, w - 30, 26, 17, C.white, { bold: true });
   if (detail) text(slide, detail, x + 15, y + 79, w - 30, 20, 12, C.muted);
@@ -137,7 +137,7 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
     }
   }
 
-  const insight = shape(s, 1010, 168, 214, 126, "#102A3E", "rounded-xl", C.cyan);
+  const insight = shape(s, 1010, 168, 214, 126, "#102A3E", 6, C.cyan);
   text(s, "Điểm nghẽn", 1032, 188, 170, 24, 15, C.cyan, { bold: true });
   text(s, "Không phải OCR — mà là biết khi nào phải dừng và hỏi người.", 1032, 220, 168, 58, 18, C.white, { bold: true });
 
@@ -149,8 +149,8 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
   ];
   principles.forEach((p, i) => {
     const x = 55 + i * 390;
-    shape(s, x, 395, 365, 190, C.surface2, "rounded-xl", C.line);
-    pill(s, p[0], x + 20, 416, 130, p[2]);
+    shape(s, x, 395, 365, 190, C.surface2, 6, C.line);
+    pill(s, p[0], x + 20, 416, [130, 174, 246][i], p[2]);
     text(s, p[1], x + 20, 468, 325, 58, 21, C.white, { bold: true });
     text(s, i === 0 ? "Không suy đoán field không đọc chắc." : i === 1 ? "Đầu vào nghi vấn không bao giờ auto-approve." : "Audit giữ đủ timeline, UI chỉ hiện một hồ sơ.", x + 20, 535, 325, 38, 14, C.muted);
   });
@@ -162,161 +162,181 @@ function step(slide, n, label, x, y, w, accent, detail = "") {
 {
   const s = deck.slides.add();
   s.background.fill = C.bg;
-  title(s, 2, "Một luồng — hai điểm con người quyết định", "Input và AI là dữ kiện; quyết định nghiệp vụ nằm ở policy và quản lý.");
+  title(s, 2, "Pipeline E2E: async trước, AI đọc, policy quyết định", "Chín gate chạy thật; con người chỉ quyết định ở nhánh ngoại lệ.");
 
-  const flow = [
-    ["Input", "Ảnh + số tiền\n+ người gửi", C.blue],
-    ["Nhận hồ sơ", "Lưu PENDING\ntrả HTTP 202", C.cyan],
-    ["Worker", "Claim bằng lease\nkhôi phục sau restart", C.violet],
-    ["Vision", "Primary hoặc fallback\n+ semantic repair", C.green],
-    ["Policy", "AUTO_APPROVE\nhoặc ESCALATE_*", C.amber],
+  const topFlow = [
+    ["1  INPUT", "JPG/PNG ≤ 5 MB\nclaim + metadata", C.blue],
+    ["2  INTAKE GATE", "extension • MIME • magic\nprivate store + SHA-256", C.cyan],
+    ["3  DURABLE ENQUEUE", "SQL PENDING\n+ audit AI_QUEUED", C.violet],
+    ["4  ASYNC UI", "HTTP 202 + statusUrl\nUI poll • không giữ request", C.amber],
   ];
-  flow.forEach((f, i) => {
-    const x = 54 + i * 237;
-    shape(s, x, 168, 205, 142, C.surface, "rounded-xl", f[2]);
-    pill(s, String(i + 1), x + 15, 184, 34, f[2]);
-    text(s, f[0], x + 58, 184, 132, 26, 17, C.white, { bold: true });
-    text(s, f[1], x + 16, 230, 173, 62, 16, C.muted, { align: "center", valign: "middle" });
-    if (i < flow.length - 1) {
-      s.shapes.add({ geometry: "rightArrow", position: { left: x + 210, top: 220, width: 22, height: 32 }, fill: C.line, line: { fill: C.line, width: 0 } });
+  topFlow.forEach((f, i) => {
+    const x = 54 + i * 295;
+    shape(s, x, 153, 267, 118, C.surface, 6, f[2]);
+    pill(s, f[0], x + 14, 168, 150, f[2]);
+    text(s, f[1], x + 14, 211, 239, 46, 15, C.muted, { align: "center", valign: "middle" });
+    if (i < topFlow.length - 1) {
+      s.shapes.add({ geometry: "rightArrow", position: { left: x + 270, top: 194, width: 20, height: 31 }, fill: C.line, line: { fill: C.line, width: 0 } });
     }
   });
 
-  text(s, "Điểm người #1", 58, 357, 162, 26, 15, C.cyan, { bold: true });
-  shape(s, 54, 390, 535, 218, C.surface2, "rounded-xl", C.cyan);
-  text(s, "Nhân viên xác nhận chuyển tiếp", 78, 414, 470, 32, 23, C.white, { bold: true });
-  text(s, "• chỉ hồ sơ ESCALATE_*\n• chuyển từng hồ sơ hoặc tất cả\n• tab quản lý cập nhật ngay", 78, 463, 450, 94, 18, C.muted);
-  pill(s, "Không chuyển âm thầm", 78, 564, 190, C.cyan);
+  s.shapes.add({ geometry: "downArrow", position: { left: 1167, top: 275, width: 28, height: 31 }, fill: C.line, line: { fill: C.line, width: 0 } });
 
-  text(s, "Điểm người #2", 650, 357, 162, 26, 15, C.amber, { bold: true });
-  shape(s, 645, 390, 579, 218, C.surface2, "rounded-xl", C.amber);
-  text(s, "Quản lý trả lời câu hỏi cụ thể", 670, 414, 515, 32, 23, C.white, { bold: true });
-  shape(s, 670, 466, 235, 67, "#12352F", "rounded-xl", C.green);
-  text(s, "ĐỒNG Ý", 688, 478, 199, 24, 16, C.green, { bold: true, align: "center" });
-  text(s, "duyệt ngoại lệ / tiếp nhận", 688, 505, 199, 18, 13, C.muted, { align: "center" });
-  shape(s, 929, 466, 235, 67, "#3A202C", "rounded-xl", C.red);
-  text(s, "TỪ CHỐI", 947, 478, 199, 24, 16, C.red, { bold: true, align: "center" });
-  text(s, "trả lại / yêu cầu bổ sung", 947, 505, 199, 18, 13, C.muted, { align: "center" });
-  text(s, "Audit append-only • hoàn tác quyết định gần nhất", 670, 558, 494, 24, 15, C.white, { align: "center", bold: true });
+  const workerFlow = [
+    ["5  WORKER LEASE", "claim job • lease 600s\nreclaim sau restart", C.cyan, 939],
+    ["6  AI PERMIT", "1 AI call đồng thời\nOpenRouter → Qwen3.8", C.blue, 644],
+    ["7  CONTRACT GATE", "JSON Schema → DTO\nsemantic • repair ≤1", C.violet, 349],
+    ["8  POLICY C#", "AUTO_APPROVE\nhoặc ESCALATE_*", C.green, 54],
+  ];
+  workerFlow.forEach((f, i) => {
+    const x = f[3];
+    shape(s, x, 307, 267, 118, C.surface, 6, f[2]);
+    pill(s, f[0], x + 14, 322, 156, f[2]);
+    text(s, f[1], x + 14, 365, 239, 46, 15, C.muted, { align: "center", valign: "middle" });
+    if (i < workerFlow.length - 1) {
+      s.shapes.add({ geometry: "leftArrow", position: { left: x - 23, top: 348, width: 20, height: 31 }, fill: C.line, line: { fill: C.line, width: 0 } });
+    }
+  });
+
+  s.shapes.add({ geometry: "downArrow", position: { left: 176, top: 429, width: 28, height: 28 }, fill: C.line, line: { fill: C.line, width: 0 } });
+  shape(s, 54, 466, 294, 138, "#12352F", 6, C.green);
+  pill(s, "AUTO_APPROVE", 72, 483, 150, C.green);
+  text(s, "Ca rõ ràng", 72, 526, 250, 25, 19, C.white, { bold: true });
+  text(s, "ghi lịch sử • không chờ quản lý", 72, 560, 250, 24, 14, C.muted);
+
+  shape(s, 382, 466, 570, 138, "#33263A", 6, C.amber);
+  pill(s, "9  ESCALATE_*", 400, 483, 160, C.amber);
+  text(s, "Điểm người #1: nhân viên chuyển tiếp", 400, 526, 520, 24, 18, C.white, { bold: true });
+  text(s, "Điểm người #2: quản lý YES / NO", 400, 558, 520, 24, 18, C.white, { bold: true });
+
+  shape(s, 986, 466, 238, 138, "#102A3E", 6, C.cyan);
+  pill(s, "AUDIT / UNDO", 1004, 483, 150, C.cyan);
+  text(s, "Append-only timeline", 1004, 526, 202, 24, 17, C.white, { bold: true, align: "center" });
+  text(s, "Undo = event mới", 1004, 560, 202, 22, 14, C.muted, { align: "center" });
+
+  s.shapes.add({ geometry: "rightArrow", position: { left: 351, top: 516, width: 25, height: 35 }, fill: C.line, line: { fill: C.line, width: 0 } });
+  s.shapes.add({ geometry: "rightArrow", position: { left: 956, top: 516, width: 25, height: 35 }, fill: C.line, line: { fill: C.line, width: 0 } });
   footer(s, 2);
-  s.speakerNotes.textFrame.setText("Workflow chi tiết: submission/AURA_WORKFLOW_SPEC.md");
+  s.speakerNotes.textFrame.setText("Pipeline chi tiết đã đối chiếu với submission/AURA_WORKFLOW_SPEC.md. Polling chỉ cập nhật UI; SQL queue và worker mới xử lý nền. AI chỉ tạo facts, PolicyDecisionEngine C# mới chọn route.");
 }
 
 // Slide 3
 {
   const s = deck.slides.add();
   s.background.fill = C.bg;
-  title(s, 3, "Bằng chứng kỹ thuật và tác động cần đo", "Một missed escalation đã đổi cách AURA được xây: đo an toàn trước, rồi mới tối ưu tốc độ.");
+  title(s, 3, "Đối chiếu trước–sau: khẳng định nào đã có bằng chứng?", "Không suy ROI từ fixture; dùng cùng nhiệm vụ, cùng người và cùng tiêu chí.");
 
-  shape(s, 54, 162, 560, 232, C.surface, "rounded-xl", C.red);
-  pill(s, "TRƯỚC", 76, 182, 86, C.red);
-  text(s, "Đọc và phân loại thủ công", 77, 231, 500, 32, 24, C.white, { bold: true });
-  text(s, "• nhiều lần chạm trên hồ sơ routine\n• câu hỏi escalation không nhất quán\n• lịch sử rời rạc, khó giải thích", 77, 278, 505, 92, 18, C.muted);
+  shape(s, 54, 158, 354, 222, C.surface, 6, C.red);
+  pill(s, "TRƯỚC — THỦ CÔNG", 74, 178, 158, C.red);
+  text(s, "Sẽ đo trên 3 người dùng", 74, 226, 312, 28, 22, C.white, { bold: true });
+  text(s, "Cùng 3 nhiệm vụ:\n• gửi hồ sơ\n• xử lý ngoại lệ\n• kiểm tra / hoàn tác", 74, 267, 312, 96, 16, C.muted);
 
-  shape(s, 666, 162, 558, 232, C.surface, "rounded-xl", C.green);
-  pill(s, "SAU — MỤC TIÊU", 690, 182, 145, C.green);
-  text(s, "Tự xử lý ca rõ ràng", 690, 231, 500, 32, 24, C.white, { bold: true });
-  text(s, "• con người chỉ nhận ngoại lệ\n• câu hỏi có dữ kiện và lựa chọn\n• một hồ sơ, một timeline truy vết", 690, 278, 500, 92, 18, C.muted);
+  shape(s, 435, 158, 370, 222, C.surface, 6, C.green);
+  pill(s, "SAU — AURA", 455, 178, 128, C.green);
+  text(s, "Nguồn đo có truy vết", 455, 226, 328, 28, 22, C.white, { bold: true });
+  text(s, "HTTP 202 / status timestamps\nroute terminal + Audit / Undo\n8/10 prospective • 0 missed\n2 over-escalation fail-safe", 455, 267, 328, 92, 16, C.muted);
 
-  text(s, "Bằng chứng đã có", 54, 428, 250, 28, 20, C.white, { bold: true });
+  shape(s, 832, 158, 392, 222, "#102A3E", 6, C.cyan);
+  pill(s, "KHUNG ĐO", 852, 178, 110, C.cyan);
+  text(s, "U_AURA = <ΔT, ΔH, E_missed,\nE_over, A_trace>", 852, 225, 350, 58, 21, C.white, { bold: true, align: "center", valign: "middle" });
+  text(s, "ΔT: thời gian route • ΔH: số lần chạm\nE: lỗi quyết định • A: đủ dấu vết", 852, 299, 350, 54, 14, C.muted, { align: "center" });
+
+  text(s, "Mốc kỹ thuật đã đo", 54, 416, 260, 28, 20, C.white, { bold: true });
   const evidence = [
     ["163/163", "test offline", C.blue],
-    ["8/10", "holdout mới • 0 missed", C.green],
-    ["5/5", "Verify live 65s", C.violet],
+    ["8/10", "0 missed • 2 over", C.green],
+    ["5/5", "Verify 65.004s", C.violet],
   ];
   evidence.forEach((e, i) => {
     const x = 54 + i * 185;
-    shape(s, x, 473, 164, 119, C.surface2, "rounded-xl", e[2]);
-    text(s, e[0], x + 12, 491, 140, 42, 31, e[2], { align: "center", bold: true });
-    text(s, e[1], x + 12, 543, 140, 22, 14, C.muted, { align: "center", bold: true });
+    shape(s, x, 458, 164, 122, C.surface2, 6, e[2]);
+    text(s, e[0], x + 12, 477, 140, 38, 30, e[2], { align: "center", bold: true });
+    text(s, e[1], x + 10, 526, 144, 34, 14, C.muted, { align: "center", bold: true, valign: "middle" });
   });
 
-  shape(s, 635, 428, 589, 164, C.surface2, "rounded-xl", C.line);
-  text(s, "Đo trong pilot", 660, 449, 200, 28, 20, C.white, { bold: true });
-  const metrics = ["Touchless rate", "Review time", "Over-escalation", "Missed escalation"];
-  metrics.forEach((m, i) => {
-    const x = 660 + (i % 2) * 270;
-    const y = 492 + Math.floor(i / 2) * 43;
-    pill(s, m, x, y, 236, i < 2 ? C.blue : C.amber, i < 2 ? C.bg : C.bg);
-  });
-  text(s, "Baseline và target chỉ điền sau khi có dữ liệu người dùng thật.", 635, 610, 589, 34, 15, C.amber, { align: "center", bold: true });
+  shape(s, 635, 416, 589, 164, C.surface2, 6, C.line);
+  text(s, "Phương pháp paired — gate còn mở", 658, 439, 530, 27, 20, C.white, { bold: true });
+  text(s, "1. Cùng người, cùng task\n2. Ghi timestamp + số lần chạm\n3. So median trước/sau\n4. Giữ cả feedback tiêu cực", 658, 481, 522, 80, 16, C.muted);
+  text(s, "Phản hồi 3 người dùng dự kiến nhận 16/10; ΔT/ΔH hiện là PENDING, không phải kết quả.", 54, 606, 1170, 29, 15, C.amber, { align: "center", bold: true });
   footer(s, 3);
-  s.speakerNotes.textFrame.setText("Nguồn hiện hành 13/10/2026: 163/163 test offline và Release build sạch. Candidate Qwen3.8 Flash qua OpenRouter/Alibaba, reasoning none. Prospective mini-holdout 10 hóa đơn mới đạt 8/10 quyết định đúng, 0 missed, 2 over fail-safe, 0 system/provider/429 error và 28/30 field trọng yếu; mẫu nhỏ và có redaction confounder, không phải production accuracy. Regression 12 ảnh byte gốc đạt 10/12; lượt chạy tuần tự lại trên dữ liệu đã biết đạt 11/12 và chỉ được dùng làm evidence ổn định. Burst 5 upload hoàn tất 5/5; AI concurrency vẫn là 1 nên queue wait tăng. Verify live đạt 5/5 trong 65.004 giây. Ollama chỉ là fallback local có giám sát. Ba user session vẫn là gate chưa hoàn tất.");
+  s.speakerNotes.textFrame.setText("Nguồn hiện hành 15/10/2026: 163/163 test offline và Release build sạch. Prospective mini-holdout 10 hóa đơn mới đạt 8/10 quyết định đúng, 0 missed, 2 over fail-safe, 0 system/provider/429 error và 28/30 field trọng yếu; mẫu nhỏ, không phải production accuracy. Verify live đạt 5/5 trong 65.004 giây. Regression 12 ảnh byte gốc đạt 10/12 và lượt tuần tự 11/12 chỉ là stability evidence trên dữ liệu đã biết. Khung U_AURA là vector phương pháp đo, không phải điểm ROI. Feedback 3 người dùng chưa nhận nên Delta T và Delta H vẫn để PENDING.");
 }
 
 // Slide 4
 {
   const s = deck.slides.add();
   s.background.fill = C.bg;
-  title(s, 4, "Kiến trúc: model thay được, policy đứng yên", "Vertical slice chạy thật trên ASP.NET Core; Test Kit chỉ là dữ liệu mô phỏng.");
+  title(s, 4, "Kiến trúc triển khai: model thay được, policy đứng yên", "ASP.NET Core + SQL chạy thật; fixture/runner được phân định rõ là mô phỏng.");
 
   const layers = [
-    ["GIAO DIỆN", "Razor MVC • fetch HTTP 202 • status polling sau upload", C.blue, 54, 162, 760],
-    ["ỨNG DỤNG", "DB-backed worker • lease • circuit breaker", C.cyan, 54, 248, 760],
-    ["QUYẾT ĐỊNH", "Schema + identifier validation → Policy C# → human review", C.green, 54, 334, 760],
-    ["DỮ LIỆU", "EF Core • SQL Server • private receipt storage • AuditLogs", C.violet, 54, 420, 760],
+    ["GIAO DIỆN", "Razor MVC • HTTP 202 • status polling", C.blue, 54, 154, 760],
+    ["QUEUE / WORKER", "SQL job • lease 600s • retry / circuit state", C.cyan, 54, 220, 760],
+    ["AI ADAPTER", "permit 1 → OpenRouter → Qwen3.8 Flash / Alibaba", C.violet, 54, 286, 760],
+    ["CONTRACT", "JSON Schema → ReceiptExtractionDto → semantic → repair ≤1", C.green, 54, 352, 760],
+    ["DECISION", "PolicyDecisionEngine C# → AUTO / ESCALATE → human review", C.amber, 54, 418, 760],
+    ["DỮ LIỆU / AUDIT", "EF Core • SQL Server • private storage • Undo event", C.red, 54, 484, 760],
   ];
   layers.forEach(([label, detail, accent, x, y, w], i) => {
-    shape(s, x, y, w, 66, C.surface, "rounded-xl", accent);
-    pill(s, label, x + 16, y + 18, 132, accent);
-    text(s, detail, x + 168, y + 20, w - 190, 28, 17, C.white, { bold: true });
+    shape(s, x, y, w, 52, C.surface, 6, accent);
+    pill(s, label, x + 14, y + 11, 146, accent);
+    text(s, detail, x + 178, y + 13, w - 196, 26, 16, C.white, { bold: true });
     if (i < layers.length - 1) {
-      s.shapes.add({ geometry: "line", position: { left: 434, top: y + 66, width: 0, height: 20 }, fill: "none", line: { style: "solid", fill: C.line, width: 2 } });
+      s.shapes.add({ geometry: "line", position: { left: 434, top: y + 52, width: 0, height: 14 }, fill: "none", line: { style: "solid", fill: C.line, width: 2 } });
     }
   });
 
-  shape(s, 54, 535, 760, 100, "#0E2A3D", "rounded-xl", C.cyan);
-  text(s, "VISION PROVIDER", 75, 554, 205, 24, 15, C.cyan, { bold: true });
-  text(s, "OpenRouter → Alibaba primary • Ollama local opt-in • model không quyết định", 75, 584, 690, 28, 18, C.white, { bold: true });
+  shape(s, 54, 568, 760, 67, "#0E2A3D", 6, C.cyan);
+  text(s, "RANH GIỚI QUYỀN HẠN", 75, 582, 230, 22, 14, C.cyan, { bold: true });
+  text(s, "AI trả facts; policy C# route; nhân viên/quản lý quyết định ngoại lệ.", 75, 607, 690, 22, 17, C.white, { bold: true });
 
-  shape(s, 856, 162, 368, 210, C.surface2, "rounded-xl", C.green);
-  pill(s, "CHẠY THẬT", 880, 184, 118, C.green);
-  text(s, "Upload + validation\nVision provider\nPolicy C#\nSQL + Audit + Undo", 880, 235, 305, 118, 20, C.white, { bold: true });
+  shape(s, 856, 154, 368, 218, C.surface2, 6, C.green);
+  pill(s, "CHẠY THẬT", 880, 176, 118, C.green);
+  text(s, "Upload + validation\nSQL queue + worker\nVision provider + contract\nPolicy C# + Audit + Undo", 880, 225, 305, 128, 19, C.white, { bold: true });
 
-  shape(s, 856, 397, 368, 238, C.surface2, "rounded-xl", C.amber);
-  pill(s, "MÔ PHỎNG", 880, 419, 118, C.amber);
-  text(s, "30 ảnh tổng hợp\n5 ca Verify trên UI\n15/30 ca qua runner", 880, 470, 305, 92, 20, C.white, { bold: true });
-  text(s, "Không có tax/e-invoice lookup\nKhông có user role thật", 880, 574, 305, 44, 14, C.muted);
+  shape(s, 856, 397, 368, 238, C.surface2, 6, C.amber);
+  pill(s, "MÔ PHỎNG / TEST", 880, 419, 156, C.amber);
+  text(s, "30 ảnh tổng hợp\n5 fixture Verify trên UI\nrunner mở rộng ngoài dashboard", 880, 469, 305, 92, 19, C.white, { bold: true });
+  text(s, "Không phải receipt thật / user evidence\nKhông claim production SLA", 880, 573, 305, 46, 14, C.muted);
   footer(s, 4);
-  s.speakerNotes.textFrame.setText("Repository và hướng dẫn chạy localhost: https://github.com/BondPhuPhamzZ/AURA");
+  s.speakerNotes.textFrame.setText("Repository và hướng dẫn chạy localhost: https://github.com/BondPhuPhamzZ/AURA. Primary hiện tại: OpenRouter qwen/qwen3.8-flash, reasoning none, route Alibaba. Fallback Ollama mặc định tắt. Thay model có thể đổi facts nhưng không tự đổi business policy; mọi provider phải qua cùng contract, semantic gate và PolicyDecisionEngine.");
 }
 
 // Slide 5
 {
   const s = deck.slides.add();
   s.background.fill = C.bg;
-  title(s, 5, "Giới hạn hiện tại và cách fail-safe", "Fallback có allowlist và circuit breaker; lỗi dữ liệu không được che bằng đổi model.");
+  title(s, 5, "Giới hạn, tình huống lỗi và bước tiếp theo", "Baseline có người giám sát: lỗi phải dừng an toàn và để lại bằng chứng.");
 
   const risks = [
-    ["429 / timeout", "Fallback 1 lần nếu bật • audit provider", C.red],
-    ["Provider lỗi liên tiếp", "Circuit mở • cooldown • primary probe", C.amber],
     ["JSON / semantic sai", "Repair đúng 1 lần • rồi FACT fail-safe", C.violet],
+    ["429 / timeout", "Fallback chỉ khi bật • audit provider", C.red],
     ["App restart", "DB job + lease • worker reclaim", C.cyan],
+    ["5 upload đồng thời", "Queue hoàn tất 5/5 • P95 93.684s • chưa là SLA", C.amber],
     ["Ảnh mơ hồ / giả", "FACT ưu tiên • không auto-approve", C.blue],
   ];
   risks.forEach((r, i) => {
     const y = 157 + i * 84;
-    shape(s, 54, y, 746, 66, C.surface, "rounded-xl", C.line);
+    shape(s, 54, y, 746, 66, C.surface, 6, C.line);
     pill(s, r[0], 72, y + 18, 180, r[2]);
     text(s, r[1], 276, y + 19, 500, 28, 17, C.white, { bold: true });
   });
 
-  shape(s, 842, 157, 382, 242, C.surface2, "rounded-xl", C.green);
+  shape(s, 842, 157, 382, 242, C.surface2, 6, C.green);
   text(s, "ĐÃ BÀN GIAO", 869, 180, 326, 24, 15, C.green, { bold: true });
-  const todo = ["DB-backed upload queue", "163 test, build sạch", "Holdout 8/10 • 0 missed", "Verify 5/5 • Mobile pass"];
+  const todo = ["DB-backed queue + HTTP 202", "163/163 test • build sạch", "Holdout 8/10 • 0 missed", "Verify 5/5 • 65.004s"];
   todo.forEach((t, i) => {
     pill(s, `${i + 1}`, 869, 225 + i * 40, 30, C.green);
     text(s, t, 914, 228 + i * 40, 270, 24, 16, C.white, { bold: true });
   });
 
-  shape(s, 842, 424, 382, 153, "#342334", "rounded-xl", C.red);
-  text(s, "CHƯA CÓ TRONG BASELINE", 869, 447, 326, 24, 15, C.red, { bold: true });
-  text(s, "3 người dùng thực tế • rehearsal\nPDF/nhiều trang\nauthentication • object storage", 869, 487, 326, 72, 16, C.white, { bold: true });
+  shape(s, 842, 424, 382, 172, "#342334", 6, C.red);
+  text(s, "RỦI RO / ĐIỀU KIỆN CÒN MỞ", 869, 447, 326, 24, 15, C.red, { bold: true });
+  text(s, "• phản hồi 3 người dùng: chờ 16/10\n• limiter/lock mới ở một process\n• PDF • RBAC • object storage\n• evidence overlay mới là prototype", 869, 485, 326, 96, 15, C.white, { bold: true });
 
-  text(s, "Verify vẫn đúng 5 ca BTC; runner mở rộng không làm rối dashboard.", 842, 601, 382, 44, 14, C.amber, { align: "center", bold: true });
+  text(s, "Sau feedback: chọn 1 thay đổi truy vết → chạy lại build/test/Verify; không tune bằng holdout.", 842, 610, 382, 39, 14, C.amber, { align: "center", bold: true });
   footer(s, 5, "AURA • Giới hạn hiện tại, không phải lời hứa marketing");
   s.speakerNotes.textFrame.setText(
-    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ReceiptExtractionContract.cs, PolicyDecisionEngine.cs, VietnamTime.cs, tools/Invoke-ExtendedDatasetEvaluation.ps1, docs/CURRENT_PROJECT_STATUS.md và docs/EVALUATION_EVIDENCE.md. Fallback vẫn opt-in và mặc định tắt; Ollama chỉ bật local sau smoke. Qwen3.8 Flash qua OpenRouter/Alibaba, reasoning none, là primary candidate. Prospective holdout đạt 8/10 với 0 missed và 2 over; sequential repeat trên dữ liệu đã biết đạt 11/12; Verify live đạt 5/5 trong 65.004 giây. Burst 5 upload hoàn tất 5/5 nhưng phép đo một process không phải production SLA. Ba phiên người dùng thật, video chính thức và kiểm tra quyền Team Drive vẫn là gate mở.",
+    "Nguồn kỹ thuật trong repo: ReceiptProcessingWorker.cs, ReceiptProcessingQueue.cs, VisionInvocationCoordinator.cs, ReceiptExtractionContract.cs, ReceiptSemanticValidator.cs, PolicyDecisionEngine.cs, docs/CURRENT_PROJECT_STATUS.md và docs/EVALUATION_EVIDENCE.md. Fallback opt-in và mặc định tắt. Burst 5 upload hoàn tất 5/5; E2E P95 93.684 giây là queue integrity trên một process, không phải production SLA. Verify giữ lock theo process để tránh nhân batch fixture. Ba phiên người dùng thật và distributed limiter/lock vẫn là gate mở. Evidence localization chỉ là prototype cô lập, chưa nằm trong production pipeline.",
   );
 }
 
