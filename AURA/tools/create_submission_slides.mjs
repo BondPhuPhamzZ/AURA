@@ -223,12 +223,12 @@ function addRightArrow(surface, name, x, y, w = 22, h = 18, color = C.line) {
 }
 
 {
-  const s = addSlide(4, "Kiến trúc triển khai và phạm vi evidence", "Nhãn CHẠY THẬT hoặc MÔ PHỎNG / TEST nằm trực tiếp trên từng khối.");
+  const s = addSlide(4, "Kiến trúc, ranh giới thực thi và phạm vi evidence", "Mỗi khối ghi rõ phần đang chạy, quyền của model và phần còn mô phỏng / test.");
   const leftW = 770;
   const layers = [
     ["GIAO DIỆN", "Razor MVC • HTTP 202 • polling trạng thái", C.teal],
     ["QUEUE / WORKER", "SQL job • lease 600s • retry / circuit", C.teal],
-    ["AI ADAPTER + CONTRACT", "OpenRouter • Qwen3.8 Flash • Schema → DTO → semantic → repair ≤ 1", C.blue],
+    ["AI ADAPTER + CONTRACT", "OpenRouter • Qwen3.8 Flash • image → DTO • không tool / DB write\nSchema • semantic validation • repair ≤ 1", C.blue],
     ["POLICY + DỮ LIỆU", "PolicyDecisionEngine C# • EF Core • SQL Server • private storage • Undo event", C.amber],
   ];
   layers.forEach(([label, detail, accent], i) => {
@@ -236,7 +236,7 @@ function addRightArrow(surface, name, x, y, w = 22, h = 18, color = C.line) {
     addShape(s, `S4_Layer_${i + 1}`, M, y, leftW, 74, C.card, C.line);
     addPill(s, `S4_LiveBadge_${i + 1}`, "CHẠY THẬT", M + 16, y + 10, 110, C.green);
     addText(s, `S4_LayerLabel_${i + 1}`, label, M + 148, y + 12, 210, 24, 15, accent, { bold: true, valign: "middle" });
-    addText(s, `S4_LayerText_${i + 1}`, detail, M + 148, y + 40, leftW - 170, 24, 14, C.text, { bold: true, valign: "middle" });
+    addText(s, `S4_LayerText_${i + 1}`, detail, M + 148, y + 35, leftW - 170, 34, i === 2 ? 12 : 14, C.text, { bold: true, valign: "middle" });
     if (i < layers.length - 1) addLine(s, `S4_LayerConnector_${i + 1}`, M + leftW / 2, y + 74, 0, 18, C.line, 1.5);
   });
 
@@ -256,14 +256,15 @@ function addRightArrow(surface, name, x, y, w = 22, h = 18, color = C.line) {
     addText(s, `S4_TestDetail_${i + 1}`, detail, testX + 32, y + 42, 290, 20, 13, C.muted, { valign: "middle" });
   });
 
-  addShape(s, "S4_DeploymentBand", M, 544, CONTENT_W, 82, C.cardAccent, C.line);
-  addText(s, "S4_DeploymentLabel", "MÔ HÌNH TRIỂN KHAI HIỆN TẠI", M + 20, 560, 310, 20, 13, C.muted, { bold: true });
-  addText(s, "S4_DeploymentText", "localhost • một process • AI qua OpenRouter / Alibaba • fallback Ollama mặc định tắt", M + 20, 590, CONTENT_W - 40, 24, 17, C.text, { bold: true });
-  s.speakerNotes.text = ["MỞ: Slide này phân định trực tiếp thành phần chạy thật với dữ liệu và prototype mô phỏng.", "Bốn lớp chạy thật gồm giao diện Razor MVC, queue/worker trong SQL, AI adapter cùng evidence contract, và PolicyDecisionEngine C# với dữ liệu bền vững. Model có thể thay, nhưng mọi facts vẫn phải qua contract, semantic gate và cùng policy engine.", "Ba khối mô phỏng hoặc test là 30 ảnh tổng hợp, 5 fixture Verify và evidence overlay prototype. Overlay hiện chỉ gắn với hash, chưa nối vào extraction hoặc policy và chưa có benchmark localization trên ảnh unseen.", "Mô hình triển khai hiện tại là localhost, một process; AI gọi qua OpenRouter tới route Alibaba; fallback Ollama mặc định tắt.", "Nguồn: submission/AURA_WORKFLOW_SPEC.md; docs/EVALUATION_EVIDENCE.md; docs/RUNBOOK.md; docs/CURRENT_PROJECT_STATUS.md.", "CHUYỂN: Kiến trúc đã xác định rõ phạm vi; slide cuối nêu lỗi đã quan sát và điều kiện để mở rộng an toàn."].join("\n\n");
+  addShape(s, "S4_DeploymentBand", M, 536, CONTENT_W, 96, C.cardAccent, C.line);
+  addText(s, "S4_DeploymentLabel", "MÔ HÌNH HIỆN TẠI VÀ RANH GIỚI BẢO MẬT", M + 20, 550, 420, 20, 13, C.muted, { bold: true });
+  addText(s, "S4_DeploymentText", "localhost • một process • OpenRouter / Alibaba • fallback Ollama tắt", M + 20, 576, CONTENT_W - 40, 20, 15, C.text, { bold: true, valign: "middle" });
+  addText(s, "S4_SecurityBoundaryText", "Identity chỉ là metadata demo • chưa production RBAC • chưa sandbox file parser", M + 20, 602, CONTENT_W - 40, 18, 14, C.muted, { bold: true, valign: "middle" });
+  s.speakerNotes.text = ["MỞ: Slide này phân định trực tiếp thành phần chạy thật, quyền của model và phần còn mô phỏng.", "Ranh giới thực thi có tính quyết định là: model chỉ nhận ảnh và trả DTO theo contract; model không có tool, không có credential ghi database và không tự sửa trạng thái. Semantic validator kiểm tra facts, còn PolicyDecisionEngine C# mới chọn route. Vì vậy đổi model không đồng nghĩa đổi policy.", "Identity hiện mới là metadata demo gồm mã nhân viên, tên và phòng ban; đó chưa phải danh tính đã xác thực. Các vai trò người gửi, nhân viên và quản lý mới là vai trò workflow, chưa phải production RBAC hay least-privilege enforcement.", "Upload hiện đã kiểm extension, MIME, magic bytes, giới hạn 5 MB và lưu riêng tư; model không được cấp quyền hệ thống. Tuy nhiên đây mới là logical isolation, chưa phải sandbox OS hoặc container cho file parser.", "Ba khối mô phỏng hoặc test là 30 ảnh tổng hợp, 5 fixture Verify và evidence overlay prototype. Overlay chỉ gắn với hash, chưa nối extraction hoặc policy và chưa có benchmark localization trên ảnh unseen.", "Mô hình hiện tại là localhost, một process; AI gọi qua OpenRouter tới route Alibaba; fallback Ollama tắt.", "Nguồn: submission/AURA_WORKFLOW_SPEC.md; submission/AURA_PROPOSAL_VI.md; docs/CURRENT_PROJECT_STATUS.md; src/AURA/Infrastructure/AI/ReceiptExtractionContract.cs; src/AURA/Core/Policy/PolicyDecisionEngine.cs.", "CHUYỂN: Slide cuối biến khoảng cách từ demo tới production thành các security gate có thể kiểm chứng."].join("\n\n");
 }
 
 {
-  const s = addSlide(5, "Lỗi đã quan sát, hạn chế còn lại và hướng xử lý", "Mỗi vấn đề có nguyên nhân, phản ứng an toàn và điều kiện xác nhận trước khi mở rộng.");
+  const s = addSlide(5, "Từ demo đến production: lỗi, hạn chế và security gates", "Identity, least privilege, sandbox và scale đều cần gate xác nhận trước pilot.");
   const leftX = M;
   const leftW = 560;
   const rightX = 642;
@@ -290,8 +291,8 @@ function addRightArrow(surface, name, x, y, w = 22, h = 18, color = C.line) {
     ["HẠN CHẾ", "HƯỚNG XỬ LÝ VÀ GATE XÁC NHẬN"],
     ["Feedback 3 user còn PENDING", "Chạy paired protocol; khóa ngưỡng trước kết quả. Gate: 3 record có consent và giữ feedback tiêu cực."],
     ["Limiter / lock theo process", "Đưa limiter, cooldown, circuit và Verify lock ra storage phân tán. Gate: test capacity multi-instance."],
-    ["PDF + object storage", "Thêm PDF ingestion và private object store. Gate: MIME, AV và retrieval regression đều pass."],
-    ["RBAC", "Lập role matrix và authorization tests. Gate: thao tác sai quyền bị chặn và có audit."],
+    ["Sandbox ingestion + storage", "Quarantine; MIME + AV/CDR; parser ít quyền, giới hạn CPU/RAM/time/egress. Gate: malicious-file tests pass."],
+    ["Identity + least privilege", "OIDC/SSO + service identity; deny-by-default role matrix. Gate: thao tác sai quyền bị chặn và có audit."],
     ["Overlay mới là prototype", "Chuẩn hóa bounding box + fallback low-confidence. Gate: localization QA trên receipt unseen."],
   ];
   const roadmapTable = s.tables.add({ rows: roadmap.length, columns: 2, left: rightX, top: 170, width: rightW, height: 420, columnWidths: [206, 374], values: roadmap });
@@ -305,8 +306,8 @@ function addRightArrow(surface, name, x, y, w = 22, h = 18, color = C.line) {
   for (let r = 1; r < roadmap.length; r++) roadmapTable.rows[r].height = 75;
 
   addShape(s, "S5_PrincipleBand", M, 610, CONTENT_W, 44, C.cardAccent, C.line);
-  addText(s, "S5_PrincipleText", "Giữ fail-safe, không tune bằng holdout; mọi cải tiến phải có fixture độc lập và gate xác nhận.", M + 16, 622, CONTENT_W - 32, 20, 15, C.text, { bold: true, align: "center" });
-  s.speakerNotes.text = ["MỞ: Slide cuối tách ba phần: lỗi đã quan sát, hạn chế còn lại và điều kiện xác nhận cho bước tiếp theo.", "Trong mini-holdout, hai over-escalation là FAHASA và GS25_2. FAHASA bị validator từ chối nhãn ‘Thanh toán 91.500 đ’; GS25_2 bị thiếu merchantName gần vùng che. Hệ thống dừng ở FACT để người duyệt kiểm tra, nên không có missed escalation hay provider error.", "Hai trên ba mươi field trọng yếu sai là hai field của Phương Nam: ngày bị vùng che cắt và identifier bị suy diễn quá mức. Quyết định vẫn đúng FACT; đây là redaction confounder phải công bố riêng, không đồng nhất với hai ca over-escalation.", "Regression trên 12 ảnh đã biết đạt 10/12 với cùng hai failure mode. Lượt tuần tự 11/12 cho thấy variance, nên không dùng chính các ảnh này để nới guard.", "Lộ trình có gate cụ thể: user study có consent và feedback tiêu cực; distributed coordination trước multi-instance; PDF/object storage qua kiểm MIME, AV và retrieval; RBAC qua authorization test; overlay qua localization QA trên receipt unseen.", "Nguồn: docs/EVALUATION_EVIDENCE.md; D:/aura/demo_evidence/22_NewRealReceipt_ForHoldout/holdout10_evidence_v3_2026-10-13/09_documentation_update/mismatch-register.corrected-utf8.json; D:/aura/demo_evidence/22_NewRealReceipt_ForHoldout/regression12_original_bytes_v1_2026-10-13/07_analysis/REGRESSION12_ORIGINAL_BYTES_RESULT_2026-10-13.md.", "KẾT: AURA hiện phù hợp cho demo có giám sát. Bước tiếp theo chỉ được coi là đạt khi qua gate đã định trước."].join("\n\n");
+  addText(s, "S5_PrincipleText", "Model không có quyền thực thi; giữ fail-safe, không tune bằng holdout; chỉ mở rộng khi security gate đạt.", M + 16, 622, CONTENT_W - 32, 20, 14, C.text, { bold: true, align: "center" });
+  s.speakerNotes.text = ["MỞ: Slide cuối tách ba phần: lỗi đã quan sát, hạn chế còn lại và security gate trước khi đưa demo vào production.", "Trong mini-holdout, hai over-escalation là FAHASA và GS25_2. FAHASA bị validator từ chối nhãn ‘Thanh toán 91.500 đ’; GS25_2 bị thiếu merchantName gần vùng che. Hệ thống dừng ở FACT để người duyệt kiểm tra, nên không có missed escalation hay provider error.", "Hai trên ba mươi field trọng yếu sai là hai field của Phương Nam: ngày bị vùng che cắt và identifier bị suy diễn quá mức. Quyết định vẫn đúng FACT; đây là redaction confounder phải công bố riêng, không đồng nhất với hai ca over-escalation.", "Regression trên 12 ảnh đã biết đạt 10/12 với cùng hai failure mode. Lượt tuần tự 11/12 cho thấy variance, nên không dùng chính các ảnh này để nới guard.", "Từ demo tới production, identity phải chuyển từ metadata sang OIDC hoặc SSO và service identity. Least privilege cần role matrix deny-by-default cho người gửi, reviewer, manager và operator, kèm authorization tests và audit.", "Sandbox hiện mới ở mức logical: model không có tool hay quyền ghi DB trực tiếp. Production cần quarantine, AV hoặc CDR, parser cô lập với quyền thấp, cùng giới hạn CPU, RAM, thời gian và network egress.", "Scale vẫn cần distributed limiter, cooldown, circuit và lock trước multi-instance; user study vẫn PENDING và feedback chung của doanh nghiệp không thay thế record từ ba người dùng.", "Nguồn: docs/EVALUATION_EVIDENCE.md; docs/CURRENT_PROJECT_STATUS.md; submission/AURA_WORKFLOW_SPEC.md; submission/AURA_PROPOSAL_VI.md.", "KẾT: AURA là supervised MVP có ranh giới quyết định rõ, chưa tự nhận production-ready. Chỉ mở rộng khi từng security gate đạt bằng test và audit evidence."].join("\n\n");
 }
 
 for (let i = 0; i < deck.slides.length; i++) {
