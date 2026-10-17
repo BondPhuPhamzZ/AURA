@@ -5,6 +5,7 @@ Thư mục này chỉ chứa các tài liệu kỹ thuật hiện hành dành ch
 | Tài liệu | Mục đích |
 |---|---|
 | `CURRENT_PROJECT_STATUS.md` | Nguồn sự thật duy nhất về baseline đã xác minh và các gate còn mở |
+| `AFTER_FEEDBACK_IMPLEMENTATION.md` | Phạm vi triển khai ngày 17/10, bằng chứng test, demo flow mới và các ranh giới chưa-production |
 | `EVALUATION_EVIDENCE.md` | Bản đồ kết quả công khai, ranh giới claim và vị trí evidence thô riêng tư |
 | `RUNBOOK.md` | Quy trình vận hành và khôi phục |
 | `JUDGE_LOCAL_SETUP.md` | Hướng dẫn BGK chạy AURA tại máy local |

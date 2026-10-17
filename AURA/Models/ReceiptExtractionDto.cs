@@ -60,6 +60,14 @@ namespace AURA.Models
         public List<string> MissingFields { get; set; } = new List<string>();
         public List<string> Warnings { get; set; } = new List<string>();
         public List<string> SuspiciousSignals { get; set; } = new List<string>();
+        // Backend privacy triage. The model reports only normalized markers such as
+        // `personal_data:PHONE`; it must never echo the raw personal value here.
+        public List<string> PersonalDataCategories { get; set; } = new List<string>();
+        public string PrivacyRisk { get; set; } = PrivacyRiskLevels.None;
+        public bool RequiresPrivacyReview { get; set; }
+        // Backend-only provenance for the amount used by PolicyDecisionEngine.
+        // This field is persisted in ExtractedFactsJson but is not model-generated.
+        public string AmountSource { get; set; } = AmountSources.Unknown;
         // Added by the backend after structured output parsing. The model never supplies
         // this field; it records unresolved cross-field contradictions for the policy engine.
         public List<string> ValidationIssues { get; set; } = new List<string>();
@@ -69,5 +77,20 @@ namespace AURA.Models
         public bool SemanticRepairApplied { get; set; }
         public List<string> SemanticRepairIssues { get; set; } = new List<string>();
         public double Confidence { get; set; }
+    }
+
+    public static class PrivacyRiskLevels
+    {
+        public const string None = "NONE";
+        public const string Review = "REVIEW";
+        public const string High = "HIGH";
+    }
+
+    public static class AmountSources
+    {
+        public const string Unknown = "UNKNOWN";
+        public const string UserProvided = "USER_PROVIDED";
+        public const string AiExtracted = "AI_EXTRACTED";
+        public const string Unavailable = "UNAVAILABLE";
     }
 }

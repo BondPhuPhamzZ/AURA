@@ -24,6 +24,7 @@
                 <button class="nav-link @(initialTab == "applicant" ? "active" : null)" onclick="navigateToTab('applicant')" id="btn-tab-applicant">Cửa sổ nhân viên</button>
                 <button class="nav-link @(initialTab == "reviewer" ? "active" : null)" onclick="navigateToTab('reviewer')" id="btn-tab-reviewer">Cửa sổ quản lý</button>
                 <button class="nav-link @(initialTab == "audit" ? "active" : null)" onclick="navigateToTab('audit')" id="btn-tab-audit">Lịch sử hành vi</button>
+                <button class="nav-link @(initialTab == "dashboard" ? "active" : null)" onclick="navigateToTab('dashboard')" id="btn-tab-dashboard">Tổng quan</button>
             </div>
             
             
@@ -100,7 +101,7 @@
         }
 
         const initialTab = new URLSearchParams(window.location.search).get('tab');
-        if (initialTab === 'reviewer' || initialTab === 'audit') switchTab(initialTab);
+        if (initialTab === 'reviewer' || initialTab === 'audit' || initialTab === 'dashboard') switchTab(initialTab);
 
         const backToTopButton = document.getElementById('backToTop');
         function updateBackToTopVisibility() {

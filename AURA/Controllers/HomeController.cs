@@ -20,6 +20,7 @@ public class HomeController : Controller
         {
             "reviewer" => "reviewer",
             "audit" => "audit",
+            "dashboard" => "dashboard",
             _ => "applicant"
         };
 

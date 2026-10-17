@@ -105,6 +105,12 @@ internal static class ReceiptExtractionContract
               non-authoritative arithmetic guess; AMBIGUOUS and INFERRED must also keep totalAmount null.
               `Subtotal`, `Tạm tính`, cash tendered/`Tiền mặt`, change/`Tiền thối lại`, and included VAT are
               never final-payable evidence by themselves.
+            - Privacy triage: if the image visibly contains personal data, add only normalized markers to
+              suspiciousSignals using `personal_data:CATEGORY`. Allowed categories are PERSON_NAME, PHONE,
+              EMAIL, ADDRESS, PERSONAL_ID, PERSONAL_TAX_ID, BANK_ACCOUNT, PAYMENT_CARD, HEALTH, BIOMETRIC
+              and OTHER. Never copy the raw personal value into suspiciousSignals or warnings. Merchant
+              identity and a company tax code alone are business data; flag them only when the image clearly
+              associates the value with an identifiable natural person. This is a review signal, not a legal conclusion.
 
             {policy}
             """;
@@ -126,6 +132,7 @@ internal static class ReceiptExtractionContract
         facts.MissingFields ??= [];
         facts.Warnings ??= [];
         facts.SuspiciousSignals ??= [];
+        facts.PersonalDataCategories ??= [];
         facts.ValidationIssues ??= [];
         facts.SemanticRepairIssues ??= [];
         facts.Confidence = Math.Clamp(facts.Confidence, 0, 1);

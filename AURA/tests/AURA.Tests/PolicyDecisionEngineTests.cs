@@ -305,6 +305,8 @@ public sealed class PolicyDecisionEngineTests
     [InlineData("ESCALATE_AUTHORITY", false, "RETURNED_BY_MANAGER")]
     [InlineData("ESCALATE_SYSTEM_ERROR", true, "MANUAL_REVIEW_ACCEPTED")]
     [InlineData("ESCALATE_SYSTEM_ERROR", false, "RETURNED_FOR_RETRY")]
+    [InlineData("ESCALATE_PRIVACY", true, "MANUAL_REVIEW_ACCEPTED")]
+    [InlineData("ESCALATE_PRIVACY", false, "RETURNED_BY_MANAGER")]
     public void Manager_yes_no_has_explicit_outcome(string status, bool answer, string expected)
     {
         Assert.Equal(expected, EscalationWorkflow.Answer(status, answer).Status);
@@ -321,6 +323,7 @@ public sealed class PolicyDecisionEngineTests
     [InlineData("ESCALATE_FACT")]
     [InlineData("ESCALATE_POLICY")]
     [InlineData("ESCALATE_AUTHORITY")]
+    [InlineData("ESCALATE_PRIVACY")]
     public void Manager_choices_use_explicit_approve_and_reject_labels(string status)
     {
         var choices = EscalationWorkflow.ExplainChoices(status);

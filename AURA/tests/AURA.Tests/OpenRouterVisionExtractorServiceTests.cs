@@ -20,6 +20,8 @@ public sealed class OpenRouterVisionExtractorServiceTests
 
         Assert.Equal("qwen/qwen3.8-flash", options.Model);
         Assert.Equal("none", options.ReasoningEffort);
+        Assert.True(options.DenyProviderDataCollection);
+        Assert.False(options.RequireZeroDataRetention);
     }
 
     [Fact]
@@ -130,6 +132,8 @@ public sealed class OpenRouterVisionExtractorServiceTests
                 StringComparison.Ordinal);
             Assert.Equal(4096, rootElement.GetProperty("max_tokens").GetInt32());
             Assert.Equal("none", rootElement.GetProperty("reasoning").GetProperty("effort").GetString());
+            Assert.Equal("deny", rootElement.GetProperty("provider").GetProperty("data_collection").GetString());
+            Assert.False(rootElement.GetProperty("provider").GetProperty("zdr").GetBoolean());
             Assert.Equal("response-healing",
                 rootElement.GetProperty("plugins")[0].GetProperty("id").GetString());
             var responseFormat = rootElement.GetProperty("response_format");

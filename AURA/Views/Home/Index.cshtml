@@ -9,6 +9,7 @@
     var applicantDisplay = initialTab == "applicant" ? "block" : "none";
     var reviewerDisplay = initialTab == "reviewer" ? "block" : "none";
     var auditDisplay = initialTab == "audit" ? "block" : "none";
+    var dashboardDisplay = initialTab == "dashboard" ? "block" : "none";
 }
 
 <!-- Tab Applicant / Tester -->
@@ -19,7 +20,7 @@
         <div class="verify-copy">
             <h2 class="hero-title" style="font-size: 1.5rem; margin-bottom: 8px;">Verify Harness</h2>
             <p class="hero-sub" style="color: var(--colors-ink-subtle); margin: 0; font-size: 0.95rem;">
-                Nhấn nút bên phải để AI tự động chạy kiểm thử trên bộ 5 hóa đơn chuẩn hóa. Bạn cũng có thể tải lên 1 hóa đơn thủ công ở khung bên dưới.
+                Nhấn nút bên phải để AI tự động chạy kiểm thử trên bộ 5 hóa đơn chuẩn hóa. Bạn cũng có thể tải lên tối đa 10 hóa đơn trong một lượt ở khung bên dưới.
             </p>
         </div>
         <div class="verify-action">
@@ -40,31 +41,31 @@
             
             <div class="upload-workspace">
                 <div class="upload-input-column">
-                    <h3 id="single-upload-title" class="workflow-subtitle">Tải lên hóa đơn lẻ</h3>
+                    <h3 id="single-upload-title" class="workflow-subtitle">Tải lên một hoặc nhiều hóa đơn</h3>
                     <div class="dropzone-area" id="dropzone" onclick="document.getElementById('receiptFile').click()">
-                        <input type="file" id="receiptFile" name="receiptFile" accept=".jpg,.jpeg,.png" style="display: none;" onchange="handleFileSelect(this)">
+                        <input type="file" id="receiptFile" name="receiptFile" accept=".jpg,.jpeg,.png" multiple style="display: none;" onchange="handleFileSelect(this)">
                         <img id="receiptLocalPreview" class="receipt-local-preview" alt="Xem trước hóa đơn đã chọn" hidden />
                         <div class="dropzone-placeholder" id="dropzonePlaceholder">
                             <div class="dropzone-icon">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                             </div>
-                            <div class="dropzone-text" id="dropzoneText">Kéo thả ảnh hóa đơn vào đây</div>
-                            <div class="dropzone-subtext">Hỗ trợ JPG, PNG (Tối đa @ReceiptStorage.Value.MaxFileSizeMb MB)</div>
+                            <div class="dropzone-text" id="dropzoneText">Kéo thả hoặc chọn nhiều ảnh hóa đơn</div>
+                            <div class="dropzone-subtext">JPG, PNG · tối đa 10 ảnh/lượt · @ReceiptStorage.Value.MaxFileSizeMb MB/ảnh</div>
                         </div>
                     </div>
                     <div class="amount-action-row">
                         <div class="amount-field">
-                            <label for="claimedAmountDisplay" class="form-label fw-semibold">Số tiền nhân viên đề nghị hoàn ứng (VND)</label>
-                            <input id="claimedAmountDisplay" type="text" inputmode="numeric" autocomplete="off" required
-                                   class="form-control amount-input-aura" placeholder="Ví dụ: 150.000" aria-describedby="claimedAmountHelp" />
+                            <label for="claimedAmountDisplay" class="form-label fw-semibold">Số tiền đối chiếu tùy chọn (VND)</label>
+                            <input id="claimedAmountDisplay" type="text" inputmode="numeric" autocomplete="off"
+                                   class="form-control amount-input-aura" placeholder="Có thể để trống" aria-describedby="claimedAmountHelp" />
                             <input id="claimedAmount" name="claimedAmount" type="hidden" />
                             <div id="claimedAmountHelp" class="form-text">
-                                Nhập số tiền thực tế nhân viên yêu cầu. Hệ thống tự thêm dấu chấm phân cách hàng nghìn.
+                                Với một ảnh, có thể nhập để đối chiếu. Nếu để trống hoặc tải nhiều ảnh, AURA dùng dòng tổng cuối AI đọc được; nếu không đủ bằng chứng thì chuyển người kiểm tra.
                             </div>
                         </div>
                         <div class="amount-submit-wrap">
                             <button type="submit" id="submitBtn" class="button-primary">
-                                <span id="btnText">AI tự động kiểm</span>
+                                <span id="btnText">Xếp hàng AI</span>
                             </button>
                         </div>
                     </div>
@@ -159,6 +160,11 @@
     <div id="auditTrailHost">@await Component.InvokeAsync("AuditLogQueue")</div>
 </div>
 
+<!-- Tab Dashboard -->
+<div class="tab-content-pane feature-card @(initialTab == "dashboard" ? "active" : null)" id="pane-dashboard" style="display: @dashboardDisplay;">
+    @await Component.InvokeAsync("DashboardSummary")
+</div>
+
 <style>
     /* CSS for skeleton loading animation */
     .skeleton-row td {
@@ -231,6 +237,7 @@
     const amountRawInput = document.getElementById('claimedAmount');
     const maxUploadBytes = @((long)ReceiptStorage.Value.MaxFileSizeMb * 1024L * 1024L);
     const maxUploadMegabytes = @ReceiptStorage.Value.MaxFileSizeMb;
+    const maxBatchFiles = 10;
     const resultsBody = document.getElementById('resultsBody');
     const emptyResultsRow = '<tr><td colspan="8" class="text-center empty-state">Không có hồ sơ nào đang chờ chuyển tiếp. Ca tự động duyệt đã được ghi thẳng vào lịch sử.</td></tr>';
     let currentAnalysisItems = [];
@@ -283,20 +290,30 @@
     function handleDrop(e) {
         const dt = e.dataTransfer;
         const files = dt.files;
-        if (files.length > 0 && validateSelectedFile(files[0])) {
+        if (files.length > 0 && validateSelectedFiles(files)) {
             fileInput.files = files;
-            updateDropzoneUI(files[0]);
+            updateDropzoneUI(files);
         }
     }
 
     function handleFileSelect(input) {
         if (input.files && input.files.length > 0) {
-            if (validateSelectedFile(input.files[0])) {
-                updateDropzoneUI(input.files[0]);
+            if (validateSelectedFiles(input.files)) {
+                updateDropzoneUI(input.files);
             } else {
                 input.value = '';
             }
         }
+    }
+
+    function validateSelectedFiles(fileList) {
+        const files = Array.from(fileList || []);
+        if (files.length === 0) return false;
+        if (files.length > maxBatchFiles) {
+            showToast(`Mỗi lượt chỉ nhận tối đa ${maxBatchFiles} ảnh để tránh ghi nhầm hoặc quá tải.`, 'danger');
+            return false;
+        }
+        return files.every(validateSelectedFile);
     }
 
     function validateSelectedFile(file) {
@@ -313,15 +330,20 @@
         return true;
     }
 
-    function updateDropzoneUI(file) {
+    function updateDropzoneUI(fileList) {
+        const files = Array.from(fileList || []);
+        const file = files[0];
+        if (!file) return;
         if (localPreviewUrl) URL.revokeObjectURL(localPreviewUrl);
         localPreviewUrl = URL.createObjectURL(file);
         receiptLocalPreview.src = localPreviewUrl;
         receiptLocalPreview.hidden = false;
         dropzonePlaceholder.classList.add('with-preview');
         dropzone.classList.add('has-preview');
-        dropzoneText.textContent = file.name;
-        dropzoneSubtext.innerText = 'Click hoặc kéo thả ảnh khác để thay đổi';
+        dropzoneText.textContent = files.length === 1 ? file.name : `Đã chọn ${files.length} hóa đơn`;
+        dropzoneSubtext.innerText = files.length === 1
+            ? 'Click hoặc kéo thả ảnh khác để thay đổi'
+            : `${file.name} và ${files.length - 1} ảnh khác · AI sẽ xếp hàng tuần tự`;
         renderExtractedFacts(null);
     }
 
@@ -404,6 +426,12 @@
             : '<span class="fact-value missing">Không đọc được dòng hàng</span>';
         const warnings = [...(facts.missingFields || []), ...(facts.warnings || []),
             ...(facts.suspiciousSignals || []), ...(facts.validationIssues || [])];
+        const privacyCategories = Array.isArray(facts.personalDataCategories) ? facts.personalDataCategories : [];
+        const amountSourceLabels = {
+            USER_PROVIDED: 'Người dùng nhập để đối chiếu',
+            AI_EXTRACTED: 'AI đọc từ dòng tổng cuối',
+            UNAVAILABLE: 'Chưa xác định'
+        };
 
         body.className = 'extracted-facts-content';
         body.innerHTML =
@@ -420,6 +448,11 @@
                 '<div><dt>Tổng thanh toán</dt><dd>' + escapeHtml(formatFactMoney(facts.totalAmount)) + '</dd></div>' +
                 (facts.totalAmountSource ? '<div><dt>Nguồn tổng tiền</dt><dd>' + escapeHtml(formatTotalSource(facts.totalAmountSource)) + '</dd></div>' : '') +
                 (facts.totalAmountEvidence ? '<div><dt>Dòng tổng nguyên văn</dt><dd>' + escapeHtml(displayFact(facts.totalAmountEvidence)) + '</dd></div>' : '') +
+                (facts.amountSource ? '<div><dt>Nguồn số tiền đối chiếu</dt><dd>' + escapeHtml(amountSourceLabels[facts.amountSource] || facts.amountSource) + '</dd></div>' : '') +
+                '<div><dt>Privacy triage</dt><dd>' +
+                    (privacyCategories.length
+                        ? escapeHtml(`${facts.privacyRisk || 'REVIEW'} · ${privacyCategories.join(', ')}`)
+                        : 'Không phát hiện tín hiệu trong dữ kiện đã trích xuất') + '</dd></div>' +
                 '<div><dt>Tiền tệ</dt><dd>' + escapeHtml(displayFact(facts.currency)) + '</dd></div>' +
                 '<div><dt>Trạng thái</dt><dd>' + escapeHtml(displayFact(facts.documentStatus || facts.orderStatus)) + '</dd></div>' +
                 (facts.completionDate ? '<div><dt>Ngày hoàn tất (tham khảo)</dt><dd>' + escapeHtml(displayFact(facts.completionDate)) + '</dd></div>' : '') +
@@ -570,6 +603,13 @@
             selectedFactsCaseId = null;
         }
         processingPlaceholderRows = 0;
+        renderResultsTable();
+    }
+
+    function upsertCurrentAnalysisItem(item) {
+        const index = currentAnalysisItems.findIndex(candidate => candidate?.caseId === item?.caseId);
+        if (index >= 0) currentAnalysisItems[index] = item;
+        else currentAnalysisItems.push(item);
         renderResultsTable();
     }
 
@@ -726,83 +766,97 @@
         });
     }
 
-    // AJAX Upload Single File
+    // Batch upload reuses the same validated HTTP 202 endpoint for each file. This
+    // keeps storage, hash checks, SQL queueing and worker behavior on one code path.
     async function submitUpload() {
         if (!fileInput.files || fileInput.files.length === 0) {
-            showToast('Vui lòng tải lên ảnh hóa đơn.', 'danger');
+            showToast('Vui lòng chọn ít nhất một ảnh hóa đơn.', 'danger');
             return;
         }
-        if (!validateSelectedFile(fileInput.files[0])) return;
+        if (!validateSelectedFiles(fileInput.files)) return;
+        const files = Array.from(fileInput.files);
         const rawAmount = syncClaimedAmount();
-        if (!rawAmount || Number(rawAmount) <= 0) {
-            showToast('Vui lòng nhập số tiền đề nghị hoàn ứng hợp lệ.', 'danger');
-            amountDisplayInput.focus();
-            return;
-        }
+        const submittedAmount = files.length === 1 && rawAmount ? rawAmount : '0';
+        if (files.length > 1 && rawAmount)
+            showToast('Batch nhiều ảnh sẽ dùng tổng tiền AI đọc riêng cho từng hóa đơn.', 'warning');
 
         const btn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');
         const originalText = btnText.innerText;
         
         btn.disabled = true;
-        btnText.innerText = 'Đang xử lý...';
-        renderExtractedFactsLoading('AI đang đọc và đối chiếu nội dung hóa đơn…');
-        beginAnalysisProgress('AI đang tiếp nhận hóa đơn',
-            'Ảnh sẽ được lưu trước, sau đó xử lý bằng hàng đợi bền vững. Bảng tự cập nhật, không cần tải lại trang.');
+        btnText.innerText = `Đang xếp hàng ${files.length} ảnh...`;
+        renderExtractedFactsLoading('AURA đang kiểm tra và xếp hàng các hóa đơn…');
+        beginAnalysisProgress(`Đang tiếp nhận ${files.length} hóa đơn`,
+            'Mỗi ảnh đi qua cùng lớp kiểm file, lưu riêng tư, SHA-256 và SQL queue trước khi AI xử lý.');
 
         currentAnalysisItems = [];
-        processingPlaceholderRows = 1;
+        processingPlaceholderRows = files.length;
         renderResultsTable();
         scrollToResults();
 
         const form = document.getElementById('uploadForm');
-        const formData = new FormData(form);
-        formData.set('claimedAmount', rawAmount);
+        const queued = [];
 
         try {
-            const response = await fetch(form.action, {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                body: formData
-            });
-
-            const data = await readJsonResponse(response, 'Tải lên hóa đơn');
-            setCurrentAnalysisItems(data);
-            sessionStorage.setItem('aura.pendingReceipt', JSON.stringify({ caseId: data.caseId, statusUrl: data.statusUrl }));
-            btn.disabled = false;
-            btnText.innerText = originalText;
-            showToast('Đã ghi nhận hồ sơ. AI đang xử lý nền; bạn có thể tiếp tục thao tác.', 'success');
-            const completed = await pollReceiptStatus(data.statusUrl);
-            setCurrentAnalysisItems(completed);
-            sessionStorage.removeItem('aura.pendingReceipt');
-            if (completed.facts) showAnalysisFacts(completed.caseId, false);
-            else renderExtractedFactsUnavailable('AI chưa trả về dữ liệu trích xuất; hồ sơ đã được chuyển sang kiểm tra thủ công.', completed.image);
-            if (completed.duplicateDetected && !completed.duplicatePolicyEnabled) {
-                showToast('Ảnh này đã từng được dùng; hệ thống vẫn xử lý vì đang bật chế độ kiểm thử.', 'warning');
+            for (const file of files) {
+                const formData = new FormData(form);
+                formData.delete('receiptFile');
+                formData.append('receiptFile', file, file.name);
+                formData.set('claimedAmount', submittedAmount);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData
+                });
+                const data = await readJsonResponse(response, `Tải lên ${file.name}`);
+                queued.push(data);
+                sessionStorage.setItem('aura.pendingReceipts', JSON.stringify(
+                    queued.map(item => ({ caseId: item.caseId, statusUrl: item.statusUrl }))));
+                currentAnalysisItems = [...queued];
+                processingPlaceholderRows = files.length - queued.length;
+                renderResultsTable();
             }
-            updateAnalysisSummary(completed);
-            finishAnalysisProgress('AI đã hoàn tất thẩm định',
-                completed.canForward
-                    ? 'Hồ sơ cần nhân viên chuyển tiếp để quản lý xem xét.'
-                    : 'Kết quả đã được lưu vào lịch sử hành vi.');
+
+            processingPlaceholderRows = 0;
+            sessionStorage.setItem('aura.pendingReceipts', JSON.stringify(
+                queued.map(item => ({ caseId: item.caseId, statusUrl: item.statusUrl }))));
+            showToast(`Đã ghi nhận ${queued.length} hồ sơ. AI xử lý nền theo SQL queue.`, 'success');
+
+            const completedItems = [];
+            for (const item of queued) {
+                const completed = await pollReceiptStatus(item.statusUrl, true);
+                completedItems.push(completed);
+            }
+            sessionStorage.removeItem('aura.pendingReceipts');
+            sessionStorage.removeItem('aura.pendingReceipt');
+
+            const firstFacts = completedItems.find(item => item.facts);
+            if (firstFacts) showAnalysisFacts(firstFacts.caseId, false);
+            else renderExtractedFactsUnavailable('AI chưa trả về dữ kiện; các hồ sơ đã được chuyển sang kiểm tra thủ công.');
+            updateAnalysisSummary(completedItems);
+            finishAnalysisProgress(`Đã hoàn tất ${completedItems.length} hóa đơn`,
+                'Kết quả, privacy triage và route đã được lưu; ca cần xử lý vẫn chờ nhân viên chuyển tiếp.');
             await refreshEmployeeEscalationQueue();
         } catch(e) {
             processingPlaceholderRows = 0;
             renderResultsTable();
-            renderExtractedFactsUnavailable('Không nhận được nội dung từ AI: ' + e.message);
-            finishAnalysisProgress('Không thể hoàn tất thẩm định', e.message, true);
+            const accepted = queued.length > 0 ? ` ${queued.length} hồ sơ đã nhận vẫn được xử lý nền.` : '';
+            renderExtractedFactsUnavailable('Không thể hoàn tất toàn bộ batch: ' + e.message + accepted);
+            finishAnalysisProgress('Batch chưa được tiếp nhận đầy đủ', e.message + accepted, true);
         } finally {
             btn.disabled = false;
             btnText.innerText = originalText;
         }
     }
 
-    async function pollReceiptStatus(statusUrl) {
+    async function pollReceiptStatus(statusUrl, preserveBatch = false) {
         if (!statusUrl) throw new Error('Máy chủ không trả về địa chỉ theo dõi hồ sơ.');
         for (let attempt = 0; attempt < 900; attempt++) {
             const response = await fetch(statusUrl, { cache: 'no-store' });
             const item = await readJsonResponse(response, 'Theo dõi trạng thái AI');
-            setCurrentAnalysisItems(item);
+            if (preserveBatch) upsertCurrentAnalysisItem(item);
+            else setCurrentAnalysisItems(item);
             if (item.processingState === 'COMPLETED' || item.processingState === 'FAILED') return item;
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
@@ -810,19 +864,30 @@
     }
 
     async function resumePendingReceipt() {
-        const raw = sessionStorage.getItem('aura.pendingReceipt');
+        const raw = sessionStorage.getItem('aura.pendingReceipts') || sessionStorage.getItem('aura.pendingReceipt');
         if (!raw) return;
         try {
-            const pending = JSON.parse(raw);
-            beginAnalysisProgress('Đang khôi phục hồ sơ chưa hoàn tất',
+            const parsed = JSON.parse(raw);
+            const pendingItems = Array.isArray(parsed) ? parsed : [parsed];
+            beginAnalysisProgress(`Đang khôi phục ${pendingItems.length} hồ sơ chưa hoàn tất`,
                 'Hàng đợi vẫn chạy trong nền; bảng sẽ tự cập nhật khi có kết quả.');
-            const completed = await pollReceiptStatus(pending.statusUrl);
+            currentAnalysisItems = pendingItems.map(item => ({
+                caseId: item.caseId,
+                image: 'Hồ sơ đang khôi phục',
+                processingState: 'PENDING',
+                reason: 'Đang đọc lại trạng thái từ SQL queue.'
+            }));
+            renderResultsTable();
+            const completedItems = [];
+            for (const pending of pendingItems)
+                completedItems.push(await pollReceiptStatus(pending.statusUrl, true));
+            sessionStorage.removeItem('aura.pendingReceipts');
             sessionStorage.removeItem('aura.pendingReceipt');
-            setCurrentAnalysisItems(completed);
-            if (completed.facts) showAnalysisFacts(completed.caseId, false);
-            updateAnalysisSummary(completed);
+            const firstFacts = completedItems.find(item => item.facts);
+            if (firstFacts) showAnalysisFacts(firstFacts.caseId, false);
+            updateAnalysisSummary(completedItems);
             finishAnalysisProgress('Đã khôi phục kết quả thẩm định',
-                completed.canForward ? 'Hồ sơ đang chờ chuyển tiếp.' : 'Kết quả đã được lưu vào lịch sử hành vi.');
+                'Các hồ sơ đã hoàn tất hoặc được chuyển sang kiểm tra thủ công.');
             await refreshEmployeeEscalationQueue();
         } catch (error) {
             showToast('Không thể khôi phục trạng thái xử lý: ' + error.message, 'warning');

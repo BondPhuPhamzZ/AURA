@@ -39,6 +39,10 @@ public static class EscalationWorkflow
                 "Quản lý đồng ý duyệt: hồ sơ lỗi hệ thống được tiếp nhận để kiểm tra thủ công."),
             ("ESCALATE_SYSTEM_ERROR", false) => ("RETURNED_FOR_RETRY", "MANAGER_NO",
                 "Quản lý từ chối duyệt: hồ sơ được trả lại để thử xử lý lại sau."),
+            ("ESCALATE_PRIVACY", true) => ("MANUAL_REVIEW_ACCEPTED", "MANAGER_YES",
+                "Quản lý đồng ý tiếp tục: hồ sơ được kiểm tra thủ công theo quy trình bảo vệ dữ liệu."),
+            ("ESCALATE_PRIVACY", false) => ("RETURNED_BY_MANAGER", "MANAGER_NO",
+                "Quản lý từ chối tiếp tục: hồ sơ được trả lại để xử lý theo quy trình bảo vệ dữ liệu."),
             _ => answer
                 ? ("MANUAL_REVIEW_ACCEPTED", "MANAGER_YES", "Quản lý đồng ý duyệt: hồ sơ được xử lý thủ công.")
                 : ("RETURNED_BY_MANAGER", "MANAGER_NO", "Quản lý từ chối duyệt: hồ sơ được trả lại.")
@@ -52,6 +56,7 @@ public static class EscalationWorkflow
     {
         "ESCALATE_POLICY" => ("Đồng ý duyệt ngoại lệ chính sách", "Từ chối khoản chi ngoài chính sách"),
         "ESCALATE_AUTHORITY" => ("Đồng ý chuyển cấp có thẩm quyền", "Từ chối và trả lại hồ sơ"),
+        "ESCALATE_PRIVACY" => ("Đồng ý tiếp tục theo quy trình bảo vệ dữ liệu", "Từ chối và trả lại hồ sơ"),
         "ESCALATE_SYSTEM_ERROR" => ("Đủ tiêu chuẩn", "Không đủ tiêu chuẩn"),
         _ => ("Đồng ý tiếp nhận kiểm tra thủ công", "Từ chối và yêu cầu bổ sung chứng từ")
     };

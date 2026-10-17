@@ -33,6 +33,18 @@ public sealed class OpenRouterOptions
     /// </summary>
     public string? ReasoningEffort { get; set; } = "none";
 
+    /// <summary>
+    /// Restricts routing to providers that declare they do not collect request data.
+    /// This reduces provider-side exposure but does not replace consent, minimization or local redaction.
+    /// </summary>
+    public bool DenyProviderDataCollection { get; set; } = true;
+
+    /// <summary>
+    /// Optional strict Zero Data Retention routing. Keep disabled until the selected multimodal route
+    /// is verified in the target account; enabling it can make the provider set empty.
+    /// </summary>
+    public bool RequireZeroDataRetention { get; set; }
+
     [Required]
     public string HttpReferer { get; set; } = "https://github.com/BondPhuPhamzZ/AURA";
 

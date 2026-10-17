@@ -135,11 +135,12 @@ public sealed class ApplicantController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UploadReceipt(IFormFile? receiptFile, decimal claimedAmount,
+    public async Task<IActionResult> UploadReceipt(IFormFile? receiptFile, decimal? claimedAmount,
         string? submitterCode, string? submitterDisplayName, string? submitterDepartment,
         CancellationToken cancellationToken)
     {
-        var validationError = ValidateUpload(receiptFile, claimedAmount);
+        var submittedAmount = claimedAmount.GetValueOrDefault();
+        var validationError = ValidateUpload(receiptFile, submittedAmount);
         if (validationError is not null) return BadRequest(new { error = validationError });
 
         var file = receiptFile!;
@@ -165,7 +166,7 @@ public sealed class ApplicantController : Controller
         var request = new ReimbursementRequest
         {
             Id = id,
-            ClaimedAmount = claimedAmount,
+            ClaimedAmount = submittedAmount,
             OriginalFileName = Path.GetFileName(file.FileName),
             StoredFileName = storedFileName,
             ContentType = extension == ".png" ? "image/png" : "image/jpeg",
@@ -186,6 +187,7 @@ public sealed class ApplicantController : Controller
         {
             await _repository.AddRequestWithAuditAsync(request, "AI_QUEUED",
                 $"File={request.OriginalFileName}; Submitter={request.SubmitterCode}; Department={request.SubmitterDepartment}; " +
+                $"AmountSource={(submittedAmount > 0 ? AmountSources.UserProvided : "AI_PENDING")}; " +
                 $"SHA256={request.FileSha256}; DuplicateDetected={duplicate}; " +
                 $"DuplicatePolicyEnabled={request.DuplicatePolicyEnabled}");
         }
@@ -235,7 +237,7 @@ public sealed class ApplicantController : Controller
     private string? ValidateUpload(IFormFile? file, decimal claimedAmount)
     {
         if (file is null || file.Length == 0) return "Vui lòng chọn file hóa đơn hợp lệ.";
-        if (claimedAmount <= 0) return "Số tiền đề nghị hoàn ứng phải lớn hơn 0.";
+        if (claimedAmount < 0) return "Số tiền đối chiếu không được là số âm.";
         if (file.Length > _storageOptions.MaxFileSizeMb * 1024L * 1024L)
             return $"Kích thước file không được vượt quá {_storageOptions.MaxFileSizeMb}MB.";
 

@@ -53,7 +53,9 @@ public sealed class UiContractTests
 
         var uploadFunction = dashboard[uploadStart..verifyStart];
         var verifyFunction = dashboard[verifyStart..workflowFormsStart];
-        Assert.Contains("processingPlaceholderRows = 1;", uploadFunction, StringComparison.Ordinal);
+        Assert.Contains("processingPlaceholderRows = files.length;", uploadFunction, StringComparison.Ordinal);
+        Assert.Contains("formData.append('receiptFile', file, file.name)", uploadFunction, StringComparison.Ordinal);
+        Assert.Contains("aura.pendingReceipts", uploadFunction, StringComparison.Ordinal);
         var uploadRender = uploadFunction.IndexOf("renderResultsTable();", StringComparison.Ordinal);
         var uploadScroll = uploadFunction.IndexOf("scrollToResults();", StringComparison.Ordinal);
         Assert.True(uploadRender >= 0 && uploadScroll > uploadRender);
@@ -61,6 +63,23 @@ public sealed class UiContractTests
         var verifyRender = verifyFunction.IndexOf("renderResultsTable();", StringComparison.Ordinal);
         var verifyScroll = verifyFunction.IndexOf("scrollToResults();", StringComparison.Ordinal);
         Assert.True(verifyRender >= 0 && verifyScroll > verifyRender);
+    }
+
+    [Fact]
+    public void Dashboard_and_batch_upload_are_exposed_without_a_second_processing_pipeline()
+    {
+        var dashboard = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Home", "Index.cshtml"));
+        var layout = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Shared", "_Layout.cshtml"));
+        var controller = File.ReadAllText(Path.Combine(ProjectRoot, "Controllers", "ApplicantController.cs"));
+
+        Assert.Contains("name=\"receiptFile\" accept=\".jpg,.jpeg,.png\" multiple", dashboard,
+            StringComparison.Ordinal);
+        Assert.Contains("const maxBatchFiles = 10;", dashboard, StringComparison.Ordinal);
+        Assert.Contains("asp-route-tab=\"dashboard\"", File.ReadAllText(Path.Combine(ProjectRoot,
+            "Views", "Shared", "Components", "DashboardSummary", "Default.cshtml")), StringComparison.Ordinal);
+        Assert.Contains("btn-tab-dashboard", layout, StringComparison.Ordinal);
+        Assert.Contains("decimal? claimedAmount", controller, StringComparison.Ordinal);
+        Assert.DoesNotContain("UploadReceiptBatch", controller, StringComparison.Ordinal);
     }
 
     [Fact]

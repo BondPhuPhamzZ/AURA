@@ -154,9 +154,15 @@ public sealed class ReceiptProcessingWorker : BackgroundService
                     "Không tìm thấy file hóa đơn đã lưu để xử lý.");
 
             extractedFacts = await vision.ExtractFactsAsync(physicalPath, cancellationToken);
+            ReceiptPrivacyClassifier.Apply(extractedFacts);
+            var amountResolution = ReceiptAmountResolver.Resolve(request.ClaimedAmount, extractedFacts);
+            extractedFacts.AmountSource = amountResolution.Source;
+            if (amountResolution.Source == AmountSources.AiExtracted)
+                request.ClaimedAmount = amountResolution.PolicyAmount;
             request.ExtractedFactsJson = JsonSerializer.Serialize(extractedFacts);
             var enforceDuplicatePolicy = request.DuplicateDetected && request.DuplicatePolicyEnabled;
-            var decision = PolicyDecisionEngine.Evaluate(extractedFacts, request.ClaimedAmount, enforceDuplicatePolicy);
+            var decision = PolicyDecisionEngine.Evaluate(extractedFacts, amountResolution.PolicyAmount,
+                enforceDuplicatePolicy);
             request.Status = decision.Status;
             request.AiReasoning = decision.Reason;
             request.ManagerQuestion = decision.ManagerQuestion;
@@ -213,6 +219,9 @@ public sealed class ReceiptProcessingWorker : BackgroundService
                 $"FallbackUsed={request.FallbackUsed}; ProviderErrorCode={request.ProviderErrorCode}; " +
                 $"EvidenceContractVersion={extractedFacts?.EvidenceContractVersion ?? 0}; " +
                 $"TotalAmountSource={extractedFacts?.TotalAmountSource ?? "<none>"}; " +
+                $"AmountSource={extractedFacts?.AmountSource ?? AmountSources.Unknown}; " +
+                $"PrivacyRisk={extractedFacts?.PrivacyRisk ?? PrivacyRiskLevels.None}; " +
+                $"PersonalDataCategories={string.Join(",", extractedFacts?.PersonalDataCategories ?? [])}; " +
                 $"SemanticRepairApplied={extractedFacts?.SemanticRepairApplied ?? false}; " +
                 $"SemanticRepairIssueCount={extractedFacts?.SemanticRepairIssues.Count ?? 0}; " +
                 $"Reason={request.AiReasoning}; Latency={request.ProcessingLatencyMs}ms"

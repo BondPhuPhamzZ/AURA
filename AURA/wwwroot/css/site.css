@@ -1421,7 +1421,8 @@ main {
 
     #pane-applicant,
     #pane-reviewer,
-    #pane-audit {
+    #pane-audit,
+    #pane-dashboard {
         padding: 16px !important;
     }
 
@@ -1640,4 +1641,89 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+/* Monthly operations dashboard */
+.dashboard-summary {
+    padding: 24px;
+}
+
+.dashboard-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.dashboard-heading h2 {
+    margin: 0 0 6px;
+    font-size: 1.5rem;
+}
+
+.dashboard-heading p {
+    margin: 0;
+    color: var(--colors-ink-subtle);
+    max-width: 760px;
+}
+
+.dashboard-metrics {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    border: 1px solid var(--colors-border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.dashboard-metrics > div {
+    padding: 16px;
+    border-right: 1px solid var(--colors-border);
+    background: var(--colors-surface-soft);
+}
+
+.dashboard-metrics > div:last-child { border-right: 0; }
+.dashboard-metrics span { display: block; color: var(--colors-ink-subtle); font-size: .8rem; margin-bottom: 5px; }
+.dashboard-metrics strong { font-size: 1.55rem; }
+
+.dashboard-secondary-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 28px;
+    margin: 0 0 18px;
+    color: var(--colors-ink-subtle);
+    font-size: .9rem;
+}
+
+.dashboard-year-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .65rem 1.25rem;
+    align-items: center;
+    margin: 0 0 1rem;
+    padding: .85rem 1rem;
+    border: 1px solid var(--colors-border);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, .025);
+    color: var(--colors-ink-subtle);
+}
+
+.dashboard-year-summary strong { color: var(--colors-ink); }
+.dashboard-subtitle { margin: 1.3rem 0 .7rem; font-size: 1rem; }
+
+.dashboard-secondary-metrics strong { color: var(--colors-ink); }
+.dashboard-table th, .dashboard-table td { text-align: right; }
+.dashboard-table th:first-child, .dashboard-table td:first-child { text-align: left; }
+
+@media (max-width: 980px) {
+    .dashboard-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .dashboard-metrics > div:nth-child(3) { border-right: 0; }
+    .dashboard-metrics > div:nth-child(-n+3) { border-bottom: 1px solid var(--colors-border); }
+}
+
+@media (max-width: 640px) {
+    .dashboard-heading { display: grid; }
+    .dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dashboard-metrics > div { border-right: 1px solid var(--colors-border); border-bottom: 1px solid var(--colors-border); }
+    .dashboard-metrics > div:nth-child(even) { border-right: 0; }
+    .dashboard-metrics > div:nth-last-child(-n+2) { border-bottom: 0; }
 }

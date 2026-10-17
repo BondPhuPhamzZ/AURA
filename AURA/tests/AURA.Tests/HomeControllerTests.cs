@@ -14,6 +14,8 @@ public sealed class HomeControllerTests
     [InlineData("reviewer", "reviewer")]
     [InlineData(" REVIEWER ", "reviewer")]
     [InlineData("audit", "audit")]
+    [InlineData("dashboard", "dashboard")]
+    [InlineData(" DASHBOARD ", "dashboard")]
     public void IndexSelectsSafeInitialTab(string? requestedTab, string expectedTab)
     {
         var controller = new HomeController(NullLogger<HomeController>.Instance);

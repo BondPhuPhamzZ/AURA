@@ -169,6 +169,14 @@ public static class PolicyDecisionEngine
                 $"Hồ sơ có vấn đề dữ kiện: {summary}. Quản lý có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]");
         }
 
+        if (facts.RequiresPrivacyReview)
+        {
+            var categories = string.Join(", ", facts.PersonalDataCategories);
+            return ("ESCALATE_PRIVACY",
+                $"Hóa đơn có tín hiệu dữ liệu cá nhân cần kiểm tra ({categories}); hệ thống không hiển thị giá trị gốc.",
+                $"Hồ sơ có tín hiệu dữ liệu cá nhân ({categories}). Quản lý có đồng ý tiếp tục xử lý theo quy trình bảo vệ dữ liệu của doanh nghiệp không? [CÓ/KHÔNG]");
+        }
+
         if (prohibitedItems.Count > 0)
         {
             var items = string.Join(", ", prohibitedItems);

@@ -1,6 +1,6 @@
 # AURA - AI thẩm định hoàn ứng có kiểm soát
 
-AURA là ứng dụng ASP.NET Core hỗ trợ bước thẩm định đầu tiên trong quy trình hoàn ứng của nhân viên. Vision model đọc dữ kiện trên hóa đơn, nhưng policy engine C# tất định mới quyết định hướng xử lý: tự động đi tiếp với ca thường quy rõ ràng hoặc chuyển các ca bất định, ngoài chính sách và vượt thẩm quyền cho người duyệt.
+AURA là ứng dụng ASP.NET Core hỗ trợ bước thẩm định đầu tiên trong quy trình hoàn ứng của nhân viên. Vision model đọc dữ kiện trên hóa đơn, nhưng policy engine C# tất định mới quyết định hướng xử lý: tự động đi tiếp với ca thường quy rõ ràng hoặc chuyển các ca bất định, ngoài chính sách, có tín hiệu dữ liệu cá nhân và vượt thẩm quyền cho người duyệt.
 
 ## Hồ sơ nộp bài
 
@@ -20,12 +20,14 @@ Nếu BGK cần evaluation key, hãy chia sẻ bằng kênh riêng. Không commi
 ## Luồng xử lý cốt lõi
 
 ```text
-Upload hóa đơn JPG/PNG
+Upload một hoặc nhiều hóa đơn JPG/PNG
 -> lưu hồ sơ và trả HTTP 202
 -> worker dùng database gọi Qwen Vision
 -> semantic validation và tối đa một lần repair
+-> suy ra tổng tiền từ hóa đơn nếu người dùng không nhập
+-> privacy triage chỉ ghi category, không lặp lại giá trị nhạy cảm
 -> policy C# tất định quyết định
--> AUTO_APPROVE hoặc ESCALATE_FACT/POLICY/AUTHORITY/SYSTEM_ERROR
+-> AUTO_APPROVE hoặc ESCALATE_FACT/POLICY/PRIVACY/AUTHORITY/SYSTEM_ERROR
 -> nhân viên chuyển tiếp ngoại lệ
 -> quản lý duyệt, từ chối hoặc hoàn tác
 -> audit trail ghi lại toàn bộ vòng đời
@@ -35,6 +37,10 @@ Khả năng chính:
 
 - OpenRouter/Qwen3.8 Flash qua Alibaba, với reasoning tắt để extraction ổn định, là bộ đọc hóa đơn mặc định; Ollama/Qwen3-VL-4B là phương án local tùy chọn.
 - Xử lý nền dựa trên SQL vẫn tiếp tục sau refresh hoặc restart và không giữ request upload trong lúc chờ AI.
+- Một batch tối đa 10 ảnh được tiếp nhận tuần tự qua cùng upload boundary; mỗi ảnh vẫn có case ID, hash, row SQL và status URL riêng.
+- Claimed amount là tùy chọn: nếu bỏ trống, worker dùng `totalAmount` đã qua schema/semantic validation; nguồn số tiền được audit rõ là người dùng nhập, AI trích xuất hay không khả dụng.
+- Privacy triage phát hiện category cần xem xét, không hiển thị lại giá trị gốc; hồ sơ được fail-safe sang `ESCALATE_PRIVACY`. Request OpenRouter mặc định đặt `provider.data_collection=deny`.
+- Tab **Tổng quan** tổng hợp số hồ sơ, route, privacy review, lỗi, giá trị và độ trễ theo tháng/ngày từ SQL.
 - Model chỉ trích xuất facts có cấu trúc; model không có quyền phê duyệt cuối.
 - Evidence thiếu, mâu thuẫn hoặc không đọc được luôn fail-safe về người duyệt.
 - Verify Harness chạy năm ca chính thức trong một thao tác: ba ca duyệt và hai ca chuyển tiếp.
@@ -51,10 +57,10 @@ Runtime chỉ đọc đúng đường dẫn `BUSINESS_RULES.md` được cấu h
 
 ## Baseline đã xác minh
 
-Cập nhật evidence gần nhất: 14/10/2026. Health live và gate Verify Qwen3.8 Flash là baseline demo đã đóng băng; mini-holdout prospective 10 hóa đơn là một lần chạy riêng, không rerun.
+Cập nhật kỹ thuật gần nhất: 17/10/2026. Health live và gate Verify Qwen3.8 Flash ngày 14/10 vẫn là baseline live đã đo; các cải tiến sau feedback doanh nghiệp bên dưới mới được kiểm thử offline và cần publish/smoke lại trước khi gọi là live.
 
 - Build: **0 warning, 0 error**.
-- Test tự động sau cập nhật UX reviewer và prototype evidence overlay: **163/163 pass**; test offline không gọi AI API trả phí.
+- Test tự động sau batch ingestion, AI-derived amount, privacy triage và dashboard: **178/178 pass**; test offline không gọi AI API trả phí.
 - Verify Harness chính thức: **5/5** với đúng 3 approve và 2 escalate.
 - Mini-holdout 10 receipt mới do chủ dự án cung cấp, redaction và khóa trước đạt **8/10 exact**, **0 missed, 2 fail-safe over, 0 lỗi system/provider/429 và 28/30 field date/identifier/total cốt lõi**. Năm request đầu về terminal trong 64,763 giây và cả mười trong 108,803 giây ở AI concurrency 1. Bộ này chỉ chạy một lần; tương tác redaction được công bố nên không được gọi là production accuracy.
 - Post-holdout regression sau đó gửi cùng 12 **source bytes nguyên bản**, không snapshot/resize/transform: **10/12 exact, 0 missed, 2 over, 0 lỗi system/provider/429, 35/36 critical field**. Năm upload khác nhau đồng thời hoàn tất 5/5 với E2E P95 **93,684 giây**. Lần này chỉ kiểm queue integrity, không phải yêu cầu latency Verify.
@@ -130,7 +136,7 @@ Kỳ vọng: `READY: 0 failures`, health `status=ok`, database và storage avail
 ### 5. Dùng ứng dụng
 
 1. Chọn **Chạy Verify Harness (90s)** để chạy năm ca chính thức.
-2. Hoặc upload một receipt JPG/PNG, nhập claimed amount và chọn **AI tự động kiểm**.
+2. Hoặc upload tối đa 10 receipt JPG/PNG. Claimed amount chỉ cần nhập cho một ảnh; nếu bỏ trống, AURA dùng tổng tiền AI đọc được sau validation.
 3. Với kết quả `ESCALATE_*`, chọn **Chuyển tiếp**.
 4. Trong **Quản lý**, duyệt hoặc từ chối hồ sơ.
 5. Mở **Lịch sử hành vi** để xem audit trail hoặc Undo quyết định quản lý gần nhất.
@@ -143,7 +149,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore
 dotnet ef migrations has-pending-model-changes --no-build
 ```
 
-Kỳ vọng cho candidate hiện hành: build 0 warning/error, 163/163 test pass và không có model change cần migration.
+Kỳ vọng cho candidate hiện hành: build 0 warning/error, 178/178 test pass và không có model change cần migration.
 
 Dừng app bằng `Ctrl+C`. Không cần reset database hoặc xóa LocalDB.
 
@@ -166,7 +172,9 @@ Dừng app bằng `Ctrl+C`. Không cần reset database hoặc xóa LocalDB.
 
 ## Giới hạn hiện tại
 
-- Mỗi lần nhận một receipt JPG/PNG tối đa 5 MB; chưa hỗ trợ PDF hoặc tài liệu nhiều trang.
+- Mỗi batch nhận tối đa 10 receipt JPG/PNG, tối đa 5 MB mỗi ảnh; chưa hỗ trợ PDF hoặc tài liệu nhiều trang.
+- Chưa có connector email/folder tự động. Đây là bước tiếp theo cần OAuth/OIDC, least privilege, consent, idempotency, backfill và audit trước khi nối vào cùng ingestion boundary.
+- Privacy triage là tín hiệu vận hành, không phải kết luận tuân thủ pháp luật. `RequireZeroDataRetention` mặc định tắt cho tới khi route/provider live được xác nhận tương thích.
 - OpenRouter cần Internet và provider credit khả dụng.
 - Ollama fallback là opt-in và không phải đường capacity chính thức cho concurrency.
 - Production vẫn cần authentication/RBAC, receipt storage quản lý tập trung, chính sách retention/privacy, backup/restore, monitoring và malware scanning.

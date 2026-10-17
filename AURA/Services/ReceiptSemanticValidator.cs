@@ -162,6 +162,8 @@ public static class ReceiptSemanticValidator
               tổng bị rách/cắt/che thì dùng NOT_VISIBLE, totalAmount=null và ghi cảnh báo. Không dùng
               subtotal, tổng dòng hàng, tiền khách đưa, tiền thối hay VAT đã bao gồm để dựng tổng cuối.
             - Không suy đoán từ tên file, kết quả mong đợi hoặc số tiền người dùng khai báo.
+            - Nếu thấy dữ liệu cá nhân, chỉ thêm marker `personal_data:CATEGORY` vào suspiciousSignals;
+              không chép lại họ tên, số điện thoại, email, địa chỉ, giấy tờ, tài khoản hay số thẻ gốc.
             - Chỉ trả về một JSON object đúng schema, không thêm Markdown hay giải thích.
             """;
     }

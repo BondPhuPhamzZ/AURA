@@ -1,0 +1,105 @@
+@model AURA.ViewModels.DashboardSummaryViewModel
+
+<section class="dashboard-summary" aria-labelledby="dashboard-title">
+    <div class="dashboard-heading">
+        <div>
+            <h2 id="dashboard-title">Tổng quan xử lý @Model.PeriodLabel</h2>
+            <p>Số liệu lấy từ hồ sơ đã ghi trong SQL, hiển thị theo múi giờ Việt Nam. Privacy triage là tín hiệu hỗ trợ kiểm tra, không phải kết luận pháp lý.</p>
+        </div>
+        <a class="button-ghost-sm" asp-controller="Home" asp-action="Index" asp-route-tab="dashboard">Làm mới</a>
+    </div>
+
+    @if (ViewData["LoadError"] is string loadError)
+    {
+        <p class="text-danger">@loadError</p>
+    }
+
+    <div class="dashboard-metrics" aria-label="Chỉ số tháng">
+        <div><span>Tiếp nhận</span><strong>@Model.Received</strong></div>
+        <div><span>Hoàn tất</span><strong>@Model.Completed</strong></div>
+        <div><span>Tự động duyệt</span><strong>@Model.AutoApproved</strong></div>
+        <div><span>Cần người xử lý</span><strong>@Model.Escalated</strong></div>
+        <div><span>Privacy review</span><strong>@Model.PrivacyReview</strong></div>
+        <div><span>Lỗi hệ thống</span><strong>@Model.Failed</strong></div>
+    </div>
+
+    <div class="dashboard-secondary-metrics">
+        <span>Tổng giá trị đã ghi nhận: <strong>@Model.TotalAmountVnd.ToString("N0") VND</strong></span>
+        <span>Độ trễ trung bình hồ sơ hoàn tất: <strong>@(Model.AverageLatencyMs == 0 ? "Chưa có dữ liệu" : $"{Model.AverageLatencyMs:N0} ms")</strong></span>
+    </div>
+
+    <div class="dashboard-year-summary" aria-label="Tổng hợp năm">
+        <strong>@Model.YearLabel</strong>
+        <span>@Model.YearReceived hồ sơ tiếp nhận</span>
+        <span>@Model.YearCompleted hồ sơ hoàn tất</span>
+        <span>@Model.YearTotalAmountVnd.ToString("N0") VND đã ghi nhận</span>
+    </div>
+
+    <div class="table-responsive-aura">
+        <table class="table-aura dashboard-table">
+            <thead>
+                <tr>
+                    <th>Ngày</th>
+                    <th>Tiếp nhận</th>
+                    <th>Hoàn tất</th>
+                    <th>Tự động duyệt</th>
+                    <th>Cần xử lý</th>
+                    <th>Privacy</th>
+                    <th>Lỗi</th>
+                    <th>Tổng giá trị</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Days.Count == 0)
+            {
+                <tr><td colspan="8" class="text-center empty-state">Chưa có hồ sơ trong tháng này.</td></tr>
+            }
+            else
+            {
+                foreach (var day in Model.Days)
+                {
+                    <tr>
+                        <td>@day.Date.ToString("dd/MM/yyyy")</td>
+                        <td>@day.Received</td>
+                        <td>@day.Completed</td>
+                        <td>@day.AutoApproved</td>
+                        <td>@day.Escalated</td>
+                        <td>@day.PrivacyReview</td>
+                        <td>@day.Failed</td>
+                        <td>@day.TotalAmountVnd.ToString("N0") VND</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="dashboard-subtitle">Đối chiếu theo tháng trong @Model.YearLabel.ToLowerInvariant()</h3>
+    <div class="table-responsive-aura">
+        <table class="table-aura dashboard-table">
+            <thead>
+                <tr>
+                    <th>Tháng</th><th>Tiếp nhận</th><th>Hoàn tất</th><th>Tự động duyệt</th>
+                    <th>Cần xử lý</th><th>Privacy</th><th>Lỗi</th><th>Tổng giá trị</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Months.Count == 0)
+            {
+                <tr><td colspan="8" class="text-center empty-state">Chưa có hồ sơ trong năm này.</td></tr>
+            }
+            else
+            {
+                foreach (var month in Model.Months)
+                {
+                    <tr>
+                        <td>@($"{month.Month:00}/{month.Year}")</td><td>@month.Received</td><td>@month.Completed</td>
+                        <td>@month.AutoApproved</td><td>@month.Escalated</td><td>@month.PrivacyReview</td>
+                        <td>@month.Failed</td><td>@month.TotalAmountVnd.ToString("N0") VND</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

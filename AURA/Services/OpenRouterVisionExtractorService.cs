@@ -92,6 +92,11 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             },
             ["temperature"] = 0,
             ["max_tokens"] = _options.MaxOutputTokens,
+            ["provider"] = new
+            {
+                data_collection = _options.DenyProviderDataCollection ? "deny" : "allow",
+                zdr = _options.RequireZeroDataRetention
+            },
             ["plugins"] = new[] { new { id = "response-healing" } },
             ["response_format"] = new
             {
