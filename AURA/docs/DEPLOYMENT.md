@@ -43,7 +43,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Kỳ vọng candidate hiện hành: preflight trả `READY: 0 failures`, build 0 warning/error và 206/206 test pass. Chạy thêm `dotnet ef migrations has-pending-model-changes --no-build`; model phải khớp migration `AddSandboxMailboxIngestion`. Warning do `-SkipHttp` là mong đợi; warning registry inspect chỉ là chẩn đoán và phải được đối chiếu bằng full `/healthz` sau khi app chạy. EF Core/dotnet-ef được pin ở 8.0.31. Chạy thêm `dotnet list AURA.csproj package --vulnerable --include-transitive` cho cả app và test project.
+Kỳ vọng candidate hiện hành: preflight trả `READY: 0 failures`, build 0 warning/error và 190/190 test pass. `dotnet ef migrations has-pending-model-changes --no-build` phải trả không có model change. Warning do `-SkipHttp` là mong đợi; warning registry inspect chỉ là chẩn đoán và phải được đối chiếu bằng full `/healthz` sau khi app chạy. EF Core/dotnet-ef được pin ở 8.0.31. Chạy thêm `dotnet list AURA.csproj package --vulnerable --include-transitive` cho cả app và test project. Không nâng EF Core 8 lên 10 trước demo vì đó là thay đổi major/target framework, không phải bản vá tại chỗ. Offline gate không cần gọi API AI; sau deploy phải có một smoke contract v2 vì structured schema đã đổi.
 
 3. Trong Visual Studio, mở `AURA.csproj` và chọn **Publish → Folder** hoặc **Publish → Web Deploy**. Target framework là `net8.0`, cấu hình `Release`.
 
@@ -77,25 +77,9 @@ ConnectionStrings__DefaultConnection=<SQL_SERVER_CONNECTION_STRING>
 Database__ApplyMigrationsOnStartup=true
 ReceiptStorage__Directory=App_Data/receipts
 ReceiptStorage__MaxFileSizeMb=5
-MailboxSandbox__Enabled=false
 ```
 
 Sau migration đầu tiên chạy thành công, nên đổi `Database__ApplyMigrationsOnStartup=false` và recycle application pool. Không đặt key vào `appsettings.json`, publish profile hoặc ảnh/video.
-
-Giữ mailbox sandbox tắt là cấu hình public an toàn mặc định. Chỉ khi cần demo trong môi trường kiểm soát mới bổ sung các biến dưới đây vào secret/environment store, không commit giá trị thật:
-
-```text
-MailboxSandbox__Enabled=true
-MailboxSandbox__ApiKey=<RANDOM_SECRET_TỐI_THIỂU_24_KÝ_TỰ>
-MailboxSandbox__Provider=SANDBOX
-MailboxSandbox__MailboxId=aura-mail-sandbox
-MailboxSandbox__AllowedFolder=AURA_INVOICE
-MailboxSandbox__AllowedSenders__0=demo.sender@example.test
-MailboxSandbox__RequireMalwareScanner=false
-MailboxSandbox__MaxAttachmentsPerMessage=10
-```
-
-`RequireMalwareScanner=false` chỉ dành cho fixture synthetic. Không bật sandbox với mail/dữ liệu thật khi chưa có scanner production và pre-inference privacy control.
 
 ## 4. Publish bằng Web Deploy
 
@@ -113,14 +97,13 @@ MailboxSandbox__MaxAttachmentsPerMessage=10
 
 Thực hiện theo thứ tự để không tốn quota vô ích:
 
-1. Mở `https://<live-url>/healthz`, kỳ vọng HTTP 200, JSON `status: ok`, model `qwen/qwen3.8-flash`, `reasoningEffort=none`, `databaseAvailable=true`, `databaseUpToDate=true`, `pendingMigrationCount=0`, `storageAvailable=true` và `mailboxSandboxEnabled` đúng cấu hình. Endpoint không gọi AI provider nên vẫn cần ảnh smoke test riêng.
+1. Mở `https://<live-url>/healthz`, kỳ vọng HTTP 200, JSON `status: ok`, model `qwen/qwen3.8-flash`, `reasoningEffort=none`, `databaseAvailable=true`, `databaseUpToDate=true`, `pendingMigrationCount=0` và `storageAvailable=true`. Endpoint không gọi AI provider nên vẫn cần ảnh smoke test riêng.
 2. Mở trang chủ ở cửa sổ ẩn danh, kiểm CSS/JS/ba tab.
 3. Mở tab quản lý và lịch sử để xác nhận SQL Server/migration hoạt động.
 4. Upload một ảnh smoke tổng hợp; xác nhận HTTP `202`, audit `AI_QUEUED`, rồi trạng thái `COMPLETED/FAILED`. Refresh giữa lúc xử lý không được làm mất job.
 5. Mở lại ảnh từ lịch sử, recycle app pool rồi mở lại lần nữa để xác minh file tồn tại.
 6. Chỉ khi 5 bước trên đạt, chạy đúng một lượt Verify Harness nếu rehearsal thật sự cần và ghi thời điểm, 5 expected/actual, tổng latency và OpenRouter cost. Lượt live candidate 12/10 đã đạt 5/5 trong 65,004 giây, 0 system/provider error và gate 1 HTTP 200 + 4 HTTP 409 khi năm client cùng bấm. Không chạy lại Verify hoặc gói 15/30 để săn PASS.
 7. Đổi migration flag về `false`, recycle pool và kiểm `/healthz` lần cuối.
-8. Nếu sandbox bật, chạy `tools/Invoke-SandboxMailboxPipeline.ps1 -RepeatDelivery`; lưu JSON output và xác nhận delivery đầu `ACCEPTED`, replay `DUPLICATE` cùng request. Nếu sandbox tắt, POST delivery phải trả 404.
 
 ## 6. Xử lý lỗi thường gặp
 

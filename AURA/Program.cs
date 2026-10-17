@@ -72,14 +72,6 @@ builder.Services.AddOptions<VerifyOptions>()
     .Bind(builder.Configuration.GetSection(VerifyOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
-builder.Services.AddOptions<MailboxSandboxOptions>()
-    .Bind(builder.Configuration.GetSection(MailboxSandboxOptions.SectionName))
-    .ValidateDataAnnotations()
-    .Validate(options => !options.Enabled || options.ApiKey.Length >= 24,
-        "MailboxSandbox:ApiKey phải có ít nhất 24 ký tự khi bật sandbox.")
-    .Validate(options => !options.Enabled || options.AllowedSenders.Length > 0,
-        "MailboxSandbox:AllowedSenders phải có ít nhất một địa chỉ khi bật sandbox.")
-    .ValidateOnStart();
 
 var maxUploadBytes = builder.Configuration.GetValue<int>("ReceiptStorage:MaxFileSizeMb", 5) * 1024L * 1024L;
 // Multipart contains the file plus antiforgery fields, boundaries and headers. Keep transport
@@ -93,13 +85,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Đăng ký Dependency Injection
 builder.Services.AddScoped<IReimbursementRepository, ReimbursementRepository>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
-builder.Services.AddScoped<IInvoiceIngestionService, InvoiceIngestionService>();
 builder.Services.AddSingleton<WorkflowOperationGate>();
 builder.Services.AddSingleton<ReceiptProcessingQueue>();
 builder.Services.AddSingleton<VisionCircuitBreaker>();
 builder.Services.AddSingleton<VisionInvocationCoordinator>();
 builder.Services.AddScoped<VisionExecutionContext>();
-builder.Services.AddHostedService<IngestionOutboxDispatcher>();
 builder.Services.AddHostedService<ReceiptProcessingWorker>();
 builder.Services.AddHttpClient<OpenRouterVisionExtractorService>((services, client) =>
 {
@@ -150,7 +140,6 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
     IOptions<OpenRouterOptions> configuredOpenRouter,
     IOptions<OllamaOptions> configuredOllama,
     IOptions<VerifyOptions> configuredVerify,
-    IOptions<MailboxSandboxOptions> configuredMailboxSandbox,
     IWebHostEnvironment environment,
     AppDbContext database,
     CancellationToken cancellationToken) =>
@@ -183,7 +172,6 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
     var storageAvailable = Directory.Exists(receiptStorageRoot);
     var databaseUpToDate = databaseAvailable && pendingMigrationCount == 0;
     var ready = policyAvailable && aiConfigured && databaseUpToDate && storageAvailable;
-    var mailboxSandbox = configuredMailboxSandbox.Value;
 
     return Results.Json(new
     {
@@ -204,12 +192,6 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
         maxConcurrentAiRequests = vision.MaxConcurrentRequests,
         providerCooldownSeconds = vision.ProviderCooldownSeconds,
         verifyHarnessEnabled = configuredVerify.Value.Enabled,
-        mailboxSandboxEnabled = mailboxSandbox.Enabled,
-        mailboxSandboxMode = "synthetic-sandbox-only",
-        mailboxSandboxProvider = mailboxSandbox.Provider,
-        mailboxSandboxAllowedFolder = mailboxSandbox.AllowedFolder,
-        mailboxSandboxMalwareScannerRequired = mailboxSandbox.RequireMalwareScanner,
-        gmailConnected = false,
         fallbackEnabled = vision.FallbackEnabled,
         configuredFallbackProvider = vision.FallbackProvider,
         fallbackProvider = vision.FallbackEnabled ? vision.FallbackProvider : null,

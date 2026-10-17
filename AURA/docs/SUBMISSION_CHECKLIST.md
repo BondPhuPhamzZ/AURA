@@ -11,7 +11,7 @@
 | Hạng mục | Trạng thái | Nguồn chốt |
 |---|---|---|
 | Repository source công khai và README | Sẵn sàng | `README.md` ở root repository |
-| Ứng dụng live | Baseline `de101f2` đã health/smoke; UX + mailbox sandbox source mới chờ migrate/publish/smoke | URL trong README và `CURRENT_PROJECT_STATUS.md` |
+| Ứng dụng live | Candidate `de101f2` đã health/smoke; UX follow-up chờ publish lại | URL trong README và `CURRENT_PROJECT_STATUS.md` |
 | Slide 5 trang | Sẵn sàng | `../submission/AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx` |
 | Proposal tiếng Việt và tiếng Anh | Sẵn sàng | `../submission/AURA_PROPOSAL_VI.*`, `../submission/AURA_PROPOSAL_EN.*` |
 | Build Log một trang của toàn dự án | Sẵn sàng | `../submission/AURA_BUILD_LOG.*` |
@@ -41,7 +41,6 @@
 4. Không chạy Verify đồng thời với benchmark upload hoặc một Verify batch khác.
 5. Ẩn browser history, API dashboard, secret, console có key và PII hóa đơn thật.
 6. Ôn phương án dự phòng: refresh trước, kiểm status/Audit, sau đó dùng video đã quay nếu upstream provider không sẵn sàng.
-7. Nếu demo mailbox, chỉ bật sandbox synthetic sau backup/migration; chạy replay smoke và nói rõ không phải Gmail thật. Nếu chưa đạt gate, giữ `MailboxSandbox__Enabled=false`.
 
 ## Trước khi chốt Team Drive
 

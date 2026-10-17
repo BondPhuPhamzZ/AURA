@@ -2,7 +2,7 @@
 
 ## Kết luận
 
-Candidate sau feedback tại commit `de101f2` đã được publish và smoke trên live ngày 17/10: health HTTP 200, Verify 5/5, ba upload synthetic đều hoàn tất và workflow Forward → YES → Undo → Audit đi hết luồng. Source sau đó có UX follow-up và mailbox sandbox synthetic; các phần này cần publish/migrate/smoke lại trước khi gọi là live. Mỗi ảnh vẫn là một hồ sơ độc lập; hệ thống chưa có `InvoiceBatch`/`batchId` phía server. Video cũ chỉ là bằng chứng của baseline trước feedback.
+Candidate sau feedback tại commit `de101f2` đã được publish và smoke trên live ngày 17/10: health HTTP 200, Verify 5/5, ba upload synthetic đều hoàn tất và workflow Forward → YES → Undo → Audit đi hết luồng. Source sau đó có một UX follow-up: rút gọn intake, cho chọn kỳ dashboard/CSV và tăng tương phản/scroll bảng; phần UX này cần publish lại trước khi gọi là live. Mỗi ảnh vẫn là một hồ sơ độc lập; hệ thống chưa có `InvoiceBatch`/`batchId` phía server. Video cũ chỉ là bằng chứng của baseline trước feedback.
 
 ## Cấu hình live
 
@@ -21,15 +21,14 @@ Candidate sau feedback tại commit `de101f2` đã được publish và smoke tr
 | Amount | UI không có ô nhập; worker dùng `totalAmount` AI trích xuất sau validation. `USER_PROVIDED` chỉ còn cho test kit/API lịch sử |
 | Provider privacy | `data_collection=deny`; strict ZDR mặc định tắt chờ xác nhận route live |
 | Privacy route | `ESCALATE_PRIVACY`; triage category, không lặp lại giá trị gốc |
-| Mailbox sandbox | Có trong source, mặc định tắt; synthetic delivery qua API key/allow-list, không kết nối Gmail |
 
 Read-only health ngày 17/10 lúc 12:54 ICT trả HTTP 200, `status=ok`, database/storage sẵn sàng, migration 0, Qwen3.8 Flash, reasoning none, `data_collection=deny`, AI concurrency 1 và fallback tắt. Health không gọi inference nên đã được đối chiếu thêm bằng live smoke phía dưới.
 
 ## Gate kỹ thuật đã đạt
 
 - Debug build: 0 warning, 0 error.
-- Offline tests sau mailbox sandbox và multilingual fail-safe: 206/206 pass.
-- EF model và migration `AddSandboxMailboxIngestion` đồng bộ; chưa được apply lên live.
+- Offline tests sau UX follow-up và multilingual fail-safe: 190/190 pass.
+- Mailbox sandbox thử nghiệm cùng migration liên quan đã được gỡ; EF model hiện không có pending model change.
 - Live Verify sau publish: 5/5 trong 49,518 giây, 0 system error.
 - Duplicate Verify clients: 1 HTTP 200 và 4 HTTP 409 trên một process.
 - Năm upload khác nhau: 5/5 hoàn tất, không mất job; E2E P95 93,684 giây do concurrency một.
@@ -44,7 +43,7 @@ Read-only health ngày 17/10 lúc 12:54 ICT trả HTTP 200, `status=ok`, databas
 3. **Dashboard quản lý:** tab Tổng quan cho chọn tháng/năm; KPI, bảng ngày, bảng đối chiếu năm và CSV dùng cùng kỳ được chọn. Dữ liệu được project theo giờ Việt Nam từ SQL.
 4. **Privacy triage:** model chỉ gắn marker category trong `suspiciousSignals`; backend normalize category, không ghi lại giá trị cá nhân, và policy C# chuyển `ESCALATE_PRIVACY`. Request OpenRouter mặc định yêu cầu provider không dùng dữ liệu để thu thập/huấn luyện.
 5. **Báo cáo quản lý:** dashboard tải CSV theo kỳ đang chọn từ SQL. File chỉ chứa dữ liệu vận hành cần review, không chứa raw AI facts và có chống CSV formula injection.
-6. **Mailbox sandbox synthetic:** đã có endpoint delivery có API key, sender/folder allow-list, source-scoped idempotency, cursor, persisted quarantine và transactional outbox. Nó gọi chung `IInvoiceIngestionService`, SQL queue và worker với manual upload; replay cùng message/attachment trả record cũ, không tạo AI job thứ hai. Đây không phải Gmail connector và không giữ OAuth token.
+6. **Email/folder connector:** chưa nối trong candidate hôm nay. Workflow đích giữ cùng ingestion boundary; Agent chỉ điều phối, connector riêng giữ OAuth. Kênh này cần least privilege, consent, sync cursor, idempotency, backfill, quarantine và audit.
 7. **Dashboard fail-closed và UX:** khi SQL không tải được, UI không hiển thị KPI bằng 0 hoặc cho tải CSV. Bảng có vùng cuộn, header sticky và đường kẻ tương phản hơn; nút refresh dùng icon. “Cần kiểm tra dữ liệu cá nhân” là số hồ sơ có marker privacy cần người xem lại, không phải kết luận pháp lý.
 
 Privacy triage là công cụ hỗ trợ rà soát, không phải kết luận pháp lý hay chứng nhận tuân thủ. Strict zero-data-retention chỉ được bật sau khi route/provider live được xác nhận hỗ trợ; nếu bật mù có thể làm không còn provider đủ điều kiện.
@@ -61,13 +60,10 @@ FAHASA còn over ổn định do validator chưa chấp nhận chắc chắn nh�
 
 ## Gate con người còn mở
 
-1. Backup database, apply migration `AddSandboxMailboxIngestion`, publish/recycle source mới nhất, kiểm `/healthz`, bộ chọn kỳ/CSV và manual synthetic smoke; không rerun holdout cũ để tạo accuracy claim mới.
-2. Chỉ trong môi trường sandbox riêng, bật `MailboxSandbox__Enabled=true`, đặt secret API key và allow-list rồi chạy `tools/Invoke-SandboxMailboxPipeline.ps1 -RepeatDelivery`. Giữ tắt trên public live nếu chưa cần demo mailbox.
-3. Xác nhận route Alibaba/OpenRouter vẫn nhận `data_collection=deny`; chỉ cân nhắc bật strict ZDR sau một probe có kiểm soát.
-4. Hoàn tất ba phiên user study thật, có consent, quote nguyên văn, một thay đổi truy vết được và một negative effect.
-5. Rehearsal có bấm giờ theo demo mới: mailbox sandbox hoặc manual intake → trạng thái nền → privacy escalation → manager → audit/dashboard.
-
-Gmail/OAuth, webhook/Pub/Sub, token vault, malware scanner production và capacity hàng trăm/nghìn email vẫn chưa được triển khai. Mailbox sandbox chỉ chứng minh boundary và tính toàn vẹn của pipeline trên dữ liệu synthetic.
+1. Publish/recycle UX follow-up mới nhất, kiểm lại `/healthz`, bộ chọn kỳ/CSV và một synthetic smoke; không rerun holdout cũ để tạo accuracy claim mới.
+2. Xác nhận route Alibaba/OpenRouter vẫn nhận `data_collection=deny`; chỉ cân nhắc bật strict ZDR sau một probe có kiểm soát.
+3. Hoàn tất ba phiên user study thật, có consent, quote nguyên văn, một thay đổi truy vết được và một negative effect.
+4. Rehearsal có bấm giờ theo demo mới: dashboard → lượt nhiều ảnh không nhập tiền → privacy escalation → manager → audit.
 
 Đối chiếu đầy đủ với tài liệu `recommend_check`, 10 architecture gates và evidence read-only ngày 17/10 nằm trong `AFTER_FEEDBACK_ARCHITECTURE_CHECKLIST.md`.
 
