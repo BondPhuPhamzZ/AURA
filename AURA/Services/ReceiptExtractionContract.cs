@@ -55,8 +55,10 @@ internal static class ReceiptExtractionContract
             - A product-order screen with delivery status and SPX/GHN/GHTK/J&T tracking is ECOMMERCE,
               not RIDE_HAILING. RIDE_HAILING is only for passenger trips with a trip/booking/receipt ID.
             - Keep order IDs, trip/booking IDs and shipping tracking codes in their distinct fields.
-            - Preserve the exact visible Vietnamese wording and diacritics in merchantName and every
-              lineItems.description. Never silently replace a visually supported word with a more common
+            - Preserve the exact visible Vietnamese wording and diacritics, or the exact visible Simplified/
+              Traditional Chinese characters, in merchantName, lineItems.description and every evidence field.
+              Never translate Chinese evidence into Vietnamese/English and never silently replace a visually
+              supported word with a more common
               policy word; in particular `Bìa hồ sơ` must not become `Bia hồ sơ`. If a policy-relevant word
               is genuinely unreadable, retain the best visible transcription, lower confidence and add a
               concise warning instead of confidently guessing a different product.
@@ -66,10 +68,12 @@ internal static class ReceiptExtractionContract
               the corresponding RETURNED, REFUNDED or CANCELLED state and never mark that document COMPLETED.
             - On VAT invoices and receipts, actively read the seller name, tax ID, invoice/receipt number
               and the final payable row labelled `TỔNG THANH TOÁN`, `TỔNG CỘNG`, `THÀNH TIỀN`,
-              `THANH TOÁN` or `SỐ TIỀN PHẢI THU`.
+              `THANH TOÁN`, `SỐ TIỀN PHẢI THU`, `合计`, `总计`, `应付金额`, `实付金额`,
+              `价税合计`, `金额合计` or `本次应付`.
               When a clearly printed final total is visible, totalAmount must not be null and must not be
               confused with a line-item subtotal.
-            - If the receipt prints a receipt-level `GIẢM GIÁ`, `CHIẾT KHẤU`, `VOUCHER`, `KHUYẾN MÃI`
+            - If the receipt prints a receipt-level `GIẢM GIÁ`, `CHIẾT KHẤU`, `VOUCHER`, `KHUYẾN MÃI`,
+              `折扣`, `优惠` or `减免`
               or equivalent reduction, put its absolute non-negative value in discountAmount. For example,
               a printed `-2.828` VND reduction becomes discountAmount=2828, not -2828. Do not infer a
               discount only from the difference between subtotal and totalAmount or from the claimed amount.
@@ -91,9 +95,16 @@ internal static class ReceiptExtractionContract
               `POS No`/register number belongs only in posNumber. A number explicitly labelled `PTT` on a
               `PHIẾU TÍNH TIỀN` is the printed receipt number and belongs in receiptNumber, never both
               receiptNumber and transactionReference.
+              On Chinese documents, `发票号码`/`发票号` belongs in invoiceNumber;
+              `票据号码`/`收据编号` belongs in receiptNumber; and `交易单号`/`订单号` belongs in
+              transactionReference or orderId according to the visible document type. Read seller labels
+              such as `销售方`/`销方名称`, date labels such as `开票日期`/`交易日期`, and preserve their
+              original visible evidence.
             - Copy the exact visible date text into invoiceDateEvidence or transactionDateEvidence alongside
               the corresponding normalized date. For Vietnamese receipts, numeric dates are day-first:
               `04-10-26` and `04/10/2026` mean 2026-10-04, not 2026-04-10. Do not invent a raw evidence string.
+              Chinese dates such as `2026年10月17日` are year-month-day and normalize to `2026-10-17`.
+              Normalize `人民币`, `RMB`, `CN¥`, `元` or a clear Chinese-yuan symbol to currency=`CNY`.
             - If the final payable row itself is blurred, covered or cropped, set totalAmount to null and
               report that visual defect in warnings or suspiciousSignals. Never infer the final total from
               a line-item amount, subtotal or the user's claimed amount, even when the numbers look equal.

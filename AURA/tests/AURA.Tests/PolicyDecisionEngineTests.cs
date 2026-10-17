@@ -208,6 +208,38 @@ public sealed class PolicyDecisionEngineTests
         Assert.Equal("ESCALATE_POLICY", Decide(facts).Status);
     }
 
+    [Fact]
+    public void Chinese_receipt_is_extracted_but_fails_safe_to_human_review()
+    {
+        var facts = ValidFacts();
+        facts.MerchantName = "上海示例商店";
+        facts.InvoiceDateEvidence = "开票日期 2026年09月18日";
+        facts.Currency = "CNY";
+        facts.TotalAmount = 88m;
+        facts.TotalAmountEvidence = "价税合计 ¥88.00";
+        facts.LineItems = [new ReceiptLineItem { Description = "办公用品", Amount = 88m }];
+
+        var result = Decide(facts, 88m);
+
+        Assert.Equal("ESCALATE_FACT", result.Status);
+        Assert.Contains("tiếng Trung", result.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("CNY", result.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Chinese_prohibited_item_is_reported_even_when_fact_review_has_priority()
+    {
+        var facts = ValidFacts();
+        facts.MerchantName = "上海餐饮有限公司";
+        facts.LineItems = [new ReceiptLineItem { Description = "青岛啤酒", Amount = 150_000m }];
+
+        var result = Decide(facts);
+
+        Assert.Equal("ESCALATE_FACT", result.Status);
+        Assert.Contains("青岛啤酒", result.Reason, StringComparison.Ordinal);
+        Assert.Contains("policy", result.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Theory]
     [InlineData("Bìa hồ sơ")]
     [InlineData("Bìa còng lưu tài liệu")]

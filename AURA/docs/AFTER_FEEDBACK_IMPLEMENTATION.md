@@ -4,7 +4,7 @@
 
 AURA đã triển khai các thay đổi có thể kiểm soát trong cùng kiến trúc hiện hành: upload nhiều hóa đơn, bỏ ô nhập tiền để AI đọc dòng tổng cuối, dashboard/CSV theo kỳ, privacy triage fail-safe và mailbox sandbox synthetic. Sandbox không tạo endpoint AI thứ hai: manual upload và synthetic mail dùng chung application service, storage, SQL queue, worker, semantic/privacy/policy và audit. Gmail/OAuth thật vẫn ở roadmap.
 
-Candidate `de101f2` đã được publish/recycle và smoke thật ngày 17/10. Source mới nhất đạt 203/203 test offline và có migration `AddSandboxMailboxIngestion`; cần backup, migrate, publish và smoke lại trước khi gọi mailbox sandbox/UX mới là live.
+Candidate `de101f2` đã được publish/recycle và smoke thật ngày 17/10. Source mới nhất đạt 206/206 test offline và có migration `AddSandboxMailboxIngestion`; cần backup, migrate, publish và smoke lại trước khi gọi mailbox sandbox/UX/multilingual guard mới là live.
 
 ## 2. Đối chiếu feedback và phần đã triển khai
 
@@ -58,7 +58,7 @@ Theo pháp luật hiện hành, Luật Bảo vệ dữ liệu cá nhân 91/2025/
 | Gate | Kết quả |
 |---|---|
 | `dotnet build --no-restore` | PASS — 0 warning, 0 error |
-| Toàn bộ xUnit | PASS — 203/203 |
+| Toàn bộ xUnit | PASS — 206/206 |
 | Test mới | shared intake validator, mailbox guard, SQLite persistence/idempotency/quarantine/outbox, fail-closed scanner option và controller auth/status; cùng các test amount/privacy/dashboard trước đó |
 | `dotnet ef migrations has-pending-model-changes --no-build` | PASS — model khớp migration `AddSandboxMailboxIngestion` |
 | NuGet vulnerability scan | PASS — app và test project không có package bị báo vulnerable từ nguồn hiện hành |

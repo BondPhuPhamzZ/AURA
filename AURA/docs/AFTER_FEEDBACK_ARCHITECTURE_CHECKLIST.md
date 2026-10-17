@@ -64,7 +64,7 @@ Các phần không đổi: SQL queue bền, model không tự phê duyệt, poli
 
 | Kiểm tra | Kết quả | Cách diễn giải |
 |---|---|---|
-| Release xUnit | 203/203 pass | UX/mailbox regression offline; không gọi AI API trả phí |
+| Release xUnit | 206/206 pass | UX/mailbox/multilingual regression offline; không gọi AI API trả phí |
 | EF migration gate | Model khớp `AddSandboxMailboxIngestion` | Migration chưa được apply trên live |
 | Live `GET /healthz` lúc 12:54 ICT | HTTP 200, DB/storage/migration khỏe, Qwen3.8 Flash, reasoning none, data collection denied, concurrency 1 | Candidate sau feedback đã live |
 | Live no-amount synthetic upload | 3/3 hoàn tất; 0 provider/system error; 2/3 khớp manifest cũ | TC-05 chuyển bảo thủ sang privacy; không ghi 3/3 exact |
@@ -96,6 +96,6 @@ Các phần không đổi: SQL queue bền, model không tự phê duyệt, poli
 
 ## 8. Điều kiện GO NO GO
 
-**GO cho demo mailbox sandbox có giám sát** sau khi backup/migration thành công, source đúng commit được publish, Release build sạch, 203/203 test pass, `/healthz` có migration 0 và smoke script xác nhận ACCEPTED → terminal + DUPLICATE cùng request. Nếu chưa đạt đủ, giữ sandbox tắt và demo manual baseline.
+**GO cho demo mailbox sandbox có giám sát** sau khi backup/migration thành công, source đúng commit được publish, Release build sạch, 206/206 test pass, `/healthz` có migration 0 và smoke script xác nhận ACCEPTED → terminal + DUPLICATE cùng request. Nếu chưa đạt đủ, giữ sandbox tắt và demo manual baseline.
 
 **NO GO cho claim production-ready/Gmail-connected** khi chưa có OAuth/token vault/revoke, SSO/RBAC, malware scanner, pre-inference privacy control, strict ZDR/local route đã đo, managed storage, retention, monitoring, capacity và distributed coordination.

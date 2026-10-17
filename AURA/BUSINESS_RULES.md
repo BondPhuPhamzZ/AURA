@@ -14,7 +14,8 @@ Do not claim that an invoice is legally authentic. Vision can only report visibl
 
 ## 2. Supported input and evidence limits
 
-- One JPG or PNG image, up to 5 MB, in Vietnamese or English.
+- One JPG or PNG image, up to 5 MB, in Vietnamese, English, Simplified Chinese or Traditional Chinese.
+- Chinese documents are currently supported for evidence extraction only. Preserve the original Chinese text. Until a Chinese holdout set, CNY conversion, and jurisdiction-specific invoice rules are benchmarked, any Chinese evidence must fail safe to `ESCALATE_FACT` for human confirmation and must never auto-approve.
 - It may show a VAT invoice, retail receipt, restaurant bill, ride-hailing/e-commerce receipt, or an unsupported/non-receipt image.
 - If the document states `Trang 1/2`, is visibly cropped, omits the total section, or otherwise appears incomplete, add a precise warning. Do not reconstruct missing pages.
 - If a field is absent, obscured, ambiguous, or unreadable, return `null` and add its JSON field name to `missingFields`. Never guess.

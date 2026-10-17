@@ -30,6 +30,40 @@ public sealed class ReceiptSemanticValidatorTests
     }
 
     [Fact]
+    public void Normalizes_a_visible_chinese_invoice_date_and_removes_a_summary_pseudo_item()
+    {
+        var facts = CorrectedTc01();
+        facts.DocumentType = "RETAIL_RECEIPT";
+        facts.ReceiptNumber = "CN-20261017-01";
+        facts.InvoiceDate = "2026-01-01";
+        facts.InvoiceDateEvidence = "开票日期：2026年10月17日";
+        facts.TransactionDate = null;
+        facts.TransactionDateEvidence = null;
+        facts.Currency = "RMB";
+        facts.Subtotal = 88m;
+        facts.TotalAmount = 88m;
+        facts.TotalAmountEvidence = "价税合计 ¥88.00";
+        facts.LineItems =
+        [
+            new ReceiptLineItem { Description = "办公用品", Amount = 88m },
+            new ReceiptLineItem { Description = "价税合计", Amount = 88m }
+        ];
+
+        ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
+
+        Assert.Equal("2026-10-17", facts.InvoiceDate);
+        Assert.Equal("CNY", facts.Currency);
+        Assert.Single(facts.LineItems);
+        Assert.Equal("办公用品", facts.LineItems[0].Description);
+        Assert.DoesNotContain(ReceiptSemanticValidator.Validate(facts),
+            issue => issue.Contains("totalAmountEvidence", StringComparison.Ordinal));
+
+        facts.TotalAmount = 89m;
+        Assert.Contains(ReceiptSemanticValidator.Validate(facts),
+            issue => issue.Contains("totalAmountEvidence", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Does_not_multiply_a_genuine_whole_vnd_amount()
     {
         var facts = CorrectedTc01();

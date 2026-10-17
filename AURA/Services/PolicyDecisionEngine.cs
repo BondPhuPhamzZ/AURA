@@ -15,7 +15,9 @@ public static class PolicyDecisionEngine
         "thuốc lá", "thuoc la", "tobacco", "cigarette", "cigarettes", "karaoke", "cinema", "vé xem phim", "ve xem phim",
         "rạp chiếu phim", "rap chieu phim", "movie ticket", "cinema ticket", "massage", "entertainment",
         "personal item", "personal items", "đồ cá nhân", "do ca nhan", "hair clip", "hair clips", "hair accessory", "hair accessories", "kẹp tóc", "kep toc",
-        "khăn ướt", "khan uot", "wet wipe", "wet wipes", "chăm sóc da", "cham soc da"
+        "khăn ướt", "khan uot", "wet wipe", "wet wipes", "chăm sóc da", "cham soc da",
+        "啤酒", "白酒", "红酒", "葡萄酒", "威士忌", "伏特加", "香烟", "卷烟", "烟草",
+        "卡拉OK", "KTV", "电影院", "电影票", "按摩", "娱乐", "个人用品", "发夹", "湿巾", "护肤品"
     ];
 
     private static readonly string[] StationeryBiaPhrases =
@@ -64,6 +66,12 @@ public static class PolicyDecisionEngine
 
         if (string.IsNullOrWhiteSpace(facts.MerchantName))
             factProblems.Add("thiếu tên đơn vị bán hàng");
+
+        // Chinese OCR is accepted for extraction, but the current reimbursement baseline has not yet
+        // benchmarked Chinese evidence, CNY conversion or China-specific invoice rules. Preserve the
+        // extracted facts and fail safe to a human instead of silently auto-approving them.
+        if (ContainsChineseEvidence(facts))
+            factProblems.Add("chứng từ tiếng Trung mới được hỗ trợ ở mức trích xuất; cần người xác nhận trước khi áp dụng policy");
 
         // The policy cannot conclude that a receipt contains no prohibited item when
         // no purchased item/service was extracted. Semantic validation normally catches
@@ -234,10 +242,31 @@ public static class PolicyDecisionEngine
     {
         if (string.IsNullOrWhiteSpace(source)) return false;
 
-        var normalizedSource = $" {NormalizePolicyText(source)} ";
-        var normalizedTerm = $" {NormalizePolicyText(term)} ";
+        var sourceText = NormalizePolicyText(source);
+        var termText = NormalizePolicyText(term);
+        if (ContainsHanScript(termText))
+            return sourceText.Contains(termText, StringComparison.Ordinal);
+
+        var normalizedSource = $" {sourceText} ";
+        var normalizedTerm = $" {termText} ";
         return normalizedSource.Contains(normalizedTerm, StringComparison.Ordinal);
     }
+
+    private static bool ContainsChineseEvidence(ReceiptExtractionDto facts)
+    {
+        var values = new[]
+        {
+            facts.MerchantName, facts.InvoiceDateEvidence, facts.TransactionDateEvidence,
+            facts.TotalAmountEvidence, facts.DocumentStatus, facts.OrderStatus
+        }.Concat(facts.LineItems.Select(item => item.Description))
+         .Concat(facts.Warnings)
+         .Concat(facts.SuspiciousSignals);
+
+        return values.Any(value => !string.IsNullOrWhiteSpace(value) && ContainsHanScript(value));
+    }
+
+    private static bool ContainsHanScript(string value) => value.Any(character =>
+        character is >= '\u3400' and <= '\u4DBF' or >= '\u4E00' and <= '\u9FFF' or >= '\uF900' and <= '\uFAFF');
 
     private static string NormalizePolicyText(string value)
     {

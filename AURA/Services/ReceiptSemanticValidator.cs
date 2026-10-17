@@ -7,8 +7,8 @@ namespace AURA.Services;
 
 /// <summary>
 /// Validates meaning across otherwise schema-valid receipt fields. Structured output
-/// guarantees JSON shape, but it cannot guarantee that Vietnamese monetary punctuation
-/// or the document category was interpreted correctly.
+/// guarantees JSON shape, but it cannot guarantee that multilingual monetary punctuation,
+/// dates or the document category were interpreted correctly.
 /// </summary>
 public static class ReceiptSemanticValidator
 {
@@ -19,7 +19,7 @@ public static class ReceiptSemanticValidator
 
     private static readonly string[] VisibleDateFormats =
     [
-        "yyyy-MM-dd", "yyyy/M/d", "yyyy/MM/dd", "yyyy.M.d",
+        "yyyy-MM-dd", "yyyy/M/d", "yyyy/MM/dd", "yyyy.M.d", "yyyy年M月d日", "yyyy年MM月dd日",
         "d/M/yyyy", "dd/MM/yyyy", "d-M-yyyy", "dd-MM-yyyy", "d.M.yyyy", "dd.MM.yyyy",
         "d/M/yy", "dd/MM/yy", "d-M-yy", "dd-MM-yy", "d.M.yy", "dd.MM.yy",
         "ddd dd MMM yyyy", "dd MMM yyyy", "ddd d MMM yyyy", "d MMM yyyy"
@@ -35,7 +35,8 @@ public static class ReceiptSemanticValidator
     {
         "tong cong", "tong so tong cong", "tong thanh toan", "tong tien", "tong tien hang",
         "thanh tien", "tien can thanh toan", "so tien phai thu", "grand total", "amount due",
-        "total due", "final total", "total"
+        "total due", "final total", "total", "合计", "总计", "应付金额", "实付金额",
+        "价税合计", "金额合计", "本次应付"
     };
 
     public static IReadOnlyList<string> Validate(ReceiptExtractionDto facts)
@@ -157,6 +158,9 @@ public static class ReceiptSemanticValidator
               và totalAmount đã bằng nhau thì không gán một số rời rạc thành discountAmount.
             - Chép nguyên văn ngày nhìn thấy vào invoiceDateEvidence hoặc transactionDateEvidence.
               Hóa đơn Việt Nam dùng thứ tự ngày-tháng-năm: 04-10-26 là 2026-10-04.
+              Hóa đơn Trung Quốc dùng thứ tự năm-tháng-ngày: 2026年10月17日 là 2026-10-17.
+              Giữ nguyên chữ Trung Quốc trong merchantName, lineItems và evidence; không tự dịch.
+              `人民币`/`RMB`/`CN¥`/`元` phải chuẩn hóa thành currency=CNY.
             - totalAmountSource chỉ là PRINTED_FINAL_TOTAL khi cả nhãn tổng phải trả và con số trên
               chính dòng đó đều nhìn thấy; chép nguyên dòng vào totalAmountEvidence. Nếu giá trị dòng
               tổng bị rách/cắt/che thì dùng NOT_VISIBLE, totalAmount=null và ghi cảnh báo. Không dùng
@@ -204,6 +208,7 @@ public static class ReceiptSemanticValidator
 
     public static ReceiptExtractionDto NormalizeCanonicalFields(ReceiptExtractionDto facts)
     {
+        facts.Currency = NormalizeCurrency(facts.Currency);
         facts.TotalAmountSource = facts.TotalAmountSource?.Trim().ToUpperInvariant();
         NormalizeInvoiceTime(facts);
         facts.InvoiceDate = NormalizeDateFromEvidence(
@@ -369,7 +374,8 @@ public static class ReceiptSemanticValidator
         string[] labels =
         [
             "tong cong", "tong thanh toan", "thanh tien", "tien can thanh toan",
-            "so tien phai thu", "grand total", "amount due", "total due", "final total", "total"
+            "so tien phai thu", "grand total", "amount due", "total due", "final total", "total",
+            "合计", "总计", "应付金额", "实付金额", "价税合计", "金额合计", "本次应付"
         ];
         return labels.Any(label => normalizedLine.Equals(label, StringComparison.Ordinal) ||
                                    normalizedLine.StartsWith(label + " ", StringComparison.Ordinal));
@@ -457,6 +463,11 @@ public static class ReceiptSemanticValidator
         {
             issues.Add($"totalAmountEvidence không chứa đúng totalAmount={facts.TotalAmount.Value}: '{facts.TotalAmountEvidence}'");
         }
+        else if (string.Equals(facts.Currency, "CNY", StringComparison.OrdinalIgnoreCase) &&
+                 !ContainsMatchingDecimalAmount(facts.TotalAmountEvidence, facts.TotalAmount.Value))
+        {
+            issues.Add($"totalAmountEvidence không chứa đúng totalAmount={facts.TotalAmount.Value} CNY: '{facts.TotalAmountEvidence}'");
+        }
     }
 
     private static bool ContainsFinalTotalLabel(string normalizedEvidence)
@@ -466,7 +477,7 @@ public static class ReceiptSemanticValidator
         [
             "tong cong", "tong thanh toan", "tong tien", "thanh tien", "tien can thanh toan",
             "so tien phai thu", "grand total", "amount due", "total due", "final total", "payable",
-            "total"
+            "total", "合计", "总计", "应付金额", "实付金额", "价税合计", "金额合计", "本次应付"
         ];
         return labels.Any(label => padded.Contains($" {label} ", StringComparison.Ordinal));
     }
@@ -482,6 +493,31 @@ public static class ReceiptSemanticValidator
         }
 
         return false;
+    }
+
+    private static bool ContainsMatchingDecimalAmount(string evidence, decimal total)
+    {
+        foreach (Match match in Regex.Matches(evidence,
+                     @"(?<!\d)(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?(?!\d)",
+                     RegexOptions.CultureInvariant))
+        {
+            var normalized = match.Value.Replace(",", string.Empty, StringComparison.Ordinal);
+            if (decimal.TryParse(normalized, NumberStyles.AllowDecimalPoint,
+                    CultureInfo.InvariantCulture, out var parsed) && AreEqual(parsed, total))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string? NormalizeCurrency(string? currency)
+    {
+        if (string.IsNullOrWhiteSpace(currency)) return currency;
+
+        var normalized = currency.Trim().ToUpperInvariant();
+        return normalized is "RMB" or "CN¥" or "人民币" or "人民币元" ? "CNY" : normalized;
     }
 
     private static bool IsFinalTotalEvidenceIssue(string issue) =>
@@ -509,12 +545,16 @@ public static class ReceiptSemanticValidator
     {
         var match = Regex.Match(evidence.Trim(), @"(?<!\d)(\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4})(?!\d)",
             RegexOptions.CultureInvariant);
+        var chineseDateMatch = Regex.Match(evidence.Trim(),
+            @"(?<!\d)(\d{4}年\d{1,2}月\d{1,2}日)(?!\d)", RegexOptions.CultureInvariant);
         var textDateMatch = Regex.Match(evidence.Trim(),
             @"(?<![A-Za-z])((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)?\s*\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})(?!\d)",
             RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
-        var token = match.Success
-            ? match.Groups[1].Value
-            : textDateMatch.Success
+        var token = chineseDateMatch.Success
+            ? chineseDateMatch.Groups[1].Value
+            : match.Success
+                ? match.Groups[1].Value
+                : textDateMatch.Success
                 ? textDateMatch.Groups[1].Value.Trim()
                 : evidence.Trim();
         return DateTime.TryParseExact(token, VisibleDateFormats, CultureInfo.InvariantCulture,

@@ -89,7 +89,7 @@ Sandbox cập nhật cursor theo message ID và chống trùng bằng unique pro
 
 ## Thứ tự triển khai an toàn
 
-1. Baseline manual đã giữ nguyên; chạy 203 test và kiểm migration trước publish.
+1. Baseline manual đã giữ nguyên; chạy 206 test và kiểm migration trước publish.
 2. Backup/migrate rồi bật mailbox sandbox ở môi trường riêng với một folder/sender allow-list và fixture synthetic.
 3. Smoke unauthorized, ACCEPTED, terminal status, replay DUPLICATE và quarantine; ghi evidence bằng script.
 4. Tích hợp malware scanner + quarantine storage và pre-inference privacy control trước dữ liệu thật.

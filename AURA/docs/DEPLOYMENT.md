@@ -43,7 +43,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Kỳ vọng candidate hiện hành: preflight trả `READY: 0 failures`, build 0 warning/error và 203/203 test pass. Chạy thêm `dotnet ef migrations has-pending-model-changes --no-build`; model phải khớp migration `AddSandboxMailboxIngestion`. Warning do `-SkipHttp` là mong đợi; warning registry inspect chỉ là chẩn đoán và phải được đối chiếu bằng full `/healthz` sau khi app chạy. EF Core/dotnet-ef được pin ở 8.0.31. Chạy thêm `dotnet list AURA.csproj package --vulnerable --include-transitive` cho cả app và test project.
+Kỳ vọng candidate hiện hành: preflight trả `READY: 0 failures`, build 0 warning/error và 206/206 test pass. Chạy thêm `dotnet ef migrations has-pending-model-changes --no-build`; model phải khớp migration `AddSandboxMailboxIngestion`. Warning do `-SkipHttp` là mong đợi; warning registry inspect chỉ là chẩn đoán và phải được đối chiếu bằng full `/healthz` sau khi app chạy. EF Core/dotnet-ef được pin ở 8.0.31. Chạy thêm `dotnet list AURA.csproj package --vulnerable --include-transitive` cho cả app và test project.
 
 3. Trong Visual Studio, mở `AURA.csproj` và chọn **Publish → Folder** hoặc **Publish → Web Deploy**. Target framework là `net8.0`, cấu hình `Release`.
 

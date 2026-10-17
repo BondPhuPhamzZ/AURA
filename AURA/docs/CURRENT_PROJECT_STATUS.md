@@ -28,7 +28,7 @@ Read-only health ngày 17/10 lúc 12:54 ICT trả HTTP 200, `status=ok`, databas
 ## Gate kỹ thuật đã đạt
 
 - Debug build: 0 warning, 0 error.
-- Offline tests sau mailbox sandbox: 203/203 pass.
+- Offline tests sau mailbox sandbox và multilingual fail-safe: 206/206 pass.
 - EF model và migration `AddSandboxMailboxIngestion` đồng bộ; chưa được apply lên live.
 - Live Verify sau publish: 5/5 trong 49,518 giây, 0 system error.
 - Duplicate Verify clients: 1 HTTP 200 và 4 HTTP 409 trên một process.
