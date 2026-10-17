@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using AURA.Interfaces;
 using AURA.Models;
 using AURA.Options;
@@ -11,24 +10,19 @@ namespace AURA.Controllers;
 
 public sealed class ApplicantController : Controller
 {
-    private static readonly HashSet<string> AllowedContentTypes =
-        new(StringComparer.OrdinalIgnoreCase) { "image/jpeg", "image/png" };
-
     private readonly IWebHostEnvironment _environment;
     private readonly IReimbursementRepository _repository;
     private readonly ReceiptStorageOptions _storageOptions;
-    private readonly DecisionPolicyOptions _decisionPolicyOptions;
-    private readonly ReceiptProcessingQueue _processingQueue;
+    private readonly IInvoiceIngestionService _ingestion;
 
     public ApplicantController(IWebHostEnvironment environment, IReimbursementRepository repository,
         IOptions<ReceiptStorageOptions> storageOptions,
-        IOptions<DecisionPolicyOptions> decisionPolicyOptions, ReceiptProcessingQueue processingQueue)
+        IInvoiceIngestionService ingestion)
     {
         _environment = environment;
         _repository = repository;
         _storageOptions = storageOptions.Value;
-        _decisionPolicyOptions = decisionPolicyOptions.Value;
-        _processingQueue = processingQueue;
+        _ingestion = ingestion;
     }
 
     [HttpGet]
@@ -139,64 +133,28 @@ public sealed class ApplicantController : Controller
         string? submitterCode, string? submitterDisplayName, string? submitterDepartment,
         CancellationToken cancellationToken)
     {
-        var submittedAmount = claimedAmount.GetValueOrDefault();
-        var validationError = ValidateUpload(receiptFile, submittedAmount);
-        if (validationError is not null) return BadRequest(new { error = validationError });
+        if (receiptFile is null || receiptFile.Length == 0)
+            return BadRequest(new { error = "Vui lòng chọn file hóa đơn hợp lệ." });
 
-        var file = receiptFile!;
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        var bytes = new byte[checked((int)file.Length)];
-        await using (var input = file.OpenReadStream())
+        var bytes = new byte[checked((int)receiptFile.Length)];
+        await using (var input = receiptFile.OpenReadStream())
         {
             await input.ReadExactlyAsync(bytes, cancellationToken);
         }
+        var ingestion = await _ingestion.IngestAsync(new InvoiceIngestionCommand(
+            InvoiceSourceTypes.ManualUpload,
+            receiptFile.FileName,
+            receiptFile.ContentType,
+            bytes,
+            claimedAmount.GetValueOrDefault(),
+            submitterCode,
+            submitterDisplayName,
+            submitterDepartment), cancellationToken);
+        if (ingestion.Outcome != InvoiceIngestionOutcomes.Accepted || ingestion.RequestId is null)
+            return BadRequest(new { error = ingestion.Message, errorCode = ingestion.ErrorCode });
 
-        if (!HasValidSignature(bytes, extension))
-            return BadRequest(new { error = "Nội dung file không khớp định dạng JPG/PNG đã khai báo." });
-
-        var id = Guid.NewGuid().ToString("N");
-        var storedFileName = id + extension;
-        var storageRoot = GetStorageRoot();
-        Directory.CreateDirectory(storageRoot);
-        var physicalPath = Path.Combine(storageRoot, storedFileName);
-        await System.IO.File.WriteAllBytesAsync(physicalPath, bytes, cancellationToken);
-
-        var sha256 = Convert.ToHexString(SHA256.HashData(bytes));
-        var duplicate = await _repository.ExistsByFileHashAsync(sha256);
-        var request = new ReimbursementRequest
-        {
-            Id = id,
-            ClaimedAmount = submittedAmount,
-            OriginalFileName = Path.GetFileName(file.FileName),
-            StoredFileName = storedFileName,
-            ContentType = extension == ".png" ? "image/png" : "image/jpeg",
-            FileSizeBytes = file.Length,
-            FileSha256 = sha256,
-            ImageUrl = Url.Action(nameof(Receipt), "Applicant", new { id }) ?? $"/Applicant/Receipt/{id}",
-            CreatedAt = DateTime.UtcNow,
-            QueuedAt = DateTime.UtcNow,
-            ProcessingState = ProcessingStates.Pending,
-            Status = ProcessingStates.Pending,
-            DuplicateDetected = duplicate,
-            DuplicatePolicyEnabled = _decisionPolicyOptions.EscalateDuplicateReceipts,
-            SubmitterCode = NormalizeIdentity(submitterCode, "DEMO-EMPLOYEE", 100),
-            SubmitterDisplayName = NormalizeIdentity(submitterDisplayName, "Nhân viên demo", 200),
-            SubmitterDepartment = NormalizeIdentity(submitterDepartment, "Demo", 200)
-        };
-        try
-        {
-            await _repository.AddRequestWithAuditAsync(request, "AI_QUEUED",
-                $"File={request.OriginalFileName}; Submitter={request.SubmitterCode}; Department={request.SubmitterDepartment}; " +
-                $"AmountSource={(submittedAmount > 0 ? AmountSources.UserProvided : "AI_PENDING")}; " +
-                $"SHA256={request.FileSha256}; DuplicateDetected={duplicate}; " +
-                $"DuplicatePolicyEnabled={request.DuplicatePolicyEnabled}");
-        }
-        catch
-        {
-            if (System.IO.File.Exists(physicalPath)) System.IO.File.Delete(physicalPath);
-            throw;
-        }
-        _processingQueue.Signal(request.Id);
+        var request = await _repository.GetRequestByIdAsync(ingestion.RequestId)
+            ?? throw new InvalidOperationException("Hồ sơ vừa tiếp nhận không tồn tại trong SQL.");
 
         var result = ReimbursementResultDto.FromRequest(request);
         return AcceptedAtAction(nameof(Status), new { id = request.Id }, new
@@ -234,19 +192,6 @@ public sealed class ApplicantController : Controller
         return Json(ReimbursementResultDto.FromRequest(request));
     }
 
-    private string? ValidateUpload(IFormFile? file, decimal claimedAmount)
-    {
-        if (file is null || file.Length == 0) return "Vui lòng chọn file hóa đơn hợp lệ.";
-        if (claimedAmount < 0) return "Số tiền đối chiếu không được là số âm.";
-        if (file.Length > _storageOptions.MaxFileSizeMb * 1024L * 1024L)
-            return $"Kích thước file không được vượt quá {_storageOptions.MaxFileSizeMb}MB.";
-
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (extension is not (".jpg" or ".jpeg" or ".png") || !AllowedContentTypes.Contains(file.ContentType))
-            return "Chỉ chấp nhận ảnh JPG hoặc PNG có MIME hợp lệ.";
-        return null;
-    }
-
     private string GetStorageRoot()
     {
         if (string.IsNullOrWhiteSpace(_storageOptions.Directory))
@@ -259,16 +204,4 @@ public sealed class ApplicantController : Controller
             : Path.Combine(_environment.ContentRootPath, _storageOptions.Directory));
     }
 
-    private static bool HasValidSignature(byte[] bytes, string extension) => extension switch
-    {
-        ".png" => bytes.Length >= 8 && bytes.AsSpan(0, 8).SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }),
-        ".jpg" or ".jpeg" => bytes.Length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF,
-        _ => false
-    };
-
-    private static string NormalizeIdentity(string? value, string fallback, int maxLength)
-    {
-        var normalized = string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
-        return normalized.Length <= maxLength ? normalized : normalized[..maxLength];
-    }
 }

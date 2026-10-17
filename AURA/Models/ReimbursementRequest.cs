@@ -57,6 +57,12 @@ namespace AURA.Models
 
         public bool DuplicatePolicyEnabled { get; set; }
 
+        [Required, StringLength(50)]
+        public string SourceType { get; set; } = "MANUAL_UPLOAD";
+
+        [StringLength(1000)]
+        public string? SourceReference { get; set; }
+
         [Required, StringLength(100)]
         public string SubmitterCode { get; set; } = "DEMO-EMPLOYEE";
 

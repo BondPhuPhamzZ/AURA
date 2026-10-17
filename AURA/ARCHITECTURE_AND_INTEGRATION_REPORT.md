@@ -2,7 +2,7 @@
 
 ## AURA Automated Underwriting and Reimbursement AI
 
-Cập nhật ngày 02/10/2026. Tài liệu mô tả baseline sau feedback Sprint 1 và phần hardening chuẩn bị Sprint 2. Cách đánh giá chuẩn là clone và chạy localhost theo README. OpenRouter vẫn là provider chính; Ollama là tùy chọn local/offline có kiểm soát và mặc định chưa bật auto-fallback.
+Cập nhật ngày 17/10/2026. OpenRouter vẫn là provider chính; Ollama là tùy chọn local/offline có kiểm soát và mặc định chưa bật auto-fallback. Source mới bổ sung mailbox sandbox synthetic dùng chung ingestion boundary; không kết nối Gmail/OAuth và mặc định tắt. Trạng thái live/offline chính xác nằm tại `docs/CURRENT_PROJECT_STATUS.md`.
 
 ## 1. Sơ đồ thành phần
 
@@ -11,6 +11,7 @@ AURA/
 ├── Program.cs                         # DI, middleware, SQL Server, /healthz
 ├── Controllers/
 │   ├── ApplicantController.cs         # upload, xem ảnh, chuyển quản lý
+│   ├── SandboxMailboxController.cs     # delivery synthetic có API key; không phải Gmail
 │   ├── VerifyController.cs            # chạy 5 ca Verify qua cùng pipeline thật
 │   ├── ReviewerController.cs          # quản lý đồng ý, từ chối, hoàn tác
 │   └── HomeController.cs              # trang chính và các component đọc dữ liệu
@@ -25,6 +26,8 @@ AURA/
 │   ├── AuditLogger.cs                        # ghi sự kiện
 │   ├── AuditTrailProjector.cs                # gom sự kiện thành timeline UI
 │   ├── ReceiptProcessingWorker.cs             # worker DB-backed, lease và backoff lỗi DB
+│   ├── InvoiceIngestionService.cs              # boundary chung manual/mailbox
+│   ├── IngestionOutboxDispatcher.cs            # đánh thức worker từ outbox bền
 │   ├── VisionCircuitBreaker.cs                # ngắt provider chính theo ngưỡng lỗi
 │   └── WorkflowOperationGate.cs               # chỉ chống chạy chồng Verify Harness
 ├── Data/                              # EF Core DbContext và migrations
@@ -32,7 +35,7 @@ AURA/
 ├── Views/                             # Razor UI nhân viên, quản lý, lịch sử
 ├── wwwroot/test_data/                 # 5 fixture được Verify chạy trực tiếp
 ├── test_kit/                          # ngân hàng 30 ca và gói BGK 15 ca
-├── tests/AURA.Tests/                  # 100 kiểm thử tự động offline
+├── tests/AURA.Tests/                  # 203 kiểm thử tự động offline
 ├── docs/                              # runbook, deploy, test, checklist
 ├── submission/                        # 5 slide, Build Log Word, workflow
 └── tools/                             # tái tạo fixture, chạy evaluator và sinh artifact
@@ -55,6 +58,11 @@ SmarterASP.NET / IIS / ASP.NET Core 8
     ConfiguredVisionExtractor
        ├── chính: OpenRouter → Qwen3.8 Flash, route Alibaba, reasoning none
        └── fallback có cờ bật: Ollama → Qwen3-VL-4B-Instruct
+
+Synthetic mailbox client
+    │ API key + sender/folder allow-list
+    ▼
+SandboxMailboxController → InvoiceIngestionService → cùng SQL queue/worker phía trên
 ```
 
 Qwen chỉ trích xuất dữ kiện nhìn thấy trong ảnh. Quyết định `AUTO_APPROVE` hay `ESCALATE_*` nằm trong C# policy engine. Sprint 1 chưa có đăng nhập theo vai trò, nên mọi bản demo công khai chỉ dùng dữ liệu tổng hợp và không phù hợp để nhận hóa đơn cá nhân thật.
@@ -66,6 +74,8 @@ Qwen chỉ trích xuất dữ kiện nhìn thấy trong ảnh. Quyết định `
 | `/` | GET | Dashboard nhân viên, quản lý và lịch sử |
 | `/healthz` | GET | Readiness: policy, cấu hình AI, kết nối DB, trạng thái migration và thư mục receipt; không gọi provider và không lộ API key |
 | `/Applicant/UploadReceipt` | POST | Kiểm file, lưu hồ sơ `PENDING`, trả `202 Accepted` và đánh thức worker |
+| `/api/mailbox-sandbox/status` | GET | Công khai ranh giới synthetic-only; không lộ secret |
+| `/api/mailbox-sandbox/deliver` | POST | Nhận một attachment synthetic có API key/allow-list/idempotency; mặc định tắt |
 | `/Applicant/Status/{id}` | GET | Trả trạng thái `PENDING/PROCESSING/COMPLETED/FAILED` để UI poll |
 | `/Applicant/Receipt/{id}` | GET | Đọc ảnh từ storage riêng tư theo mã hồ sơ |
 | `/Applicant/ForwardToManager` | POST | Chuyển một hồ sơ cần người quyết định |
@@ -76,13 +86,13 @@ Qwen chỉ trích xuất dữ kiện nhìn thấy trong ảnh. Quyết định `
 | `/Home/ReviewerQueue` | GET | Fragment hàng đợi quản lý |
 | `/Home/AuditTrail` | GET | Fragment timeline audit |
 
-Các POST thay đổi trạng thái đều kiểm antiforgery token. Upload chỉ nhận JPG/PNG tối đa 5 MB và server kiểm cả MIME, magic bytes lẫn kích thước.
+Các POST từ UI kiểm antiforgery token. Endpoint sandbox không dùng browser session mà dùng secret header và feature flag. Mọi nguồn chỉ nhận JPG/PNG tối đa 5 MB và server kiểm cả MIME, magic bytes lẫn kích thước.
 
 ## 4. Luồng xử lý một hóa đơn
 
-1. Server xác thực file và số tiền đề nghị.
+1. Nguồn manual hoặc sandbox gửi ảnh và metadata. UI hiện không yêu cầu số tiền; final total do VLM trích xuất rồi qua schema/semantic validation.
 2. `ReceiptStorage` lưu ảnh ngoài `wwwroot`, đặt tên ngẫu nhiên và tính SHA-256.
-3. Server ghi hồ sơ `PENDING` cùng audit `AI_QUEUED`, trả HTTP `202` và status URL. Request HTTP không giữ kết nối trong lúc model suy luận.
+3. Server ghi hồ sơ `PENDING`, audit `AI_QUEUED` và outbox trong cùng transaction, trả HTTP `202` và status URL. Request HTTP không giữ kết nối trong lúc model suy luận.
 4. `ReceiptProcessingWorker` claim job bằng update có điều kiện, gắn lease và tăng số lần thử. Job tồn tại trong SQL Server nên app restart không làm mất hàng đợi; lease hết hạn cho phép worker lấy lại job bị gián đoạn.
 5. `ConfiguredVisionExtractor` gọi provider chính. Khi bật fallback, chỉ lỗi hạ tầng nằm trong allowlist mới được chuyển một lần sang provider dự phòng. Hai adapter dùng chung prompt, JSON Schema và parser qua `ReceiptExtractionContract`.
 6. `ReceiptSemanticValidator` kiểm ý nghĩa chéo trên evidence contract v2: tiền VND chính phải là số nguyên đồng (riêng VAT được in là đã bao gồm có thể giữ phần lẻ hỗ trợ), loại chứng từ phải phù hợp identifier, mã/ngày không được gán nhầm trường và line items phải đối chiếu với tổng thanh toán. Mỗi extraction mới phải mang `evidenceContractVersion=2`, chuỗi ngày gốc và provenance của tổng cuối. Chỉ `totalAmountSource=PRINTED_FINAL_TOTAL` cùng `totalAmountEvidence` chứa đúng nhãn/số in trên ảnh mới đủ điều kiện đi tiếp; `NOT_VISIBLE`, `AMBIGUOUS`, `INFERRED`, thiếu evidence hoặc evidence lệch đều repair tối đa một lần rồi fail-safe. Backend tự chuẩn hóa `HH:mm:ss`/12 giờ về `HH:mm` và ngày Việt Nam day-first từ chuỗi gốc, ngăn `04-10-26` bị đổi thành `2026-04-10`. Chứng từ giấy thiếu toàn bộ `lineItems` là dữ kiện chưa đủ để kiểm tra danh mục cấm: backend thêm missing field/warning, hạ confidence tối đa còn 0.69 và buộc `ESCALATE_FACT` nếu vẫn rỗng. Khoản giảm được in rõ đi vào `discountAmount` không âm và phải đối chiếu được; tiền khách đưa, tiền thối, VAT đã gồm, điểm/tích lũy và số không có base trước giảm không được nâng thành discount/total. Ba identifier giao dịch được tách khỏi `taxAuthorityCode`, `invoiceSerial`, `documentNumber`, `posNumber`; PTT trên phiếu tính tiền là `receiptNumber`, còn Mã CQT không thay mã giao dịch. Normalization hậu extraction chỉ loại exact duplicate identifier theo loại chứng từ, bỏ summary pseudo-line có điều kiện và sửa total khi dòng final-total + subtotal + toàn bộ line items cùng khớp; giá trị khác nhau, total rách hoặc evidence mơ hồ vẫn đi fail-safe.
@@ -90,6 +100,8 @@ Các POST thay đổi trạng thái đều kiểm antiforgery token. Upload ch�
 8. Worker chạy `PolicyDecisionEngine`, commit kết quả, provider thực sự phục vụ và audit cả việc repair/counter lỗi. UI poll mỗi giây trong phiên trình duyệt, lưu status URL trong `sessionStorage` và tự nối lại sau refresh.
 9. Nhân viên xác nhận chuyển tiếp. Quản lý đồng ý hoặc từ chối theo câu hỏi đã sinh; quyết định có thể hoàn tác.
 10. UI gom các audit event của cùng hồ sơ thành một timeline, tránh hiển thị các dòng trùng nghĩa.
+
+Với sandbox, API key và sender/folder allow-list chạy trước intake. Unique `(mailbox,message)` và `(message,attachment)` khiến replay trả record cũ thay vì tạo job thứ hai. File sai được ghi quarantine trước AI. Outbox chỉ đánh thức worker nhanh hơn; SQL poll/lease vẫn là cơ chế độ bền nếu process recycle.
 
 Nếu SQL Server tạm mất kết nối, worker tăng thời gian chờ theo cấp số nhân từ 5 giây đến tối đa 60 giây thay vì ghi full stack liên tục. Khi database phục hồi, worker tiếp tục lấy job từ trạng thái đã lưu; không cần tạo lại request.
 

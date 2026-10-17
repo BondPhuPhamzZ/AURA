@@ -77,11 +77,11 @@ Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_rec
 
 Test Kit v3/v3.1 là regression namespace riêng, không thay Verify/v2. Tái tạo bằng `tools/generate_regression_receipts_v3.py --as-of-date 2026-10-06 --revision 3.0|3.1`; runner phải nhận manifest và images directory tường minh. Raw v3 đã khóa/chạy một lần; chỉ chạy v3.1 sau publish đúng candidate, recycle và health `ok`.
 
-Để bảo toàn credit: build + 187 automated test offline trước, deploy, chạy health/security smoke không ảnh, sau đó chỉ chạy **một lượt** Verify 5 ảnh khi thực sự cần. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota và quyền gửi ảnh.
+Để bảo toàn credit: build + 203 automated test offline trước, deploy, chạy health/security smoke không ảnh, sau đó chỉ chạy **một lượt** Verify 5 ảnh khi thực sự cần. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota và quyền gửi ảnh.
 
 Sau thay đổi contract giảm giá hoặc sửa lỗi live, làm theo cổng build/test/health trong `docs/CURRENT_PROJECT_STATUS.md` và `docs/SUBMISSION_CHECKLIST.md`. Không reset database và không chạy migration nếu facts vẫn nằm trong JSON hiện có; restart queue phải dùng chính DB cũ để chứng minh độ bền.
 
-Sau official holdout 06/10, extraction mới dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Candidate hiện tại còn chuyển timestamp Audit từ UTC sang giờ Việt Nam rõ ràng, không phụ thuộc timezone host. Trước publish phải đạt Release build sạch, 187/187 test và `dotnet ef migrations has-pending-model-changes` trả không có thay đổi. Thứ tự SmartASP an toàn: backup/kiểm biến môi trường, bổ sung `OpenRouter__Model=qwen/qwen3.8-flash`, `OpenRouter__ReasoningEffort=none`, `OpenRouter__DenyProviderDataCollection=true` và giữ `OpenRouter__RequireZeroDataRetention=false` cho tới khi route được xác nhận → recycle ngay trước publish để nhả file lock → Visual Studio Web Deploy Release → chờ `Publish succeeded` → recycle lại → đợi 10–30 giây → `/healthz` phải HTTP 200, `status=ok`, database/storage true, pending migration 0, model/reasoning đúng và `providerDataCollectionDenied=true`. Sau đó chạy đúng một synthetic smoke single, một batch nhỏ, một privacy case và tải báo cáo CSV theo kỳ; không bật migration startup hoặc fallback.
+Sau official holdout 06/10, extraction mới dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Trước publish phải đạt Release build sạch, 203/203 test và model khớp migration. Thứ tự an toàn: backup database/storage → apply `AddSandboxMailboxIngestion` bằng quy trình có rollback → kiểm biến môi trường → publish/recycle → `/healthz` phải HTTP 200, database/storage true và pending migration 0. Sau đó smoke manual baseline. Mailbox sandbox mặc định tắt; nếu bật trong môi trường riêng thì phải smoke unauthorized, accepted, replay và quarantine theo `MAILBOX_SANDBOX_RUNBOOK.md`.
 
 Live gate hậu contract v2 phải dùng request mới, không gọi lại 15 ảnh là “blind”: (1) receipt có giờ `HH:mm:ss` + bia phải `ESCALATE_POLICY`; (2) receipt rõ, dòng tổng in đủ phải giữ `PRINTED_FINAL_TOTAL` và AUTO khi các điều kiện khác đạt; (3) ảnh có giá trị Total bị cắt phải FACT dù subtotal/items cộng được; (4) `04-10-26` phải canonicalize thành 2026-10-04; (5) Winmart có PTT + Mã CQT phải tách receipt/tax-authority; (6) money-role CoopSmile không được dùng cash/change/VAT làm total/discount. Lưu raw status/facts/audit và timestamp. Nếu model/provider chưa tuân schema v2, kết quả phải `ESCALATE_SYSTEM_ERROR`/`ESCALATE_FACT`, không rollback gate để lấy AUTO.
 
@@ -150,6 +150,16 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 6. Circuit breaker mặc định mở sau ba lỗi hạ tầng liên tiếp, dùng fallback 60 giây rồi cho provider chính một lượt probe.
 7. `VisionInvocationCoordinator` dùng chung cho Verify và worker, mặc định `Vision:MaxConcurrentRequests=1`. Khi 429, worker dừng drain queue; các job chưa claim vẫn nằm trong SQL.
 
+### Mailbox sandbox synthetic
+
+1. Sandbox chỉ mô phỏng provider delivery, không đọc Gmail/Graph và không giữ OAuth token.
+2. `POST /api/mailbox-sandbox/deliver` cần secret header, sender/folder allow-list và message/attachment ID ổn định.
+3. Manual và sandbox gọi chung `IInvoiceIngestionService`; attachment hợp lệ mới tạo request, audit và outbox trong một transaction.
+4. Replay cùng source identity trả record cũ; attachment sai bị persist quarantine và không tạo AI job.
+5. Outbox đánh thức worker nhanh hơn, nhưng SQL poll/lease vẫn bảo đảm job không mất khi process recycle.
+6. Khi `RequireMalwareScanner=true` mà chưa có scanner, hệ thống fail-closed vào quarantine.
+7. Chạy smoke bằng `tools/Invoke-SandboxMailboxPipeline.ps1`; không dùng email hoặc hóa đơn thật.
+
 ### Khi có 2–5 người cùng thao tác
 
 1. Chỉ một người được bấm **Verify Harness**. `WorkflowOperationGate` trả HTTP 409 cho Verify thứ hai trên cùng instance.
@@ -184,6 +194,7 @@ Vision__Provider=OpenRouter
 ConnectionStrings__DefaultConnection=<SQL Server connection string>
 ReceiptStorage__Directory=<persistent volume path>
 Database__ApplyMigrationsOnStartup=true
+MailboxSandbox__Enabled=false
 ```
 
 Quy trình release:

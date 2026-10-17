@@ -2,16 +2,16 @@
 
 ## Quyết định hiện tại
 
-AURA giữ một pipeline xử lý chung. Manual upload là nguồn đã triển khai. Mailbox hoặc folder là nguồn bổ sung trong roadmap và chỉ được nối khi hoàn tất các gate về identity, quyền truy cập và quarantine. Agent tương lai chỉ điều phối công cụ; model không giữ OAuth token, không gọi Gmail hoặc Microsoft Graph trực tiếp, không tự quyết định PASS và không tự gửi hồ sơ ra ngoài.
+AURA giữ một pipeline xử lý chung. Manual upload và mailbox sandbox synthetic đã dùng chung `IInvoiceIngestionService`. Sandbox không đọc Gmail, không giữ OAuth token và mặc định tắt; mục tiêu là kiểm chứng idempotency, quarantine, cursor/outbox và khả năng tái sử dụng pipeline trước khi làm connector thật. Agent tương lai chỉ điều phối công cụ; model không giữ OAuth token, không gọi Gmail hoặc Microsoft Graph trực tiếp, không tự quyết định PASS và không tự gửi hồ sơ ra ngoài.
 
 Lượt chọn nhiều ảnh hiện tại không tạo aggregate `InvoiceBatch`: UI gọi tuần tự cùng endpoint và mỗi ảnh có row/status/audit riêng. Thiết kế này phù hợp demo có giám sát và tránh migration gấp. Chỉ thêm `InvoiceBatch` khi cần progress/retry/report theo lô; khi đó batch phải là aggregate trong SQL, không được tồn tại chỉ trong memory hoặc JavaScript.
 
 ## Luồng mục tiêu
 
 ```text
-Manual upload đã chạy       Mailbox connector roadmap
-          │                           │
-          └──────── Invoice source ───┘
+Manual upload            Synthetic mailbox sandbox       Gmail/Graph tương lai
+       │                 API key + allow-list             OAuth read-only adapter
+       └──────────────────────── Invoice source ─────────────────────────┘
                          │
                          ▼
               Ingestion boundary
@@ -48,8 +48,12 @@ Manual upload đã chạy       Mailbox connector roadmap
 - Privacy triage chỉ lưu category và chuyển `ESCALATE_PRIVACY` để con người quyết định.
 - Dashboard lấy số liệu ngày, tháng và năm từ SQL.
 - Báo cáo CSV theo kỳ dashboard được chọn lấy từ SQL, có UTF 8 BOM để mở trong Excel, không xuất raw AI facts và vô hiệu hóa CSV formula injection từ chuỗi do người dùng cung cấp.
+- Mailbox sandbox có unique source identity theo connection/message/attachment, persisted message/attachment/cursor, quarantine và transactional outbox.
+- Delivery hợp lệ trả 202 rồi dùng cùng worker. Replay trả record cũ; file không hợp lệ hoặc scanner-required chưa sẵn sàng không tạo AI job.
 
-## Ranh giới của mailbox agent
+## Ranh giới của mailbox sandbox và agent tương lai
+
+Sandbox hiện tại nhận multipart synthetic qua endpoint nội bộ có API key. Nó chỉ mô phỏng delivery của provider, không quét inbox, không có webhook và không xác thực người dùng Gmail. Subject/body không được gửi vào VLM; chỉ attachment đã qua gate mới đi tiếp.
 
 Kiến trúc khuyến nghị chia ba tầng:
 
@@ -61,13 +65,14 @@ Agent không được nhận credential thô. Model chỉ phân loại hoặc tr
 
 ## State tối thiểu cho đồng bộ mailbox
 
-- `MailboxConnection`: tenant hoặc account, provider, scope đã cấp, trạng thái consent và tham chiếu secret.
+- `MailboxConnection`: provider/mailbox synthetic và trạng thái bật. OAuth consent/secret reference chưa có vì Gmail chưa được nối.
 - `MailboxSyncCursor`: history ID hoặc delta token, thời điểm sync cuối và trạng thái backfill.
 - `EmailMessage`: external message ID, thread ID, sender, subject, received time và processing status.
 - `EmailAttachment`: external attachment ID, hash, MIME, kích thước và quarantine status.
-- `InvoiceProcessingJob`: liên kết attachment với SQL queue hiện hành.
+- `ReimbursementRequest`: liên kết attachment hợp lệ với SQL queue hiện hành; không tạo loại job song song.
+- `IngestionOutboxEvent`: commit cùng request/audit để đánh thức worker sau transaction.
 
-Không quét lại toàn bộ mailbox mỗi lần. Connector đọc thay đổi kể từ cursor, chống trùng bằng provider ID kết hợp SHA 256 và chỉ tạo job sau khi file vượt qua quarantine.
+Sandbox cập nhật cursor theo message ID và chống trùng bằng unique provider/message/attachment; SHA-256 vẫn phát hiện nội dung trùng giữa các nguồn. Connector Gmail tương lai phải đọc thay đổi kể từ history cursor thay vì quét lại toàn inbox.
 
 ## Gate trước khi nối mailbox thật
 
@@ -84,9 +89,9 @@ Không quét lại toàn bộ mailbox mỗi lần. Connector đọc thay đổi 
 
 ## Thứ tự triển khai an toàn
 
-1. Giữ candidate hiện tại làm baseline và hoàn tất publish, health, synthetic smoke.
-2. Pilot connector bằng mailbox sandbox chỉ đọc, một folder allow list và dữ liệu synthetic.
-3. Tạo sync cursor, idempotency và quarantine trước khi bật AI extraction.
-4. Nối attachment hợp lệ vào cùng ingestion boundary và SQL queue; không tạo AI pipeline thứ hai.
-5. Thêm batch review và báo cáo chi tiết. Forward vẫn là thao tác của nhân viên.
-6. Chỉ mở rộng tenant hoặc mailbox sau capacity test, privacy review và kiểm thử revoke token.
+1. Baseline manual đã giữ nguyên; chạy 203 test và kiểm migration trước publish.
+2. Backup/migrate rồi bật mailbox sandbox ở môi trường riêng với một folder/sender allow-list và fixture synthetic.
+3. Smoke unauthorized, ACCEPTED, terminal status, replay DUPLICATE và quarantine; ghi evidence bằng script.
+4. Tích hợp malware scanner + quarantine storage và pre-inference privacy control trước dữ liệu thật.
+5. Thêm Gmail/Graph adapter read-only với OAuth/token vault/revoke/webhook/backfill; vẫn gọi cùng ingestion service.
+6. Chỉ mở rộng tenant/mailbox sau capacity test, privacy review, monitoring và kiểm thử revoke token.

@@ -1,6 +1,6 @@
 # AURA — Workflow đặc tả sản phẩm
 
-Phiên bản: 2.3 — 13/10/2026
+Phiên bản: 2.4 — 17/10/2026
 Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — The Escalation Referee
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
@@ -9,7 +9,7 @@ AURA hỗ trợ hoàn ứng chi phí theo nguyên tắc **AI đọc dữ kiện,
 
 Ba vai trò demo:
 
-- **Nhân viên:** tải chứng từ, nhập số tiền yêu cầu, xem kết quả, chuyển hồ sơ ngoại lệ.
+- **Nhân viên:** tải một hoặc nhiều chứng từ, xem số tiền AI trích xuất/kết quả và chuyển hồ sơ ngoại lệ.
 - **Quản lý:** trả lời câu hỏi cụ thể bằng Đồng ý/Từ chối.
 - **Người kiểm toán/BGK:** xem một dòng tổng hợp cho mỗi hồ sơ và mở toàn bộ timeline sự kiện.
 
@@ -17,7 +17,7 @@ Ba vai trò demo:
 
 ```mermaid
 flowchart LR
-    A[Ảnh JPG/PNG + số tiền] --> B[Kiểm size, MIME, magic bytes]
+    A[Manual hoặc mailbox sandbox synthetic] --> B[Kiểm quyền nguồn, size, MIME, magic bytes]
     B --> C[Lưu ảnh riêng tư + SHA-256]
     C --> Q[Lưu PENDING + audit AI_QUEUED]
     Q --> W[Worker claim job bằng lease]
@@ -34,9 +34,9 @@ flowchart LR
 
 ## 3. Workflow A — Phân tích một chứng từ mới
 
-1. Trình duyệt chỉ nhận một JPG/PNG tối đa 5 MB và hiển thị preview ngay khi chọn.
-2. Nhân viên nhập số tiền đề nghị hoàn ứng lớn hơn 0.
-3. Client gửi `POST /Applicant/UploadReceipt` bằng `fetch` kèm antiforgery token và ngữ cảnh người gửi; trang không reload.
+1. Trình duyệt nhận tối đa 10 JPG/PNG, mỗi file tối đa 5 MB, và hiển thị preview khi chọn. Mỗi ảnh vẫn là một hồ sơ/job riêng, không phải server-side batch transaction.
+2. UI không yêu cầu số tiền. Final total chỉ được dùng sau khi AI trích xuất và backend kiểm JSON Schema/ngữ nghĩa/provenance; thiếu bằng chứng thì fail-safe.
+3. Client gửi từng file tới `POST /Applicant/UploadReceipt` bằng `fetch` kèm antiforgery token và ngữ cảnh người gửi; trang không reload.
 4. Server kiểm extension, MIME, kích thước và magic bytes.
 5. Server đặt tên file bằng GUID, lưu ngoài `wwwroot`, tính SHA-256 và kiểm ảnh trùng.
 6. Chế độ demo vẫn cho phép ảnh trùng; cờ trùng được ghi nhận. Production có thể bật `DecisionPolicy:EscalateDuplicateReceipts=true`.
@@ -45,7 +45,7 @@ flowchart LR
 9. Worker claim job bằng update có điều kiện, đặt lease và tăng attempt. DB là nguồn sự thật nên job còn lại sau refresh hoặc app restart.
 10. Qwen đọc ảnh và trả `ReceiptExtractionDto`. Khi bật fallback, chỉ lỗi hạ tầng trong allowlist mới chuyển một lần sang provider dự phòng; schema/semantic/request invalid không kích hoạt fallback.
 11. Backend kiểm tra semantic trước policy bằng evidence contract v2. Mỗi kết quả mới phải có chuỗi ngày nguyên văn và provenance của số tiền cuối; chỉ `PRINTED_FINAL_TOTAL` cùng dòng evidence chứa đúng nhãn/số in trực tiếp mới có thể tự duyệt. Dòng Total bị cắt/rách, số chỉ suy từ subtotal/items, evidence thiếu hoặc không khớp đều repair tối đa một lần rồi `ESCALATE_FACT`. Backend chuẩn hóa lossless `HH:mm:ss`/AM-PM về `HH:mm` và ngày Việt Nam day-first từ chuỗi gốc; vì vậy `09:46:21` không che nhánh POLICY và `04-10-26` không bị hiểu thành 10/04. VND chính là số nguyên đồng, nhưng VAT đã được in là bao gồm có thể giữ phần lẻ hỗ trợ và không được cộng lần hai. Tiền khách đưa, tiền thối, VAT đã gồm, điểm/tích lũy không phải discount/total. Hóa đơn giấy phải có ít nhất một hàng hóa/dịch vụ đọc được; vùng món bị che/mờ/cắt hoặc `lineItems=[]` không chứng minh “không có hạng mục cấm”. `invoiceNumber`, `receiptNumber`, `transactionReference` được tách khỏi Mã CQT, serial, số chứng từ và POS; PTT trên phiếu tính tiền là `receiptNumber`. Facts lưu repair metadata; lỗi còn lại luôn fail-safe.
-12. Policy C# đối chiếu dữ kiện và số tiền khai báo:
+12. Policy C# đối chiếu bộ facts đã chuẩn hóa; nhánh `USER_PROVIDED` chỉ còn để tương thích test kit/API lịch sử:
    - dữ kiện đáng tin cậy, đúng policy và trong thẩm quyền → `AUTO_APPROVE`;
    - thiếu/mâu thuẫn dữ kiện → `ESCALATE_FACT`; nếu đồng thời có hạng mục cấm, lý do vẫn hiển thị policy finding thứ cấp để quản lý không bỏ sót;
    - ngoài chính sách → `ESCALATE_POLICY`;
@@ -53,6 +53,15 @@ flowchart LR
    - AI/provider lỗi → `ESCALATE_SYSTEM_ERROR`.
 13. Worker lưu facts, quyết định, latency, provider chính/provider phục vụ, fallback flag và sự kiện audit trong một lần `SaveChanges`.
 14. UI poll `GET /Applicant/Status/{id}` mỗi giây. `sessionStorage` giữ status URL để tiếp tục theo dõi sau refresh trong cùng tab.
+
+### 3.1 Workflow A2 — Mailbox sandbox synthetic
+
+1. Tính năng mặc định tắt và không đọc Gmail/Graph. Client sandbox gửi một attachment synthetic tới `POST /api/mailbox-sandbox/deliver` bằng API key.
+2. Backend kiểm sender/folder allow-list, message/attachment ID, file type/size/MIME/magic bytes.
+3. Attachment sai được persist quarantine và không tạo AI job. Khi cấu hình bắt buộc scanner nhưng scanner production chưa có, hệ thống fail-closed.
+4. Attachment hợp lệ đi qua cùng `IInvoiceIngestionService`, private storage, SQL queue, worker và policy như manual upload.
+5. Replay cùng message/attachment trả `DUPLICATE` và request ID cũ. Transactional outbox đánh thức worker; SQL vẫn là source of truth.
+6. Gmail/OAuth, token vault, webhook/backfill, malware scanner production và capacity lớn là gate tương lai, không được claim từ sandbox.
 
 ## 4. Workflow B — Verify Harness 5 ca
 
@@ -80,6 +89,7 @@ flowchart LR
 | `ESCALATE_FACT` | `MANUAL_REVIEW_ACCEPTED` | `RETURNED_FOR_MORE_EVIDENCE` |
 | `ESCALATE_POLICY` | `APPROVED_POLICY_EXCEPTION` | `REJECTED_POLICY_EXCEPTION` |
 | `ESCALATE_AUTHORITY` | `FORWARDED_TO_AUTHORITY` | `RETURNED_BY_MANAGER` |
+| `ESCALATE_PRIVACY` | `MANUAL_REVIEW_ACCEPTED` | `RETURNED_BY_MANAGER` |
 | `ESCALATE_SYSTEM_ERROR` | `MANUAL_REVIEW_ACCEPTED` | `RETURNED_FOR_RETRY` |
 
 Mỗi quyết định lưu câu hỏi, câu trả lời, kết quả và thời gian trong cùng transaction cập nhật hồ sơ.

@@ -1,6 +1,6 @@
 # AURA Test Matrix
 
-Candidate sau feedback ngày 17/10/2026 có 187 automated test offline. Phần bổ sung bao phủ: UI không còn nhập/gửi claimed amount, AI amount provenance, privacy category/route/manager outcome, OpenRouter `data_collection=deny`, dashboard SQL theo kỳ được chọn, multi-file UI contract, bảo toàn pending job trong một lượt nhiều ảnh và CSV report scope/formula hardening/UTF-8 BOM. Live Verify sau publish đạt 5/5; đây là stability evidence trên fixture synthetic đã biết, không phải accuracy holdout mới.
+Candidate sau feedback ngày 17/10/2026 có 203 automated test offline. Ngoài amount/privacy/dashboard/multi-file/CSV, test mới bao phủ shared intake validator, mailbox API key và allow-list, schema/index persistence, delivery accepted, source replay không tạo job trùng, quarantine trước AI, outbox và scanner-required fail-closed. Live Verify 5/5 thuộc baseline đã publish; mailbox sandbox mới chỉ có evidence offline cho tới khi được migrate/publish/smoke.
 
 Mốc cập nhật: 06/10/2026. Ký hiệu: `A` đã tự động hóa bằng xUnit; `V` nằm trong Verify Vision; `R` chạy bằng evaluator ngoài UI; `P` backlog mở rộng, chưa tuyên bố đã đạt.
 
@@ -31,6 +31,11 @@ Test Kit v3/v3.1 là namespace riêng tại `test_kit/v3*`, không thay gói tr�
 | OP-05 | Schema/semantic invalid, fallback bật | Không đổi provider; fail-safe theo contract/policy |
 | OP-06 | Nhiều lỗi hạ tầng đến ngưỡng | Circuit mở; hết cooldown có primary probe |
 | OP-07 | Hai manager action cùng hồ sơ | Một thao tác thành công, thao tác stale nhận conflict |
+| OP-08 | Sandbox delivery hợp lệ | HTTP 202; một request/audit/outbox; job dùng cùng worker |
+| OP-09 | Replay cùng message/attachment | `DUPLICATE`, cùng request ID, không tạo AI job thứ hai |
+| OP-10 | Sai sender/folder hoặc thiếu API key | Bị chặn trước ingestion |
+| OP-11 | Attachment sandbox sai magic bytes | Persist `QUARANTINED`, không có request/outbox |
+| OP-12 | Bật yêu cầu scanner khi scanner chưa tích hợp | Fail-closed `MALWARE_SCANNER_UNAVAILABLE` |
 
 Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số `AUTO_APPROVE`/`ESCALATE_*`; facts trích xuất hiển thị cạnh upload; mỗi dòng Verify có nút `Xem dữ kiện` và panel phải ghi đúng `TC-xx · tên ảnh`; auto approve xuất hiện ngay trong Audit; escalation còn trong bảng kết quả cho tới khi chuyển quản lý. Upload/Verify cập nhật trong workspace; mutation workflow điều hướng toàn trang sau commit để tránh trạng thái cũ hoặc trùng lặp.
 

@@ -18,6 +18,7 @@ Thư mục này chỉ chứa các tài liệu kỹ thuật hiện hành dành ch
 | `EVIDENCE_LOCALIZATION_PLAN.md` | Tính khả thi của overlay khoanh vùng và giới hạn chưa-production |
 | `USER_STUDY_PROTOCOL.md` | Protocol lấy ý kiến ba người dùng dựa trên consent |
 | `SUBMISSION_CHECKLIST.md` | Checklist nộp bài và rehearsal cuối |
+| `MAILBOX_SANDBOX_RUNBOOK.md` | Cấu hình, migration và smoke cho mailbox synthetic; không phải Gmail connector |
 | `../BUSINESS_RULES.md` | Bản tiếng Anh chuẩn đang đồng bộ với model contract và policy hiện hành |
 | `BUSINESS_RULES_VI.md` | Bảng dịch tiếng Việt công khai cho BGK; được loại khỏi build output và gói publish |
 
