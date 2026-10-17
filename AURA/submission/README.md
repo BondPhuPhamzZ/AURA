@@ -14,6 +14,8 @@ Thư mục này chỉ giữ một phiên bản hiện hành cho mỗi hạng m�
 | Đặc tả workflow | `AURA_WORKFLOW_SPEC.md` |
 | Báo cáo sau feedback | `AURA_AFTER_FEEDBACK_REPORT.docx`, `.pdf` |
 
+Proposal và Build Log là artifact nộp đã khóa trước feedback ngày 17/10. Trạng thái kiến trúc hiện hành, thay đổi candidate và các giới hạn mới phải đọc cùng `AURA_AFTER_FEEDBACK_REPORT.*`, `../docs/CURRENT_PROJECT_STATUS.md` và `../docs/AFTER_FEEDBACK_ARCHITECTURE_CHECKLIST.md`; không dùng riêng proposal cũ để suy ra candidate đã publish.
+
 Ba file Build Log là ba định dạng của cùng một tài liệu toàn dự án, không phải các sprint log riêng. Phiên bản lịch sử được giữ trong Git history thay vì đặt cạnh bản chốt.
 
 Tài liệu ôn tập cá nhân, kịch bản quay video, kịch bản pitching và Q&A của BGK được giữ ngoài repository tại `D:\aura\phan_bien`, không nằm trong gói submission.

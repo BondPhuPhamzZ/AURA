@@ -30,6 +30,7 @@ public sealed class DashboardSummaryViewComponent : ViewComponent
             ViewData["LoadError"] = "Không thể tải dashboard. Hãy kiểm tra kết nối cơ sở dữ liệu.";
             return View(new DashboardSummaryViewModel
             {
+                IsAvailable = false,
                 PeriodLabel = "Tháng hiện tại",
                 YearLabel = "Năm hiện tại"
             });

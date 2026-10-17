@@ -77,6 +77,14 @@ public sealed class UiContractTests
         Assert.Contains("const maxBatchFiles = 10;", dashboard, StringComparison.Ordinal);
         Assert.Contains("asp-route-tab=\"dashboard\"", File.ReadAllText(Path.Combine(ProjectRoot,
             "Views", "Shared", "Components", "DashboardSummary", "Default.cshtml")), StringComparison.Ordinal);
+        var dashboardSummary = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Shared", "Components",
+            "DashboardSummary", "Default.cshtml"));
+        Assert.Contains("if (!Model.IsAvailable)", dashboardSummary, StringComparison.Ordinal);
+        Assert.Contains("Không dùng các giá trị 0 thay cho dữ liệu chưa tải được", dashboardSummary,
+            StringComparison.Ordinal);
+        Assert.Contains("không phải tổng đã phê duyệt", dashboardSummary, StringComparison.Ordinal);
+        Assert.Contains("Bản demo có giám sát", dashboard, StringComparison.Ordinal);
+        Assert.Contains("mỗi ảnh tạo một hồ sơ độc lập", dashboard, StringComparison.Ordinal);
         Assert.Contains("btn-tab-dashboard", layout, StringComparison.Ordinal);
         Assert.Contains("decimal? claimedAmount", controller, StringComparison.Ordinal);
         Assert.DoesNotContain("UploadReceiptBatch", controller, StringComparison.Ordinal);

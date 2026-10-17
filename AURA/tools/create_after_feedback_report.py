@@ -171,7 +171,7 @@ def add_title(doc):
     r = p.add_run("Kết luận. ")
     r.bold = True
     p.add_run(
-        "Candidate đã triển khai năm thay đổi trong cùng kiến trúc hiện hành gồm batch upload, "
+        "Candidate đã triển khai năm thay đổi trong cùng kiến trúc hiện hành gồm lượt chọn nhiều ảnh, "
         "số tiền AI suy ra có provenance, dashboard ngày tháng năm, báo cáo CSV và privacy triage fail safe. "
         "Release build đạt 0 warning 0 error, 181 trên 181 test offline. Thay đổi báo cáo không sửa database model."
     )
@@ -198,7 +198,7 @@ def add_bullets(doc, items):
 def add_feedback_table(doc):
     doc.add_heading("Đối chiếu feedback và quyết định triển khai", level=1)
     rows = [
-        ("Nhiều hóa đơn", "Làm ngay", "Tối đa 10 JPG hoặc PNG qua cùng HTTP 202 và SQL queue", "5 MB mỗi ảnh chưa có PDF"),
+        ("Nhiều hóa đơn", "Làm ngay", "Tối đa 10 JPG hoặc PNG qua cùng HTTP 202 và SQL queue", "Mỗi ảnh là job riêng chưa có batchId hoặc PDF"),
         ("Folder hoặc email", "Roadmap", "Giữ ingestion boundary để nối connector sau", "Cần OIDC OAuth least privilege consent idempotency quarantine"),
         ("Không nhập số tiền", "Làm ngay", "Ưu tiên số người dùng nhập nếu có nếu trống dùng final total đã validation", "Không có total thì fail safe"),
         ("Báo cáo quản lý", "Làm ngay", "Dashboard ngày tháng năm và CSV tháng hiện tại từ SQL", "Không xuất raw AI facts chưa phải financial ledger"),
@@ -227,7 +227,7 @@ def add_feedback_table(doc):
             cells[i].width = widths[i]
             cells[i].text = value
             cells[i].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-            set_cell_margins(cells[i])
+            set_cell_margins(cells[i], top=55, bottom=55)
             if row_index % 2:
                 set_cell_shading(cells[i], PALE_BLUE)
             for run in cells[i].paragraphs[0].runs:
@@ -241,7 +241,9 @@ def add_pipeline(doc):
     doc.add_heading("Kiến trúc sau cập nhật", level=1)
     doc.add_paragraph(
         "Các boundary chính không đổi. Model chỉ đọc facts, C Sharp áp policy tất định và con người chịu trách nhiệm ngoại lệ. "
-        "Privacy triage nằm sau structured extraction và semantic validation nhưng trước policy decision."
+        "Privacy triage nằm sau structured extraction và semantic validation nhưng trước policy decision. "
+        "Lượt chọn nhiều ảnh chỉ là tiện ích intake phía giao diện. Mỗi ảnh nhận status URL và SQL row riêng; "
+        "candidate chưa có aggregate InvoiceBatch hoặc batch transaction phía server."
     )
     doc.add_paragraph(
         "Workflow mục tiêu giữ một ingestion boundary chung cho manual upload và mailbox connector. "
@@ -273,9 +275,9 @@ def add_pipeline(doc):
 def add_safety(doc):
     doc.add_heading("Cơ chế an toàn mới", level=1)
     add_bullets(doc, [
-        ("Batch không làm mất job đã nhận. ", "UI lưu danh sách pending ngay sau từng HTTP 202 nên file sau lỗi không xóa SQL job trước."),
+        ("Lượt nhiều ảnh không làm mất job đã nhận. ", "UI lưu danh sách pending ngay sau từng HTTP 202 nên file sau lỗi không xóa SQL job trước; mỗi ảnh vẫn là một hồ sơ độc lập."),
         ("Không tin số tiền mù. ", "Worker chỉ chọn số người dùng nhập lớn hơn không hoặc final total lớn hơn không sau validation và luôn audit nguồn."),
-        ("Privacy không quyết định bằng keyword. ", "Model phát marker category chuẩn backend chỉ nhận allow list và không ghi raw value vào warning."),
+        ("Privacy không quyết định bằng keyword. ", "Model phát marker category chuẩn backend chỉ nhận allow list và không ghi raw value vào warning. Vì triage chạy sau VLM demo ưu tiên chứng từ tổng hợp hoặc đã ẩn danh; production cần pre inference control cho dữ liệu nhạy cảm."),
         ("Fail safe có chủ đích. ", "Tín hiệu dữ liệu cá nhân dẫn đến ESCALATE PRIVACY fact inconsistency vẫn có ưu tiên cao hơn."),
         ("Provider boundary. ", "Payload yêu cầu data collection deny nhưng không bật strict ZDR nếu chưa xác nhận còn provider đủ điều kiện."),
         ("Dashboard và CSV dùng cùng SQL. ", "Không tạo source of truth mới, không xuất facts thô và vô hiệu hóa formula injection từ chuỗi người dùng."),
@@ -322,7 +324,7 @@ def add_test_table(doc):
         for i, value in enumerate(row_data):
             cells[i].width = widths[i]
             cells[i].text = value
-            set_cell_margins(cells[i])
+            set_cell_margins(cells[i], top=35, bottom=35)
             cells[i].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
             if idx % 2:
                 set_cell_shading(cells[i], PALE)
@@ -336,7 +338,7 @@ def add_test_table(doc):
     p.add_run("Diễn giải LocalDB. ").bold = True
     p.add_run(
         "Lỗi registry runtime trên máy kiểm tra không chứng minh database live hỏng và không phát sinh từ migration. "
-        "Không xóa registry LocalDB hoặc MDF khi chưa có backup."
+        "Không xóa registry LocalDB hoặc MDF khi chưa có backup. Read only live health trả 200 nhưng dashboard candidate chưa xuất hiện và CSV trả 404 nên production vẫn là baseline cũ."
     )
 
 
@@ -344,7 +346,7 @@ def add_demo(doc):
     doc.add_heading("Quy trình demo mới", level=1)
     demo = [
         ("25 giây", "Mở Tổng quan", "Nêu số liệu từ SQL ở ba mức ngày tháng năm và tải CSV tháng."),
-        ("35 giây", "Batch intake", "Chọn hai hoặc ba ảnh để trống amount và chỉ HTTP 202 cùng job riêng."),
+        ("35 giây", "Lượt nhiều ảnh", "Chọn hai hoặc ba ảnh để trống amount và chỉ HTTP 202 cùng job riêng."),
         ("25 giây", "Xử lý nền", "Chỉ PENDING hoặc PROCESSING và người dùng không bị giữ request."),
         ("25 giây", "Amount provenance", "Mở facts và chỉ AI EXTRACTED hoặc USER PROVIDED."),
         ("45 giây", "Privacy boundary", "Dùng synthetic receipt và chỉ ESCALATE PRIVACY không lặp raw value."),
@@ -377,7 +379,7 @@ def add_demo(doc):
             if idx % 2:
                 set_cell_shading(cells[i], PALE_BLUE)
             for run in cells[i].paragraphs[0].runs:
-                run.font.size = Pt(8.9)
+                run.font.size = Pt(8.2)
         cells[0].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
     set_table_borders(table)
     p = doc.add_paragraph()
@@ -393,11 +395,12 @@ def add_checklist_and_roadmap(doc):
         "Ghi commit SHA; backup hosting và database; kiểm biến môi trường mà không in API key.",
         "Publish và recycle rồi chờ 10 đến 30 giây.",
         "Kiểm health HTTP 200 status ok database storage true migration 0 và providerDataCollectionDenied true.",
-        "Chạy single upload không nhập amount, batch hai ảnh và một privacy synthetic case; kiểm manager route cùng audit.",
-        "Không rerun holdout cũ để tạo accuracy claim mới; rehearsal theo thứ tự dashboard report batch privacy manager audit.",
+        "Chạy single upload không nhập amount, lượt hai ảnh và một privacy synthetic case; kiểm manager route cùng audit.",
+        "Không rerun holdout cũ để tạo accuracy claim mới; rehearsal theo thứ tự dashboard report multi file privacy manager audit.",
     ]
     for text in checklist:
         p = doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(2)
         p.paragraph_format.left_indent = Cm(0.4)
         p.paragraph_format.first_line_indent = Cm(-0.4)
         p.add_run("☐  ").font.color.rgb = RGBColor(31, 138, 138)

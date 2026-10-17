@@ -1718,6 +1718,29 @@ main {
 .dashboard-subtitle { margin: 1.3rem 0 .7rem; font-size: 1rem; }
 
 .dashboard-secondary-metrics strong { color: var(--colors-ink); }
+.dashboard-definition {
+    margin: 0 0 18px;
+    color: var(--colors-ink-muted);
+    font-size: .82rem;
+}
+
+.dashboard-error-state {
+    display: grid;
+    gap: 6px;
+    padding: 18px;
+    border: 1px solid #ef4444;
+    border-radius: 6px;
+    background: rgba(127, 29, 29, .16);
+    color: var(--colors-ink-subtle);
+}
+
+.dashboard-error-state strong { color: #fecaca; }
+.intake-safety-note {
+    margin: 10px 0 0;
+    color: var(--colors-ink-muted);
+    font-size: .82rem;
+    line-height: 1.55;
+}
 .dashboard-table th, .dashboard-table td { text-align: right; }
 .dashboard-table th:first-child, .dashboard-table td:first-child { text-align: left; }
 

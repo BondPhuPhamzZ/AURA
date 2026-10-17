@@ -53,6 +53,9 @@
                             <div class="dropzone-subtext">JPG, PNG · tối đa 10 ảnh/lượt · @ReceiptStorage.Value.MaxFileSizeMb MB/ảnh</div>
                         </div>
                     </div>
+                    <p class="intake-safety-note" role="note">
+                        Bản demo có giám sát: ưu tiên chứng từ tổng hợp hoặc đã ẩn danh. Privacy triage chạy sau bước AI trích xuất nên không thay thế việc che dữ liệu nhạy cảm trước khi gửi provider.
+                    </p>
                     <div class="amount-action-row">
                         <div class="amount-field">
                             <label for="claimedAmountDisplay" class="form-label fw-semibold">Số tiền đối chiếu tùy chọn (VND)</label>
@@ -343,7 +346,7 @@
         dropzoneText.textContent = files.length === 1 ? file.name : `Đã chọn ${files.length} hóa đơn`;
         dropzoneSubtext.innerText = files.length === 1
             ? 'Click hoặc kéo thả ảnh khác để thay đổi'
-            : `${file.name} và ${files.length - 1} ảnh khác · AI sẽ xếp hàng tuần tự`;
+            : `${file.name} và ${files.length - 1} ảnh khác · mỗi ảnh tạo một hồ sơ độc lập`;
         renderExtractedFacts(null);
     }
 
@@ -766,7 +769,7 @@
         });
     }
 
-    // Batch upload reuses the same validated HTTP 202 endpoint for each file. This
+    // A multi-file selection reuses the same validated HTTP 202 endpoint for each file. This
     // keeps storage, hash checks, SQL queueing and worker behavior on one code path.
     async function submitUpload() {
         if (!fileInput.files || fileInput.files.length === 0) {
@@ -778,7 +781,7 @@
         const rawAmount = syncClaimedAmount();
         const submittedAmount = files.length === 1 && rawAmount ? rawAmount : '0';
         if (files.length > 1 && rawAmount)
-            showToast('Batch nhiều ảnh sẽ dùng tổng tiền AI đọc riêng cho từng hóa đơn.', 'warning');
+            showToast('Lượt nhiều ảnh sẽ dùng tổng tiền AI đọc riêng cho từng hóa đơn.', 'warning');
 
         const btn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');
@@ -842,8 +845,8 @@
             processingPlaceholderRows = 0;
             renderResultsTable();
             const accepted = queued.length > 0 ? ` ${queued.length} hồ sơ đã nhận vẫn được xử lý nền.` : '';
-            renderExtractedFactsUnavailable('Không thể hoàn tất toàn bộ batch: ' + e.message + accepted);
-            finishAnalysisProgress('Batch chưa được tiếp nhận đầy đủ', e.message + accepted, true);
+            renderExtractedFactsUnavailable('Không thể tiếp nhận toàn bộ lượt ảnh: ' + e.message + accepted);
+            finishAnalysisProgress('Lượt ảnh chưa được tiếp nhận đầy đủ', e.message + accepted, true);
         } finally {
             btn.disabled = false;
             btnText.innerText = originalText;

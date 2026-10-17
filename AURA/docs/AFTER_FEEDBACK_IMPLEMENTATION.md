@@ -10,7 +10,7 @@ Candidate source hiện đạt build 0 warning/0 error, 181/181 test offline và
 
 | Feedback | Quyết định | Triển khai thực tế | Ranh giới |
 |---|---|---|---|
-| Upload nhiều hóa đơn | Làm ngay | UI nhận tối đa 10 JPG/PNG, tiếp nhận tuần tự qua cùng endpoint HTTP 202; mỗi file có case ID, SHA-256, SQL row, audit và status URL riêng | Chưa nhận PDF; tối đa 5 MB/file |
+| Upload nhiều hóa đơn | Làm ngay | UI nhận tối đa 10 JPG/PNG, tiếp nhận tuần tự qua cùng endpoint HTTP 202; mỗi file có case ID, SHA-256, SQL row, audit và status URL riêng | Đây là một lượt chọn nhiều ảnh, chưa phải `InvoiceBatch`/`batchId`; chưa nhận PDF; tối đa 5 MB/file |
 | Nhận từ folder/email | Chưa nối gấp | Giữ cùng ingestion boundary làm điểm tích hợp tương lai | Cần OIDC/OAuth, least privilege, consent, idempotency, backfill, quarantine và audit |
 | Không bắt người dùng nhập số tiền | Làm ngay, fail-safe | Claimed amount tùy chọn. Worker ưu tiên số người dùng nhập; nếu trống chỉ dùng `totalAmount` đã qua JSON Schema và semantic validation | Không đoán khi AI không có final total; hồ sơ đi kiểm tra dữ kiện |
 | Báo cáo cho quản lý | Làm ngay | Tab Tổng quan chiếu dữ liệu SQL theo ngày, tháng và năm; tải CSV tháng hiện tại có route, privacy, trạng thái quản lý và latency | CSV không xuất raw AI facts; chưa phải BI/financial ledger |
@@ -38,7 +38,7 @@ Các boundary chính không đổi: model chỉ đọc facts; C# áp policy tấ
 
 ## 4. Cơ chế an toàn mới
 
-- **Batch không làm mất job đã nhận:** UI lưu `aura.pendingReceipts` ngay sau từng HTTP 202. Nếu file sau lỗi, các job trước vẫn nằm trong SQL queue và được resume/poll.
+- **Lượt nhiều ảnh không làm mất job đã nhận:** UI lưu `aura.pendingReceipts` ngay sau từng HTTP 202. Nếu file sau lỗi, các job trước vẫn nằm trong SQL queue và được resume/poll. Mỗi ảnh là một hồ sơ độc lập, không có atomic batch transaction.
 - **Không tin số tiền mù:** `ReceiptAmountResolver` chỉ chọn số người dùng nhập lớn hơn 0 hoặc `facts.TotalAmount` lớn hơn 0. Provenance được lưu vào `ExtractedFactsJson` và audit.
 - **Privacy không dựa vào keyword quyết định:** model chỉ phát tín hiệu category bằng marker chuẩn; backend chỉ chấp nhận allow-list và có kiểm tra bảo thủ cho email/phone trong text đã trích xuất. Không lưu raw match trong warning.
 - **Privacy fail-safe:** `RequiresPrivacyReview=true` dẫn đến `ESCALATE_PRIVACY`, không auto-approve. Fact inconsistency vẫn có ưu tiên cao hơn.
@@ -64,7 +64,7 @@ Không dùng lỗi LocalDB của máy này để suy ra database live hỏng. Kh
 ## 6. Quy trình demo mới đề xuất (4–5 phút)
 
 1. **Tổng quan (25 giây):** mở dashboard, chỉ rõ số liệu lấy từ SQL ở ba mức ngày/tháng/năm và nút tải báo cáo CSV.
-2. **Batch intake (35 giây):** chọn 2–3 receipt JPG/PNG, để trống số tiền, bấm “Xếp hàng AI”. Nhấn mạnh mỗi ảnh nhận HTTP 202 và job riêng.
+2. **Multi-file intake (35 giây):** chọn 2–3 receipt JPG/PNG, để trống số tiền, bấm “Xếp hàng AI”. Nhấn mạnh mỗi ảnh nhận HTTP 202 và job riêng; không gọi đây là server batch có `batchId`.
 3. **Xử lý nền (25 giây):** chỉ trạng thái PENDING/PROCESSING và việc người dùng có thể tiếp tục thao tác.
 4. **Amount provenance (25 giây):** mở facts, chỉ “Nguồn số tiền: AI trích xuất” và final total; nếu thiếu total thì fail-safe.
 5. **Privacy boundary (45 giây):** dùng receipt synthetic có category dữ liệu cá nhân, chỉ `ESCALATE_PRIVACY`; hệ thống nêu category nhưng không lặp lại giá trị gốc.
@@ -80,7 +80,7 @@ Luôn chuẩn bị fallback: nếu provider chậm, chuyển sang dữ liệu/au
 2. Backup hosting/database và kiểm biến môi trường; không in API key.
 3. Publish/recycle; chờ 10–30 giây.
 4. `/healthz`: HTTP 200, `status=ok`, database/storage true, migration 0, model/reasoning đúng, `providerDataCollectionDenied=true`.
-5. Chạy một synthetic single upload không nhập amount; sau đó một batch nhỏ 2 ảnh.
+5. Chạy một synthetic single upload không nhập amount; sau đó một lượt chọn nhỏ 2 ảnh.
 6. Chạy một privacy synthetic case và kiểm route `ESCALATE_PRIVACY`/manager/audit.
 7. Không rerun holdout cũ để tạo claim accuracy mới. Live Verify chỉ chạy nếu credit, thời gian và provider ổn định.
 8. Quay lại dashboard và rehearsal theo đúng thứ tự demo mới.

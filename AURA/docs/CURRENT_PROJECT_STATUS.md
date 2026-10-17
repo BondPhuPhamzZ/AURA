@@ -2,7 +2,7 @@
 
 ## Kết luận
 
-Baseline live ngày 14/10 vẫn truy xuất được tại tag `aura-demo-day-2026-10-14`. Sau feedback doanh nghiệp ngày 17/10, candidate source đã bổ sung batch ingestion, số tiền AI suy ra có provenance, privacy triage, dashboard vận hành và báo cáo CSV tháng hiện tại. Các thay đổi này đã qua toàn bộ test offline nhưng **chưa được gọi là live** cho tới khi publish, health check và synthetic smoke hoàn tất. Video cũ vẫn là bằng chứng của baseline trước feedback; không dùng video đó để khẳng định UI mới đã chạy trên production.
+Baseline live ngày 14/10 vẫn truy xuất được tại tag `aura-demo-day-2026-10-14`. Sau feedback doanh nghiệp ngày 17/10, candidate source đã bổ sung lượt chọn nhiều ảnh, số tiền AI suy ra có provenance, privacy triage, dashboard vận hành và báo cáo CSV tháng hiện tại. Mỗi ảnh vẫn là một hồ sơ độc lập; candidate chưa có `InvoiceBatch`/`batchId` phía server. Các thay đổi này đã qua toàn bộ test offline nhưng **chưa được gọi là live** cho tới khi publish, health check và synthetic smoke hoàn tất. Video cũ vẫn là bằng chứng của baseline trước feedback; không dùng video đó để khẳng định UI mới đã chạy trên production.
 
 ## Cấu hình live
 
@@ -17,7 +17,7 @@ Baseline live ngày 14/10 vẫn truy xuất được tại tag `aura-demo-day-20
 | Provider cooldown | 120 giây |
 | Verify Harness | Bật |
 | Live fallback | Tắt; Ollama chỉ là contingency local |
-| Batch upload | Tối đa 10 JPG/PNG; mỗi ảnh tối đa 5 MB và tạo một job riêng |
+| Lượt chọn nhiều ảnh | Tối đa 10 JPG/PNG; mỗi ảnh tối đa 5 MB và tạo một job/status URL riêng, không có batch transaction phía server |
 | Amount | Người dùng nhập cho single upload hoặc AI suy ra từ `totalAmount` đã validation |
 | Provider privacy | `data_collection=deny`; strict ZDR mặc định tắt chờ xác nhận route live |
 | Privacy route | `ESCALATE_PRIVACY`; triage category, không lặp lại giá trị gốc |
@@ -41,6 +41,7 @@ Read-only health recheck ngày 14/10 trả HTTP 200, `status=ok`, database/stora
 4. **Privacy triage:** model chỉ gắn marker category trong `suspiciousSignals`; backend normalize category, không ghi lại giá trị cá nhân, và policy C# chuyển `ESCALATE_PRIVACY`. Request OpenRouter mặc định yêu cầu provider không dùng dữ liệu để thu thập/huấn luyện.
 5. **Báo cáo quản lý:** dashboard có nút tải CSV tháng hiện tại từ SQL. File chỉ chứa dữ liệu vận hành cần review, không chứa raw AI facts và có chống CSV formula injection.
 6. **Email/folder connector:** chưa nối trong candidate hôm nay. Workflow đích giữ cùng ingestion boundary; Agent chỉ điều phối, connector riêng giữ OAuth. Kênh này cần least privilege, consent, sync cursor, idempotency, backfill, quarantine và audit.
+7. **Dashboard fail-closed:** khi SQL không tải được, UI không hiển thị KPI bằng 0 hoặc cho tải CSV; dashboard báo không khả dụng và yêu cầu tải lại. Nhãn “Đã kết thúc” được dùng cho `COMPLETED + FAILED`, còn tổng tiền được ghi rõ là tiền tham chiếu, không phải số đã phê duyệt.
 
 Privacy triage là công cụ hỗ trợ rà soát, không phải kết luận pháp lý hay chứng nhận tuân thủ. Strict zero-data-retention chỉ được bật sau khi route/provider live được xác nhận hỗ trợ; nếu bật mù có thể làm không còn provider đủ điều kiện.
 
@@ -59,7 +60,9 @@ FAHASA còn over ổn định do validator chưa chấp nhận chắc chắn nh�
 1. Publish/recycle candidate sau feedback, kiểm `/healthz`, database migration và một synthetic smoke cho single/batch; không rerun holdout cũ để tạo accuracy claim mới.
 2. Xác nhận route Alibaba/OpenRouter vẫn nhận `data_collection=deny`; chỉ cân nhắc bật strict ZDR sau một probe có kiểm soát.
 3. Hoàn tất ba phiên user study thật, có consent, quote nguyên văn, một thay đổi truy vết được và một negative effect.
-4. Rehearsal có bấm giờ theo demo mới: dashboard → batch không nhập tiền → privacy escalation → manager → audit.
+4. Rehearsal có bấm giờ theo demo mới: dashboard → lượt nhiều ảnh không nhập tiền → privacy escalation → manager → audit.
+
+Đối chiếu đầy đủ với tài liệu `recommend_check`, 10 architecture gates và evidence read-only ngày 17/10 nằm trong `AFTER_FEEDBACK_ARCHITECTURE_CHECKLIST.md`.
 
 ## Cách đọc ngày trong gói Demo Day
 

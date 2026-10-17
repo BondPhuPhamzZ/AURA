@@ -38,6 +38,7 @@ public static class DashboardSummaryProjector
 
         return new DashboardSummaryViewModel
         {
+            IsAvailable = true,
             PeriodLabel = $"Tháng {localNow:MM/yyyy}",
             YearLabel = $"Năm {localNow:yyyy}",
             Received = monthly.Length,

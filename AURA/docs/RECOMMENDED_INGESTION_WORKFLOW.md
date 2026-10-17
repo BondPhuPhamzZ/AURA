@@ -4,6 +4,8 @@
 
 AURA giữ một pipeline xử lý chung. Manual upload là nguồn đã triển khai. Mailbox hoặc folder là nguồn bổ sung trong roadmap và chỉ được nối khi hoàn tất các gate về identity, quyền truy cập và quarantine. Agent tương lai chỉ điều phối công cụ; model không giữ OAuth token, không gọi Gmail hoặc Microsoft Graph trực tiếp, không tự quyết định PASS và không tự gửi hồ sơ ra ngoài.
 
+Lượt chọn nhiều ảnh hiện tại không tạo aggregate `InvoiceBatch`: UI gọi tuần tự cùng endpoint và mỗi ảnh có row/status/audit riêng. Thiết kế này phù hợp demo có giám sát và tránh migration gấp. Chỉ thêm `InvoiceBatch` khi cần progress/retry/report theo lô; khi đó batch phải là aggregate trong SQL, không được tồn tại chỉ trong memory hoặc JavaScript.
+
 ## Luồng mục tiêu
 
 ```text

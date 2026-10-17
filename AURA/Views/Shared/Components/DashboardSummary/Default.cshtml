@@ -7,49 +7,61 @@
             <p>Số liệu lấy từ hồ sơ đã ghi trong SQL, hiển thị theo múi giờ Việt Nam. Privacy triage là tín hiệu hỗ trợ kiểm tra, không phải kết luận pháp lý.</p>
         </div>
         <div class="dashboard-actions">
-            <a class="button-ghost-sm" asp-controller="Reports" asp-action="CurrentMonth">Tải báo cáo CSV</a>
-            <a class="button-ghost-sm" asp-controller="Home" asp-action="Index" asp-route-tab="dashboard">Làm mới</a>
+            @if (Model.IsAvailable)
+            {
+                <a class="button-ghost-sm" asp-controller="Home" asp-action="Index">Xem hồ sơ cần xử lý</a>
+                <a class="button-ghost-sm" asp-controller="Reports" asp-action="CurrentMonth"
+                   title="Tải dữ liệu vận hành của tháng hiện tại, không gồm raw AI facts">Tải CSV tháng này</a>
+            }
+            <a class="button-ghost-sm" asp-controller="Home" asp-action="Index" asp-route-tab="dashboard">Tải lại dữ liệu</a>
         </div>
     </div>
 
-    @if (ViewData["LoadError"] is string loadError)
+    @if (!Model.IsAvailable)
     {
-        <p class="text-danger">@loadError</p>
+        <div class="dashboard-error-state" role="alert">
+            <strong>Dữ liệu tổng quan tạm thời không khả dụng.</strong>
+            <span>@(ViewData["LoadError"] as string ?? "Hãy kiểm tra kết nối cơ sở dữ liệu rồi tải lại.")</span>
+            <span>Không dùng các giá trị 0 thay cho dữ liệu chưa tải được.</span>
+        </div>
     }
+    else
+    {
+        <div class="dashboard-metrics" aria-label="Chỉ số tháng">
+            <div><span>Tiếp nhận</span><strong>@Model.Received</strong></div>
+            <div><span>Đã kết thúc</span><strong>@Model.Completed</strong></div>
+            <div><span>Tự động duyệt</span><strong>@Model.AutoApproved</strong></div>
+            <div><span>Cần người xử lý</span><strong>@Model.Escalated</strong></div>
+            <div><span>Cần rà soát riêng tư</span><strong>@Model.PrivacyReview</strong></div>
+            <div><span>Lỗi hệ thống</span><strong>@Model.Failed</strong></div>
+        </div>
 
-    <div class="dashboard-metrics" aria-label="Chỉ số tháng">
-        <div><span>Tiếp nhận</span><strong>@Model.Received</strong></div>
-        <div><span>Hoàn tất</span><strong>@Model.Completed</strong></div>
-        <div><span>Tự động duyệt</span><strong>@Model.AutoApproved</strong></div>
-        <div><span>Cần người xử lý</span><strong>@Model.Escalated</strong></div>
-        <div><span>Privacy review</span><strong>@Model.PrivacyReview</strong></div>
-        <div><span>Lỗi hệ thống</span><strong>@Model.Failed</strong></div>
-    </div>
+        <div class="dashboard-secondary-metrics">
+            <span>Tổng tiền tham chiếu: <strong>@Model.TotalAmountVnd.ToString("N0") VND</strong> (không phải tổng đã phê duyệt)</span>
+            <span>Độ trễ trung bình hồ sơ đã kết thúc: <strong>@(Model.AverageLatencyMs == 0 ? "Chưa có dữ liệu" : $"{Model.AverageLatencyMs:N0} ms")</strong></span>
+        </div>
 
-    <div class="dashboard-secondary-metrics">
-        <span>Tổng giá trị đã ghi nhận: <strong>@Model.TotalAmountVnd.ToString("N0") VND</strong></span>
-        <span>Độ trễ trung bình hồ sơ hoàn tất: <strong>@(Model.AverageLatencyMs == 0 ? "Chưa có dữ liệu" : $"{Model.AverageLatencyMs:N0} ms")</strong></span>
-    </div>
+        <p class="dashboard-definition">“Đã kết thúc” gồm hồ sơ xử lý thành công và hồ sơ dừng vì lỗi; số lỗi luôn được tách riêng ở cột “Lỗi hệ thống”.</p>
 
-    <div class="dashboard-year-summary" aria-label="Tổng hợp năm">
-        <strong>@Model.YearLabel</strong>
-        <span>@Model.YearReceived hồ sơ tiếp nhận</span>
-        <span>@Model.YearCompleted hồ sơ hoàn tất</span>
-        <span>@Model.YearTotalAmountVnd.ToString("N0") VND đã ghi nhận</span>
-    </div>
+        <div class="dashboard-year-summary" aria-label="Tổng hợp năm">
+            <strong>@Model.YearLabel</strong>
+            <span>@Model.YearReceived hồ sơ tiếp nhận</span>
+            <span>@Model.YearCompleted hồ sơ đã kết thúc</span>
+            <span>@Model.YearTotalAmountVnd.ToString("N0") VND tham chiếu</span>
+        </div>
 
-    <div class="table-responsive-aura">
-        <table class="table-aura dashboard-table">
+        <div class="table-responsive-aura">
+            <table class="table-aura dashboard-table">
             <thead>
                 <tr>
                     <th>Ngày</th>
                     <th>Tiếp nhận</th>
-                    <th>Hoàn tất</th>
+                    <th>Đã kết thúc</th>
                     <th>Tự động duyệt</th>
                     <th>Cần xử lý</th>
-                    <th>Privacy</th>
+                    <th>Riêng tư</th>
                     <th>Lỗi</th>
-                    <th>Tổng giá trị</th>
+                    <th>Tiền tham chiếu</th>
                 </tr>
             </thead>
             <tbody>
@@ -74,16 +86,16 @@
                 }
             }
             </tbody>
-        </table>
-    </div>
+            </table>
+        </div>
 
-    <h3 class="dashboard-subtitle">Đối chiếu theo tháng trong @Model.YearLabel.ToLowerInvariant()</h3>
-    <div class="table-responsive-aura">
-        <table class="table-aura dashboard-table">
+        <h3 class="dashboard-subtitle">Đối chiếu theo tháng trong @Model.YearLabel.ToLowerInvariant()</h3>
+        <div class="table-responsive-aura">
+            <table class="table-aura dashboard-table">
             <thead>
                 <tr>
-                    <th>Tháng</th><th>Tiếp nhận</th><th>Hoàn tất</th><th>Tự động duyệt</th>
-                    <th>Cần xử lý</th><th>Privacy</th><th>Lỗi</th><th>Tổng giá trị</th>
+                    <th>Tháng</th><th>Tiếp nhận</th><th>Đã kết thúc</th><th>Tự động duyệt</th>
+                    <th>Cần xử lý</th><th>Riêng tư</th><th>Lỗi</th><th>Tiền tham chiếu</th>
                 </tr>
             </thead>
             <tbody>
@@ -103,6 +115,7 @@
                 }
             }
             </tbody>
-        </table>
-    </div>
+            </table>
+        </div>
+    }
 </section>

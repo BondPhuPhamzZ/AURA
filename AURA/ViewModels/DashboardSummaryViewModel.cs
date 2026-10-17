@@ -2,6 +2,7 @@ namespace AURA.ViewModels;
 
 public sealed class DashboardSummaryViewModel
 {
+    public bool IsAvailable { get; init; }
     public required string PeriodLabel { get; init; }
     public required string YearLabel { get; init; }
     public int Received { get; init; }
