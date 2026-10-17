@@ -18,7 +18,7 @@ Baseline live ngày 14/10 vẫn truy xuất được tại tag `aura-demo-day-20
 | Verify Harness | Bật |
 | Live fallback | Tắt; Ollama chỉ là contingency local |
 | Lượt chọn nhiều ảnh | Tối đa 10 JPG/PNG; mỗi ảnh tối đa 5 MB và tạo một job/status URL riêng, không có batch transaction phía server |
-| Amount | Người dùng nhập cho single upload hoặc AI suy ra từ `totalAmount` đã validation |
+| Amount | UI không có ô nhập; worker dùng `totalAmount` AI trích xuất sau validation. `USER_PROVIDED` chỉ còn cho test kit/API lịch sử |
 | Provider privacy | `data_collection=deny`; strict ZDR mặc định tắt chờ xác nhận route live |
 | Privacy route | `ESCALATE_PRIVACY`; triage category, không lặp lại giá trị gốc |
 
@@ -36,7 +36,7 @@ Read-only health recheck ngày 14/10 trả HTTP 200, `status=ok`, database/stora
 ## Thay đổi sau feedback doanh nghiệp
 
 1. **Nhiều hóa đơn:** UI nhận tối đa 10 ảnh và gọi tuần tự cùng endpoint HTTP 202. Mỗi ảnh vẫn qua kiểm extension/MIME/magic bytes/5 MB, private storage, SHA-256, SQL row, lease và audit độc lập. Danh sách job được lưu sau từng response 202 để lỗi giữa batch không làm mất job đã nhận.
-2. **Không bắt buộc nhập tiền:** claimed amount trở thành tùy chọn. Nếu bỏ trống, worker chỉ dùng `facts.TotalAmount` do model trả về sau JSON Schema và semantic validation; nguồn `USER_PROVIDED`, `AI_EXTRACTED` hoặc `UNAVAILABLE` được lưu trong facts/audit. Thiếu total vẫn fail-safe về kiểm tra dữ kiện.
+2. **Bỏ nhập tiền khỏi UI:** trình duyệt không còn hiển thị hoặc gửi `claimedAmount`. Worker chỉ dùng `facts.TotalAmount` do model trả về sau JSON Schema và semantic validation; nguồn mới của luồng demo là `AI_EXTRACTED` hoặc `UNAVAILABLE`. Backend giữ `USER_PROVIDED` để tương thích test kit/API lịch sử. Thiếu total vẫn fail-safe về kiểm tra dữ kiện.
 3. **Dashboard quản lý:** tab Tổng quan tổng hợp tháng hiện tại và từng ngày theo giờ Việt Nam từ SQL, gồm tiếp nhận, hoàn tất, tự duyệt, chuyển người, privacy review, lỗi, tổng giá trị và độ trễ.
 4. **Privacy triage:** model chỉ gắn marker category trong `suspiciousSignals`; backend normalize category, không ghi lại giá trị cá nhân, và policy C# chuyển `ESCALATE_PRIVACY`. Request OpenRouter mặc định yêu cầu provider không dùng dữ liệu để thu thập/huấn luyện.
 5. **Báo cáo quản lý:** dashboard có nút tải CSV tháng hiện tại từ SQL. File chỉ chứa dữ liệu vận hành cần review, không chứa raw AI facts và có chống CSV formula injection.

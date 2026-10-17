@@ -200,7 +200,7 @@ def add_feedback_table(doc):
     rows = [
         ("Nhiều hóa đơn", "Làm ngay", "Tối đa 10 JPG hoặc PNG qua cùng HTTP 202 và SQL queue", "Mỗi ảnh là job riêng chưa có batchId hoặc PDF"),
         ("Folder hoặc email", "Roadmap", "Giữ ingestion boundary để nối connector sau", "Cần OIDC OAuth least privilege consent idempotency quarantine"),
-        ("Không nhập số tiền", "Làm ngay", "Ưu tiên số người dùng nhập nếu có nếu trống dùng final total đã validation", "Không có total thì fail safe"),
+        ("Không nhập số tiền", "Làm ngay", "UI bỏ ô amount; worker dùng final total AI sau validation", "Backend cũ chỉ giữ cho test kit; thiếu total thì fail safe"),
         ("Báo cáo quản lý", "Làm ngay", "Dashboard ngày tháng năm và CSV tháng hiện tại từ SQL", "Không xuất raw AI facts chưa phải financial ledger"),
         ("Dữ liệu cá nhân", "Làm ngay", "Category only triage và ESCALATE PRIVACY", "Không phải kết luận compliance"),
         ("Bảo vệ provider", "Làm ngay", "OpenRouter data collection deny", "Strict ZDR chờ xác nhận route live"),
@@ -250,7 +250,7 @@ def add_pipeline(doc):
         "Mailbox Agent tương lai chỉ điều phối backend tool; connector riêng giữ OAuth và policy C Sharp vẫn là lớp duy nhất chọn route."
     )
     steps = [
-        "Một đến mười JPG hoặc PNG cùng metadata và amount tùy chọn",
+        "Một đến mười JPG hoặc PNG cùng metadata; UI không nhận amount",
         "Kiểm extension MIME magic bytes và 5 MB mỗi ảnh",
         "Private storage SHA 256 SQL PENDING và audit AI QUEUED",
         "HTTP 202 và status URL riêng cho từng ảnh",
@@ -276,7 +276,7 @@ def add_safety(doc):
     doc.add_heading("Cơ chế an toàn mới", level=1)
     add_bullets(doc, [
         ("Lượt nhiều ảnh không làm mất job đã nhận. ", "UI lưu danh sách pending ngay sau từng HTTP 202 nên file sau lỗi không xóa SQL job trước; mỗi ảnh vẫn là một hồ sơ độc lập."),
-        ("Không tin số tiền mù. ", "Worker chỉ chọn số người dùng nhập lớn hơn không hoặc final total lớn hơn không sau validation và luôn audit nguồn."),
+        ("Không tin số tiền mù. ", "UI không gửi amount. Worker chỉ dùng final total AI lớn hơn không sau validation và audit nguồn; nhánh cũ được giữ cho test kit."),
         ("Privacy không quyết định bằng keyword. ", "Model phát marker category chuẩn backend chỉ nhận allow list và không ghi raw value vào warning. Vì triage chạy sau VLM demo ưu tiên chứng từ tổng hợp hoặc đã ẩn danh; production cần pre inference control cho dữ liệu nhạy cảm."),
         ("Fail safe có chủ đích. ", "Tín hiệu dữ liệu cá nhân dẫn đến ESCALATE PRIVACY fact inconsistency vẫn có ưu tiên cao hơn."),
         ("Provider boundary. ", "Payload yêu cầu data collection deny nhưng không bật strict ZDR nếu chưa xác nhận còn provider đủ điều kiện."),
@@ -346,9 +346,9 @@ def add_demo(doc):
     doc.add_heading("Quy trình demo mới", level=1)
     demo = [
         ("25 giây", "Mở Tổng quan", "Nêu số liệu từ SQL ở ba mức ngày tháng năm và tải CSV tháng."),
-        ("35 giây", "Lượt nhiều ảnh", "Chọn hai hoặc ba ảnh để trống amount và chỉ HTTP 202 cùng job riêng."),
+        ("35 giây", "Lượt nhiều ảnh", "Chọn hai hoặc ba ảnh; UI không có ô amount; chỉ HTTP 202 cùng job riêng."),
         ("25 giây", "Xử lý nền", "Chỉ PENDING hoặc PROCESSING và người dùng không bị giữ request."),
-        ("25 giây", "Amount provenance", "Mở facts và chỉ AI EXTRACTED hoặc USER PROVIDED."),
+        ("25 giây", "Amount provenance", "Mở facts và chỉ AI EXTRACTED; thiếu total thì fail safe."),
         ("45 giây", "Privacy boundary", "Dùng synthetic receipt và chỉ ESCALATE PRIVACY không lặp raw value."),
         ("30 giây", "Human authority", "Nhân viên chuyển tiếp quản lý YES NO và AI không tự cấp quyền."),
         ("30 giây", "Audit và dashboard", "Mở timeline rồi refresh tổng quan."),
@@ -395,7 +395,7 @@ def add_checklist_and_roadmap(doc):
         "Ghi commit SHA; backup hosting và database; kiểm biến môi trường mà không in API key.",
         "Publish và recycle rồi chờ 10 đến 30 giây.",
         "Kiểm health HTTP 200 status ok database storage true migration 0 và providerDataCollectionDenied true.",
-        "Chạy single upload không nhập amount, lượt hai ảnh và một privacy synthetic case; kiểm manager route cùng audit.",
+        "Chạy single upload, xác nhận không có ô amount, lượt hai ảnh và một privacy synthetic case; kiểm manager route cùng audit.",
         "Không rerun holdout cũ để tạo accuracy claim mới; rehearsal theo thứ tự dashboard report multi file privacy manager audit.",
     ]
     for text in checklist:

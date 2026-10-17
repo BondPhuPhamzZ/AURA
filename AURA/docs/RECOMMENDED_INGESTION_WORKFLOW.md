@@ -44,7 +44,7 @@ Manual upload đã chạy       Mailbox connector roadmap
 
 - Manual upload nhận tối đa 10 JPG hoặc PNG. Mỗi file tạo một SQL job và status URL riêng.
 - Worker dùng SQL lease, gọi cùng VLM pipeline, semantic validator và `PolicyDecisionEngine` hiện tại.
-- Số tiền người dùng nhập là tùy chọn. Nếu bỏ trống, worker chỉ dùng final total đã qua validation và ghi provenance.
+- UI không nhận số tiền từ người dùng. Worker dùng final total AI trích xuất sau validation và ghi provenance; tham số `USER_PROVIDED` chỉ được giữ để tương thích test kit/API lịch sử.
 - Privacy triage chỉ lưu category và chuyển `ESCALATE_PRIVACY` để con người quyết định.
 - Dashboard lấy số liệu ngày, tháng và năm từ SQL.
 - Báo cáo CSV tháng hiện tại lấy từ SQL, có UTF 8 BOM để mở trong Excel, không xuất raw AI facts và vô hiệu hóa CSV formula injection từ chuỗi do người dùng cung cấp.

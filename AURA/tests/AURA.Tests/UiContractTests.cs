@@ -85,6 +85,9 @@ public sealed class UiContractTests
         Assert.Contains("không phải tổng đã phê duyệt", dashboardSummary, StringComparison.Ordinal);
         Assert.Contains("Bản demo có giám sát", dashboard, StringComparison.Ordinal);
         Assert.Contains("mỗi ảnh tạo một hồ sơ độc lập", dashboard, StringComparison.Ordinal);
+        Assert.Contains("AURA tự đọc tổng tiền trên hóa đơn", dashboard, StringComparison.Ordinal);
+        Assert.DoesNotContain("claimedAmountDisplay", dashboard, StringComparison.Ordinal);
+        Assert.DoesNotContain("formData.set('claimedAmount'", dashboard, StringComparison.Ordinal);
         Assert.Contains("btn-tab-dashboard", layout, StringComparison.Ordinal);
         Assert.Contains("decimal? claimedAmount", controller, StringComparison.Ordinal);
         Assert.DoesNotContain("UploadReceiptBatch", controller, StringComparison.Ordinal);

@@ -38,7 +38,7 @@ Khả năng chính:
 - OpenRouter/Qwen3.8 Flash qua Alibaba, với reasoning tắt để extraction ổn định, là bộ đọc hóa đơn mặc định; Ollama/Qwen3-VL-4B là phương án local tùy chọn.
 - Xử lý nền dựa trên SQL vẫn tiếp tục sau refresh hoặc restart và không giữ request upload trong lúc chờ AI.
 - Một lượt chọn tối đa 10 ảnh được tiếp nhận tuần tự qua cùng upload boundary; mỗi ảnh vẫn có case ID, hash, row SQL và status URL riêng. Candidate chưa có aggregate `InvoiceBatch` hoặc `batchId` phía server.
-- Claimed amount là tùy chọn: nếu bỏ trống, worker dùng `totalAmount` đã qua schema/semantic validation; nguồn số tiền được audit rõ là người dùng nhập, AI trích xuất hay không khả dụng.
+- Giao diện không yêu cầu người dùng nhập số tiền. Worker chỉ dùng `totalAmount` AI đọc từ dòng tổng thanh toán cuối sau schema và semantic validation; nếu thiếu bằng chứng thì fail-safe sang người kiểm tra. Backend vẫn nhận claimed amount cho test kit/API lịch sử, nhưng luồng demo không gửi trường này.
 - Privacy triage phát hiện category cần xem xét, không hiển thị lại giá trị gốc; hồ sơ được fail-safe sang `ESCALATE_PRIVACY`. Request OpenRouter mặc định đặt `provider.data_collection=deny`.
 - Tab **Tổng quan** tổng hợp số hồ sơ, route, privacy review, lỗi, giá trị và độ trễ theo tháng/ngày từ SQL; quản lý có thể tải CSV tháng hiện tại mà không xuất raw AI facts.
 - Model chỉ trích xuất facts có cấu trúc; model không có quyền phê duyệt cuối.

@@ -29,16 +29,16 @@ Quyết định này giữ được các invariant đã đo, tránh migration g�
 
 ```text
 TRƯỚC
-1 JPG/PNG + claimed amount bắt buộc
+1 JPG/PNG + claimed amount nhập thủ công
 → HTTP 202 → SQL queue → VLM → semantic → policy → human → audit
 
 HIỆN TẠI TRONG SOURCE CANDIDATE
-1–10 JPG/PNG trong một lượt chọn + amount tùy chọn
+1–10 JPG/PNG trong một lượt chọn + metadata; không có ô amount
 → mỗi ảnh kiểm độc lập và nhận HTTP 202/status URL riêng
 → private storage + SHA-256 + SQL PENDING + audit AI_QUEUED
 → worker lease + AI concurrency 1
 → Qwen structured facts + semantic validation + một repair
-→ amount provenance: USER_PROVIDED / AI_EXTRACTED / UNAVAILABLE
+→ amount provenance: AI_EXTRACTED / UNAVAILABLE trong UI
 → privacy category triage, không lặp giá trị gốc
 → C# policy → human authority → audit
 → dashboard SQL ngày/tháng/năm + CSV tháng hiện tại
@@ -53,6 +53,7 @@ Các phần không đổi: SQL queue bền, model không tự phê duyệt, poli
 - Tổng tiền trên dashboard được ghi rõ là **tiền tham chiếu**, không phải tổng đã phê duyệt hay financial ledger.
 - Nếu SQL không tải được, dashboard hiển thị trạng thái không khả dụng, ẩn KPI/CSV và không dùng các số 0 giả.
 - Khu vực upload nhắc dùng dữ liệu tổng hợp/đã ẩn danh vì privacy triage hiện chạy sau extraction.
+- Khu vực upload đã bỏ ô nhập số tiền và không gửi `claimedAmount`; backend chỉ giữ nhánh `USER_PROVIDED` cho test kit/API lịch sử.
 - Dashboard có lối tắt quay về hồ sơ cần xử lý, tải CSV tháng và tải lại dữ liệu.
 
 ## 5. Evidence thực tế ngày 17/10/2026
@@ -71,7 +72,7 @@ Các phần không đổi: SQL queue bền, model không tự phê duyệt, poli
 
 1. Mở `/healthz`; kiểm HTTP 200 và có `providerDataCollectionDenied=true`.
 2. Mở **Tổng quan**; chỉ rõ SQL source of truth, nhãn tiền tham chiếu và nút CSV tháng này.
-3. Trở lại **Cửa sổ nhân viên**; chọn 2–3 ảnh tổng hợp/đã ẩn danh, để trống amount.
+3. Trở lại **Cửa sổ nhân viên**; chọn 2–3 ảnh tổng hợp/đã ẩn danh và chỉ metadata người gửi; xác nhận không còn ô amount.
 4. Nói rõ mỗi ảnh nhận job/status URL riêng; không gọi đây là batch transaction.
 5. Chỉ một ca amount AI đủ evidence, một ca `ESCALATE_FACT`, một ca `ESCALATE_PRIVACY` nếu có fixture phù hợp.
 6. Chuyển tiếp ngoại lệ, quản lý YES/NO, rồi mở Audit.

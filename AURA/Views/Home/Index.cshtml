@@ -56,17 +56,12 @@
                     <p class="intake-safety-note" role="note">
                         Bản demo có giám sát: ưu tiên chứng từ tổng hợp hoặc đã ẩn danh. Privacy triage chạy sau bước AI trích xuất nên không thay thế việc che dữ liệu nhạy cảm trước khi gửi provider.
                     </p>
-                    <div class="amount-action-row">
-                        <div class="amount-field">
-                            <label for="claimedAmountDisplay" class="form-label fw-semibold">Số tiền đối chiếu tùy chọn (VND)</label>
-                            <input id="claimedAmountDisplay" type="text" inputmode="numeric" autocomplete="off"
-                                   class="form-control amount-input-aura" placeholder="Có thể để trống" aria-describedby="claimedAmountHelp" />
-                            <input id="claimedAmount" name="claimedAmount" type="hidden" />
-                            <div id="claimedAmountHelp" class="form-text">
-                                Với một ảnh, có thể nhập để đối chiếu. Nếu để trống hoặc tải nhiều ảnh, AURA dùng dòng tổng cuối AI đọc được; nếu không đủ bằng chứng thì chuyển người kiểm tra.
-                            </div>
+                    <div class="upload-action-row">
+                        <div class="ai-amount-note" role="note">
+                            <strong>AURA tự đọc tổng tiền trên hóa đơn.</strong>
+                            <span>Hệ thống chỉ dùng dòng tổng thanh toán cuối đã qua kiểm tra schema và ngữ nghĩa. Nếu ảnh không đủ bằng chứng, hồ sơ sẽ được chuyển cho người kiểm tra.</span>
                         </div>
-                        <div class="amount-submit-wrap">
+                        <div class="upload-submit-wrap">
                             <button type="submit" id="submitBtn" class="button-primary">
                                 <span id="btnText">Xếp hàng AI</span>
                             </button>
@@ -236,8 +231,6 @@
     const receiptLocalPreview = document.getElementById('receiptLocalPreview');
     const dropzonePlaceholder = document.getElementById('dropzonePlaceholder');
     const uploadForm = document.getElementById('uploadForm');
-    const amountDisplayInput = document.getElementById('claimedAmountDisplay');
-    const amountRawInput = document.getElementById('claimedAmount');
     const maxUploadBytes = @((long)ReceiptStorage.Value.MaxFileSizeMb * 1024L * 1024L);
     const maxUploadMegabytes = @ReceiptStorage.Value.MaxFileSizeMb;
     const maxBatchFiles = 10;
@@ -252,15 +245,6 @@
     let analysisProgressStartedAt = null;
     let analysisProgressTimer = null;
     let localPreviewUrl = null;
-
-    function syncClaimedAmount() {
-        const digits = amountDisplayInput.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
-        amountRawInput.value = digits;
-        amountDisplayInput.value = digits ? new Intl.NumberFormat('vi-VN').format(Number(digits)) : '';
-        return digits;
-    }
-
-    amountDisplayInput.addEventListener('input', syncClaimedAmount);
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropzone.addEventListener(eventName, preventDefaults, false);
@@ -778,10 +762,6 @@
         }
         if (!validateSelectedFiles(fileInput.files)) return;
         const files = Array.from(fileInput.files);
-        const rawAmount = syncClaimedAmount();
-        const submittedAmount = files.length === 1 && rawAmount ? rawAmount : '0';
-        if (files.length > 1 && rawAmount)
-            showToast('Lượt nhiều ảnh sẽ dùng tổng tiền AI đọc riêng cho từng hóa đơn.', 'warning');
 
         const btn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');
@@ -806,7 +786,6 @@
                 const formData = new FormData(form);
                 formData.delete('receiptFile');
                 formData.append('receiptFile', file, file.name);
-                formData.set('claimedAmount', submittedAmount);
                 const response = await fetch(form.action, {
                     method: 'POST',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
