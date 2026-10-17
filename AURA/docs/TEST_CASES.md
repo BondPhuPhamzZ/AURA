@@ -1,6 +1,6 @@
 # AURA Test Matrix
 
-Candidate sau feedback ngày 17/10/2026 có 181 automated test offline. Phần bổ sung bao phủ: UI không còn nhập/gửi claimed amount, AI amount provenance, privacy category/route/manager outcome, OpenRouter `data_collection=deny`, dashboard SQL ngày-tháng-năm, multi-file UI contract, bảo toàn pending job trong một lượt nhiều ảnh và CSV report scope/formula hardening/UTF-8 BOM. Live baseline 5/5 ngày 14/10 không được xem là phép đo lại candidate này trước khi publish/smoke.
+Candidate sau feedback ngày 17/10/2026 có 187 automated test offline. Phần bổ sung bao phủ: UI không còn nhập/gửi claimed amount, AI amount provenance, privacy category/route/manager outcome, OpenRouter `data_collection=deny`, dashboard SQL theo kỳ được chọn, multi-file UI contract, bảo toàn pending job trong một lượt nhiều ảnh và CSV report scope/formula hardening/UTF-8 BOM. Live Verify sau publish đạt 5/5; đây là stability evidence trên fixture synthetic đã biết, không phải accuracy holdout mới.
 
 Mốc cập nhật: 06/10/2026. Ký hiệu: `A` đã tự động hóa bằng xUnit; `V` nằm trong Verify Vision; `R` chạy bằng evaluator ngoài UI; `P` backlog mở rộng, chưa tuyên bố đã đạt.
 

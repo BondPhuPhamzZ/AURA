@@ -30,6 +30,23 @@ public sealed class ManagerOperationsReportExporterTests
     }
 
     [Fact]
+    public void Exports_the_selected_month_when_dashboard_period_changes()
+    {
+        var requests = new[]
+        {
+            Request("september", new DateTime(2026, 9, 12, 2, 0, 0, DateTimeKind.Utc)),
+            Request("october", new DateTime(2026, 10, 12, 2, 0, 0, DateTimeKind.Utc))
+        };
+
+        var report = ManagerOperationsReportExporter.ExportMonth(requests, 2026, 9);
+        var csv = Decode(report.Content);
+
+        Assert.Equal("AURA_Operations_2026-09.csv", report.FileName);
+        Assert.Contains("september", csv, StringComparison.Ordinal);
+        Assert.DoesNotContain("october", csv, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Prevents_formula_injection_and_excludes_raw_extracted_values()
     {
         var request = Request("safe", new DateTime(2026, 10, 17, 1, 0, 0, DateTimeKind.Utc));

@@ -14,7 +14,7 @@ public class HomeController : Controller
         _logger = logger;
     }
 
-    public IActionResult Index(string? tab)
+    public IActionResult Index(string? tab, string? dashboardPeriod = null)
     {
         var initialTab = tab?.Trim().ToLowerInvariant() switch
         {
@@ -25,6 +25,16 @@ public class HomeController : Controller
         };
 
         ViewData["InitialTab"] = initialTab;
+        if (!string.IsNullOrWhiteSpace(dashboardPeriod))
+        {
+            var parts = dashboardPeriod.Split('-', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 2 && int.TryParse(parts[0], out var year) &&
+                int.TryParse(parts[1], out var month) && year is >= 2000 and <= 2100 && month is >= 1 and <= 12)
+            {
+                ViewData["DashboardYear"] = year;
+                ViewData["DashboardMonth"] = month;
+            }
+        }
         return View();
     }
 

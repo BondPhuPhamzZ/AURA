@@ -46,6 +46,28 @@ public sealed class DashboardSummaryProjectorTests
         Assert.Equal(1, result.Months[1].Received);
     }
 
+    [Fact]
+    public void Projects_a_selected_historical_month_instead_of_fixing_the_current_month()
+    {
+        var requests = new[]
+        {
+            Request("september", new DateTime(2026, 9, 12, 2, 0, 0, DateTimeKind.Utc),
+                "AUTO_APPROVE", ProcessingStates.Completed, 90_000m, 900),
+            Request("october", new DateTime(2026, 10, 12, 2, 0, 0, DateTimeKind.Utc),
+                "AUTO_APPROVE", ProcessingStates.Completed, 120_000m, 1_200)
+        };
+
+        var result = DashboardSummaryProjector.Project(requests,
+            new DateTime(2026, 10, 17, 3, 0, 0, DateTimeKind.Utc), 2026, 9);
+
+        Assert.Equal("Tháng 09/2026", result.PeriodLabel);
+        Assert.Equal(2026, result.SelectedYear);
+        Assert.Equal(9, result.SelectedMonth);
+        Assert.Equal(1, result.Received);
+        Assert.Equal(90_000m, result.TotalAmountVnd);
+        Assert.Equal(2, result.YearReceived);
+    }
+
     private static ReimbursementRequest Request(string id, DateTime createdAt, string status,
         string processingState, decimal amount, long latency, bool privacy = false)
     {

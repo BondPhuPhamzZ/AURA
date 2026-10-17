@@ -5,6 +5,8 @@ public sealed class DashboardSummaryViewModel
     public bool IsAvailable { get; init; }
     public required string PeriodLabel { get; init; }
     public required string YearLabel { get; init; }
+    public int SelectedYear { get; init; }
+    public int SelectedMonth { get; init; }
     public int Received { get; init; }
     public int Completed { get; init; }
     public int AutoApproved { get; init; }

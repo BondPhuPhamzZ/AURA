@@ -2,18 +2,32 @@
 
 <section class="dashboard-summary" aria-labelledby="dashboard-title">
     <div class="dashboard-heading">
-        <div>
+        <div class="dashboard-title-group">
             <h2 id="dashboard-title">Tổng quan xử lý @Model.PeriodLabel</h2>
-            <p>Số liệu lấy từ hồ sơ đã ghi trong SQL, hiển thị theo múi giờ Việt Nam. Privacy triage là tín hiệu hỗ trợ kiểm tra, không phải kết luận pháp lý.</p>
+            @if (Model.IsAvailable)
+            {
+                <form method="get" asp-controller="Home" asp-action="Index" class="dashboard-period-form">
+                    <input type="hidden" name="tab" value="dashboard" />
+                    <label for="dashboardPeriod">Kỳ báo cáo</label>
+                    <input id="dashboardPeriod" name="dashboardPeriod" type="month"
+                           value="@($"{Model.SelectedYear:0000}-{Model.SelectedMonth:00}")"
+                           min="2000-01" max="2100-12" onchange="this.form.submit()" />
+                </form>
+            }
         </div>
         <div class="dashboard-actions">
             @if (Model.IsAvailable)
             {
-                <a class="button-ghost-sm" asp-controller="Home" asp-action="Index">Xem hồ sơ cần xử lý</a>
                 <a class="button-ghost-sm" asp-controller="Reports" asp-action="CurrentMonth"
-                   title="Tải dữ liệu vận hành của tháng hiện tại, không gồm raw AI facts">Tải CSV tháng này</a>
+                   asp-route-year="@Model.SelectedYear" asp-route-month="@Model.SelectedMonth"
+                   title="Tải dữ liệu vận hành của kỳ đang chọn, không gồm raw AI facts">Tải CSV kỳ này</a>
             }
-            <a class="button-ghost-sm" asp-controller="Home" asp-action="Index" asp-route-tab="dashboard">Tải lại dữ liệu</a>
+            <a class="button-ghost-sm dashboard-refresh-button" asp-controller="Home" asp-action="Index"
+               asp-route-tab="dashboard"
+               asp-route-dashboardPeriod="@($"{Model.SelectedYear:0000}-{Model.SelectedMonth:00}")"
+               title="Tải lại dữ liệu" aria-label="Tải lại dữ liệu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"/></svg>
+            </a>
         </div>
     </div>
 
@@ -32,7 +46,7 @@
             <div><span>Đã kết thúc</span><strong>@Model.Completed</strong></div>
             <div><span>Tự động duyệt</span><strong>@Model.AutoApproved</strong></div>
             <div><span>Cần người xử lý</span><strong>@Model.Escalated</strong></div>
-            <div><span>Cần rà soát riêng tư</span><strong>@Model.PrivacyReview</strong></div>
+            <div><span>Cần kiểm tra dữ liệu cá nhân</span><strong>@Model.PrivacyReview</strong></div>
             <div><span>Lỗi hệ thống</span><strong>@Model.Failed</strong></div>
         </div>
 
@@ -41,8 +55,6 @@
             <span>Độ trễ trung bình hồ sơ đã kết thúc: <strong>@(Model.AverageLatencyMs == 0 ? "Chưa có dữ liệu" : $"{Model.AverageLatencyMs:N0} ms")</strong></span>
         </div>
 
-        <p class="dashboard-definition">“Đã kết thúc” gồm hồ sơ xử lý thành công và hồ sơ dừng vì lỗi; số lỗi luôn được tách riêng ở cột “Lỗi hệ thống”.</p>
-
         <div class="dashboard-year-summary" aria-label="Tổng hợp năm">
             <strong>@Model.YearLabel</strong>
             <span>@Model.YearReceived hồ sơ tiếp nhận</span>
@@ -50,7 +62,7 @@
             <span>@Model.YearTotalAmountVnd.ToString("N0") VND tham chiếu</span>
         </div>
 
-        <div class="table-responsive-aura">
+        <div class="table-responsive-aura table-scroll-area dashboard-table-scroll">
             <table class="table-aura dashboard-table">
             <thead>
                 <tr>
@@ -59,7 +71,7 @@
                     <th>Đã kết thúc</th>
                     <th>Tự động duyệt</th>
                     <th>Cần xử lý</th>
-                    <th>Riêng tư</th>
+                    <th>Dữ liệu cá nhân</th>
                     <th>Lỗi</th>
                     <th>Tiền tham chiếu</th>
                 </tr>
@@ -90,12 +102,12 @@
         </div>
 
         <h3 class="dashboard-subtitle">Đối chiếu theo tháng trong @Model.YearLabel.ToLowerInvariant()</h3>
-        <div class="table-responsive-aura">
+        <div class="table-responsive-aura table-scroll-area dashboard-table-scroll">
             <table class="table-aura dashboard-table">
             <thead>
                 <tr>
                     <th>Tháng</th><th>Tiếp nhận</th><th>Đã kết thúc</th><th>Tự động duyệt</th>
-                    <th>Cần xử lý</th><th>Riêng tư</th><th>Lỗi</th><th>Tiền tham chiếu</th>
+                    <th>Cần xử lý</th><th>Dữ liệu cá nhân</th><th>Lỗi</th><th>Tiền tham chiếu</th>
                 </tr>
             </thead>
             <tbody>

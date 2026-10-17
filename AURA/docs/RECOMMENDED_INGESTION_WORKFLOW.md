@@ -47,7 +47,7 @@ Manual upload đã chạy       Mailbox connector roadmap
 - UI không nhận số tiền từ người dùng. Worker dùng final total AI trích xuất sau validation và ghi provenance; tham số `USER_PROVIDED` chỉ được giữ để tương thích test kit/API lịch sử.
 - Privacy triage chỉ lưu category và chuyển `ESCALATE_PRIVACY` để con người quyết định.
 - Dashboard lấy số liệu ngày, tháng và năm từ SQL.
-- Báo cáo CSV tháng hiện tại lấy từ SQL, có UTF 8 BOM để mở trong Excel, không xuất raw AI facts và vô hiệu hóa CSV formula injection từ chuỗi do người dùng cung cấp.
+- Báo cáo CSV theo kỳ dashboard được chọn lấy từ SQL, có UTF 8 BOM để mở trong Excel, không xuất raw AI facts và vô hiệu hóa CSV formula injection từ chuỗi do người dùng cung cấp.
 
 ## Ranh giới của mailbox agent
 

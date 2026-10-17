@@ -10,6 +10,8 @@
     var reviewerDisplay = initialTab == "reviewer" ? "block" : "none";
     var auditDisplay = initialTab == "audit" ? "block" : "none";
     var dashboardDisplay = initialTab == "dashboard" ? "block" : "none";
+    var dashboardYear = ViewData["DashboardYear"] as int?;
+    var dashboardMonth = ViewData["DashboardMonth"] as int?;
 }
 
 <!-- Tab Applicant / Tester -->
@@ -53,17 +55,16 @@
                             <div class="dropzone-subtext">JPG, PNG · tối đa 10 ảnh/lượt · @ReceiptStorage.Value.MaxFileSizeMb MB/ảnh</div>
                         </div>
                     </div>
-                    <p class="intake-safety-note" role="note">
-                        Bản demo có giám sát: ưu tiên chứng từ tổng hợp hoặc đã ẩn danh. Privacy triage chạy sau bước AI trích xuất nên không thay thế việc che dữ liệu nhạy cảm trước khi gửi provider.
-                    </p>
+                    <p class="intake-safety-note" role="note"><strong>Demo có giám sát:</strong> chỉ dùng chứng từ tổng hợp hoặc đã ẩn danh.</p>
                     <div class="upload-action-row">
                         <div class="ai-amount-note" role="note">
-                            <strong>AURA tự đọc tổng tiền trên hóa đơn.</strong>
-                            <span>Hệ thống chỉ dùng dòng tổng thanh toán cuối đã qua kiểm tra schema và ngữ nghĩa. Nếu ảnh không đủ bằng chứng, hồ sơ sẽ được chuyển cho người kiểm tra.</span>
+                            <strong>AURA tự đọc tổng tiền.</strong>
+                            <span>Thiếu bằng chứng sẽ chuyển người kiểm tra.</span>
                         </div>
                         <div class="upload-submit-wrap">
                             <button type="submit" id="submitBtn" class="button-primary">
-                                <span id="btnText">Xếp hàng AI</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 3l14 9-14 9V3z"/></svg>
+                                <span id="btnText">Bắt đầu xử lý</span>
                             </button>
                         </div>
                     </div>
@@ -160,7 +161,7 @@
 
 <!-- Tab Dashboard -->
 <div class="tab-content-pane feature-card @(initialTab == "dashboard" ? "active" : null)" id="pane-dashboard" style="display: @dashboardDisplay;">
-    @await Component.InvokeAsync("DashboardSummary")
+    @await Component.InvokeAsync("DashboardSummary", new { year = dashboardYear, month = dashboardMonth })
 </div>
 
 <style>
@@ -768,8 +769,8 @@
         const originalText = btnText.innerText;
         
         btn.disabled = true;
-        btnText.innerText = `Đang xếp hàng ${files.length} ảnh...`;
-        renderExtractedFactsLoading('AURA đang kiểm tra và xếp hàng các hóa đơn…');
+        btnText.innerText = `Đang tiếp nhận ${files.length} ảnh...`;
+        renderExtractedFactsLoading('AURA đang kiểm tra và tiếp nhận các hóa đơn…');
         beginAnalysisProgress(`Đang tiếp nhận ${files.length} hóa đơn`,
             'Mỗi ảnh đi qua cùng lớp kiểm file, lưu riêng tư, SHA-256 và SQL queue trước khi AI xử lý.');
 

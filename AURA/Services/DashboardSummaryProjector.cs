@@ -7,19 +7,20 @@ namespace AURA.Services;
 public static class DashboardSummaryProjector
 {
     public static DashboardSummaryViewModel Project(
-        IEnumerable<ReimbursementRequest> requests, DateTime utcNow)
+        IEnumerable<ReimbursementRequest> requests, DateTime utcNow, int? selectedYear = null, int? selectedMonth = null)
     {
         var localNow = VietnamTime.FromUtc(utcNow);
+        var targetYear = selectedYear is >= 2000 and <= 2100 ? selectedYear.Value : localNow.Year;
+        var targetMonth = selectedMonth is >= 1 and <= 12 ? selectedMonth.Value : localNow.Month;
         var projected = requests
             .Select(request => new ProjectedRequest(request, VietnamTime.FromUtc(request.CreatedAt),
                 HasPrivacyReview(request)))
             .ToArray();
         var yearly = projected
-            .Where(item => item.LocalCreatedAt.Year == localNow.Year)
+            .Where(item => item.LocalCreatedAt.Year == targetYear)
             .ToArray();
         var monthly = yearly
-            .Where(item => item.LocalCreatedAt.Year == localNow.Year &&
-                           item.LocalCreatedAt.Month == localNow.Month)
+            .Where(item => item.LocalCreatedAt.Month == targetMonth)
             .ToArray();
 
         var completed = monthly.Where(item =>
@@ -33,14 +34,16 @@ public static class DashboardSummaryProjector
         var months = yearly
             .GroupBy(item => item.LocalCreatedAt.Month)
             .OrderByDescending(group => group.Key)
-            .Select(group => BuildMonth(localNow.Year, group.Key, group))
+            .Select(group => BuildMonth(targetYear, group.Key, group))
             .ToArray();
 
         return new DashboardSummaryViewModel
         {
             IsAvailable = true,
-            PeriodLabel = $"Tháng {localNow:MM/yyyy}",
-            YearLabel = $"Năm {localNow:yyyy}",
+            PeriodLabel = $"Tháng {targetMonth:00}/{targetYear}",
+            YearLabel = $"Năm {targetYear}",
+            SelectedYear = targetYear,
+            SelectedMonth = targetMonth,
             Received = monthly.Length,
             Completed = completed.Length,
             AutoApproved = monthly.Count(item => item.Request.Status == "AUTO_APPROVE"),

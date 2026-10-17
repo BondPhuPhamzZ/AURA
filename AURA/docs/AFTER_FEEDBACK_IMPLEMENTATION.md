@@ -2,9 +2,9 @@
 
 ## 1. Kết luận điều hành
 
-AURA đã triển khai năm thay đổi có thể kiểm soát trong cùng kiến trúc hiện hành: upload nhiều hóa đơn, bỏ ô nhập tiền để AI đọc dòng tổng cuối, dashboard ngày/tháng/năm, báo cáo CSV tháng hiện tại và privacy triage fail-safe. Không tạo endpoint AI thứ hai, không thay database schema, không thay model, evidence contract version hay các business rule phê duyệt hiện có. Connector email/folder được giữ ở roadmap vì triển khai gấp mà thiếu OIDC/OAuth, least privilege, consent, idempotency và quarantine sẽ làm giảm an toàn production.
+AURA đã triển khai năm thay đổi có thể kiểm soát trong cùng kiến trúc hiện hành: upload nhiều hóa đơn, bỏ ô nhập tiền để AI đọc dòng tổng cuối, dashboard chọn kỳ ngày/tháng/năm, báo cáo CSV cùng kỳ và privacy triage fail-safe. Không tạo endpoint AI thứ hai, không thay database schema, không thay model, evidence contract version hay các business rule phê duyệt hiện có. Connector email/folder được giữ ở roadmap vì triển khai gấp mà thiếu OIDC/OAuth, least privilege, consent, idempotency và quarantine sẽ làm giảm an toàn production.
 
-Candidate source hiện đạt build 0 warning/0 error, 181/181 test offline và không có pending EF migration. Baseline live 5/5 ngày 14/10 vẫn là bằng chứng của phiên bản trước feedback. Candidate ngày 17/10 chưa được gọi là live cho tới khi publish/recycle, `/healthz` và synthetic smoke hoàn tất.
+Candidate `de101f2` đã được publish/recycle và smoke thật ngày 17/10. UX follow-up hiện đạt 187/187 test offline và không có pending EF migration; cần publish lại để bộ chọn kỳ, bảng cuộn/tương phản và intake rút gọn xuất hiện trên live.
 
 ## 2. Đối chiếu feedback và phần đã triển khai
 
@@ -13,7 +13,7 @@ Candidate source hiện đạt build 0 warning/0 error, 181/181 test offline và
 | Upload nhiều hóa đơn | Làm ngay | UI nhận tối đa 10 JPG/PNG, tiếp nhận tuần tự qua cùng endpoint HTTP 202; mỗi file có case ID, SHA-256, SQL row, audit và status URL riêng | Đây là một lượt chọn nhiều ảnh, chưa phải `InvoiceBatch`/`batchId`; chưa nhận PDF; tối đa 5 MB/file |
 | Nhận từ folder/email | Chưa nối gấp | Giữ cùng ingestion boundary làm điểm tích hợp tương lai | Cần OIDC/OAuth, least privilege, consent, idempotency, backfill, quarantine và audit |
 | Không bắt người dùng nhập số tiền | Làm ngay, fail-safe | UI đã bỏ ô nhập và không gửi `claimedAmount`. Worker dùng `totalAmount` đã qua JSON Schema và semantic validation | Backend giữ tham số cũ cho test kit/API lịch sử; không đoán khi AI thiếu final total |
-| Báo cáo cho quản lý | Làm ngay | Tab Tổng quan chiếu dữ liệu SQL theo ngày, tháng và năm; tải CSV tháng hiện tại có route, privacy, trạng thái quản lý và latency | CSV không xuất raw AI facts; chưa phải BI/financial ledger |
+| Báo cáo cho quản lý | Làm ngay | Tab Tổng quan cho chọn kỳ; KPI, bảng ngày/năm và CSV cùng lọc theo tháng/năm đã chọn | CSV không xuất raw AI facts; chưa phải BI/financial ledger |
 | Nhận diện dữ liệu cá nhân | Làm ngay ở mức triage | AI chỉ gắn marker category; backend normalize, không lặp lại giá trị gốc; policy trả `ESCALATE_PRIVACY`; manager quyết định tiếp tục hay trả lại | Không phải kết luận pháp lý hoặc chứng nhận compliance |
 | Giảm dữ liệu gửi provider | Làm ngay | OpenRouter request mặc định gửi `provider.data_collection=deny`; health công khai trạng thái cấu hình | Strict ZDR mặc định tắt tới khi route live được xác nhận tương thích |
 
@@ -31,7 +31,7 @@ Candidate source hiện đạt build 0 warning/0 error, 181/181 test offline và
 → privacy classifier: category-only, không lưu giá trị gốc
 → PolicyDecisionEngine C#: AUTO_APPROVE hoặc ESCALATE_*
 → nhân viên chuyển tiếp → quản lý YES/NO/Undo → audit timeline
-→ dashboard SQL theo ngày / tháng / năm → CSV tháng cho quản lý
+→ dashboard SQL theo kỳ được chọn → CSV cùng kỳ cho quản lý
 ```
 
 Các boundary chính không đổi: model chỉ đọc facts; C# áp policy tất định; con người chịu trách nhiệm ngoại lệ. Privacy triage được đặt sau structured extraction và semantic validation, trước policy decision.
@@ -53,24 +53,28 @@ Theo pháp luật hiện hành, Luật Bảo vệ dữ liệu cá nhân 91/2025/
 | Gate | Kết quả |
 |---|---|
 | `dotnet build --no-restore` | PASS — 0 warning, 0 error |
-| Toàn bộ xUnit | PASS — 181/181 |
-| Test mới | amount resolver, privacy classifier/policy, provider payload, dashboard projector, batch/UI contract, privacy manager outcome, CSV scope/formula hardening/UTF 8 BOM |
+| Toàn bộ xUnit | PASS — 187/187 |
+| Test mới | amount resolver, privacy classifier/policy, provider payload, dashboard projector, chọn kỳ dashboard/CSV, batch/UI contract, privacy manager outcome, CSV scope/formula hardening/UTF 8 BOM |
 | `dotnet ef migrations has-pending-model-changes --no-build` | PASS — không có model change |
 | Demo readiness pre-check | READY — 0 failure; warning LocalDB registry đã biết và HTTP chủ động skip |
-| Local `/healthz` | 503 do LocalDB user-instance của máy hiện tại không khởi tạo được; đồng thời xác nhận AI/policy/storage và privacy flags đúng |
+| Live `/healthz` | PASS — HTTP 200; DB/storage/migration khỏe; Qwen3.8 Flash; reasoning none; data collection denied; concurrency 1; fallback tắt |
+| Live Verify | PASS — 5/5, 0 system error, E2E 49,518 giây |
+| Live no-amount smoke | PASS vận hành — 3/3 hoàn tất, HTTP 202, `AI_EXTRACTED`, 0 provider error; 2/3 khớp manifest cũ, TC-05 đi `ESCALATE_PRIVACY` thay vì `ESCALATE_POLICY` |
+| Live input validation | PASS — 2/2 file giả MIME/magic bytes và file quá 5 MB bị HTTP 400 trước queue |
+| Live human workflow | PASS — Forward, manager YES, Undo và immutable Audit |
 
 Không dùng lỗi LocalDB của máy này để suy ra database live hỏng. Không xóa LocalDB registry/MDF khi chưa có backup. Cần publish và smoke trên hosting để xác nhận candidate live.
 
 ## 6. Quy trình demo mới đề xuất (4–5 phút)
 
 1. **Tổng quan (25 giây):** mở dashboard, chỉ rõ số liệu lấy từ SQL ở ba mức ngày/tháng/năm và nút tải báo cáo CSV.
-2. **Multi-file intake (35 giây):** chọn 2–3 receipt JPG/PNG rồi bấm “Xếp hàng AI”; không còn bước nhập số tiền. Nhấn mạnh mỗi ảnh nhận HTTP 202 và job riêng; không gọi đây là server batch có `batchId`.
+2. **Multi-file intake (35 giây):** chọn 2–3 receipt JPG/PNG rồi bấm “Bắt đầu xử lý”; không còn bước nhập số tiền. Nhấn mạnh mỗi ảnh nhận HTTP 202 và job riêng; không gọi đây là server batch có `batchId`.
 3. **Xử lý nền (25 giây):** chỉ trạng thái PENDING/PROCESSING và việc người dùng có thể tiếp tục thao tác.
 4. **Amount provenance (25 giây):** mở facts, chỉ “Nguồn số tiền: AI trích xuất” và final total; nếu thiếu total thì fail-safe.
 5. **Privacy boundary (45 giây):** dùng receipt synthetic có category dữ liệu cá nhân, chỉ `ESCALATE_PRIVACY`; hệ thống nêu category nhưng không lặp lại giá trị gốc.
 6. **Human authority (30 giây):** nhân viên chuyển tiếp, quản lý YES/NO; nói rõ AI không tự cấp quyền xử lý dữ liệu cá nhân.
 7. **Audit + dashboard (30 giây):** mở timeline và refresh dashboard để thấy route, privacy review và tổng hợp vận hành.
-8. **Production reality (30 giây):** nói rõ `data_collection=deny`, ZDR cần route validation, email connector cần identity/least privilege/quarantine, và candidate hôm nay chưa được gọi là live trước publish/smoke.
+8. **Production reality (30 giây):** nói rõ `data_collection=deny`, ZDR cần route validation, email connector cần identity/least privilege/quarantine, và demo có giám sát chưa đồng nghĩa production-ready.
 
 Luôn chuẩn bị fallback: nếu provider chậm, chuyển sang dữ liệu/audit đã ghi trong SQL và trình bày ảnh/video baseline; không bấm Verify lặp lại để săn kết quả.
 

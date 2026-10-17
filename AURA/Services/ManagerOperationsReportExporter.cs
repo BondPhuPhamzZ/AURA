@@ -28,11 +28,21 @@ public static class ManagerOperationsReportExporter
         DateTime utcNow)
     {
         var localNow = VietnamTime.FromUtc(utcNow);
+        return ExportMonth(requests, localNow.Year, localNow.Month);
+    }
+
+    public static ManagerOperationsReport ExportMonth(
+        IEnumerable<ReimbursementRequest> requests,
+        int year,
+        int month)
+    {
+        if (year is < 2000 or > 2100) throw new ArgumentOutOfRangeException(nameof(year));
+        if (month is < 1 or > 12) throw new ArgumentOutOfRangeException(nameof(month));
+
         var selected = requests
             .Select(request => new ProjectedRequest(request, VietnamTime.FromUtc(request.CreatedAt),
                 ReadFacts(request)))
-            .Where(item => item.LocalCreatedAt.Year == localNow.Year &&
-                           item.LocalCreatedAt.Month == localNow.Month)
+            .Where(item => item.LocalCreatedAt.Year == year && item.LocalCreatedAt.Month == month)
             .OrderBy(item => item.LocalCreatedAt)
             .ThenBy(item => item.Request.Id, StringComparer.Ordinal)
             .ToArray();
@@ -80,7 +90,7 @@ public static class ManagerOperationsReportExporter
         Buffer.BlockCopy(body, 0, content, preamble.Length, body.Length);
 
         return new ManagerOperationsReport(
-            $"AURA_Operations_{localNow:yyyy-MM}.csv",
+            $"AURA_Operations_{year:0000}-{month:00}.csv",
             content,
             selected.Length);
     }

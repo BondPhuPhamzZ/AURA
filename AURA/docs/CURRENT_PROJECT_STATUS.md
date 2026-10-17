@@ -2,7 +2,7 @@
 
 ## Kết luận
 
-Baseline live ngày 14/10 vẫn truy xuất được tại tag `aura-demo-day-2026-10-14`. Sau feedback doanh nghiệp ngày 17/10, candidate source đã bổ sung lượt chọn nhiều ảnh, số tiền AI suy ra có provenance, privacy triage, dashboard vận hành và báo cáo CSV tháng hiện tại. Mỗi ảnh vẫn là một hồ sơ độc lập; candidate chưa có `InvoiceBatch`/`batchId` phía server. Các thay đổi này đã qua toàn bộ test offline nhưng **chưa được gọi là live** cho tới khi publish, health check và synthetic smoke hoàn tất. Video cũ vẫn là bằng chứng của baseline trước feedback; không dùng video đó để khẳng định UI mới đã chạy trên production.
+Candidate sau feedback tại commit `de101f2` đã được publish và smoke trên live ngày 17/10: health HTTP 200, Verify 5/5, ba upload synthetic đều hoàn tất và workflow Forward → YES → Undo → Audit đi hết luồng. Source sau đó có một UX follow-up: rút gọn intake, cho chọn kỳ dashboard/CSV và tăng tương phản/scroll bảng; phần UX này cần publish lại trước khi gọi là live. Mỗi ảnh vẫn là một hồ sơ độc lập; hệ thống chưa có `InvoiceBatch`/`batchId` phía server. Video cũ chỉ là bằng chứng của baseline trước feedback.
 
 ## Cấu hình live
 
@@ -22,26 +22,28 @@ Baseline live ngày 14/10 vẫn truy xuất được tại tag `aura-demo-day-20
 | Provider privacy | `data_collection=deny`; strict ZDR mặc định tắt chờ xác nhận route live |
 | Privacy route | `ESCALATE_PRIVACY`; triage category, không lặp lại giá trị gốc |
 
-Read-only health recheck ngày 14/10 trả HTTP 200, `status=ok`, database/storage/migration sẵn sàng. Health không gọi inference nên không thay thế Verify gate.
+Read-only health ngày 17/10 lúc 12:54 ICT trả HTTP 200, `status=ok`, database/storage sẵn sàng, migration 0, Qwen3.8 Flash, reasoning none, `data_collection=deny`, AI concurrency 1 và fallback tắt. Health không gọi inference nên đã được đối chiếu thêm bằng live smoke phía dưới.
 
 ## Gate kỹ thuật đã đạt
 
 - Debug build: 0 warning, 0 error.
-- Offline tests sau feedback: 181/181 pass.
-- Live Verify: 5/5 trong 65,004 giây.
+- Offline tests sau UX follow-up: 187/187 pass.
+- Live Verify sau publish: 5/5 trong 49,518 giây, 0 system error.
 - Duplicate Verify clients: 1 HTTP 200 và 4 HTTP 409 trên một process.
 - Năm upload khác nhau: 5/5 hoàn tất, không mất job; E2E P95 93,684 giây do concurrency một.
-- Live Verify 5/5 là bằng chứng baseline ngày 14/10, không phải phép đo lại prompt privacy ngày 17/10.
+- Live upload không gửi `claimedAmount`: 3/3 hoàn tất, đều HTTP 202, AI amount provenance đúng, 0 provider/system error; 2/3 khớp manifest cũ, TC-05 chuyển bảo thủ sang `ESCALATE_PRIVACY` thay vì `ESCALATE_POLICY`.
+- Live input validation: 2/2 ca file giả magic bytes và file 5 MB + 1 byte bị HTTP 400 trước storage/queue.
+- Workflow live: Forward → manager YES → Undo → Audit đều pass trên fixture synthetic.
 
 ## Thay đổi sau feedback doanh nghiệp
 
 1. **Nhiều hóa đơn:** UI nhận tối đa 10 ảnh và gọi tuần tự cùng endpoint HTTP 202. Mỗi ảnh vẫn qua kiểm extension/MIME/magic bytes/5 MB, private storage, SHA-256, SQL row, lease và audit độc lập. Danh sách job được lưu sau từng response 202 để lỗi giữa batch không làm mất job đã nhận.
 2. **Bỏ nhập tiền khỏi UI:** trình duyệt không còn hiển thị hoặc gửi `claimedAmount`. Worker chỉ dùng `facts.TotalAmount` do model trả về sau JSON Schema và semantic validation; nguồn mới của luồng demo là `AI_EXTRACTED` hoặc `UNAVAILABLE`. Backend giữ `USER_PROVIDED` để tương thích test kit/API lịch sử. Thiếu total vẫn fail-safe về kiểm tra dữ kiện.
-3. **Dashboard quản lý:** tab Tổng quan tổng hợp tháng hiện tại và từng ngày theo giờ Việt Nam từ SQL, gồm tiếp nhận, hoàn tất, tự duyệt, chuyển người, privacy review, lỗi, tổng giá trị và độ trễ.
+3. **Dashboard quản lý:** tab Tổng quan cho chọn tháng/năm; KPI, bảng ngày, bảng đối chiếu năm và CSV dùng cùng kỳ được chọn. Dữ liệu được project theo giờ Việt Nam từ SQL.
 4. **Privacy triage:** model chỉ gắn marker category trong `suspiciousSignals`; backend normalize category, không ghi lại giá trị cá nhân, và policy C# chuyển `ESCALATE_PRIVACY`. Request OpenRouter mặc định yêu cầu provider không dùng dữ liệu để thu thập/huấn luyện.
-5. **Báo cáo quản lý:** dashboard có nút tải CSV tháng hiện tại từ SQL. File chỉ chứa dữ liệu vận hành cần review, không chứa raw AI facts và có chống CSV formula injection.
+5. **Báo cáo quản lý:** dashboard tải CSV theo kỳ đang chọn từ SQL. File chỉ chứa dữ liệu vận hành cần review, không chứa raw AI facts và có chống CSV formula injection.
 6. **Email/folder connector:** chưa nối trong candidate hôm nay. Workflow đích giữ cùng ingestion boundary; Agent chỉ điều phối, connector riêng giữ OAuth. Kênh này cần least privilege, consent, sync cursor, idempotency, backfill, quarantine và audit.
-7. **Dashboard fail-closed:** khi SQL không tải được, UI không hiển thị KPI bằng 0 hoặc cho tải CSV; dashboard báo không khả dụng và yêu cầu tải lại. Nhãn “Đã kết thúc” được dùng cho `COMPLETED + FAILED`, còn tổng tiền được ghi rõ là tiền tham chiếu, không phải số đã phê duyệt.
+7. **Dashboard fail-closed và UX:** khi SQL không tải được, UI không hiển thị KPI bằng 0 hoặc cho tải CSV. Bảng có vùng cuộn, header sticky và đường kẻ tương phản hơn; nút refresh dùng icon. “Cần kiểm tra dữ liệu cá nhân” là số hồ sơ có marker privacy cần người xem lại, không phải kết luận pháp lý.
 
 Privacy triage là công cụ hỗ trợ rà soát, không phải kết luận pháp lý hay chứng nhận tuân thủ. Strict zero-data-retention chỉ được bật sau khi route/provider live được xác nhận hỗ trợ; nếu bật mù có thể làm không còn provider đủ điều kiện.
 
@@ -57,7 +59,7 @@ FAHASA còn over ổn định do validator chưa chấp nhận chắc chắn nh�
 
 ## Gate con người còn mở
 
-1. Publish/recycle candidate sau feedback, kiểm `/healthz`, database migration và một synthetic smoke cho single/batch; không rerun holdout cũ để tạo accuracy claim mới.
+1. Publish/recycle UX follow-up mới nhất, kiểm lại `/healthz`, bộ chọn kỳ/CSV và một synthetic smoke; không rerun holdout cũ để tạo accuracy claim mới.
 2. Xác nhận route Alibaba/OpenRouter vẫn nhận `data_collection=deny`; chỉ cân nhắc bật strict ZDR sau một probe có kiểm soát.
 3. Hoàn tất ba phiên user study thật, có consent, quote nguyên văn, một thay đổi truy vết được và một negative effect.
 4. Rehearsal có bấm giờ theo demo mới: dashboard → lượt nhiều ảnh không nhập tiền → privacy escalation → manager → audit.

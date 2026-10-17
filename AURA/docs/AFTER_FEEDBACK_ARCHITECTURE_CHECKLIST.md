@@ -2,7 +2,7 @@
 
 **Cập nhật:** 17/10/2026  
 **Nguồn đối chiếu:** `Hackathon_2h30_Implementation_Recommend.docx` trong thư mục `recommend_check`  
-**Trạng thái:** candidate source đã đạt gate offline; production vẫn là baseline trước feedback cho tới khi publish và smoke lại
+**Trạng thái:** candidate `de101f2` đã live-smoke; UX follow-up đã qua gate offline và chờ publish lại
 
 ## 1. Quyết định chốt
 
@@ -41,7 +41,7 @@ HIỆN TẠI TRONG SOURCE CANDIDATE
 → amount provenance: AI_EXTRACTED / UNAVAILABLE trong UI
 → privacy category triage, không lặp giá trị gốc
 → C# policy → human authority → audit
-→ dashboard SQL ngày/tháng/năm + CSV tháng hiện tại
+→ dashboard SQL theo kỳ được chọn + CSV cùng kỳ
 ```
 
 Các phần không đổi: SQL queue bền, model không tự phê duyệt, policy C# tất định, human review cho ngoại lệ, AI concurrency một trong mỗi process và Verify lock theo process.
@@ -54,16 +54,19 @@ Các phần không đổi: SQL queue bền, model không tự phê duyệt, poli
 - Nếu SQL không tải được, dashboard hiển thị trạng thái không khả dụng, ẩn KPI/CSV và không dùng các số 0 giả.
 - Khu vực upload nhắc dùng dữ liệu tổng hợp/đã ẩn danh vì privacy triage hiện chạy sau extraction.
 - Khu vực upload đã bỏ ô nhập số tiền và không gửi `claimedAmount`; backend chỉ giữ nhánh `USER_PROVIDED` cho test kit/API lịch sử.
-- Dashboard có lối tắt quay về hồ sơ cần xử lý, tải CSV tháng và tải lại dữ liệu.
+- Dashboard cho chọn kỳ; tải CSV cùng kỳ; refresh dùng icon. Lối tắt quay về hồ sơ đã bỏ vì các tab chính đã đảm nhiệm điều hướng.
+- Hai bảng dashboard có vùng cuộn, header sticky và đường kẻ tương phản hơn.
 
 ## 5. Evidence thực tế ngày 17/10/2026
 
 | Kiểm tra | Kết quả | Cách diễn giải |
 |---|---|---|
-| Release xUnit | 181/181 pass | Candidate code qua regression offline; không gọi AI API trả phí |
-| Live `GET /healthz` lúc 11:32 ICT | HTTP 200, DB/storage/migration khỏe, Qwen3.8 Flash, reasoning none | Đây là baseline live trước feedback |
-| Live `GET /?tab=dashboard` | HTTP 200 nhưng không có dashboard candidate | Xác nhận candidate mới chưa publish |
-| Live `GET /Reports/CurrentMonth` | HTTP 404 | Xác nhận CSV report chưa có trên live baseline |
+| Release xUnit | 187/187 pass | UX follow-up qua regression offline; không gọi AI API trả phí |
+| Live `GET /healthz` lúc 12:54 ICT | HTTP 200, DB/storage/migration khỏe, Qwen3.8 Flash, reasoning none, data collection denied, concurrency 1 | Candidate sau feedback đã live |
+| Live no-amount synthetic upload | 3/3 hoàn tất; 0 provider/system error; 2/3 khớp manifest cũ | TC-05 chuyển bảo thủ sang privacy; không ghi 3/3 exact |
+| Live Verify Harness | 5/5, E2E 49,518 giây, 0 system error | Bộ Verify vẫn ổn sau publish |
+| Live workflow | Forward → YES → Undo → Audit pass | Human authority và audit hoạt động thật |
+| Live upload validation | 2/2 ca xấu bị HTTP 400 trước queue | Magic bytes và giới hạn 5 MB hoạt động |
 | LocalDB | Không khởi tạo được do lỗi user-instance registry của máy | Không xóa registry/MDF; không dùng lỗi local để suy ra live DB hỏng |
 | SQL Server mặc định local | Service chạy nhưng test database không đăng nhập được do TLS/SSPI của máy | Không hạ bảo mật hoặc đổi cấu hình hệ thống sát demo |
 | In-app browser | Bị Work settings vô hiệu hóa | Không có browser evidence giả; dùng API read-only + test/source audit |
@@ -71,7 +74,7 @@ Các phần không đổi: SQL queue bền, model không tự phê duyệt, poli
 ## 6. Các bước demo candidate sau khi publish
 
 1. Mở `/healthz`; kiểm HTTP 200 và có `providerDataCollectionDenied=true`.
-2. Mở **Tổng quan**; chỉ rõ SQL source of truth, nhãn tiền tham chiếu và nút CSV tháng này.
+2. Mở **Tổng quan**; chọn kỳ, chỉ rõ SQL source of truth, nhãn tiền tham chiếu và CSV cùng kỳ.
 3. Trở lại **Cửa sổ nhân viên**; chọn 2–3 ảnh tổng hợp/đã ẩn danh và chỉ metadata người gửi; xác nhận không còn ô amount.
 4. Nói rõ mỗi ảnh nhận job/status URL riêng; không gọi đây là batch transaction.
 5. Chỉ một ca amount AI đủ evidence, một ca `ESCALATE_FACT`, một ca `ESCALATE_PRIVACY` nếu có fixture phù hợp.
@@ -89,6 +92,6 @@ Các phần không đổi: SQL queue bền, model không tự phê duyệt, poli
 
 ## 8. Điều kiện GO NO GO
 
-**GO cho demo có giám sát** khi Release build sạch, 181/181 test pass, không có pending migration, publish đúng commit, `/healthz` có field privacy mới và synthetic smoke qua đủ single/multi-file/privacy/CSV.
+**GO cho demo có giám sát** sau khi UX follow-up được publish đúng commit, Release build sạch, 187/187 test pass, không có pending migration, `/healthz` khỏe và smoke lại kỳ dashboard/CSV cùng một upload synthetic.
 
 **NO GO cho claim production-ready** khi chưa có SSO/RBAC, pre-inference privacy control, strict ZDR/local route đã đo, idempotency unique ở DB, persisted quarantine/malware scan, managed storage, retention, monitoring và distributed coordination.

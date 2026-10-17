@@ -19,12 +19,15 @@ public sealed class ReportsController : Controller
 
     [HttpGet]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-    public async Task<IActionResult> CurrentMonth()
+    public async Task<IActionResult> CurrentMonth(int? year = null, int? month = null)
     {
         try
         {
             var requests = await _repository.GetAllRequestsAsync();
-            var report = ManagerOperationsReportExporter.ExportCurrentMonth(requests, DateTime.UtcNow);
+            var localNow = VietnamTime.FromUtc(DateTime.UtcNow);
+            var targetYear = year is >= 2000 and <= 2100 ? year.Value : localNow.Year;
+            var targetMonth = month is >= 1 and <= 12 ? month.Value : localNow.Month;
+            var report = ManagerOperationsReportExporter.ExportMonth(requests, targetYear, targetMonth);
             return File(report.Content, "text/csv; charset=utf-8", report.FileName);
         }
         catch (Exception exception)

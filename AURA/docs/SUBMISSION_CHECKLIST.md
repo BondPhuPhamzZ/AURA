@@ -11,7 +11,7 @@
 | Hạng mục | Trạng thái | Nguồn chốt |
 |---|---|---|
 | Repository source công khai và README | Sẵn sàng | `README.md` ở root repository |
-| Ứng dụng live | Baseline 14/10 đang khỏe; candidate sau feedback chưa publish/smoke | URL trong README và `CURRENT_PROJECT_STATUS.md` |
+| Ứng dụng live | Candidate `de101f2` đã health/smoke; UX follow-up chờ publish lại | URL trong README và `CURRENT_PROJECT_STATUS.md` |
 | Slide 5 trang | Sẵn sàng | `../submission/AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx` |
 | Proposal tiếng Việt và tiếng Anh | Sẵn sàng | `../submission/AURA_PROPOSAL_VI.*`, `../submission/AURA_PROPOSAL_EN.*` |
 | Build Log một trang của toàn dự án | Sẵn sàng | `../submission/AURA_BUILD_LOG.*` |

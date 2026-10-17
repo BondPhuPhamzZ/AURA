@@ -17,12 +17,12 @@ public sealed class DashboardSummaryViewComponent : ViewComponent
         _logger = logger;
     }
 
-    public async Task<IViewComponentResult> InvokeAsync()
+    public async Task<IViewComponentResult> InvokeAsync(int? year = null, int? month = null)
     {
         try
         {
             var requests = await _repository.GetAllRequestsAsync();
-            return View(DashboardSummaryProjector.Project(requests, DateTime.UtcNow));
+            return View(DashboardSummaryProjector.Project(requests, DateTime.UtcNow, year, month));
         }
         catch (Exception exception)
         {
@@ -32,7 +32,9 @@ public sealed class DashboardSummaryViewComponent : ViewComponent
             {
                 IsAvailable = false,
                 PeriodLabel = "Tháng hiện tại",
-                YearLabel = "Năm hiện tại"
+                YearLabel = "Năm hiện tại",
+                SelectedYear = year ?? 0,
+                SelectedMonth = month ?? 0
             });
         }
     }
