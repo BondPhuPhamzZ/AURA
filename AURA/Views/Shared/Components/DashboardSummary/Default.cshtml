@@ -6,7 +6,10 @@
             <h2 id="dashboard-title">Tổng quan xử lý @Model.PeriodLabel</h2>
             <p>Số liệu lấy từ hồ sơ đã ghi trong SQL, hiển thị theo múi giờ Việt Nam. Privacy triage là tín hiệu hỗ trợ kiểm tra, không phải kết luận pháp lý.</p>
         </div>
-        <a class="button-ghost-sm" asp-controller="Home" asp-action="Index" asp-route-tab="dashboard">Làm mới</a>
+        <div class="dashboard-actions">
+            <a class="button-ghost-sm" asp-controller="Reports" asp-action="CurrentMonth">Tải báo cáo CSV</a>
+            <a class="button-ghost-sm" asp-controller="Home" asp-action="Index" asp-route-tab="dashboard">Làm mới</a>
+        </div>
     </div>
 
     @if (ViewData["LoadError"] is string loadError)

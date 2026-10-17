@@ -11,6 +11,7 @@ obj/
 publish/
 .vs/
 .tmp/
+.codex_tmp/
 *.user
 *.suo
 *.log

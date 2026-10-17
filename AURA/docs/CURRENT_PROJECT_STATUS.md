@@ -2,7 +2,7 @@
 
 ## Kết luận
 
-Baseline live ngày 14/10 vẫn truy xuất được tại tag `aura-demo-day-2026-10-14`. Sau feedback doanh nghiệp ngày 17/10, candidate source đã bổ sung batch ingestion, số tiền AI suy ra có provenance, privacy triage và dashboard vận hành. Các thay đổi này đã qua toàn bộ test offline nhưng **chưa được gọi là live** cho tới khi publish, health check và synthetic smoke hoàn tất. Video cũ vẫn là bằng chứng của baseline trước feedback; không dùng video đó để khẳng định UI mới đã chạy trên production.
+Baseline live ngày 14/10 vẫn truy xuất được tại tag `aura-demo-day-2026-10-14`. Sau feedback doanh nghiệp ngày 17/10, candidate source đã bổ sung batch ingestion, số tiền AI suy ra có provenance, privacy triage, dashboard vận hành và báo cáo CSV tháng hiện tại. Các thay đổi này đã qua toàn bộ test offline nhưng **chưa được gọi là live** cho tới khi publish, health check và synthetic smoke hoàn tất. Video cũ vẫn là bằng chứng của baseline trước feedback; không dùng video đó để khẳng định UI mới đã chạy trên production.
 
 ## Cấu hình live
 
@@ -27,7 +27,7 @@ Read-only health recheck ngày 14/10 trả HTTP 200, `status=ok`, database/stora
 ## Gate kỹ thuật đã đạt
 
 - Debug build: 0 warning, 0 error.
-- Offline tests sau feedback: 178/178 pass.
+- Offline tests sau feedback: 181/181 pass.
 - Live Verify: 5/5 trong 65,004 giây.
 - Duplicate Verify clients: 1 HTTP 200 và 4 HTTP 409 trên một process.
 - Năm upload khác nhau: 5/5 hoàn tất, không mất job; E2E P95 93,684 giây do concurrency một.
@@ -39,7 +39,8 @@ Read-only health recheck ngày 14/10 trả HTTP 200, `status=ok`, database/stora
 2. **Không bắt buộc nhập tiền:** claimed amount trở thành tùy chọn. Nếu bỏ trống, worker chỉ dùng `facts.TotalAmount` do model trả về sau JSON Schema và semantic validation; nguồn `USER_PROVIDED`, `AI_EXTRACTED` hoặc `UNAVAILABLE` được lưu trong facts/audit. Thiếu total vẫn fail-safe về kiểm tra dữ kiện.
 3. **Dashboard quản lý:** tab Tổng quan tổng hợp tháng hiện tại và từng ngày theo giờ Việt Nam từ SQL, gồm tiếp nhận, hoàn tất, tự duyệt, chuyển người, privacy review, lỗi, tổng giá trị và độ trễ.
 4. **Privacy triage:** model chỉ gắn marker category trong `suspiciousSignals`; backend normalize category, không ghi lại giá trị cá nhân, và policy C# chuyển `ESCALATE_PRIVACY`. Request OpenRouter mặc định yêu cầu provider không dùng dữ liệu để thu thập/huấn luyện.
-5. **Email/folder connector:** chưa nối trong candidate hôm nay. Kênh này cần OIDC/OAuth, least privilege, consent, idempotency, backfill, quarantine và audit; khi đủ điều kiện sẽ tái sử dụng ingestion boundary hiện có.
+5. **Báo cáo quản lý:** dashboard có nút tải CSV tháng hiện tại từ SQL. File chỉ chứa dữ liệu vận hành cần review, không chứa raw AI facts và có chống CSV formula injection.
+6. **Email/folder connector:** chưa nối trong candidate hôm nay. Workflow đích giữ cùng ingestion boundary; Agent chỉ điều phối, connector riêng giữ OAuth. Kênh này cần least privilege, consent, sync cursor, idempotency, backfill, quarantine và audit.
 
 Privacy triage là công cụ hỗ trợ rà soát, không phải kết luận pháp lý hay chứng nhận tuân thủ. Strict zero-data-retention chỉ được bật sau khi route/provider live được xác nhận hỗ trợ; nếu bật mù có thể làm không còn provider đủ điều kiện.
 

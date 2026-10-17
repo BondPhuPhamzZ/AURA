@@ -4,10 +4,10 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const workspaceDir = path.resolve(".");
-const sourcePath = path.join(workspaceDir, "submission", "AURA_5_SLIDES_FINAL.pptx");
+const sourcePath = path.join(workspaceDir, "submission", "AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx");
 const qaDir = path.join(workspaceDir, ".tmp", "final-artifact-qa", "slides");
 const candidatePath = path.join(qaDir, "candidate.pptx");
-const finalPath = path.join(qaDir, "AURA_5_SLIDES_FINAL.cleaned.pptx");
+const finalPath = path.join(qaDir, "AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.cleaned.pptx");
 const receiptPath = path.join(workspaceDir, ".tmp", "final-artifact-qa", "slide-validation.json");
 const skillDir = "C:/Users/bondp/.codex/plugins/cache/openai-primary-runtime/presentations/26.1011.11113/skills/presentations";
 const modulesDir = "C:/Users/bondp/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules";

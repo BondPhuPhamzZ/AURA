@@ -8,7 +8,7 @@ AURA là ứng dụng ASP.NET Core hỗ trợ bước thẩm định đầu tiê
 |---|---|
 | Ứng dụng live | [AURA trên SmarterASP.NET](https://bondphupham-001-site1.ltempurl.com/) |
 | Thư mục nộp video Sprint 1 và evaluation key chỉ dành cho BGK | [Team Drive](https://drive.google.com/drive/folders/1_EHs9-KghK2JWpQGRAu_jLWl9WmBkMLc?usp=sharing) |
-| Slide chung kết | [AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES_FINAL.pptx) |
+| Slide chung kết sau feedback | [AURA 5 Slides](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx) |
 | Proposal tiếng Việt | [AURA Proposal VI](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_VI.pdf) |
 | Proposal tiếng Anh | [AURA Proposal EN](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_EN.pdf) |
 | Build Log | [AURA Build Log](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.pdf) |
@@ -40,7 +40,7 @@ Khả năng chính:
 - Một batch tối đa 10 ảnh được tiếp nhận tuần tự qua cùng upload boundary; mỗi ảnh vẫn có case ID, hash, row SQL và status URL riêng.
 - Claimed amount là tùy chọn: nếu bỏ trống, worker dùng `totalAmount` đã qua schema/semantic validation; nguồn số tiền được audit rõ là người dùng nhập, AI trích xuất hay không khả dụng.
 - Privacy triage phát hiện category cần xem xét, không hiển thị lại giá trị gốc; hồ sơ được fail-safe sang `ESCALATE_PRIVACY`. Request OpenRouter mặc định đặt `provider.data_collection=deny`.
-- Tab **Tổng quan** tổng hợp số hồ sơ, route, privacy review, lỗi, giá trị và độ trễ theo tháng/ngày từ SQL.
+- Tab **Tổng quan** tổng hợp số hồ sơ, route, privacy review, lỗi, giá trị và độ trễ theo tháng/ngày từ SQL; quản lý có thể tải CSV tháng hiện tại mà không xuất raw AI facts.
 - Model chỉ trích xuất facts có cấu trúc; model không có quyền phê duyệt cuối.
 - Evidence thiếu, mâu thuẫn hoặc không đọc được luôn fail-safe về người duyệt.
 - Verify Harness chạy năm ca chính thức trong một thao tác: ba ca duyệt và hai ca chuyển tiếp.
@@ -60,7 +60,7 @@ Runtime chỉ đọc đúng đường dẫn `BUSINESS_RULES.md` được cấu h
 Cập nhật kỹ thuật gần nhất: 17/10/2026. Health live và gate Verify Qwen3.8 Flash ngày 14/10 vẫn là baseline live đã đo; các cải tiến sau feedback doanh nghiệp bên dưới mới được kiểm thử offline và cần publish/smoke lại trước khi gọi là live.
 
 - Build: **0 warning, 0 error**.
-- Test tự động sau batch ingestion, AI-derived amount, privacy triage và dashboard: **178/178 pass**; test offline không gọi AI API trả phí.
+- Test tự động sau batch ingestion, AI-derived amount, privacy triage, dashboard và CSV report: **181/181 pass**; test offline không gọi AI API trả phí.
 - Verify Harness chính thức: **5/5** với đúng 3 approve và 2 escalate.
 - Mini-holdout 10 receipt mới do chủ dự án cung cấp, redaction và khóa trước đạt **8/10 exact**, **0 missed, 2 fail-safe over, 0 lỗi system/provider/429 và 28/30 field date/identifier/total cốt lõi**. Năm request đầu về terminal trong 64,763 giây và cả mười trong 108,803 giây ở AI concurrency 1. Bộ này chỉ chạy một lần; tương tác redaction được công bố nên không được gọi là production accuracy.
 - Post-holdout regression sau đó gửi cùng 12 **source bytes nguyên bản**, không snapshot/resize/transform: **10/12 exact, 0 missed, 2 over, 0 lỗi system/provider/429, 35/36 critical field**. Năm upload khác nhau đồng thời hoàn tất 5/5 với E2E P95 **93,684 giây**. Lần này chỉ kiểm queue integrity, không phải yêu cầu latency Verify.
@@ -149,7 +149,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore
 dotnet ef migrations has-pending-model-changes --no-build
 ```
 
-Kỳ vọng cho candidate hiện hành: build 0 warning/error, 178/178 test pass và không có model change cần migration.
+Kỳ vọng cho candidate hiện hành: build 0 warning/error, 181/181 test pass và không có model change cần migration.
 
 Dừng app bằng `Ctrl+C`. Không cần reset database hoặc xóa LocalDB.
 
@@ -164,6 +164,7 @@ Dừng app bằng `Ctrl+C`. Không cần reset database hoặc xóa LocalDB.
 - [Đặc tả workflow](AURA/submission/AURA_WORKFLOW_SPEC.md)
 - [Hướng dẫn dataset và đánh giá mở rộng](AURA/docs/DATASET_EVALUATION_GUIDE.md)
 - [Trạng thái đã xác minh hiện hành](AURA/docs/CURRENT_PROJECT_STATUS.md)
+- [Workflow mailbox an toàn và thứ tự triển khai](AURA/docs/RECOMMENDED_INGESTION_WORKFLOW.md)
 - [Tổng hợp bằng chứng đánh giá](AURA/docs/EVALUATION_EVIDENCE.md)
 - [Kế hoạch khoanh vùng evidence](AURA/docs/EVIDENCE_LOCALIZATION_PLAN.md)
 - [Protocol đánh giá ba người dùng](AURA/docs/USER_STUDY_PROTOCOL.md)

@@ -2,9 +2,9 @@
 
 ## 1. Kết luận điều hành
 
-AURA đã triển khai bốn thay đổi có thể kiểm soát trong cùng kiến trúc hiện hành: upload nhiều hóa đơn, claimed amount tùy chọn với nguồn dữ liệu minh bạch, dashboard ngày/tháng/năm và privacy triage fail-safe. Không tạo endpoint AI thứ hai, không thay database schema, không thay model, evidence contract version hay các business rule phê duyệt hiện có. Connector email/folder được giữ ở roadmap vì triển khai gấp mà thiếu OIDC/OAuth, least privilege, consent, idempotency và quarantine sẽ làm giảm an toàn production.
+AURA đã triển khai năm thay đổi có thể kiểm soát trong cùng kiến trúc hiện hành: upload nhiều hóa đơn, claimed amount tùy chọn với nguồn dữ liệu minh bạch, dashboard ngày/tháng/năm, báo cáo CSV tháng hiện tại và privacy triage fail-safe. Không tạo endpoint AI thứ hai, không thay database schema, không thay model, evidence contract version hay các business rule phê duyệt hiện có. Connector email/folder được giữ ở roadmap vì triển khai gấp mà thiếu OIDC/OAuth, least privilege, consent, idempotency và quarantine sẽ làm giảm an toàn production.
 
-Candidate source hiện đạt build 0 warning/0 error, 178/178 test offline và không có pending EF migration. Baseline live 5/5 ngày 14/10 vẫn là bằng chứng của phiên bản trước feedback. Candidate ngày 17/10 chưa được gọi là live cho tới khi publish/recycle, `/healthz` và synthetic smoke hoàn tất.
+Candidate source hiện đạt build 0 warning/0 error, 181/181 test offline và không có pending EF migration. Baseline live 5/5 ngày 14/10 vẫn là bằng chứng của phiên bản trước feedback. Candidate ngày 17/10 chưa được gọi là live cho tới khi publish/recycle, `/healthz` và synthetic smoke hoàn tất.
 
 ## 2. Đối chiếu feedback và phần đã triển khai
 
@@ -13,7 +13,7 @@ Candidate source hiện đạt build 0 warning/0 error, 178/178 test offline và
 | Upload nhiều hóa đơn | Làm ngay | UI nhận tối đa 10 JPG/PNG, tiếp nhận tuần tự qua cùng endpoint HTTP 202; mỗi file có case ID, SHA-256, SQL row, audit và status URL riêng | Chưa nhận PDF; tối đa 5 MB/file |
 | Nhận từ folder/email | Chưa nối gấp | Giữ cùng ingestion boundary làm điểm tích hợp tương lai | Cần OIDC/OAuth, least privilege, consent, idempotency, backfill, quarantine và audit |
 | Không bắt người dùng nhập số tiền | Làm ngay, fail-safe | Claimed amount tùy chọn. Worker ưu tiên số người dùng nhập; nếu trống chỉ dùng `totalAmount` đã qua JSON Schema và semantic validation | Không đoán khi AI không có final total; hồ sơ đi kiểm tra dữ kiện |
-| Báo cáo cho quản lý | Làm ngay | Tab Tổng quan chiếu dữ liệu SQL theo ngày, tháng hiện tại và các tháng trong năm; có route, privacy, lỗi, tổng giá trị và latency | Đây là operational dashboard, chưa phải BI/financial ledger |
+| Báo cáo cho quản lý | Làm ngay | Tab Tổng quan chiếu dữ liệu SQL theo ngày, tháng và năm; tải CSV tháng hiện tại có route, privacy, trạng thái quản lý và latency | CSV không xuất raw AI facts; chưa phải BI/financial ledger |
 | Nhận diện dữ liệu cá nhân | Làm ngay ở mức triage | AI chỉ gắn marker category; backend normalize, không lặp lại giá trị gốc; policy trả `ESCALATE_PRIVACY`; manager quyết định tiếp tục hay trả lại | Không phải kết luận pháp lý hoặc chứng nhận compliance |
 | Giảm dữ liệu gửi provider | Làm ngay | OpenRouter request mặc định gửi `provider.data_collection=deny`; health công khai trạng thái cấu hình | Strict ZDR mặc định tắt tới khi route live được xác nhận tương thích |
 
@@ -31,7 +31,7 @@ Candidate source hiện đạt build 0 warning/0 error, 178/178 test offline và
 → privacy classifier: category-only, không lưu giá trị gốc
 → PolicyDecisionEngine C#: AUTO_APPROVE hoặc ESCALATE_*
 → nhân viên chuyển tiếp → quản lý YES/NO/Undo → audit timeline
-→ dashboard SQL theo ngày / tháng / năm
+→ dashboard SQL theo ngày / tháng / năm → CSV tháng cho quản lý
 ```
 
 Các boundary chính không đổi: model chỉ đọc facts; C# áp policy tất định; con người chịu trách nhiệm ngoại lệ. Privacy triage được đặt sau structured extraction và semantic validation, trước policy decision.
@@ -44,6 +44,7 @@ Các boundary chính không đổi: model chỉ đọc facts; C# áp policy tấ
 - **Privacy fail-safe:** `RequiresPrivacyReview=true` dẫn đến `ESCALATE_PRIVACY`, không auto-approve. Fact inconsistency vẫn có ưu tiên cao hơn.
 - **Provider boundary:** OpenRouter payload yêu cầu từ chối data collection. Không bật strict ZDR nếu chưa biết route có provider đủ điều kiện.
 - **Dashboard không tạo source of truth mới:** chỉ project từ SQL hiện hành và đổi timestamp UTC sang giờ Việt Nam.
+- **CSV phục vụ review, không rò facts thô:** report chỉ lấy trường vận hành cần thiết, không xuất `ExtractedFactsJson`; chuỗi do người dùng cung cấp được vô hiệu hóa ký tự đầu có thể kích hoạt công thức Excel.
 
 Theo pháp luật hiện hành, Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15 và Nghị định 356/2025/NĐ-CP đều có hiệu lực từ 01/01/2026. Tính năng này chỉ hỗ trợ sàng lọc để con người xử lý theo quy trình doanh nghiệp; đánh giá tuân thủ đầy đủ vẫn cần pháp chế, data inventory, retention, quyền chủ thể dữ liệu và kiểm soát nhà cung cấp.
 
@@ -52,8 +53,8 @@ Theo pháp luật hiện hành, Luật Bảo vệ dữ liệu cá nhân 91/2025/
 | Gate | Kết quả |
 |---|---|
 | `dotnet build --no-restore` | PASS — 0 warning, 0 error |
-| Toàn bộ xUnit | PASS — 178/178 |
-| Test mới | amount resolver, privacy classifier/policy, provider payload, dashboard projector, batch/UI contract, privacy manager outcome |
+| Toàn bộ xUnit | PASS — 181/181 |
+| Test mới | amount resolver, privacy classifier/policy, provider payload, dashboard projector, batch/UI contract, privacy manager outcome, CSV scope/formula hardening/UTF 8 BOM |
 | `dotnet ef migrations has-pending-model-changes --no-build` | PASS — không có model change |
 | Demo readiness pre-check | READY — 0 failure; warning LocalDB registry đã biết và HTTP chủ động skip |
 | Local `/healthz` | 503 do LocalDB user-instance của máy hiện tại không khởi tạo được; đồng thời xác nhận AI/policy/storage và privacy flags đúng |
@@ -62,7 +63,7 @@ Không dùng lỗi LocalDB của máy này để suy ra database live hỏng. Kh
 
 ## 6. Quy trình demo mới đề xuất (4–5 phút)
 
-1. **Tổng quan (20 giây):** mở dashboard, chỉ rõ số liệu lấy từ SQL và có ba mức ngày/tháng/năm.
+1. **Tổng quan (25 giây):** mở dashboard, chỉ rõ số liệu lấy từ SQL ở ba mức ngày/tháng/năm và nút tải báo cáo CSV.
 2. **Batch intake (35 giây):** chọn 2–3 receipt JPG/PNG, để trống số tiền, bấm “Xếp hàng AI”. Nhấn mạnh mỗi ảnh nhận HTTP 202 và job riêng.
 3. **Xử lý nền (25 giây):** chỉ trạng thái PENDING/PROCESSING và việc người dùng có thể tiếp tục thao tác.
 4. **Amount provenance (25 giây):** mở facts, chỉ “Nguồn số tiền: AI trích xuất” và final total; nếu thiếu total thì fail-safe.
@@ -86,7 +87,7 @@ Luôn chuẩn bị fallback: nếu provider chậm, chuyển sang dữ liệu/au
 
 ## 8. Việc chưa triển khai và hướng tiếp theo
 
-- Email/folder ingestion có OIDC/OAuth, scope tối thiểu, allow-list sender/folder, idempotency key, malware scan/quarantine và webhook/backfill.
+- Email/folder ingestion theo `docs/RECOMMENDED_INGESTION_WORKFLOW.md`: Agent chỉ điều phối; connector riêng giữ OAuth; scope tối thiểu, allow-list sender/folder, sync cursor, idempotency key, malware scan/quarantine và webhook/backfill.
 - Managed private object storage, encryption/KMS, retention/deletion policy và access logging.
 - Authentication/SSO, RBAC thực, segregation of duties và audit identity thay cho demo identities.
 - Distributed provider limiter/Verify lock/circuit state nếu chạy nhiều instance.

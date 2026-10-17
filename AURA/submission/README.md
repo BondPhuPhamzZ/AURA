@@ -4,7 +4,7 @@ Thư mục này chỉ giữ một phiên bản hiện hành cho mỗi hạng m�
 
 | Hạng mục | File chốt |
 |---|---|
-| Slide 5 trang | `AURA_5_SLIDES_FINAL.pptx` |
+| Slide 5 trang | `AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx` |
 | Proposal tiếng Việt | `AURA_PROPOSAL_VI.md`, `.docx`, `.pdf` |
 | Proposal tiếng Anh | `AURA_PROPOSAL_EN.md`, `.docx`, `.pdf` |
 | Build Log một trang của toàn dự án | `AURA_BUILD_LOG.md`, `.docx`, `.pdf` |
@@ -12,6 +12,7 @@ Thư mục này chỉ giữ một phiên bản hiện hành cho mỗi hạng m�
 | Video demo chính thức | Lưu trên Team Drive; URL nằm trong `AURA_SUBMISSION_LINKS.*` |
 | Phiếu phản hồi người dùng | `AURA_USER_FEEDBACK_FORM.docx`, `.pdf` |
 | Đặc tả workflow | `AURA_WORKFLOW_SPEC.md` |
+| Báo cáo sau feedback | `AURA_AFTER_FEEDBACK_REPORT.docx`, `.pdf` |
 
 Ba file Build Log là ba định dạng của cùng một tài liệu toàn dự án, không phải các sprint log riêng. Phiên bản lịch sử được giữ trong Git history thay vì đặt cạnh bản chốt.
 
