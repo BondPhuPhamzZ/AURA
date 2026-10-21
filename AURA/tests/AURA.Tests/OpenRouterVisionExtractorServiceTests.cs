@@ -166,6 +166,46 @@ public sealed class OpenRouterVisionExtractorServiceTests
     }
 
     [Fact]
+    public async Task Strict_zdr_option_sets_provider_zdr_filter()
+    {
+        var root = CreateFixtureRoot();
+        try
+        {
+            string? requestJson = null;
+            var handler = new StubHandler(async request =>
+            {
+                requestJson = await request.Content!.ReadAsStringAsync();
+                return new HttpResponseMessage(HttpStatusCode.NotFound)
+                {
+                    Content = new StringContent("{\"error\":{\"message\":\"No endpoints found\"}}",
+                        Encoding.UTF8, "application/json")
+                };
+            });
+            var options = Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions
+            {
+                ApiKey = "test-key",
+                RequireZeroDataRetention = true,
+                DenyProviderDataCollection = true
+            });
+            var client = new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) };
+            var service = new OpenRouterVisionExtractorService(client, options,
+                new TestEnvironment(root), NullLogger<OpenRouterVisionExtractorService>.Instance);
+
+            await Assert.ThrowsAsync<VisionExtractionException>(() =>
+                service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg")));
+
+            using var payload = JsonDocument.Parse(requestJson!);
+            var provider = payload.RootElement.GetProperty("provider");
+            Assert.True(provider.GetProperty("zdr").GetBoolean());
+            Assert.Equal("deny", provider.GetProperty("data_collection").GetString());
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task Parses_strict_qwen_json_response_without_calling_external_api()
     {
         var root = CreateFixtureRoot();

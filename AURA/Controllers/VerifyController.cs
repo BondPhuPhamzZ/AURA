@@ -7,6 +7,7 @@ using AURA.Services;
 using AURA.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace AURA.Controllers;
 
@@ -39,9 +40,10 @@ public sealed class VerifyController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("verify-harness")]
     public async Task<IActionResult> RunHarness(CancellationToken cancellationToken)
     {
-        if (!_verifyOptions.Enabled) return NotFound(new
+        if (!VerifyExecutionPolicy.IsAllowed(_verifyOptions.Enabled, _environment.EnvironmentName)) return NotFound(new
         {
             error = "Verify Harness đang tắt trên môi trường này. Chỉ bật trong phiên kiểm thử có giám sát."
         });

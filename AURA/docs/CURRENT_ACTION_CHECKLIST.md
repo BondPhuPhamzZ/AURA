@@ -1,4 +1,6 @@
-# Checklist hiện tại: publish sạch và smoke baseline
+# Checklist hiện tại: publish hardening và smoke baseline
+
+> Cập nhật 21/10: source mới có Verify chỉ dành cho Development, mặc định tắt, và giới hạn HTTP upload/Verify trong từng process. Gate offline **196/196 tests**, build 0 warning, EF model không đổi. Chưa publish/smoke live bản này. Chi tiết và NO-GO pilot thật: [POST_CONTEST_HARDENING_2026-10-21.md](POST_CONTEST_HARDENING_2026-10-21.md).
 
 Ngày chốt: 17/10/2026. Candidate hiện hành giữ manual upload, multi-file UX, dashboard/CSV, privacy triage và multilingual fail-safe. Mailbox sandbox thử nghiệm cùng migration liên quan đã được gỡ khỏi source; email/folder ingestion chỉ còn là roadmap.
 
@@ -32,7 +34,7 @@ OpenRouter__RequireZeroDataRetention=false
 
 ReceiptStorage__Directory=App_Data/receipts
 ReceiptStorage__MaxFileSizeMb=5
-Verify__Enabled=true
+Verify__Enabled=false
 Database__ApplyMigrationsOnStartup=false
 ```
 
@@ -42,7 +44,7 @@ Các biến `MailboxSandbox__*` không còn được source đọc. Có thể x�
 
 - [ ] Ghi lại commit sẽ publish bằng `git rev-parse --short HEAD`.
 - [ ] Xác nhận backup SQL và `App_Data/receipts` đã tải về máy và mở được.
-- [ ] Chạy `dotnet test tests/AURA.Tests/AURA.Tests.csproj -c Release`; yêu cầu 190/190 pass.
+- [ ] Chạy `dotnet test tests/AURA.Tests/AURA.Tests.csproj -c Release`; yêu cầu ít nhất 196/196 pass trên đúng commit được publish.
 - [ ] Chạy `dotnet build AURA.csproj -c Release --no-restore`; yêu cầu 0 error.
 - [ ] Chạy `dotnet ef migrations has-pending-model-changes --no-build`; yêu cầu `No changes have been made...`.
 - [ ] Giữ `Database__ApplyMigrationsOnStartup=false`; không apply migration mailbox đã thất bại.
@@ -54,11 +56,12 @@ Các biến `MailboxSandbox__*` không còn được source đọc. Có thể x�
 - [ ] `GET /healthz` trả HTTP 200, `status=ok`.
 - [ ] `databaseAvailable=true`, `databaseUpToDate=true`, `pendingMigrationCount=0`, `storageAvailable=true`.
 - [ ] Health không còn field `mailboxSandbox*`; đây là dấu hiệu candidate rollback đã live.
+- [ ] `verifyHarnessEnabled=false` ngay cả nếu hosting còn `Verify__Enabled=true`; chủ động đổi env thành `false` và recycle.
 - [ ] Mở được một ảnh lịch sử trước khi tạo dữ liệu mới.
 - [ ] Upload đúng một fixture synthetic; nhận HTTP 202 và đi tới terminal.
 - [ ] Kiểm amount provenance, semantic/privacy route và audit timeline.
 - [ ] Chọn một kỳ trên dashboard và tải CSV cùng kỳ.
-- [ ] Chỉ chạy Verify khi thật sự cần; không chạy song song với upload.
+- [ ] Verify không được chạy trên Production. Nếu cần benchmark, dùng Development/staging cô lập và bộ fixture synthetic.
 
 ## 5. Gate hóa đơn tiếng Trung
 
@@ -72,6 +75,6 @@ Các biến `MailboxSandbox__*` không còn được source đọc. Có thể x�
 
 ## 6. Điều kiện GO/NO-GO
 
-**GO cho demo có giám sát** khi 190/190 test pass, EF model không đổi, publish đúng commit, `/healthz` có migration 0, ảnh lịch sử còn đọc được và một upload synthetic hoàn tất.
+**GO cho demo synthetic có giám sát** khi 196/196 test pass, EF model không đổi, publish đúng commit, `/healthz` có migration 0 và Verify tắt, ảnh lịch sử còn đọc được và một upload synthetic hoàn tất. Đây không phải GO cho pilot dữ liệu thật.
 
 **NO-GO cho mailbox/Gmail claim:** source hiện không có mail input, OAuth, cursor, quarantine hay malware scanner. Hướng này chỉ được mở lại sau khi thiết kế schema tương thích, có migration rehearsal trên database clone và đầy đủ identity/least-privilege/privacy gates.

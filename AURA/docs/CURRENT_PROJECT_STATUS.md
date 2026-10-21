@@ -1,4 +1,6 @@
-# Trạng thái hiện hành AURA ngày 17/10/2026
+# Trạng thái hiện hành AURA ngày 21/10/2026
+
+> Bản source sau cuộc thi có thêm gate Verify chỉ dành cho Development và rate limit HTTP trong một process; 196/196 offline tests, Release build 0 warning và EF model không đổi. **Chưa publish/smoke bản hardening này trên live; chưa sẵn sàng cho dữ liệu người dùng thật.** Xem [báo cáo hardening 21/10](POST_CONTEST_HARDENING_2026-10-21.md). Các số live bên dưới là evidence lịch sử của bản trước, không xác nhận hành vi bản mới.
 
 ## Kết luận
 
@@ -15,7 +17,7 @@ Candidate sau feedback tại commit `de101f2` đã được publish và smoke tr
 | Processing | Durable SQL background queue |
 | AI concurrency | 1 trong mỗi process |
 | Provider cooldown | 120 giây |
-| Verify Harness | Bật |
+| Verify Harness | Bản source mới mặc định tắt; chỉ cho phép trong Development khi bật rõ ràng. Live cũ từng bật, cần publish bản mới để khóa. |
 | Live fallback | Tắt; Ollama chỉ là contingency local |
 | Lượt chọn nhiều ảnh | Tối đa 10 JPG/PNG; mỗi ảnh tối đa 5 MB và tạo một job/status URL riêng, không có batch transaction phía server |
 | Amount | UI không có ô nhập; worker dùng `totalAmount` AI trích xuất sau validation. `USER_PROVIDED` chỉ còn cho test kit/API lịch sử |
@@ -46,7 +48,7 @@ Read-only health ngày 17/10 lúc 12:54 ICT trả HTTP 200, `status=ok`, databas
 6. **Email/folder connector:** chưa nối trong candidate hôm nay. Workflow đích giữ cùng ingestion boundary; Agent chỉ điều phối, connector riêng giữ OAuth. Kênh này cần least privilege, consent, sync cursor, idempotency, backfill, quarantine và audit.
 7. **Dashboard fail-closed và UX:** khi SQL không tải được, UI không hiển thị KPI bằng 0 hoặc cho tải CSV. Bảng có vùng cuộn, header sticky và đường kẻ tương phản hơn; nút refresh dùng icon. “Cần kiểm tra dữ liệu cá nhân” là số hồ sơ có marker privacy cần người xem lại, không phải kết luận pháp lý.
 
-Privacy triage là công cụ hỗ trợ rà soát, không phải kết luận pháp lý hay chứng nhận tuân thủ. Strict zero-data-retention chỉ được bật sau khi route/provider live được xác nhận hỗ trợ; nếu bật mù có thể làm không còn provider đủ điều kiện.
+Privacy triage là công cụ hỗ trợ rà soát, không phải kết luận pháp lý hay chứng nhận tuân thủ. Strict zero-data-retention chỉ được bật sau khi route/provider live được xác nhận hỗ trợ; nếu bật mù có thể làm không còn provider đủ điều kiện. Rate limit mới chỉ nằm trong memory từng process và không thay thế SSO/RBAC hoặc edge limiter.
 
 ## Evidence đánh giá
 

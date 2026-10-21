@@ -1,5 +1,7 @@
 # AURA - AI thẩm định hoàn ứng có kiểm soát
 
+> Cập nhật source 21/10/2026: Verify Harness mặc định tắt và chỉ chạy ở Development khi bật rõ ràng; upload/Verify có rate limit trong từng process. Offline gate đạt **196/196 tests**, Release build 0 warning và EF model không đổi. **Bản cập nhật này chưa publish/smoke live và chưa đủ điều kiện pilot hóa đơn thật.** Xem [báo cáo hardening](AURA/docs/POST_CONTEST_HARDENING_2026-10-21.md).
+
 AURA là ứng dụng ASP.NET Core hỗ trợ bước thẩm định đầu tiên trong quy trình hoàn ứng của nhân viên. Vision model đọc dữ kiện trên hóa đơn, nhưng policy engine C# tất định mới quyết định hướng xử lý: tự động đi tiếp với ca thường quy rõ ràng hoặc chuyển các ca bất định, ngoài chính sách, có tín hiệu dữ liệu cá nhân và vượt thẩm quyền cho người duyệt.
 
 ## Hồ sơ nộp bài
@@ -43,7 +45,7 @@ Khả năng chính:
 - Tab **Tổng quan** tổng hợp số hồ sơ, route, privacy review, lỗi, giá trị và độ trễ theo tháng/ngày từ SQL; quản lý có thể tải CSV tháng hiện tại mà không xuất raw AI facts.
 - Model chỉ trích xuất facts có cấu trúc; model không có quyền phê duyệt cuối.
 - Evidence thiếu, mâu thuẫn hoặc không đọc được luôn fail-safe về người duyệt.
-- Verify Harness chạy năm ca chính thức trong một thao tác: ba ca duyệt và hai ca chuyển tiếp.
+- Verify Harness chỉ dành cho môi trường Development có bật rõ ràng; Production không render nút và từ chối action. Bộ năm fixture vẫn dùng được để benchmark trên môi trường cô lập.
 - Danh tính người gửi, thao tác quản lý, provider metadata, lý do và Undo đều có thể audit.
 
 ## Business rules đang áp dụng
@@ -57,10 +59,10 @@ Runtime chỉ đọc đúng đường dẫn `BUSINESS_RULES.md` được cấu h
 
 ## Baseline đã xác minh
 
-Cập nhật kỹ thuật gần nhất: 17/10/2026. Health live và gate Verify Qwen3.8 Flash ngày 14/10 vẫn là baseline live đã đo; các cải tiến sau feedback doanh nghiệp bên dưới mới được kiểm thử offline và cần publish/smoke lại trước khi gọi là live.
+Cập nhật kỹ thuật source: 21/10/2026. Các số live bên dưới là evidence lịch sử từ candidate trước; hardening mới chưa được publish/smoke live.
 
 - Build: **0 warning, 0 error**.
-- Test tự động sau multi-file intake, AI-derived amount, privacy triage, dashboard và CSV report: **181/181 pass**; test offline không gọi AI API trả phí.
+- Test tự động sau hardening Verify/rate limit và payload Strict ZDR: **196/196 pass**; test offline không gọi AI API trả phí.
 - Verify Harness chính thức: **5/5** với đúng 3 approve và 2 escalate.
 - Mini-holdout 10 receipt mới do chủ dự án cung cấp, redaction và khóa trước đạt **8/10 exact**, **0 missed, 2 fail-safe over, 0 lỗi system/provider/429 và 28/30 field date/identifier/total cốt lõi**. Năm request đầu về terminal trong 64,763 giây và cả mười trong 108,803 giây ở AI concurrency 1. Bộ này chỉ chạy một lần; tương tác redaction được công bố nên không được gọi là production accuracy.
 - Post-holdout regression sau đó gửi cùng 12 **source bytes nguyên bản**, không snapshot/resize/transform: **10/12 exact, 0 missed, 2 over, 0 lỗi system/provider/429, 35/36 critical field**. Năm upload khác nhau đồng thời hoàn tất 5/5 với E2E P95 **93,684 giây**. Lần này chỉ kiểm queue integrity, không phải yêu cầu latency Verify.
@@ -135,8 +137,8 @@ Kỳ vọng: `READY: 0 failures`, health `status=ok`, database và storage avail
 
 ### 5. Dùng ứng dụng
 
-1. Chọn **Chạy Verify Harness (90s)** để chạy năm ca chính thức.
-2. Hoặc upload tối đa 10 receipt JPG/PNG. Claimed amount chỉ cần nhập cho một ảnh; nếu bỏ trống, AURA dùng tổng tiền AI đọc được sau validation.
+1. Upload tối đa 10 receipt JPG/PNG trong một lượt chọn; mỗi ảnh là một hồ sơ và request riêng. UI không yêu cầu nhập số tiền; AURA dùng tổng tiền AI đọc được sau validation.
+2. Nếu cần benchmark năm fixture, đặt `Verify__Enabled=true` trên môi trường **Development cô lập**. Production luôn chặn Verify.
 3. Với kết quả `ESCALATE_*`, chọn **Chuyển tiếp**.
 4. Trong **Quản lý**, duyệt hoặc từ chối hồ sơ.
 5. Mở **Lịch sử hành vi** để xem audit trail hoặc Undo quyết định quản lý gần nhất.
@@ -149,7 +151,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore
 dotnet ef migrations has-pending-model-changes --no-build
 ```
 
-Kỳ vọng cho candidate hiện hành: build 0 warning/error, 181/181 test pass và không có model change cần migration.
+Kỳ vọng cho source 21/10: build 0 warning/error, ít nhất 196/196 test pass và không có model change cần migration.
 
 Dừng app bằng `Ctrl+C`. Không cần reset database hoặc xóa LocalDB.
 

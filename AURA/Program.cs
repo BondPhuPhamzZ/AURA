@@ -9,6 +9,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using AURA.Options;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,32 @@ builder.Logging.AddDebug();
 
 // Đăng ký Services
 builder.Services.AddControllersWithViews();
+builder.Services.AddRateLimiter(options =>
+{
+    // A conservative, process-local admission guard for the anonymous demo surface.
+    // Production capacity and abuse protection still require identity and an edge limiter.
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json; charset=utf-8";
+        await context.HttpContext.Response.WriteAsync(
+            "{\"error\":\"Hệ thống đang nhận quá nhiều yêu cầu. Vui lòng thử lại sau.\"}", cancellationToken);
+    };
+    options.AddFixedWindowLimiter("receipt-intake", limiter =>
+    {
+        limiter.PermitLimit = 15;
+        limiter.Window = TimeSpan.FromMinutes(1);
+        limiter.QueueLimit = 0;
+        limiter.AutoReplenishment = true;
+    });
+    options.AddFixedWindowLimiter("verify-harness", limiter =>
+    {
+        limiter.PermitLimit = 1;
+        limiter.Window = TimeSpan.FromMinutes(2);
+        limiter.QueueLimit = 0;
+        limiter.AutoReplenishment = true;
+    });
+});
 builder.Services.AddOptions<VisionOptions>()
     .Bind(builder.Configuration.GetSection(VisionOptions.SectionName))
     .ValidateDataAnnotations()
@@ -134,6 +162,7 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
@@ -191,7 +220,8 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
         processingMode = "durable-background-queue",
         maxConcurrentAiRequests = vision.MaxConcurrentRequests,
         providerCooldownSeconds = vision.ProviderCooldownSeconds,
-        verifyHarnessEnabled = configuredVerify.Value.Enabled,
+        verifyHarnessEnabled = VerifyExecutionPolicy.IsAllowed(
+            configuredVerify.Value.Enabled, environment.EnvironmentName),
         fallbackEnabled = vision.FallbackEnabled,
         configuredFallbackProvider = vision.FallbackProvider,
         fallbackProvider = vision.FallbackEnabled ? vision.FallbackProvider : null,

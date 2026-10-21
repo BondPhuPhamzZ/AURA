@@ -67,6 +67,8 @@ Mở URL được in trong terminal. Không truy cập `/Verify` để tìm tran
 
 ## 4. Tái lập Verify
 
+> Từ source 21/10/2026, Verify chỉ chạy khi `ASPNETCORE_ENVIRONMENT=Development` **và** `Verify__Enabled=true`; Production luôn chặn và không render nút, kể cả env còn bật. Tái lập trong Development cô lập, không trên Live URL. Xem [gate hardening](POST_CONTEST_HARDENING_2026-10-21.md).
+
 1. Bấm **Chạy Verify Harness (90s)** một lần.
 2. Chờ tối đa năm request Qwen chạy tuần tự qua OpenRouter.
 3. Xác nhận đúng 5 dòng, có timestamp và latency.
@@ -77,11 +79,11 @@ Fixture có thể tái tạo bằng Python/Pillow qua `tools/generate_verify_rec
 
 Test Kit v3/v3.1 là regression namespace riêng, không thay Verify/v2. Tái tạo bằng `tools/generate_regression_receipts_v3.py --as-of-date 2026-10-06 --revision 3.0|3.1`; runner phải nhận manifest và images directory tường minh. Raw v3 đã khóa/chạy một lần; chỉ chạy v3.1 sau publish đúng candidate, recycle và health `ok`.
 
-Để bảo toàn credit: build + 190 automated test offline trước, deploy, chạy health/security smoke không ảnh, sau đó chỉ chạy **một lượt** Verify 5 ảnh khi thực sự cần. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota và quyền gửi ảnh.
+Để bảo toàn credit: build + ít nhất 196 automated test offline trước, deploy, chạy health/security smoke không ảnh; Verify 5 ảnh chỉ chạy trong Development cô lập khi thực sự cần. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota và quyền gửi ảnh.
 
 Sau thay đổi contract giảm giá hoặc sửa lỗi live, làm theo cổng build/test/health trong `docs/CURRENT_PROJECT_STATUS.md` và `docs/SUBMISSION_CHECKLIST.md`. Không reset database và không chạy migration nếu facts vẫn nằm trong JSON hiện có; restart queue phải dùng chính DB cũ để chứng minh độ bền.
 
-Sau official holdout 06/10, extraction mới dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Candidate hiện tại còn chuyển timestamp Audit từ UTC sang giờ Việt Nam rõ ràng, không phụ thuộc timezone host. Mailbox sandbox thử nghiệm đã được gỡ và model hiện không có pending migration. Trước publish phải đạt Release build sạch, 190/190 test và `dotnet ef migrations has-pending-model-changes` trả không có thay đổi. Thứ tự SmarterASP an toàn: backup/kiểm biến môi trường, giữ `Database__ApplyMigrationsOnStartup=false`, `OpenRouter__Model=qwen/qwen3.8-flash`, `OpenRouter__ReasoningEffort=none`, `OpenRouter__DenyProviderDataCollection=true` và `OpenRouter__RequireZeroDataRetention=false` → recycle ngay trước publish để nhả file lock → Visual Studio Web Deploy Release → chờ `Publish succeeded` → recycle lại → đợi 10–30 giây → `/healthz` phải HTTP 200, `status=ok`, database/storage true, pending migration 0, model/reasoning đúng và `providerDataCollectionDenied=true`. Sau đó chạy đúng một synthetic smoke single, một batch nhỏ, một privacy case và tải báo cáo CSV theo kỳ; không bật migration startup hoặc fallback.
+Sau official holdout 06/10, extraction dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Mailbox sandbox thử nghiệm đã được gỡ và model hiện không có pending migration. Trước publish source 21/10 phải đạt Release build sạch, ít nhất 196/196 test và `dotnet ef migrations has-pending-model-changes` không có thay đổi. Thứ tự SmarterASP an toàn: backup DB/receipts và kiểm biến môi trường; giữ `Database__ApplyMigrationsOnStartup=false`, `Verify__Enabled=false`, `OpenRouter__DenyProviderDataCollection=true`, `OpenRouter__RequireZeroDataRetention=false` cho tới khi ZDR route được probe; publish Release đúng SHA; recycle; `/healthz` phải HTTP 200, `status=ok`, database/storage true, migration 0 và `verifyHarnessEnabled=false`. Sau đó chạy một synthetic smoke, kiểm dashboard/CSV và audit; không bật migration startup hoặc fallback.
 
 Live gate hậu contract v2 phải dùng request mới, không gọi lại 15 ảnh là “blind”: (1) receipt có giờ `HH:mm:ss` + bia phải `ESCALATE_POLICY`; (2) receipt rõ, dòng tổng in đủ phải giữ `PRINTED_FINAL_TOTAL` và AUTO khi các điều kiện khác đạt; (3) ảnh có giá trị Total bị cắt phải FACT dù subtotal/items cộng được; (4) `04-10-26` phải canonicalize thành 2026-10-04; (5) Winmart có PTT + Mã CQT phải tách receipt/tax-authority; (6) money-role CoopSmile không được dùng cash/change/VAT làm total/discount. Lưu raw status/facts/audit và timestamp. Nếu model/provider chưa tuân schema v2, kết quả phải `ESCALATE_SYSTEM_ERROR`/`ESCALATE_FACT`, không rollback gate để lấy AUTO.
 
@@ -158,7 +160,7 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 4. Nếu một hồ sơ trả `AI_RATE_LIMIT`, dừng các lượt AI còn lại. Không recycle, retry dồn hoặc bật fallback chưa benchmark để che lỗi.
 5. Trước demo kiểm OpenRouter Activity/Credits/Key limit và chạy đúng một ảnh smoke. Với 429, dùng video/raw evidence và trình bày fail-safe/human review.
 6. App pool demo phải đặt **Maximum Worker Processes = 1**; gate hiện tại không phân tán giữa nhiều IIS process.
-7. Đặt `Verify:Enabled=false` khi public URL không cần self-service harness; chỉ bật lại trong phiên test/demo có giám sát rồi recycle pool.
+7. Giữ `Verify:Enabled=false` trên public URL. Source 21/10 chặn Verify trong Production ngay cả khi cấu hình nhầm `true`; không bật lại trên public Production.
 
 Để bật fallback cho demo trên máy cá nhân:
 

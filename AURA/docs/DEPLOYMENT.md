@@ -1,5 +1,7 @@
 # Deploy AURA và xác minh Live URL
 
+> Source 21/10/2026: Verify Harness mặc định tắt và **không thể chạy trên Production**, kể cả khi hosting còn `Verify__Enabled=true`. Cần ít nhất **196/196 tests** trước publish. Bản hardening chưa được smoke live; xem [báo cáo gate](POST_CONTEST_HARDENING_2026-10-21.md). Các số live cũ bên dưới là evidence lịch sử.
+
 Live URL đã dùng để smoke Sprint 1: `https://bondphupham-001-site1.ltempurl.com/`. BTC xác nhận phần trình diễn Chung kết chạy trên laptop cá nhân, nhưng brief vẫn yêu cầu đường truy cập công khai cho bản bàn giao. Vì vậy localhost là đường demo chính; Live URL là cổng bàn giao riêng và phải được smoke lại sau mỗi bản hardening. Hosting trial có thể chậm hoặc gián đoạn nên không dùng nó làm đường trình diễn duy nhất. Baseline và ranh giới vận hành hiện hành nằm tại [`CURRENT_PROJECT_STATUS.md`](CURRENT_PROJECT_STATUS.md).
 
 ## Trang index mặc định của SmarterASP.NET
@@ -27,7 +29,7 @@ Artifact production không được có thư mục `publish`, `.tmp`, `test_kit`
 3. Upload đúng một ảnh tổng hợp nhỏ, kiểm preview, facts AI, quyết định và một request tương ứng trong OpenRouter Activity.
 4. Với một hồ sơ `ESCALATE_*`, bấm chuyển tiếp, mở tab Quản lý, ra quyết định và xác nhận Audit Log chỉ hiển thị một hồ sơ với timeline nhất quán.
 5. Recycle pool, mở lại hồ sơ/ảnh vừa tạo để kiểm tra SQL và thư mục ảnh không mất dữ liệu.
-6. Chạy Verify Harness đúng một lượt, ưu tiên thực hiện ngay trong lần quay video; xác nhận đủ 5 dòng, expected/actual, PASS/FAIL và timestamp. Mốc dưới 90 giây là mục tiêu của hosted/OpenRouter; Ollama 4B local đã đo khoảng 303-304 giây cho một batch trên RTX 3050 Laptop 4 GB.
+6. Xác nhận Verify Harness **không hiển thị**, `/healthz.verifyHarnessEnabled=false`. Nếu cần đo lại fixture, chạy trên Development cô lập, không trên public Production. Mốc dưới 90 giây của bản cũ không phải SLA.
 7. Kiểm tra lại trên điện thoại hoặc mạng 4G, sau đó mới chia sẻ Live URL.
 
 Cập nhật: 29/09/2026. Phương án ngắn hạn đang dùng là **SmarterASP.NET 60-day trial**, vì AURA dùng ASP.NET Core 8 + SQL Server và cần lưu ảnh hóa đơn bền. Render Free chỉ nên dùng làm preview stateless.
@@ -43,7 +45,7 @@ dotnet build --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
 ```
 
-Kỳ vọng candidate hiện hành: preflight trả `READY: 0 failures`, build 0 warning/error và 190/190 test pass. `dotnet ef migrations has-pending-model-changes --no-build` phải trả không có model change. Warning do `-SkipHttp` là mong đợi; warning registry inspect chỉ là chẩn đoán và phải được đối chiếu bằng full `/healthz` sau khi app chạy. EF Core/dotnet-ef được pin ở 8.0.31. Chạy thêm `dotnet list AURA.csproj package --vulnerable --include-transitive` cho cả app và test project. Không nâng EF Core 8 lên 10 trước demo vì đó là thay đổi major/target framework, không phải bản vá tại chỗ. Offline gate không cần gọi API AI; sau deploy phải có một smoke contract v2 vì structured schema đã đổi.
+Kỳ vọng source 21/10: preflight trả `READY: 0 failures`, Release build 0 warning/error, ít nhất 196/196 test pass và `dotnet ef migrations has-pending-model-changes --no-build` không có model change. Kiểm dependency vulnerability cho app/test project, rồi smoke `/healthz` và một fixture synthetic sau deploy. Offline gate không gọi AI và không chứng minh route Strict ZDR hay khả năng phục vụ người dùng thật.
 
 3. Trong Visual Studio, mở `AURA.csproj` và chọn **Publish → Folder** hoặc **Publish → Web Deploy**. Target framework là `net8.0`, cấu hình `Release`.
 
@@ -69,7 +71,7 @@ Vision__FallbackEnabled=false
 Vision__FallbackProvider=Ollama
 Vision__MaxConcurrentRequests=1
 Vision__ProviderCooldownSeconds=120
-Verify__Enabled=true
+Verify__Enabled=false
 OpenRouter__ApiKey=<OPENROUTER_KEY_MỚI>
 OpenRouter__Model=qwen/qwen3.8-flash
 OpenRouter__ReasoningEffort=none
@@ -102,7 +104,7 @@ Thực hiện theo thứ tự để không tốn quota vô ích:
 3. Mở tab quản lý và lịch sử để xác nhận SQL Server/migration hoạt động.
 4. Upload một ảnh smoke tổng hợp; xác nhận HTTP `202`, audit `AI_QUEUED`, rồi trạng thái `COMPLETED/FAILED`. Refresh giữa lúc xử lý không được làm mất job.
 5. Mở lại ảnh từ lịch sử, recycle app pool rồi mở lại lần nữa để xác minh file tồn tại.
-6. Chỉ khi 5 bước trên đạt, chạy đúng một lượt Verify Harness nếu rehearsal thật sự cần và ghi thời điểm, 5 expected/actual, tổng latency và OpenRouter cost. Lượt live candidate 12/10 đã đạt 5/5 trong 65,004 giây, 0 system/provider error và gate 1 HTTP 200 + 4 HTTP 409 khi năm client cùng bấm. Không chạy lại Verify hoặc gói 15/30 để săn PASS.
+6. Xác nhận `/healthz.verifyHarnessEnabled=false` và UI không có nút Verify. Lượt live 12/10 đạt 5/5 trong 65,004 giây trên bản cũ; Production mới không cho chạy lại Verify. Nếu cần benchmark, dùng Development cô lập và ghi rõ thời điểm/cost.
 7. Đổi migration flag về `false`, recycle pool và kiểm `/healthz` lần cuối.
 
 ## 6. Xử lý lỗi thường gặp

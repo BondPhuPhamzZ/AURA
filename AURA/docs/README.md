@@ -6,6 +6,7 @@ Thư mục này chỉ chứa các tài liệu kỹ thuật hiện hành dành ch
 |---|---|
 | `CURRENT_PROJECT_STATUS.md` | Nguồn sự thật duy nhất về baseline đã xác minh và các gate còn mở |
 | `AFTER_FEEDBACK_IMPLEMENTATION.md` | Phạm vi triển khai ngày 17/10, bằng chứng test, demo flow mới và các ranh giới chưa-production |
+| `POST_CONTEST_HARDENING_2026-10-21.md` | Gate Verify/rate limit mới, evidence 196 test và điều kiện NO-GO pilot dữ liệu thật |
 | `AFTER_FEEDBACK_ARCHITECTURE_CHECKLIST.md` | Đối chiếu recommend check, 10 architecture gates, khác biệt trước/sau và thứ tự phát triển tiếp theo |
 | `EVALUATION_EVIDENCE.md` | Bản đồ kết quả công khai, ranh giới claim và vị trí evidence thô riêng tư |
 | `RUNBOOK.md` | Quy trình vận hành và khôi phục |

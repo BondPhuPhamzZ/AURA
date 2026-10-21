@@ -6,6 +6,7 @@ using AURA.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace AURA.Controllers;
 
@@ -135,6 +136,7 @@ public sealed class ApplicantController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("receipt-intake")]
     public async Task<IActionResult> UploadReceipt(IFormFile? receiptFile, decimal? claimedAmount,
         string? submitterCode, string? submitterDisplayName, string? submitterDepartment,
         CancellationToken cancellationToken)

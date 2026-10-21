@@ -4,6 +4,8 @@
 @using AURA.Options
 @using Microsoft.Extensions.Options
 @inject IOptions<ReceiptStorageOptions> ReceiptStorage
+@inject IOptions<VerifyOptions> VerifySettings
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostEnvironment
 @{
     var initialTab = ViewData["InitialTab"] as string ?? "applicant";
     var applicantDisplay = initialTab == "applicant" ? "block" : "none";
@@ -12,12 +14,16 @@
     var dashboardDisplay = initialTab == "dashboard" ? "block" : "none";
     var dashboardYear = ViewData["DashboardYear"] as int?;
     var dashboardMonth = ViewData["DashboardMonth"] as int?;
+    var verifyHarnessAvailable = AURA.Services.VerifyExecutionPolicy.IsAllowed(
+        VerifySettings.Value.Enabled, HostEnvironment.EnvironmentName);
 }
 
 <!-- Tab Applicant / Tester -->
 <div class="tab-content-pane feature-card @(initialTab == "applicant" ? "active" : null)" id="pane-applicant" style="padding: 24px; display: @applicantDisplay;">
     
     <!-- Hướng dẫn & Verify Harness (Top Section) -->
+    @if (verifyHarnessAvailable)
+    {
     <div class="section-heading-row verify-heading-row">
         <div class="verify-copy">
             <h2 class="hero-title" style="font-size: 1.5rem; margin-bottom: 8px;">Verify Harness</h2>
@@ -35,6 +41,7 @@
             </form>
         </div>
     </div>
+    }
 
     <!-- Upload Thủ Công (Middle Section) -->
     <section class="workflow-section upload-section" aria-labelledby="single-upload-title">
