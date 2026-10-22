@@ -40,8 +40,8 @@ public sealed class ReceiptIntakeService
             _storageOptions.MaxFileSizeMb);
         if (error is not null) throw new ReceiptIntakeException(error);
 
-        // A Drive file version has a stable identity across polls and restarts.
-        // The SQL primary key supplies idempotency without a new migration.
+        // The caller supplies a stable source/content identity. The SQL primary
+        // key supplies idempotency across polls and restarts without a migration.
         var id = input.SourceKey is null ? Guid.NewGuid().ToString("N") :
             SourceRequestId(input.SourceKey);
         if (input.SourceKey is not null)

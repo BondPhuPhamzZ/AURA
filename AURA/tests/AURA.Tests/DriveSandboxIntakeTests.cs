@@ -138,6 +138,56 @@ public sealed class DriveSandboxIntakeTests
     }
 
     [Theory]
+    [InlineData("metadata-bump", 1)]
+    [InlineData("content-edit", 2)]
+    public async Task Drive_content_identity_ignores_metadata_only_changes_but_accepts_new_bytes(
+        string mode, int expectedJobs)
+    {
+        var root = NewTestRoot();
+        try
+        {
+            using var rsa = RSA.Create(2048);
+            var repository = new FakeRepository();
+            var options = OptionsFactory.Create(new DriveSandboxOptions
+            {
+                Enabled = true, FolderId = "folder123",
+                ServiceAccountJsonPath = WriteFakeServiceAccount(root, rsa),
+                RequireMalwareScanner = false, PollIntervalSeconds = 30
+            });
+            using var provider = BuildProvider(root, repository);
+            var handler = new FakeDriveHandler(rsa, mode);
+            using var http = new HttpClient(handler);
+            var storage = OptionsFactory.Create(new ReceiptStorageOptions
+                { Directory = "receipts", MaxFileSizeMb = 5 });
+            var environment = new TestEnvironment(root);
+
+            var first = new DriveSandboxWorker(options, storage, environment,
+                provider.GetRequiredService<IServiceScopeFactory>(),
+                new DriveSandboxClient(http, options), LocalConfig(),
+                NullLogger<DriveSandboxWorker>.Instance);
+            await first.StartAsync(CancellationToken.None);
+            await repository.Accepted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await first.StopAsync(CancellationToken.None);
+
+            var second = new DriveSandboxWorker(options, storage, environment,
+                provider.GetRequiredService<IServiceScopeFactory>(),
+                new DriveSandboxClient(http, options), LocalConfig(),
+                NullLogger<DriveSandboxWorker>.Instance);
+            await second.StartAsync(CancellationToken.None);
+            for (var attempt = 0; attempt < 50 &&
+                (handler.ListRequestCount < 2 || repository.Requests.Count < expectedJobs); attempt++)
+                await Task.Delay(100);
+            await Task.Delay(200);
+            await second.StopAsync(CancellationToken.None);
+
+            Assert.Equal(2, handler.ListRequestCount);
+            Assert.Equal(expectedJobs, repository.Requests.Count);
+            Assert.Equal(expectedJobs, handler.DownloadCount);
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Theory]
     [InlineData("rate-limited-once", 2, 1)]
     [InlineData("forbidden", 1, 0)]
     public async Task Drive_client_retries_transient_error_but_not_permission_denial(
@@ -367,8 +417,10 @@ public sealed class DriveSandboxIntakeTests
         int listedEntryCount = 1) : HttpMessageHandler
     {
         private readonly string _md5 = Convert.ToHexString(MD5.HashData(Png)).ToLowerInvariant();
+        private readonly byte[] _editedPng = [137, 80, 78, 71, 13, 10, 26, 10, 0, 1];
         public int DownloadCount { get; private set; }
         public int FolderRequestCount { get; private set; }
+        public int ListRequestCount { get; private set; }
         public bool JwtSignatureVerified { get; private set; }
         public TaskCompletionSource ListCompleted { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -403,6 +455,7 @@ public sealed class DriveSandboxIntakeTests
             }
             if (path == "/drive/v3/files" && request.RequestUri.Query.Contains("q=", StringComparison.Ordinal))
             {
+                ListRequestCount++;
                 var response = Json(JsonSerializer.Serialize(new
                 {
                     files = Enumerable.Range(0, listedEntryCount).Select(_ => FileMetadata()).ToArray()
@@ -415,21 +468,25 @@ public sealed class DriveSandboxIntakeTests
             {
                 DownloadCount++;
                 return new HttpResponseMessage(HttpStatusCode.OK)
-                    { Content = new ByteArrayContent(Png) };
+                    { Content = new ByteArrayContent(CurrentBytes()) };
             }
             if (path == "/drive/v3/files/file123")
                 return Json(JsonSerializer.Serialize(FileMetadata(afterDownload: true)));
             throw new InvalidOperationException("Unexpected fake Drive endpoint.");
         }
 
+        private byte[] CurrentBytes() => mode == "content-edit" && ListRequestCount >= 2 ? _editedPng : Png;
+
         private object FileMetadata(bool afterDownload = false) => new
         {
             id = "file123",
             name = mode == "unsupported-file" ? "receipt.txt" : "receipt.png",
             mimeType = mode == "unsupported-file" ? "text/plain" : "image/png",
-            size = Png.Length.ToString(),
-            md5Checksum = mode == "bad-md5" ? "00000000000000000000000000000000" : _md5,
-            version = afterDownload && mode == "changed-version" ? "2" : "1",
+            size = CurrentBytes().Length.ToString(),
+            md5Checksum = mode == "bad-md5" ? "00000000000000000000000000000000" :
+                mode == "content-edit" ? Convert.ToHexString(MD5.HashData(CurrentBytes())).ToLowerInvariant() : _md5,
+            version = afterDownload && mode == "changed-version" ? "2" :
+                (mode is "metadata-bump" or "content-edit") && ListRequestCount >= 2 ? "2" : "1",
             parents = new[] { mode == "wrong-parent" ? "other-folder" : "folder123" },
             trashed = false,
             capabilities = new { canDownload = true }

@@ -109,6 +109,8 @@ public sealed class DriveSandboxWorker : BackgroundService
             throw new DriveSandboxException("Drive file missing ID.");
         var version = file.TryGetProperty("version", out var versionElement) ?
             versionElement.GetString() : null;
+        // A Drive version also changes for metadata-only edits. Content identity
+        // must use the file ID and checksum, or one image can create two jobs.
         var sourceKey = $"drive:{_options.FolderId}:{id}:{version}";
         if (string.IsNullOrWhiteSpace(version) || !HasParent(file, _options.FolderId) ||
             (file.TryGetProperty("trashed", out var trashed) && trashed.GetBoolean()))
@@ -131,6 +133,8 @@ public sealed class DriveSandboxWorker : BackgroundService
             await RecordRejectionAsync(sourceKey, "UNSUPPORTED_FILE", cancellationToken);
             return;
         }
+
+        sourceKey = $"drive:{_options.FolderId}:{id}:{md5.ToLowerInvariant()}";
 
         await using var scope = _scopeFactory.CreateAsyncScope();
         var repository = scope.ServiceProvider.GetRequiredService<IReimbursementRepository>();
