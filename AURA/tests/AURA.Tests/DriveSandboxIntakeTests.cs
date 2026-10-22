@@ -54,6 +54,8 @@ public sealed class DriveSandboxIntakeTests
             Assert.Single(repository.Requests);
             Assert.Single(Directory.GetFiles(Path.Combine(root, "receipts")));
             Assert.Contains("Source=DRIVE_SANDBOX", repository.LastAudit);
+            Assert.DoesNotContain("File=", repository.LastAudit);
+            Assert.DoesNotContain("Submitter=", repository.LastAudit);
         }
         finally { DeleteTestRoot(root); }
     }
@@ -131,6 +133,46 @@ public sealed class DriveSandboxIntakeTests
             Assert.Contains("Source=DRIVE_SANDBOX", repository.LastAudit);
             Assert.Equal(1, handler.DownloadCount);
             Assert.True(handler.JwtSignatureVerified);
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Theory]
+    [InlineData("rate-limited-once", 2, 1)]
+    [InlineData("forbidden", 1, 0)]
+    public async Task Drive_client_retries_transient_error_but_not_permission_denial(
+        string mode, int expectedFolderRequests, int expectedJobs)
+    {
+        var root = NewTestRoot();
+        try
+        {
+            using var rsa = RSA.Create(2048);
+            var options = OptionsFactory.Create(new DriveSandboxOptions
+            {
+                Enabled = true, FolderId = "folder123",
+                ServiceAccountJsonPath = WriteFakeServiceAccount(root, rsa),
+                RequireMalwareScanner = false, PollIntervalSeconds = 30
+            });
+            var repository = new FakeRepository();
+            using var provider = BuildProvider(root, repository);
+            var handler = new FakeDriveHandler(rsa, mode);
+            using var http = new HttpClient(handler);
+            var worker = new DriveSandboxWorker(options,
+                OptionsFactory.Create(new ReceiptStorageOptions
+                    { Directory = "receipts", MaxFileSizeMb = 5 }),
+                new TestEnvironment(root), provider.GetRequiredService<IServiceScopeFactory>(),
+                new DriveSandboxClient(http, options), LocalConfig(),
+                NullLogger<DriveSandboxWorker>.Instance);
+
+            await worker.StartAsync(CancellationToken.None);
+            if (expectedJobs == 1)
+                await repository.Accepted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            else
+                await Task.Delay(300);
+            await worker.StopAsync(CancellationToken.None);
+
+            Assert.Equal(expectedFolderRequests, handler.FolderRequestCount);
+            Assert.Equal(expectedJobs, repository.Requests.Count);
         }
         finally { DeleteTestRoot(root); }
     }
@@ -326,6 +368,7 @@ public sealed class DriveSandboxIntakeTests
     {
         private readonly string _md5 = Convert.ToHexString(MD5.HashData(Png)).ToLowerInvariant();
         public int DownloadCount { get; private set; }
+        public int FolderRequestCount { get; private set; }
         public bool JwtSignatureVerified { get; private set; }
         public TaskCompletionSource ListCompleted { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -350,7 +393,14 @@ public sealed class DriveSandboxIntakeTests
                 return Json("""{"access_token":"fake","expires_in":3600}""");
             }
             if (path == "/drive/v3/files/folder123")
+            {
+                FolderRequestCount++;
+                if (mode == "rate-limited-once" && FolderRequestCount == 1)
+                    return new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+                if (mode == "forbidden")
+                    return new HttpResponseMessage(HttpStatusCode.Forbidden);
                 return Json("""{"id":"folder123","mimeType":"application/vnd.google-apps.folder","trashed":false}""");
+            }
             if (path == "/drive/v3/files" && request.RequestUri.Query.Contains("q=", StringComparison.Ordinal))
             {
                 var response = Json(JsonSerializer.Serialize(new

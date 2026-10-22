@@ -213,8 +213,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
             RequestId = request.Id,
             Action = auditAction,
             Timestamp = DateTime.UtcNow,
-            Details = $"File={request.OriginalFileName}; Submitter={request.SubmitterCode}; SHA256={request.FileSha256}; " +
-                $"DuplicateDetected={request.DuplicateDetected}; DuplicatePolicyEnabled={request.DuplicatePolicyEnabled}; " +
+            Details = $"DuplicateDetected={request.DuplicateDetected}; DuplicatePolicyEnabled={request.DuplicatePolicyEnabled}; " +
                 $"PrimaryProvider={request.PrimaryProvider}; ServedProvider={request.ServedProvider}; " +
                 $"FallbackUsed={request.FallbackUsed}; ProviderErrorCode={request.ProviderErrorCode}; " +
                 $"EvidenceContractVersion={extractedFacts?.EvidenceContractVersion ?? 0}; " +
@@ -224,7 +223,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
                 $"PersonalDataCategories={string.Join(",", extractedFacts?.PersonalDataCategories ?? [])}; " +
                 $"SemanticRepairApplied={extractedFacts?.SemanticRepairApplied ?? false}; " +
                 $"SemanticRepairIssueCount={extractedFacts?.SemanticRepairIssues.Count ?? 0}; " +
-                $"Reason={request.AiReasoning}; Latency={request.ProcessingLatencyMs}ms"
+                $"Latency={request.ProcessingLatencyMs}ms"
         });
         await db.SaveChangesAsync(cancellationToken);
         return providerFailure is null

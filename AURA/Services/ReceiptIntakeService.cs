@@ -92,10 +92,9 @@ public sealed class ReceiptIntakeService
                 SubmitterDepartment = NormalizeIdentity(input.SubmitterDepartment, "Demo", 200)
             };
             await _repository.AddRequestWithAuditAsync(request, "AI_QUEUED",
-                $"Source={(input.SourceKey is null ? "MANUAL" : "DRIVE_SANDBOX")}; File={request.OriginalFileName}; " +
-                $"Submitter={request.SubmitterCode}; Department={request.SubmitterDepartment}; " +
+                $"Source={(input.SourceKey is null ? "MANUAL" : "DRIVE_SANDBOX")}; " +
                 $"AmountSource={(input.ClaimedAmount > 0 ? AmountSources.UserProvided : "AI_PENDING")}; " +
-                $"SHA256={sha256}; DuplicateDetected={duplicate}; " +
+                $"DuplicateDetected={duplicate}; " +
                 $"DuplicatePolicyEnabled={request.DuplicatePolicyEnabled}");
             _queue.Signal(id);
             return request;

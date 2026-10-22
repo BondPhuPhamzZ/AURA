@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -105,9 +106,9 @@ public sealed class DriveSandboxClient
     public async Task<byte[]> DownloadAsync(string token, string fileId, long maxBytes,
         CancellationToken cancellationToken)
     {
-        using var request = AuthorizedGet("files/" + Uri.EscapeDataString(fileId) + "?alt=media", token);
-        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
+        using var response = await SendGetWithRetryAsync(
+            "files/" + Uri.EscapeDataString(fileId) + "?alt=media", token,
+            HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (!response.IsSuccessStatusCode)
             throw new DriveSandboxException($"Drive download failed: HTTP {(int)response.StatusCode}.");
         if (response.Content.Headers.ContentLength > maxBytes)
@@ -128,8 +129,8 @@ public sealed class DriveSandboxClient
 
     private async Task<JsonDocument> GetJsonAsync(string path, string token, CancellationToken cancellationToken)
     {
-        using var request = AuthorizedGet(path, token);
-        using var response = await _http.SendAsync(request, cancellationToken);
+        using var response = await SendGetWithRetryAsync(path, token,
+            HttpCompletionOption.ResponseContentRead, cancellationToken);
         if (!response.IsSuccessStatusCode)
             throw new DriveSandboxException($"Drive metadata failed: HTTP {(int)response.StatusCode}.");
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
@@ -142,6 +143,29 @@ public sealed class DriveSandboxClient
             "https://www.googleapis.com/drive/v3/" + path);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return request;
+    }
+
+    private async Task<HttpResponseMessage> SendGetWithRetryAsync(string path, string token,
+        HttpCompletionOption completion, CancellationToken cancellationToken)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            using var request = AuthorizedGet(path, token);
+            var response = await _http.SendAsync(request, completion, cancellationToken);
+            if (attempt == 2 || response.StatusCode is not (HttpStatusCode.TooManyRequests or
+                HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or
+                HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout))
+                return response;
+
+            var retryHeader = response.Headers.RetryAfter;
+            var retryAfter = retryHeader?.Delta ??
+                (retryHeader?.Date is { } date ? date - DateTimeOffset.UtcNow : null);
+            response.Dispose();
+            var delay = retryAfter is { } value && value > TimeSpan.Zero
+                ? value : TimeSpan.FromMilliseconds(200 * (1 << attempt));
+            await Task.Delay(delay > TimeSpan.FromSeconds(5) ? TimeSpan.FromSeconds(5) : delay,
+                cancellationToken);
+        }
     }
 
     private static string Encode(byte[] bytes) =>
