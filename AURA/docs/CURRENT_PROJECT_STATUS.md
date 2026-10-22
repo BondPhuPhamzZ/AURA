@@ -4,8 +4,9 @@
 > audit mới không lặp lại tên file/mã người gửi/hash ảnh/free-text reason;
 > **218/218** test pass, Release build 0 warning/error, EF không pending model
 > changes. LocalDB đã chạy được ngoài sandbox của phiên công cụ với DB thử
-> riêng, health `ok` và dashboard 200; chưa chạy lại E2E Drive/OpenRouter
-> sau thay đổi, không suy kết quả E2E cũ cho bản hardening mới. Xem
+> riêng, health `ok` và dashboard 200; E2E Drive/OpenRouter sau thay đổi
+> hoàn tất 3/3 job synthetic, 0 lỗi, không tạo trùng sau poll/restart.
+> Kết quả này chưa phải benchmark batch hay phép đo hóa đơn thật. Xem
 > [evidence và các gate còn mở](DRIVE_PIPELINE_HARDENING_2026-10-22.md).
 
 > Source 22/10 có **Drive synthetic sandbox Development-only**, tắt mặc định,
