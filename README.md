@@ -1,6 +1,6 @@
 # AURA — Controlled AI Reimbursement Review
 
-> **Current source status (22 October 2026):** 218/218 offline tests pass; the Release build has 0 warnings and 0 errors; EF Core reports no pending model changes. A restricted-folder Google Drive connector passed a small local end-to-end test using synthetic receipts before the latest hardening. LocalDB is currently unavailable for a repeat end-to-end run. The connector is disabled by default. This source has **not** been republished to the live demo and is **not approved for real receipts or production use**.
+> **Current source status (22 October 2026):** 218/218 offline tests pass; the Release build has 0 warnings and 0 errors; EF Core reports no pending model changes. A restricted-folder Google Drive connector passed a small local end-to-end test using synthetic receipts before the latest hardening. An isolated local database now passes health and dashboard checks; Drive end-to-end testing after hardening is still pending. The connector is disabled by default. This source has **not** been republished to the live demo and is **not approved for real receipts or production use**.
 
 AURA is a supervised first-line assistant for employee reimbursement review. A vision model extracts structured facts from receipt images; semantic validation checks the evidence; deterministic C# policy—not the model—selects the route. Uncertain or exceptional cases stop for human review and are recorded in an audit timeline.
 

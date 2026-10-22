@@ -16,17 +16,17 @@ Scope: local source and synthetic fixtures. This record does not certify a live 
 | `dotnet test tests/AURA.Tests/AURA.Tests.csproj -c Release --no-build --no-restore` | PASS: 218/218; no skipped tests |
 | `dotnet ef migrations has-pending-model-changes --no-build` | PASS: no model changes |
 | Focused Drive test run | PASS: 20/20 after the change |
-| LocalDB runtime and `/healthz` | BLOCKED: LocalDB instance registry error; last smoke returned `degraded`, `databaseAvailable=false` |
+| Isolated LocalDB and `/healthz` | PASS outside the command sandbox: `AuraDriveHardening_20261022` migrated; health `ok`, database available/up to date, pending migrations 0, Drive disabled; dashboard HTTP 200 |
 | Live Google Drive/OpenRouter after this change | NOT RUN; the local database gate is unavailable |
 | 5/20/100 synthetic end-to-end batches | NOT RUN; no capacity claim |
 
-An earlier test invocation with restore emitted NU1900 because the NuGet vulnerability feed was unreachable. The final no-restore test above passed. The 100-image local fixture directory contains 100 files but only 30 distinct SHA-256 values; it is untracked and unsuitable for a 100-independent-receipt accuracy claim.
+An earlier test invocation with restore emitted NU1900 because the NuGet vulnerability feed was unreachable. The final no-restore test above passed. A sandboxed LocalDB command initially failed to inspect the instance registry; an approved out-of-sandbox check succeeded, then the existing instance started. No existing database was deleted. The 100-image local fixture directory contains 100 files but only 30 distinct SHA-256 values; it is untracked and unsuitable for a 100-independent-receipt accuracy claim.
 
 ## Next gates
 
-1. Restore a working isolated SQL test database without deleting an existing instance or data; verify `/healthz` and dashboard.
+1. Confirm the Restricted Drive test folder contains only the intended synthetic fixtures before enabling the poller. The folder is an active external source, so its current contents must be checked again.
 2. Re-run one synthetic Drive file, restart/idempotency, and negative cases against the actual Drive API; record case IDs and counts without raw receipt data.
 3. Run 5, 20, then 100 distinct synthetic files only after the smaller gates pass. A clean Restricted test folder must stay within the connector's 100-entry scan limit.
 4. Review authentication/RBAC for receipt access and manager decisions, malware quarantine, retention/restore, and provider privacy before any real-data pilot.
 
-The current decision remains **GO for offline regression and local synthetic testing once SQL is healthy; NO-GO for real receipts, public Drive intake, and production scale claims**.
+The current decision remains **GO for offline regression and local synthetic testing with the isolated SQL database; NO-GO for real receipts, public Drive intake, and production scale claims**.

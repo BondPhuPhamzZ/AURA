@@ -5,8 +5,9 @@ prototype Development-only với fixture tổng hợp**, không phải phê duy�
 hóa đơn cá nhân hay tuyên bố production-ready.
 
 Hardening tiếp theo cùng ngày: Drive GET đã có retry giới hạn cho 429/5xx và
-audit mới giảm dữ liệu nhận dạng; **218/218** test pass. LocalDB hiện lỗi
-registry nên E2E sau thay đổi và batch 5/20/100 chưa chạy. Xem
+audit mới giảm dữ liệu nhận dạng; **218/218** test pass. LocalDB chạy được
+ngoài sandbox của phiên công cụ; DB thử riêng có health `ok`, dashboard 200.
+E2E Drive sau thay đổi và batch 5/20/100 chưa chạy. Xem
 [báo cáo evidence mới](DRIVE_PIPELINE_HARDENING_2026-10-22.md); các số
 216/216 và E2E bên dưới là snapshot trước hardening này.
 
