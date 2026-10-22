@@ -226,6 +226,42 @@ public sealed class DriveSandboxIntakeTests
     }
 
     [Fact]
+    public async Task Drive_scan_over_configured_file_limit_fails_closed_without_partial_intake()
+    {
+        var root = NewTestRoot();
+        try
+        {
+            using var rsa = RSA.Create(2048);
+            var keyPath = WriteFakeServiceAccount(root, rsa);
+            var repository = new FakeRepository();
+            var options = OptionsFactory.Create(new DriveSandboxOptions
+            {
+                Enabled = true, FolderId = "folder123", ServiceAccountJsonPath = keyPath,
+                RequireMalwareScanner = false, MaxFilesPerScan = 100, PollIntervalSeconds = 30
+            });
+            using var provider = BuildProvider(root, repository);
+            var handler = new FakeDriveHandler(rsa, listedEntryCount: 101);
+            using var http = new HttpClient(handler);
+            var worker = new DriveSandboxWorker(options,
+                OptionsFactory.Create(new ReceiptStorageOptions
+                    { Directory = "receipts", MaxFileSizeMb = 5 }),
+                new TestEnvironment(root), provider.GetRequiredService<IServiceScopeFactory>(),
+                new DriveSandboxClient(http, options), LocalConfig(),
+                NullLogger<DriveSandboxWorker>.Instance);
+
+            await worker.StartAsync(CancellationToken.None);
+            await handler.ListCompleted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await Task.Delay(TimeSpan.FromMilliseconds(200));
+            await worker.StopAsync(CancellationToken.None);
+
+            Assert.Empty(repository.Requests);
+            Assert.Equal(0, handler.DownloadCount);
+            Assert.False(Directory.Exists(Path.Combine(root, "receipts")));
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Fact]
     public async Task Download_never_buffers_beyond_limit_even_if_server_omits_content_length()
     {
         using var http = new HttpClient(new OversizeHandler());
@@ -285,11 +321,14 @@ public sealed class DriveSandboxIntakeTests
         return path;
     }
 
-    private sealed class FakeDriveHandler(RSA publicKey, string mode = "valid") : HttpMessageHandler
+    private sealed class FakeDriveHandler(RSA publicKey, string mode = "valid",
+        int listedEntryCount = 1) : HttpMessageHandler
     {
         private readonly string _md5 = Convert.ToHexString(MD5.HashData(Png)).ToLowerInvariant();
         public int DownloadCount { get; private set; }
         public bool JwtSignatureVerified { get; private set; }
+        public TaskCompletionSource ListCompleted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
             CancellationToken cancellationToken)
@@ -313,10 +352,14 @@ public sealed class DriveSandboxIntakeTests
             if (path == "/drive/v3/files/folder123")
                 return Json("""{"id":"folder123","mimeType":"application/vnd.google-apps.folder","trashed":false}""");
             if (path == "/drive/v3/files" && request.RequestUri.Query.Contains("q=", StringComparison.Ordinal))
-                return Json(JsonSerializer.Serialize(new
+            {
+                var response = Json(JsonSerializer.Serialize(new
                 {
-                    files = new[] { FileMetadata() }
+                    files = Enumerable.Range(0, listedEntryCount).Select(_ => FileMetadata()).ToArray()
                 }));
+                ListCompleted.TrySetResult();
+                return response;
+            }
             if (path == "/drive/v3/files/file123" && request.RequestUri.Query.Contains("alt=media",
                     StringComparison.Ordinal))
             {

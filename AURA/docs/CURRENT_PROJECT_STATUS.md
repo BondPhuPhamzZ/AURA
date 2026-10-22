@@ -11,8 +11,9 @@
 > chạy lại bằng file ID mới ra `AUTO_APPROVE`, vẫn giữ audit cũ.
 > `/healthz` local `status=ok`, migration 0, dashboard 200. Connector đã tắt
 > lại sau test; **bản live chưa publish lại, không nhận dữ liệu thật**.
-> Rejection log được hardening để cùng source-version/reason chỉ ghi một lần.
-> Hiện **215/215** Release tests pass, build 0 warning/error, EF không pending
+> Rejection log được hardening để cùng source-version/reason chỉ ghi một lần;
+> vượt giới hạn scan 100 entries cũng fail-closed, không intake một phần.
+> Hiện **216/216** Release tests pass, build 0 warning/error, EF không pending
 > model changes. Xem [evidence Drive local](DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md),
 > [checklist/GO-NO-GO](DRIVE_SANDBOX_CHECKLIST.md) và [runbook](DRIVE_SANDBOX_LOCAL.md).
 

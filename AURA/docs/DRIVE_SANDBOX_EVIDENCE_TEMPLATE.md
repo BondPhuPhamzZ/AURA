@@ -29,7 +29,7 @@ restart; kiểm thử lặp poll xác nhận một dòng duy nhất.
 E2E này chỉ đủ cơ sở công bố **local synthetic sandbox hoạt động**. Trước
 production còn malware quarantine, auth/RBAC cho ảnh và thao tác, consent,
 retention/backup, provider privacy, quản lý key, distributed coordination và
-capacity test. Sau E2E, toàn bộ 215 unit/regression tests pass, Release build
+capacity test. Sau E2E, toàn bộ 216 unit/regression tests pass, Release build
 0 warning/error và EF không có pending model changes. xUnit không thay thế E2E,
 và E2E này không thay thế pilot thật. Checklist và kế hoạch test tiếp theo ở
 [DRIVE_SANDBOX_CHECKLIST.md](DRIVE_SANDBOX_CHECKLIST.md).

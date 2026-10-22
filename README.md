@@ -1,6 +1,6 @@
 # AURA - AI thẩm định hoàn ứng có kiểm soát
 
-> Cập nhật source 22/10/2026: Drive synthetic sandbox đã qua E2E **trên localhost** với service account chỉ đọc folder test: 3/3 lần xử lý job hoàn tất (2 fixture khác nhau, một fixture chạy lại), restart không tạo trùng và file `.txt` bị chặn trước AI. Một false positive privacy do mã số thuế giống số điện thoại đã được sửa và kiểm lại. Offline gate đạt **214/214 tests**, EF model không đổi. Connector mặc định tắt; **chưa publish bản source này lên live và chưa đủ điều kiện pilot hóa đơn thật**. Xem [evidence Drive local](AURA/docs/DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md).
+> Cập nhật source 22/10/2026: Drive synthetic sandbox đã qua E2E **trên localhost** với service account chỉ đọc folder test: 3/3 lần xử lý job hoàn tất (2 fixture khác nhau, một fixture chạy lại), restart không tạo trùng và file `.txt` bị chặn trước AI. Một false positive privacy do mã số thuế giống số điện thoại đã được sửa và kiểm lại. Offline gate đạt **216/216 tests**, gồm rejection-log de-duplication và scan overflow fail-closed; EF model không đổi. Connector mặc định tắt; **chưa publish bản source này lên live và chưa đủ điều kiện pilot hóa đơn thật**. Xem [checklist GO/NO-GO](AURA/docs/DRIVE_SANDBOX_CHECKLIST.md) và [evidence Drive local](AURA/docs/DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md).
 
 AURA là ứng dụng ASP.NET Core hỗ trợ bước thẩm định đầu tiên trong quy trình hoàn ứng của nhân viên. Vision model đọc dữ kiện trên hóa đơn, nhưng policy engine C# tất định mới quyết định hướng xử lý: tự động đi tiếp với ca thường quy rõ ràng hoặc chuyển các ca bất định, ngoài chính sách, có tín hiệu dữ liệu cá nhân và vượt thẩm quyền cho người duyệt.
 
@@ -73,7 +73,7 @@ Runtime chỉ đọc đúng đường dẫn `BUSINESS_RULES.md` được cấu h
 Cập nhật kỹ thuật source: 22/10/2026. Các số live bên dưới là evidence lịch sử từ candidate trước; bản Drive sandbox và privacy fix chỉ được kiểm thử local, chưa được publish/smoke live.
 
 - Build: **0 warning, 0 error**.
-- Test tự động sau Drive sandbox và privacy classifier fix: **214/214 pass**; test offline không gọi AI API trả phí. E2E Drive dùng fixture synthetic và gọi API thật được tách riêng trong evidence.
+- Test tự động sau Drive sandbox, privacy classifier fix và giới hạn scan fail-closed: **216/216 pass**; test offline không gọi AI API trả phí. E2E Drive dùng fixture synthetic và gọi API thật được tách riêng trong evidence.
 - Verify Harness chính thức: **5/5** với đúng 3 approve và 2 escalate.
 - Mini-holdout 10 receipt mới do chủ dự án cung cấp, redaction và khóa trước đạt **8/10 exact**, **0 missed, 2 fail-safe over, 0 lỗi system/provider/429 và 28/30 field date/identifier/total cốt lõi**. Năm request đầu về terminal trong 64,763 giây và cả mười trong 108,803 giây ở AI concurrency 1. Bộ này chỉ chạy một lần; tương tác redaction được công bố nên không được gọi là production accuracy.
 - Post-holdout regression sau đó gửi cùng 12 **source bytes nguyên bản**, không snapshot/resize/transform: **10/12 exact, 0 missed, 2 over, 0 lỗi system/provider/429, 35/36 critical field**. Năm upload khác nhau đồng thời hoàn tất 5/5 với E2E P95 **93,684 giây**. Lần này chỉ kiểm queue integrity, không phải yêu cầu latency Verify.
@@ -162,7 +162,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore
 dotnet ef migrations has-pending-model-changes --no-build
 ```
 
-Kỳ vọng cho source 22/10: ít nhất 214/214 test pass và không có model change cần migration.
+Kỳ vọng cho source 22/10: ít nhất 216/216 test pass và không có model change cần migration.
 
 Dừng app bằng `Ctrl+C`. Không cần reset database hoặc xóa LocalDB.
 

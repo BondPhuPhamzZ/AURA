@@ -26,7 +26,10 @@ hóa đơn cá nhân hay tuyên bố production-ready.
 - [x] Rejection log hiện chống ghi trùng cho cùng `sourceHash + reasonCode`,
   kể cả sau restart. Test worker chạy nhiều chu kỳ poll và xác nhận chỉ một
   dòng được ghi.
-- [x] Regression suite: **215/215 pass** (`dotnet test ... -c Release
+- [x] Fake-API boundary test: 101 entries với giới hạn 100 làm scan fail-closed;
+  không download, không private file và không intake một phần. Đây không phải
+  load test 100 hóa đơn.
+- [x] Regression suite: **216/216 pass** (`dotnet test ... -c Release
   --no-restore`); Release build: **0 warning, 0 error**; EF xác nhận không có
   pending model changes. E2E Drive/OpenRouter là bằng chứng riêng, không được
   suy ra chỉ từ unit test.
@@ -62,7 +65,7 @@ hóa đơn cá nhân hay tuyên bố production-ready.
 1. **Giữ an toàn baseline:** xác nhận `DriveSandbox:Enabled=false`,
    `RequireMalwareScanner=true`, app không chạy connector khi không test; giữ
    folder Restricted và chỉ synthetic fixtures. Không đưa hóa đơn thật vào.
-2. **Smoke local sau thay đổi:** chạy Release build, 215+ unit tests, kiểm EF
+2. **Smoke local sau thay đổi:** chạy Release build, 216+ unit tests, kiểm EF
    no-pending-model-change; dùng SQL local riêng. Kiểm `/healthz`, dashboard,
    và xác nhận connector vẫn tắt.
 3. **Một file hợp lệ:** bật sandbox tạm theo runbook, dùng một JPG/PNG synthetic
@@ -72,8 +75,9 @@ hóa đơn cá nhân hay tuyên bố production-ready.
    không tăng. Sửa nội dung tạo version mới phải được xem như input mới; không
    sửa file trong lúc đang xử lý.
 5. **Negative tests:** từ chối extension/MIME/magic bytes sai, quá cỡ, sai
-   folder, source đổi giữa lúc tải; không tạo SQL job. Kiểm rejection log chỉ
-   có hash/reason/timestamp và không phình do poll lặp.
+   folder, source đổi giữa lúc tải; quá ngưỡng file fail-closed không intake
+   một phần; không tạo SQL job. Kiểm rejection log chỉ có hash/reason/timestamp
+   và không phình do poll/restart lặp.
 6. **Batch tăng dần:** chỉ sau khi 1-file và negative tests pass, chạy 5, rồi
    20, rồi tối đa 100 synthetic images; mỗi cấp ghi số nguồn, accepted,
    terminal, error, p50/p95 latency, max queue age và dung lượng storage. Dừng
