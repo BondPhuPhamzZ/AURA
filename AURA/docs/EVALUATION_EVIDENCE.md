@@ -52,4 +52,4 @@ Dự án chủ động không nới final-total guard ngay trước ngày chấm
 
 ## Bản đồ evidence riêng tư
 
-Bản Demo Day đã tuyển chọn được tạo tại `D:\aura\demo_Day\Evidence`. Gói nguồn nằm tại `D:\aura\demo_evidence`; ảnh hóa đơn thật và raw provider material bị loại khỏi bản tuyển chọn. Release tag và Git history giữ nguyên các snapshot công khai đã dọn khỏi cây hiện hành khi cần audit câu chữ cũ.
+Bản Demo Day đã tuyển chọn và gói nguồn được lưu trong các workspace riêng, ngoài repository công khai; ảnh hóa đơn thật và raw provider material bị loại khỏi bản tuyển chọn. Release tag và Git history giữ nguyên các snapshot công khai đã dọn khỏi cây hiện hành khi cần audit câu chữ cũ.

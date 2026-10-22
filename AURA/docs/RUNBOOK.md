@@ -40,21 +40,24 @@ Không thêm `--no-build` vào lệnh test trừ khi test project vừa được
 Trước khi mở AURA, kiểm tra cấu hình mà chưa gọi API AI:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb -OutputPath "D:\aura\demo_evidence\00_preflight\preflight-before-app.txt"
+$evidenceRoot = Join-Path $env:TEMP "AURA-demo-evidence"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb -OutputPath (Join-Path $evidenceRoot "00_preflight\preflight-before-app.txt")
 ```
 
 Sau khi `dotnet run` đã lắng nghe ở cổng 5000, mở PowerShell thứ hai và chạy cổng kiểm tra đầy đủ:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb -OutputPath "D:\aura\demo_evidence\00_preflight\preflight-running-app.txt"
+$evidenceRoot = Join-Path $env:TEMP "AURA-demo-evidence"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb -OutputPath (Join-Path $evidenceRoot "00_preflight\preflight-running-app.txt")
 ```
 
-`-OutputPath` tự tạo thư mục cha và transcript nên không cần khai báo `$evidenceRoot`, không cần `Tee-Object`, và tránh PowerShell hiển thị error record đỏ chỉ vì stderr của native tool. Kết quả chạy app hợp lệ là `READY`, đúng database `AuraDb`, health `ok`, `databaseAvailable=true`, `databaseUpToDate=true`, `pendingMigrationCount=0` và fallback tắt. Script không in API key hoặc toàn bộ connection string.
+`-OutputPath` tự tạo thư mục cha và transcript; `$evidenceRoot` ở trên chỉ định vị trí lưu kết quả. Không cần `Tee-Object`, tránh PowerShell hiển thị error record đỏ chỉ vì stderr của native tool. Kết quả chạy app hợp lệ là `READY`, đúng database `AuraDb`, health `ok`, `databaseAvailable=true`, `databaseUpToDate=true`, `pendingMigrationCount=0` và fallback tắt. Script không in API key hoặc toàn bộ connection string.
 
 Nếu cần ghi bằng chứng LocalDB hoặc lỗi xuất hiện không ổn định, chạy lệnh read-only sau trong đúng Windows account dùng để demo:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb -OutputPath "D:\aura\demo_evidence\00_preflight\localdb-diagnostics.txt"
+$evidenceRoot = Join-Path $env:TEMP "AURA-demo-evidence"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb -OutputPath (Join-Path $evidenceRoot "00_preflight\localdb-diagnostics.txt")
 ```
 
 `sqllocaldb` đôi khi trả exit code 0 nhưng nội dung vẫn báo `registry configuration error`; readiness kiểm cả code và text nhưng xem lỗi inspect này là **warning chẩn đoán**, không phải bằng chứng dữ liệu hỏng. Bài kiểm tra có thẩm quyền khi app đang chạy là `/healthz`: nếu `databaseAvailable=true`, `databaseUpToDate=true`, `pendingMigrationCount=0` thì LocalDB đang phục vụ AURA dù lệnh inspect registry cảnh báo. Nếu health không xác nhận được database, đó mới là blocker. Không xóa instance, registry key hoặc file `.mdf` khi chưa backup và chưa xác nhận đường dẫn database.

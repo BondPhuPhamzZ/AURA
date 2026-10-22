@@ -102,7 +102,7 @@ Luôn chuẩn bị fallback: nếu provider chậm, chuyển sang dữ liệu/au
 
 ## 9. Nguồn quyết định
 
-- Feedback doanh nghiệp: `D:\aura\demo_Day\final_feedback_trienkhai_ngay\main_feedback\final feedback need to upgrade.txt`.
+- Nguồn feedback doanh nghiệp được lưu ngoài repository; bản public chỉ ghi nhận các quyết định triển khai và evidence đã được phép công bố.
 - Trạng thái kỹ thuật: `docs/CURRENT_PROJECT_STATUS.md`.
 - Luồng vận hành: `docs/RUNBOOK.md`.
 - Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15: <https://vanban.chinhphu.vn/?docid=214590&pageid=27160>.

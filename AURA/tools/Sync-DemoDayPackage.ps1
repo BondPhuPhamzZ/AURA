@@ -1,15 +1,20 @@
-param()
+param(
+    [Parameter(Mandatory)][string]$DemoRoot,
+    [Parameter(Mandatory)][string]$EvidenceRoot,
+    [Parameter(Mandatory)][string]$PersonalRoot
+)
 
 $ErrorActionPreference = 'Stop'
 
 $AppRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $AppRoot '..')).Path
-$DemoRoot = 'D:\aura\demo_Day'
-$EvidenceRoot = 'D:\aura\demo_evidence'
-$PersonalRoot = 'D:\aura\phan_bien'
+$DemoRoot = [System.IO.Path]::GetFullPath($DemoRoot).TrimEnd('\')
+$EvidenceRoot = [System.IO.Path]::GetFullPath($EvidenceRoot)
+$PersonalRoot = [System.IO.Path]::GetFullPath($PersonalRoot)
 
-if (-not $DemoRoot.Equals('D:\aura\demo_Day', [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "Unsafe DemoRoot: $DemoRoot"
+$driveRoot = [System.IO.Path]::GetPathRoot($DemoRoot).TrimEnd('\')
+if ($DemoRoot.Equals($driveRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw 'DemoRoot must be a dedicated subdirectory, not a drive root.'
 }
 
 function Ensure-Directory {
@@ -102,8 +107,8 @@ foreach ($entry in $requiredCopies) {
 }
 
 # Remove obsolete personal guidance from the upload-ready package. The source
-# remains available outside Git under D:\aura\phan_bien and is copied only to the private rehearsal
-# folders above.
+# remains in the caller-provided private workspace and is copied only to the
+# designated rehearsal folders above.
 $legacyPersonalTargets = @(
     "$DemoRoot\Nop\00_READ_FIRST\README_FIRST.md",
     "$DemoRoot\Nop\03_VIDEO\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md",

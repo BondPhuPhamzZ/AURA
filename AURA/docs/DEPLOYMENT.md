@@ -14,7 +14,7 @@ Luôn publish vào một thư mục mới nằm ngoài project. Không dùng `-o
 
 ```powershell
 $shortCommit = (git rev-parse --short HEAD).Trim()
-$publishRoot = "D:\aura\deploy_artifacts\AURA-$shortCommit"
+$publishRoot = Join-Path ([System.IO.Path]::GetTempPath()) "AURA-$shortCommit"
 if (Test-Path -LiteralPath $publishRoot) { throw "Artifact đã tồn tại: $publishRoot. Hãy dùng tên mới; không ghi đè artifact đã kiểm thử." }
 New-Item -ItemType Directory -Path $publishRoot | Out-Null
 dotnet publish .\AURA.csproj -c Release -o $publishRoot --no-restore

@@ -40,7 +40,8 @@ Khởi động AURA trước, giữ fallback tắt khi đo riêng một provider
 Nếu source vừa thay đổi, phải chạy `dotnet build` rồi mới dùng `dotnet run --no-build`. Không dùng một assembly cũ để benchmark source mới; kiểm tra `/healthz` phải có `databaseAvailable=true` và `storageAvailable=true` trước khi bắt đầu.
 
 ```powershell
-cd D:\aura\AURA\AURA
+$repoRoot = (git rev-parse --show-toplevel).Trim()
+Set-Location (Join-Path $repoRoot "AURA")
 ```
 
 ```powershell

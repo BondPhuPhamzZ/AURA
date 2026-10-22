@@ -68,7 +68,7 @@ Invoke-RestMethod -Method Post `
 
 ## 5. Chuyển AURA sang Ollama
 
-Tại `D:\aura\AURA\AURA`:
+Chạy từ thư mục project chứa `AURA.csproj`:
 
 ```powershell
 dotnet user-secrets set "Vision:Provider" "Ollama"
