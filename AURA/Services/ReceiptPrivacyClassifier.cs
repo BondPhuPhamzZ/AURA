@@ -32,11 +32,17 @@ public static partial class ReceiptPrivacyClassifier
             if (AllowedCategories.Contains(category)) categories.Add(category);
         }
 
-        // Fallback checks only inspect fields already extracted for business use. They
-        // add categories, never retain or display the matching personal value.
+        // Email syntax is distinctive enough to check existing business text, while
+        // receipt identifiers (notably a 10-digit Vietnamese tax ID) can resemble
+        // phone numbers. Only free-text fields participate in the phone fallback;
+        // model personal_data markers still cover other locations on the image.
         foreach (var value in EnumerateExistingText(facts))
         {
             if (EmailPattern().IsMatch(value)) categories.Add("EMAIL");
+        }
+
+        foreach (var value in EnumerateFreeText(facts))
+        {
             if (PhonePattern().IsMatch(value)) categories.Add("PHONE");
         }
 
@@ -68,6 +74,12 @@ public static partial class ReceiptPrivacyClassifier
             facts.TotalAmountEvidence
         };
 
+        return values.Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => value!);
+    }
+
+    private static IEnumerable<string> EnumerateFreeText(ReceiptExtractionDto facts)
+    {
+        var values = new[] { facts.MerchantName, facts.PlatformName, facts.TotalAmountEvidence };
         return values.Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => value!);
     }
 

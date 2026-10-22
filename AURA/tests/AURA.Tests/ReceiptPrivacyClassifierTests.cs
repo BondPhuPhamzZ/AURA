@@ -48,6 +48,31 @@ public sealed class ReceiptPrivacyClassifierTests
     }
 
     [Fact]
+    public void Does_not_treat_ten_digit_tax_id_or_receipt_id_as_a_phone()
+    {
+        var facts = new ReceiptExtractionDto
+        {
+            TaxId = "0319132712",
+            ReceiptNumber = "0319132712"
+        };
+
+        ReceiptPrivacyClassifier.Apply(facts);
+
+        Assert.Empty(facts.PersonalDataCategories);
+        Assert.False(facts.RequiresPrivacyReview);
+    }
+
+    [Fact]
+    public void Still_detects_phone_in_free_text()
+    {
+        var facts = new ReceiptExtractionDto { MerchantName = "Liên hệ 090 123 4567" };
+
+        ReceiptPrivacyClassifier.Apply(facts);
+
+        Assert.Equal(["PHONE"], facts.PersonalDataCategories);
+    }
+
+    [Fact]
     public void Leaves_clean_receipts_out_of_privacy_review()
     {
         var facts = new ReceiptExtractionDto { MerchantName = "Cửa hàng AURA" };
