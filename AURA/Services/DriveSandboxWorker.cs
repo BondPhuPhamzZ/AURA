@@ -18,6 +18,9 @@ public sealed class DriveSandboxWorker : BackgroundService
     private readonly DriveSandboxClient _client;
     private readonly IConfiguration _configuration;
     private readonly ILogger<DriveSandboxWorker> _logger;
+    private readonly HashSet<string> _recordedRejections = new(StringComparer.Ordinal);
+    private readonly SemaphoreSlim _rejectionWriteGate = new(1, 1);
+    private bool _rejectionsLoaded;
 
     public DriveSandboxWorker(IOptions<DriveSandboxOptions> options,
         IOptions<ReceiptStorageOptions> storage, IWebHostEnvironment environment,
@@ -183,13 +186,51 @@ public sealed class DriveSandboxWorker : BackgroundService
         var directory = Path.Combine(_environment.ContentRootPath, "App_Data", "DriveSandbox");
         Directory.CreateDirectory(directory);
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(sourceKey)));
-        var line = JsonSerializer.Serialize(new
+        var rejectionKey = $"{hash}:{reasonCode}";
+        var path = Path.Combine(directory, "rejections.jsonl");
+
+        await _rejectionWriteGate.WaitAsync(cancellationToken);
+        try
         {
-            sourceHash = hash,
-            reasonCode,
-            timestampUtc = DateTimeOffset.UtcNow
-        }) + Environment.NewLine;
-        await File.AppendAllTextAsync(Path.Combine(directory, "rejections.jsonl"),
-            line, cancellationToken);
+            if (!_rejectionsLoaded)
+            {
+                if (File.Exists(path))
+                {
+                    foreach (var existingLine in await File.ReadAllLinesAsync(path, cancellationToken))
+                    {
+                        try
+                        {
+                            using var document = JsonDocument.Parse(existingLine);
+                            var entry = document.RootElement;
+                            var existingHash = entry.GetProperty("sourceHash").GetString();
+                            var existingReason = entry.GetProperty("reasonCode").GetString();
+                            if (!string.IsNullOrWhiteSpace(existingHash) &&
+                                !string.IsNullOrWhiteSpace(existingReason))
+                                _recordedRejections.Add($"{existingHash}:{existingReason}");
+                        }
+                        catch (JsonException)
+                        {
+                            // Ignore a malformed historical line; never include file identifiers in logs.
+                        }
+                    }
+                }
+                _rejectionsLoaded = true;
+            }
+
+            if (_recordedRejections.Contains(rejectionKey)) return;
+
+            var line = JsonSerializer.Serialize(new
+            {
+                sourceHash = hash,
+                reasonCode,
+                timestampUtc = DateTimeOffset.UtcNow
+            }) + Environment.NewLine;
+            await File.AppendAllTextAsync(path, line, cancellationToken);
+            _recordedRejections.Add(rejectionKey);
+        }
+        finally
+        {
+            _rejectionWriteGate.Release();
+        }
     }
 }

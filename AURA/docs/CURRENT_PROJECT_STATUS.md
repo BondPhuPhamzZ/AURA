@@ -8,11 +8,13 @@
 > 3/3 lần xử lý job synthetic hoàn tất (2 fixture khác nhau, một fixture chạy
 > lại để xác nhận sửa lỗi), một file `.txt` bị chặn, restart không tạo trùng.
 > Fixture thứ hai lộ false positive `TaxId` giống PHONE; backend đã sửa và
-> chạy lại bằng file ID mới ra `AUTO_APPROVE`, vẫn giữ audit cũ. 214/214
-> offline tests pass; `/healthz` local `status=ok`, migration 0, dashboard 200.
-> Connector đã tắt lại sau test; **bản live chưa publish lại, không nhận dữ
-> liệu thật**. Xem [evidence Drive local](DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md)
-> và [runbook](DRIVE_SANDBOX_LOCAL.md).
+> chạy lại bằng file ID mới ra `AUTO_APPROVE`, vẫn giữ audit cũ.
+> `/healthz` local `status=ok`, migration 0, dashboard 200. Connector đã tắt
+> lại sau test; **bản live chưa publish lại, không nhận dữ liệu thật**.
+> Rejection log được hardening để cùng source-version/reason chỉ ghi một lần.
+> Hiện **215/215** Release tests pass, build 0 warning/error, EF không pending
+> model changes. Xem [evidence Drive local](DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md),
+> [checklist/GO-NO-GO](DRIVE_SANDBOX_CHECKLIST.md) và [runbook](DRIVE_SANDBOX_LOCAL.md).
 
 > Bản source sau cuộc thi có thêm gate Verify chỉ dành cho Development và rate limit HTTP trong một process; 196/196 offline tests, Release build 0 warning và EF model không đổi. **Chưa publish/smoke bản hardening này trên live; chưa sẵn sàng cho dữ liệu người dùng thật.** Xem [báo cáo hardening 21/10](POST_CONTEST_HARDENING_2026-10-21.md). Các số live bên dưới là evidence lịch sử của bản trước, không xác nhận hành vi bản mới.
 

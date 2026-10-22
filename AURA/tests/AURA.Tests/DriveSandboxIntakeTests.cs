@@ -177,6 +177,55 @@ public sealed class DriveSandboxIntakeTests
     }
 
     [Fact]
+    public async Task Repeated_poll_does_not_duplicate_persistent_rejection_log_entry()
+    {
+        var root = NewTestRoot();
+        try
+        {
+            using var rsa = RSA.Create(2048);
+            var keyPath = WriteFakeServiceAccount(root, rsa);
+            var repository = new FakeRepository();
+            var options = OptionsFactory.Create(new DriveSandboxOptions
+            {
+                Enabled = true, FolderId = "folder123", ServiceAccountJsonPath = keyPath,
+                RequireMalwareScanner = false, PollIntervalSeconds = 1
+            });
+            using var provider = BuildProvider(root, repository);
+            var handler = new FakeDriveHandler(rsa, "unsupported-file");
+            using var http = new HttpClient(handler);
+            var worker = new DriveSandboxWorker(options,
+                OptionsFactory.Create(new ReceiptStorageOptions
+                    { Directory = "receipts", MaxFileSizeMb = 5 }),
+                new TestEnvironment(root), provider.GetRequiredService<IServiceScopeFactory>(),
+                new DriveSandboxClient(http, options), LocalConfig(),
+                NullLogger<DriveSandboxWorker>.Instance);
+
+            await worker.StartAsync(CancellationToken.None);
+            await Task.Delay(TimeSpan.FromMilliseconds(2300));
+            await worker.StopAsync(CancellationToken.None);
+
+            var rejections = Path.Combine(root, "App_Data", "DriveSandbox", "rejections.jsonl");
+            Assert.True(File.Exists(rejections));
+            Assert.Single(await File.ReadAllLinesAsync(rejections));
+
+            var restartedWorker = new DriveSandboxWorker(options,
+                OptionsFactory.Create(new ReceiptStorageOptions
+                    { Directory = "receipts", MaxFileSizeMb = 5 }),
+                new TestEnvironment(root), provider.GetRequiredService<IServiceScopeFactory>(),
+                new DriveSandboxClient(http, options), LocalConfig(),
+                NullLogger<DriveSandboxWorker>.Instance);
+            await restartedWorker.StartAsync(CancellationToken.None);
+            await Task.Delay(TimeSpan.FromMilliseconds(1100));
+            await restartedWorker.StopAsync(CancellationToken.None);
+
+            Assert.Single(await File.ReadAllLinesAsync(rejections));
+            Assert.Empty(repository.Requests);
+            Assert.Equal(0, handler.DownloadCount);
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Fact]
     public async Task Download_never_buffers_beyond_limit_even_if_server_omits_content_length()
     {
         using var http = new HttpClient(new OversizeHandler());
@@ -282,7 +331,9 @@ public sealed class DriveSandboxIntakeTests
 
         private object FileMetadata(bool afterDownload = false) => new
         {
-            id = "file123", name = "receipt.png", mimeType = "image/png",
+            id = "file123",
+            name = mode == "unsupported-file" ? "receipt.txt" : "receipt.png",
+            mimeType = mode == "unsupported-file" ? "text/plain" : "image/png",
             size = Png.Length.ToString(),
             md5Checksum = mode == "bad-md5" ? "00000000000000000000000000000000" : _md5,
             version = afterDownload && mode == "changed-version" ? "2" : "1",

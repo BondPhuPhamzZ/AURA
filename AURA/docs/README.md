@@ -7,6 +7,7 @@ Thư mục này chỉ chứa các tài liệu kỹ thuật hiện hành dành ch
 | `CURRENT_PROJECT_STATUS.md` | Nguồn sự thật duy nhất về baseline đã xác minh và các gate còn mở |
 | `DRIVE_SANDBOX_LOCAL.md` | Setup và rollback connector Drive synthetic chỉ cho localhost Development |
 | `DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md` | E2E Drive→SQL→AI ngày 22/10, false positive đã sửa và giới hạn claim |
+| `DRIVE_SANDBOX_CHECKLIST.md` | Checklist đã xác minh/chưa có evidence, bước kiểm thử tiếp theo và GO/NO-GO hiện tại |
 | `AFTER_FEEDBACK_IMPLEMENTATION.md` | Phạm vi triển khai ngày 17/10, bằng chứng test, demo flow mới và các ranh giới chưa-production |
 | `POST_CONTEST_HARDENING_2026-10-21.md` | Gate Verify/rate limit mới, evidence 196 test và điều kiện NO-GO pilot dữ liệu thật |
 | `AFTER_FEEDBACK_ARCHITECTURE_CHECKLIST.md` | Đối chiếu recommend check, 10 architecture gates, khác biệt trước/sau và thứ tự phát triển tiếp theo |
