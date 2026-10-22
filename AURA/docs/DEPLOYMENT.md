@@ -127,6 +127,12 @@ Profile local đã pass synthetic gate dùng timeout 600 giây, context 16384, o
 
 Implementation hiện tại cho phép `Ollama:BaseUrl` là HTTPS từ xa nhưng chưa có cấu hình bearer/API-key riêng cho Ollama. Vì vậy **không public trực tiếp cổng 11434** và không trỏ production AURA tới một endpoint Ollama Internet chưa có lớp bảo vệ. POC GPU phải dùng private network/VPN hoặc reverse proxy có TLS, xác thực, rate limit và log đã che dữ liệu; nếu proxy bắt bearer token thì cần bổ sung hỗ trợ header trong app rồi regression lại trước khi dùng.
 
+Drive synthetic sandbox ngày 22/10 chỉ chạy trong Development, mặc định tắt;
+không đưa service-account JSON key lên hosting và không bật DriveSandbox__Enabled
+trên Production. Chi tiết setup local ở [DRIVE_SANDBOX_LOCAL.md](DRIVE_SANDBOX_LOCAL.md).
+Khi chạy EF với `--no-build`, luôn chỉ rõ `--configuration Release` nếu vừa build
+Release: Debug assembly cũ trên máy phát triển từng chứa migration mailbox đã gỡ.
+
 ## 7. Vì sao không chọn Render Free cho bản nộp
 
 Render chạy được .NET qua Dockerfile và cấp URL `onrender.com`, nhưng Free Web Service:

@@ -1,4 +1,16 @@
-# Trạng thái hiện hành AURA ngày 21/10/2026
+# Trạng thái hiện hành AURA ngày 22/10/2026
+
+> Source 22/10 có candidate **Drive synthetic sandbox Development-only**, tắt mặc
+> định, không thêm EF migration. Manual upload và Drive staging cùng dùng
+> ReceiptIntakeService; Drive chỉ đọc file con trực tiếp của folder test riêng,
+> chống trùng bằng request ID tất định theo file ID + version. Chưa có
+> service-account key và quyền Viewer được xác nhận nên **chưa có E2E Drive→AI**.
+> Release build và 212/212 offline tests pass; localhost với SQL Drive test
+> riêng đã trả /healthz HTTP 200, databaseUpToDate=true,
+> pendingMigrationCount=0, driveSandboxConfigured=false. Đây là smoke
+> baseline khi connector tắt, chưa phải E2E Drive.
+> Bản live chưa được publish lại,
+> không nhận dữ liệu thật. Xem [runbook Drive local](DRIVE_SANDBOX_LOCAL.md).
 
 > Bản source sau cuộc thi có thêm gate Verify chỉ dành cho Development và rate limit HTTP trong một process; 196/196 offline tests, Release build 0 warning và EF model không đổi. **Chưa publish/smoke bản hardening này trên live; chưa sẵn sàng cho dữ liệu người dùng thật.** Xem [báo cáo hardening 21/10](POST_CONTEST_HARDENING_2026-10-21.md). Các số live bên dưới là evidence lịch sử của bản trước, không xác nhận hành vi bản mới.
 
@@ -45,7 +57,7 @@ Read-only health ngày 17/10 lúc 12:54 ICT trả HTTP 200, `status=ok`, databas
 3. **Dashboard quản lý:** tab Tổng quan cho chọn tháng/năm; KPI, bảng ngày, bảng đối chiếu năm và CSV dùng cùng kỳ được chọn. Dữ liệu được project theo giờ Việt Nam từ SQL.
 4. **Privacy triage:** model chỉ gắn marker category trong `suspiciousSignals`; backend normalize category, không ghi lại giá trị cá nhân, và policy C# chuyển `ESCALATE_PRIVACY`. Request OpenRouter mặc định yêu cầu provider không dùng dữ liệu để thu thập/huấn luyện.
 5. **Báo cáo quản lý:** dashboard tải CSV theo kỳ đang chọn từ SQL. File chỉ chứa dữ liệu vận hành cần review, không chứa raw AI facts và có chống CSV formula injection.
-6. **Email/folder connector:** chưa nối trong candidate hôm nay. Workflow đích giữ cùng ingestion boundary; Agent chỉ điều phối, connector riêng giữ OAuth. Kênh này cần least privilege, consent, sync cursor, idempotency, backfill, quarantine và audit.
+6. **Drive folder connector:** source có Drive synthetic sandbox candidate, tắt mặc định và chỉ chạy Development local. Service account Viewer trên folder test, metadata/MD5/version + file gate và cùng ingestion boundary; chưa chứng minh Drive→AI E2E. Kênh production vẫn cần identity người nộp, consent, malware quarantine, retention, distributed coordination và audit.
 7. **Dashboard fail-closed và UX:** khi SQL không tải được, UI không hiển thị KPI bằng 0 hoặc cho tải CSV. Bảng có vùng cuộn, header sticky và đường kẻ tương phản hơn; nút refresh dùng icon. “Cần kiểm tra dữ liệu cá nhân” là số hồ sơ có marker privacy cần người xem lại, không phải kết luận pháp lý.
 
 Privacy triage là công cụ hỗ trợ rà soát, không phải kết luận pháp lý hay chứng nhận tuân thủ. Strict zero-data-retention chỉ được bật sau khi route/provider live được xác nhận hỗ trợ; nếu bật mù có thể làm không còn provider đủ điều kiện. Rate limit mới chỉ nằm trong memory từng process và không thay thế SSO/RBAC hoặc edge limiter.
