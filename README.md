@@ -1,6 +1,6 @@
 # AURA — Controlled AI Reimbursement Review
 
-> **Current source status (22 October 2026):** 216/216 offline tests pass; the Release build has 0 warnings and 0 errors; EF Core reports no pending model changes. A restricted-folder Google Drive connector has passed a small local end-to-end test using synthetic receipts only. The connector is disabled by default. This source has **not** been republished to the live demo and is **not approved for real receipts or production use**.
+> **Current source status (22 October 2026):** 218/218 offline tests pass; the Release build has 0 warnings and 0 errors; EF Core reports no pending model changes. A restricted-folder Google Drive connector passed a small local end-to-end test using synthetic receipts before the latest hardening. LocalDB is currently unavailable for a repeat end-to-end run. The connector is disabled by default. This source has **not** been republished to the live demo and is **not approved for real receipts or production use**.
 
 AURA is a supervised first-line assistant for employee reimbursement review. A vision model extracts structured facts from receipt images; semantic validation checks the evidence; deterministic C# policy—not the model—selects the route. Uncertain or exceptional cases stop for human review and are recorded in an audit timeline.
 
@@ -98,7 +98,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj -c Release --no-restore
 dotnet ef migrations has-pending-model-changes --no-build
 ```
 
-The current branch baseline is 216 passing tests, a clean Release build, and no pending model changes. Offline tests do not call the paid vision API. A successful test run does not replace live-provider, security, privacy, or load testing.
+The current branch baseline is 218 passing tests, a clean Release build, and no pending model changes. Offline tests do not call the paid vision API. A successful test run does not replace live-provider, security, privacy, or load testing.
 
 Stop the app with `Ctrl+C`. Do not reset or delete the database as a routine shutdown step.
 
@@ -108,6 +108,7 @@ Stop the app with `Ctrl+C`. Do not reset or delete the database as a routine shu
 - [Drive sandbox checklist and GO/NO-GO gates](AURA/docs/DRIVE_SANDBOX_CHECKLIST.md)
 - [Drive sandbox local setup and rollback](AURA/docs/DRIVE_SANDBOX_LOCAL.md)
 - [Drive end-to-end evidence and limits](AURA/docs/DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md)
+- [Latest Drive hardening evidence and open gates](AURA/docs/DRIVE_PIPELINE_HARDENING_2026-10-22.md)
 - [Architecture and integration report](AURA/ARCHITECTURE_AND_INTEGRATION_REPORT.md)
 - [Business rules (runtime source)](AURA/BUSINESS_RULES.md)
 - [Operations runbook](AURA/docs/RUNBOOK.md)

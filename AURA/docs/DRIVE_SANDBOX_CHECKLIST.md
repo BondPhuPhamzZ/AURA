@@ -4,6 +4,12 @@ Cập nhật sau lần kiểm tra local ngày 22/10/2026. Checklist này mô t�
 prototype Development-only với fixture tổng hợp**, không phải phê duyệt dùng
 hóa đơn cá nhân hay tuyên bố production-ready.
 
+Hardening tiếp theo cùng ngày: Drive GET đã có retry giới hạn cho 429/5xx và
+audit mới giảm dữ liệu nhận dạng; **218/218** test pass. LocalDB hiện lỗi
+registry nên E2E sau thay đổi và batch 5/20/100 chưa chạy. Xem
+[báo cáo evidence mới](DRIVE_PIPELINE_HARDENING_2026-10-22.md); các số
+216/216 và E2E bên dưới là snapshot trước hardening này.
+
 ## Đã triển khai và có evidence
 
 - [x] Connector Drive bị tắt mặc định; runtime policy chặn ngoài Development,
