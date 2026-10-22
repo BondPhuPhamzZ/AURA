@@ -1,6 +1,7 @@
 # Runtime receipt evidence is retained by the deployed instance, never committed.
 App_Data/receipts/*
 !App_Data/receipts/.gitkeep
+App_Data/receipts-*/
 App_Data/fallback-evidence-*/
 App_Data/ollama-policy-regression-*/
 App_Data/gpu-evidence-*/
@@ -27,6 +28,7 @@ wwwroot/temp_test/
 test_kit/local_real/*
 !test_kit/local_real/README.md
 test_kit/results/
+test_kit/images/batch_100_synthetic/
 
 # Secrets and machine-specific production settings must never enter Git.
 appsettings.Secrets.json

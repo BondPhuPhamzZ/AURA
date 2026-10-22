@@ -18,6 +18,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
+// The built-in HttpClient logs include Drive file/folder IDs in request URLs.
+builder.Logging.AddFilter("System.Net.Http.HttpClient.DriveSandboxClient", LogLevel.Warning);
 
 // Đăng ký Services
 builder.Services.AddControllersWithViews();
