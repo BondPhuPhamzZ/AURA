@@ -1,6 +1,6 @@
 # AURA - AI thẩm định hoàn ứng có kiểm soát
 
-> Cập nhật source 21/10/2026: Verify Harness mặc định tắt và chỉ chạy ở Development khi bật rõ ràng; upload/Verify có rate limit trong từng process. Offline gate đạt **196/196 tests**, Release build 0 warning và EF model không đổi. **Bản cập nhật này chưa publish/smoke live và chưa đủ điều kiện pilot hóa đơn thật.** Xem [báo cáo hardening](AURA/docs/POST_CONTEST_HARDENING_2026-10-21.md).
+> Cập nhật source 22/10/2026: Drive synthetic sandbox đã qua E2E **trên localhost** với service account chỉ đọc folder test: 3/3 lần xử lý job hoàn tất (2 fixture khác nhau, một fixture chạy lại), restart không tạo trùng và file `.txt` bị chặn trước AI. Một false positive privacy do mã số thuế giống số điện thoại đã được sửa và kiểm lại. Offline gate đạt **214/214 tests**, EF model không đổi. Connector mặc định tắt; **chưa publish bản source này lên live và chưa đủ điều kiện pilot hóa đơn thật**. Xem [evidence Drive local](AURA/docs/DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md).
 
 AURA là ứng dụng ASP.NET Core hỗ trợ bước thẩm định đầu tiên trong quy trình hoàn ứng của nhân viên. Vision model đọc dữ kiện trên hóa đơn, nhưng policy engine C# tất định mới quyết định hướng xử lý: tự động đi tiếp với ca thường quy rõ ràng hoặc chuyển các ca bất định, ngoài chính sách, có tín hiệu dữ liệu cá nhân và vượt thẩm quyền cho người duyệt.
 
@@ -48,6 +48,17 @@ Khả năng chính:
 - Verify Harness chỉ dành cho môi trường Development có bật rõ ràng; Production không render nút và từ chối action. Bộ năm fixture vẫn dùng được để benchmark trên môi trường cô lập.
 - Danh tính người gửi, thao tác quản lý, provider metadata, lý do và Undo đều có thể audit.
 
+### Drive synthetic sandbox (chỉ local)
+
+Service account Viewer đọc duy nhất file con trực tiếp của folder test Restricted;
+connector kiểm metadata, kích thước, MIME, magic bytes, MD5 và version rồi đưa
+ảnh JPG/PNG vào cùng SQL queue như upload thủ công. Đây là **nguồn input bổ
+sung**, không phải model tự duyệt Drive. Mặc định `DriveSandbox:Enabled=false`;
+chỉ bật tạm trên Development bind loopback với ảnh tổng hợp. [Runbook setup và
+tắt lại](AURA/docs/DRIVE_SANDBOX_LOCAL.md) ghi rõ cách giữ JSON key ngoài repo.
+E2E local đã chạy thật nhưng chưa đo 5/20/100 ảnh, chưa có malware quarantine,
+SSO/RBAC, retention được phê duyệt hoặc bảo đảm Strict ZDR cho dữ liệu thật.
+
 ## Business rules đang áp dụng
 
 | Bản | Vai trò |
@@ -59,10 +70,10 @@ Runtime chỉ đọc đúng đường dẫn `BUSINESS_RULES.md` được cấu h
 
 ## Baseline đã xác minh
 
-Cập nhật kỹ thuật source: 21/10/2026. Các số live bên dưới là evidence lịch sử từ candidate trước; hardening mới chưa được publish/smoke live.
+Cập nhật kỹ thuật source: 22/10/2026. Các số live bên dưới là evidence lịch sử từ candidate trước; bản Drive sandbox và privacy fix chỉ được kiểm thử local, chưa được publish/smoke live.
 
 - Build: **0 warning, 0 error**.
-- Test tự động sau hardening Verify/rate limit và payload Strict ZDR: **196/196 pass**; test offline không gọi AI API trả phí.
+- Test tự động sau Drive sandbox và privacy classifier fix: **214/214 pass**; test offline không gọi AI API trả phí. E2E Drive dùng fixture synthetic và gọi API thật được tách riêng trong evidence.
 - Verify Harness chính thức: **5/5** với đúng 3 approve và 2 escalate.
 - Mini-holdout 10 receipt mới do chủ dự án cung cấp, redaction và khóa trước đạt **8/10 exact**, **0 missed, 2 fail-safe over, 0 lỗi system/provider/429 và 28/30 field date/identifier/total cốt lõi**. Năm request đầu về terminal trong 64,763 giây và cả mười trong 108,803 giây ở AI concurrency 1. Bộ này chỉ chạy một lần; tương tác redaction được công bố nên không được gọi là production accuracy.
 - Post-holdout regression sau đó gửi cùng 12 **source bytes nguyên bản**, không snapshot/resize/transform: **10/12 exact, 0 missed, 2 over, 0 lỗi system/provider/429, 35/36 critical field**. Năm upload khác nhau đồng thời hoàn tất 5/5 với E2E P95 **93,684 giây**. Lần này chỉ kiểm queue integrity, không phải yêu cầu latency Verify.
@@ -151,7 +162,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj --no-restore
 dotnet ef migrations has-pending-model-changes --no-build
 ```
 
-Kỳ vọng cho source 21/10: build 0 warning/error, ít nhất 196/196 test pass và không có model change cần migration.
+Kỳ vọng cho source 22/10: ít nhất 214/214 test pass và không có model change cần migration.
 
 Dừng app bằng `Ctrl+C`. Không cần reset database hoặc xóa LocalDB.
 
@@ -166,8 +177,10 @@ Dừng app bằng `Ctrl+C`. Không cần reset database hoặc xóa LocalDB.
 - [Đặc tả workflow](AURA/submission/AURA_WORKFLOW_SPEC.md)
 - [Hướng dẫn dataset và đánh giá mở rộng](AURA/docs/DATASET_EVALUATION_GUIDE.md)
 - [Trạng thái đã xác minh hiện hành](AURA/docs/CURRENT_PROJECT_STATUS.md)
+- [Setup Drive synthetic sandbox local](AURA/docs/DRIVE_SANDBOX_LOCAL.md)
+- [Evidence E2E Drive local và giới hạn claim](AURA/docs/DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md)
 - [Checklist kiến trúc sau feedback và recommend check](AURA/docs/AFTER_FEEDBACK_ARCHITECTURE_CHECKLIST.md)
-- [Workflow mailbox an toàn và thứ tự triển khai](AURA/docs/RECOMMENDED_INGESTION_WORKFLOW.md)
+- [Workflow ingestion an toàn và thứ tự triển khai](AURA/docs/RECOMMENDED_INGESTION_WORKFLOW.md)
 - [Tổng hợp bằng chứng đánh giá](AURA/docs/EVALUATION_EVIDENCE.md)
 - [Kế hoạch khoanh vùng evidence](AURA/docs/EVIDENCE_LOCALIZATION_PLAN.md)
 - [Protocol đánh giá ba người dùng](AURA/docs/USER_STUDY_PROTOCOL.md)
@@ -177,7 +190,7 @@ Dừng app bằng `Ctrl+C`. Không cần reset database hoặc xóa LocalDB.
 ## Giới hạn hiện tại
 
 - Mỗi batch nhận tối đa 10 receipt JPG/PNG, tối đa 5 MB mỗi ảnh; chưa hỗ trợ PDF hoặc tài liệu nhiều trang.
-- Chưa có connector email/folder tự động. Đây là bước tiếp theo cần OAuth/OIDC, least privilege, consent, idempotency, backfill và audit trước khi nối vào cùng ingestion boundary.
+- Connector Drive mới chỉ là synthetic sandbox local, đọc tối đa 100 file con trực tiếp mỗi scan; không phải batch/connector doanh nghiệp. Email chưa tích hợp. Trước khi tự động hóa dữ liệu thật vẫn cần identity, least privilege, consent, malware quarantine, retention, backfill và audit được review.
 - Privacy triage là tín hiệu vận hành, không phải kết luận tuân thủ pháp luật. `RequireZeroDataRetention` mặc định tắt cho tới khi route/provider live được xác nhận tương thích.
 - OpenRouter cần Internet và provider credit khả dụng.
 - Ollama fallback là opt-in và không phải đường capacity chính thức cho concurrency.
