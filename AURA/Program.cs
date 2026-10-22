@@ -100,6 +100,25 @@ builder.Services.AddOptions<VerifyOptions>()
     .Bind(builder.Configuration.GetSection(VerifyOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
+builder.Services.AddOptions<DriveSandboxOptions>()
+    .Bind(builder.Configuration.GetSection(DriveSandboxOptions.SectionName))
+    .ValidateDataAnnotations()
+    .Validate(options =>
+    {
+        if (!options.Enabled || !builder.Environment.IsDevelopment()) return true;
+        if (string.IsNullOrWhiteSpace(options.FolderId) ||
+            !options.FolderId.All(character => char.IsAsciiLetterOrDigit(character) ||
+                character is '-' or '_') ||
+            !Path.IsPathFullyQualified(options.ServiceAccountJsonPath) ||
+            !File.Exists(options.ServiceAccountJsonPath))
+            return false;
+        var relative = Path.GetRelativePath(builder.Environment.ContentRootPath,
+            Path.GetFullPath(options.ServiceAccountJsonPath));
+        return Path.IsPathFullyQualified(relative) || relative == ".." ||
+            relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal);
+    },
+        "DriveSandbox local cần folder ID hợp lệ và service-account JSON nằm ngoài project.")
+    .ValidateOnStart();
 
 var maxUploadBytes = builder.Configuration.GetValue<int>("ReceiptStorage:MaxFileSizeMb", 5) * 1024L * 1024L;
 // Multipart contains the file plus antiforgery fields, boundaries and headers. Keep transport
@@ -112,6 +131,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Đăng ký Dependency Injection
 builder.Services.AddScoped<IReimbursementRepository, ReimbursementRepository>();
+builder.Services.AddScoped<ReceiptIntakeService>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 builder.Services.AddSingleton<WorkflowOperationGate>();
 builder.Services.AddSingleton<ReceiptProcessingQueue>();
@@ -119,6 +139,13 @@ builder.Services.AddSingleton<VisionCircuitBreaker>();
 builder.Services.AddSingleton<VisionInvocationCoordinator>();
 builder.Services.AddScoped<VisionExecutionContext>();
 builder.Services.AddHostedService<ReceiptProcessingWorker>();
+builder.Services.AddHttpClient<DriveSandboxClient>(client =>
+    client.Timeout = TimeSpan.FromSeconds(30))
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        AllowAutoRedirect = false
+    });
+builder.Services.AddHostedService<DriveSandboxWorker>();
 builder.Services.AddHttpClient<OpenRouterVisionExtractorService>((services, client) =>
 {
     var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenRouterOptions>>().Value;
@@ -169,6 +196,7 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
     IOptions<OpenRouterOptions> configuredOpenRouter,
     IOptions<OllamaOptions> configuredOllama,
     IOptions<VerifyOptions> configuredVerify,
+    IOptions<DriveSandboxOptions> configuredDriveSandbox,
     IWebHostEnvironment environment,
     AppDbContext database,
     CancellationToken cancellationToken) =>
@@ -222,6 +250,8 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
         providerCooldownSeconds = vision.ProviderCooldownSeconds,
         verifyHarnessEnabled = VerifyExecutionPolicy.IsAllowed(
             configuredVerify.Value.Enabled, environment.EnvironmentName),
+        driveSandboxConfigured = DriveSandboxRuntimePolicy.IsAllowed(configuredDriveSandbox.Value,
+            environment.EnvironmentName, builder.Configuration["urls"]),
         fallbackEnabled = vision.FallbackEnabled,
         configuredFallbackProvider = vision.FallbackProvider,
         fallbackProvider = vision.FallbackEnabled ? vision.FallbackProvider : null,

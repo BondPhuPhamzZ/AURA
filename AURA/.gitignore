@@ -4,6 +4,8 @@ App_Data/receipts/*
 App_Data/fallback-evidence-*/
 App_Data/ollama-policy-regression-*/
 App_Data/gpu-evidence-*/
+App_Data/DriveSandbox/
+**/*service-account*.json
 
 # Build, IDE, publish and local runtime output.
 bin/
@@ -29,6 +31,7 @@ test_kit/results/
 # Secrets and machine-specific production settings must never enter Git.
 appsettings.Secrets.json
 appsettings.Production.local.json
+**/client_secret*.json
 *.publishsettings
 *.pubxml.user
 
