@@ -1,6 +1,6 @@
 # AURA — Controlled AI Reimbursement Review
 
-> **Current source status (22 October 2026):** 218/218 offline tests pass; the Release build has 0 warnings and 0 errors; EF Core reports no pending model changes. The restricted-folder Google Drive connector completed three synthetic jobs through the local SQL queue and OpenRouter after hardening, with no duplicate jobs after polling and restart. This is a small functional test, not a capacity result. The connector is disabled by default. This source has **not** been republished to the live demo and is **not approved for real receipts or production use**.
+> **Current source status (22 October 2026):** 220/220 offline tests pass; the Release build has 0 warnings and 0 errors; EF Core reports no pending model changes. A Development-only, Restricted-folder Drive run ingested 100 synthetic files as exactly 100 durable jobs after an idempotency fix; 98 completed and 2 stopped fail-safe on model/provider errors. A separate, explicitly consented 15-image localhost test completed 15/15 through manual upload. These are pipeline results, **not decision-accuracy or production-readiness claims**. The Drive connector remains off by default, and this source has **not** been republished to the public demo.
 
 AURA is a supervised first-line assistant for employee reimbursement review. A vision model extracts structured facts from receipt images; semantic validation checks the evidence; deterministic C# policy—not the model—selects the route. Uncertain or exceptional cases stop for human review and are recorded in an audit timeline.
 
@@ -25,7 +25,7 @@ The default vision route is Qwen3.8 Flash through OpenRouter. Requests ask the p
 - Manual intake accepts JPG/PNG up to 5 MB; the UI allows up to 10 images in one selection and submits them sequentially. PDF and multi-page documents are not supported.
 - The dashboard provides processing summaries and CSV export. Sensitive raw AI facts are not included in the management CSV.
 - A Drive connector exists only as a **Development + loopback synthetic sandbox**. It is read-only, off by default, and not a production intake channel. Email is not integrated.
-- The local Drive end-to-end test processed three synthetic jobs, rejected a `.txt` file, and confirmed restart idempotency. This small run is not a load test or an accuracy claim.
+- A 5 → 20 → 100-file local Drive run found and fixed metadata-only duplicate ingestion. The clean 100-file rerun created exactly 100 jobs, with 98 completed and 2 fail-safe errors; poll/restart did not duplicate jobs. Only 30 image contents are distinct, so this is not a 100-receipt accuracy claim.
 - Production gates remain open: authentication/RBAC, malware scanning and quarantine, managed private object storage, approved retention and deletion, backup/restore, provider privacy verification, distributed coordination, monitoring, and capacity testing.
 
 The public live URL may run an earlier published build. It is not evidence that the current branch or Drive connector is deployed.
@@ -98,7 +98,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj -c Release --no-restore
 dotnet ef migrations has-pending-model-changes --no-build
 ```
 
-The current branch baseline is 218 passing tests, a clean Release build, and no pending model changes. Offline tests do not call the paid vision API. A successful test run does not replace live-provider, security, privacy, or load testing.
+The current branch baseline is 220 passing tests, a clean Release build, and no pending model changes. Offline tests do not call the paid vision API. A successful test run does not replace security, privacy, independent accuracy, or production load testing.
 
 Stop the app with `Ctrl+C`. Do not reset or delete the database as a routine shutdown step.
 
@@ -108,7 +108,8 @@ Stop the app with `Ctrl+C`. Do not reset or delete the database as a routine shu
 - [Drive sandbox checklist and GO/NO-GO gates](AURA/docs/DRIVE_SANDBOX_CHECKLIST.md)
 - [Drive sandbox local setup and rollback](AURA/docs/DRIVE_SANDBOX_LOCAL.md)
 - [Drive end-to-end evidence and limits](AURA/docs/DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md)
-- [Latest Drive hardening evidence and open gates](AURA/docs/DRIVE_PIPELINE_HARDENING_2026-10-22.md)
+- [Prior Drive hardening evidence and open gates](AURA/docs/DRIVE_PIPELINE_HARDENING_2026-10-22.md)
+- [Measured 100-file Drive and consented 15-file local validation](AURA/docs/DRIVE_MVP_VALIDATION_2026-10-22.md)
 - [Architecture and integration report](AURA/ARCHITECTURE_AND_INTEGRATION_REPORT.md)
 - [Business rules (runtime source)](AURA/BUSINESS_RULES.md)
 - [Operations runbook](AURA/docs/RUNBOOK.md)

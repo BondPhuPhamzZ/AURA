@@ -1,5 +1,10 @@
 # Drive synthetic sandbox — E2E local ngày 22/10/2026
 
+> Đây là snapshot lịch sử của lần E2E 3 job trước batch/idempotency fix.
+> Trạng thái hiện hành và số liệu 5/20/100 cùng 15 ảnh có consent nằm ở
+> [báo cáo kiểm thử MVP](DRIVE_MVP_VALIDATION_2026-10-22.md). Các câu
+> "chưa đo" và cơ chế file ID + version dưới đây chỉ mô tả thời điểm test này.
+
 Đã gọi Google Drive API và OpenRouter thật với **fixture synthetic** trên
 `127.0.0.1:5097` và LocalDB riêng. Đây không phải test hosting, tải lớn,
 độ chính xác trên hóa đơn thật hay chứng nhận production-ready. Không ghi

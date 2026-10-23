@@ -18,9 +18,11 @@
 - Mỗi ảnh tối đa 5 MB (hoặc ReceiptStorage:MaxFileSizeMb), đúng extension,
   MIME, magic bytes; PDF/ZIP/Google Docs/shortcut bị từ chối. Connector đối
   chiếu MD5, version, parent folder trước khi lưu riêng tư, SHA-256, tạo SQL
-  PENDING + audit AI_QUEUED. Một file version = một request ID tất định,
-  poll lại/restart không tạo thêm job. Edit file tạo version mới và job mới;
-  đừng sửa ảnh đang ingest.
+  PENDING + audit AI_QUEUED. Một **file ID + MD5 nội dung** = một request ID
+  tất định; đổi tên/metadata, poll lại và restart không tạo job mới. Đổi bytes
+  tạo checksum/job mới; đừng sửa ảnh đang ingest. Sau thay đổi thuật toán
+  idempotency ngày 22/10/2026, dùng **DB local mới** khi bật connector; không
+  trỏ bản mới vào DB test Drive cũ nếu chưa reconcile vì có thể nhập lại file.
 - Poll hiện quét chỉ file con trực tiếp của một folder, tối đa 100 entries
   mặc định. Vượt giới hạn thì dừng scan, không nhận một phần. Đây là local
   pilot, chưa chứng minh 1.000 ảnh/đa instance. AI permit vẫn là 1.
@@ -71,8 +73,11 @@ terminal. Không gọi healthz là inference test.
 Thử theo thứ tự: 1 PNG synthetic → 1 job; khởi động lại → vẫn 1 job; JPG khác
 → job thứ hai; PDF/giả MIME/ảnh >5 MB → không vào queue và có mã từ chối trong
 App_Data/DriveSandbox/rejections.jsonl; file ở folder khác → không thấy.
-Sau đó thử 5, 20, 100 file và ghi số terminal, latency, provider error,
-thời gian queue. Không vượt 100 trước khi đo capacity.
+Batch 5, 20, 100 đã được chạy trên bộ có 30 nội dung khác nhau. Xem
+[báo cáo MVP 22/10/2026](DRIVE_MVP_VALIDATION_2026-10-22.md) để biết số
+terminal, latency, provider error và lỗi nhân job đã được sửa. Không vượt
+100 entries trước khi thiết kế lại giới hạn/pagination; không dùng bộ bản sao
+để tuyên bố accuracy trên 100 hóa đơn độc lập.
 
 ## Tắt và thu hồi
 

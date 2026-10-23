@@ -1,16 +1,17 @@
 # Drive sandbox: checklist trạng thái và bước tiếp theo
 
-Cập nhật sau lần kiểm tra local ngày 22/10/2026. Checklist này mô tả **một
-prototype Development-only với fixture tổng hợp**, không phải phê duyệt dùng
-hóa đơn cá nhân hay tuyên bố production-ready.
+Cập nhật sau lần kiểm tra local đêm 22–23/10/2026. Checklist này mô tả
+**Drive prototype Development-only với fixture tổng hợp** và một lần test
+manual intake có consent riêng; không phải phê duyệt dùng dữ liệu người dùng
+đại trà hay tuyên bố production-ready.
 
-Hardening tiếp theo cùng ngày: Drive GET đã có retry giới hạn cho 429/5xx và
-audit mới giảm dữ liệu nhận dạng; **218/218** test pass. LocalDB chạy được
-ngoài sandbox của phiên công cụ; DB thử riêng có health `ok`, dashboard 200.
-E2E Drive/OpenRouter sau thay đổi đạt 3/3 job synthetic, 0 lỗi, không tăng
-job/audit khi poll và restart. Batch 5/20/100 chưa chạy. Xem
-[báo cáo evidence mới](DRIVE_PIPELINE_HARDENING_2026-10-22.md); các số
-216/216 và E2E bên dưới là snapshot trước hardening này.
+Sau hardening, batch 5/20/100 đã được chạy qua Drive API, SQL queue,
+OpenRouter và policy trên localhost. Lượt 100 đầu phát hiện 4 job trùng do
+Drive metadata version đổi; bản sửa đã chạy lại trên DB sạch: đúng 100 job,
+98 hoàn tất và 2 fail-safe, không tăng job/audit sau poll và restart. 15 ảnh
+thật có consent cũng hoàn tất qua manual intake local, nhưng không có nhãn
+khớp hash để tính accuracy. Xem [báo cáo kiểm thử MVP](DRIVE_MVP_VALIDATION_2026-10-22.md).
+E2E 3 ca bên dưới là snapshot lịch sử; hiện Release suite **220/220 pass**.
 
 ## Đã triển khai và có evidence
 
@@ -21,9 +22,10 @@ job/audit khi poll và restart. Batch 5/20/100 chưa chạy. Xem
   MIME và magic bytes trước khi intake. Tải file có giới hạn byte.
 - [x] Không ghi key/ID/tên file/raw facts vào log hoặc Git; key JSON nằm ngoài
   repo và ACL của đúng file key đã được giới hạn trên máy test.
-- [x] Cùng file ID + version tạo một request ID ổn định; poll/restart không tạo
-  thêm SQL job. Intake đi qua cùng boundary và audit `AI_QUEUED` như manual
-  intake.
+- [x] Cùng folder ID + file ID + MD5 nội dung tạo một request ID ổn định;
+  version vẫn được kiểm để phát hiện file đổi khi tải. Metadata-only edit,
+  poll và restart không tạo thêm SQL job. Intake dùng cùng boundary và audit
+  `AI_QUEUED` như manual intake. Lưu ý dùng DB test mới sau đổi thuật toán ID.
 - [x] E2E local đã gọi Drive API và OpenRouter thật trên fixture synthetic:
   3 lần xử lý hoàn tất (2 fixture khác nhau, 1 lần chạy lại để kiểm tra sửa
   false positive), 1 file `.txt` bị từ chối trước SQL intake, restart không
@@ -37,17 +39,24 @@ job/audit khi poll và restart. Batch 5/20/100 chưa chạy. Xem
 - [x] Fake-API boundary test: 101 entries với giới hạn 100 làm scan fail-closed;
   không download, không private file và không intake một phần. Đây không phải
   load test 100 hóa đơn.
-- [x] Regression suite: **216/216 pass** (`dotnet test ... -c Release
+- [x] Regression suite: **220/220 pass** (`dotnet test ... -c Release
   --no-restore`); Release build: **0 warning, 0 error**; EF xác nhận không có
   pending model changes. E2E Drive/OpenRouter là bằng chứng riêng, không được
   suy ra chỉ từ unit test.
 - [x] Connector được tắt lại sau E2E; DB local test là DB riêng, không phải
   hosting/live. Không publish connector lên live.
+- [x] Batch tăng dần 5 → 20 → 100 đã chạy. Bản sửa nhận đúng 100/100,
+  30 nội dung khác nhau, 200 audit event; 98 `COMPLETED`, 2
+  `ESCALATE_SYSTEM_ERROR` fail-safe. Poll/restart không sinh job trùng.
+- [x] 15 ảnh thật có consent qua localhost manual intake: 15/15 completed,
+  0 lỗi provider; ảnh không vào Drive. Đây không phải blind holdout/accuracy
+  claim vì hash không khớp manifest nhãn cũ.
 
 ## Chưa làm / chưa có đủ bằng chứng
 
-- [ ] Batch 5 → 20 → 100 file: queue wait, terminal/error counts, throughput,
-  rate limit, memory/disk và latency p50/p95. Chưa có capacity/SLA claim.
+- [ ] Đo memory peak, disk theo thời gian và capacity/SLA trên 100 ảnh **độc
+  lập** rồi 1.000 ảnh; batch vừa qua chỉ có 30 nội dung khác nhau. Latency,
+  queue wait, terminal và lỗi đã ghi ở báo cáo MVP; chưa có SLA claim.
 - [ ] Hành vi API lỗi thực tế: 401/403/revoked key, quota/429, timeout,
   transient download error và retry/backoff; kiểm tra app vẫn hoạt động an toàn.
 - [ ] Thử file giả MIME/PDF, file quá cỡ và file bị đổi/move giữa metadata với
@@ -73,32 +82,32 @@ job/audit khi poll và restart. Batch 5/20/100 chưa chạy. Xem
 1. **Giữ an toàn baseline:** xác nhận `DriveSandbox:Enabled=false`,
    `RequireMalwareScanner=true`, app không chạy connector khi không test; giữ
    folder Restricted và chỉ synthetic fixtures. Không đưa hóa đơn thật vào.
-2. **Smoke local sau thay đổi:** chạy Release build, 216+ unit tests, kiểm EF
+2. **Smoke local sau thay đổi:** chạy Release build, 220+ unit tests, kiểm EF
    no-pending-model-change; dùng SQL local riêng. Kiểm `/healthz`, dashboard,
    và xác nhận connector vẫn tắt.
 3. **Một file hợp lệ:** bật sandbox tạm theo runbook, dùng một JPG/PNG synthetic
    mới; xác nhận một SQL row, `AI_QUEUED`, trạng thái terminal, private storage
    và không có raw PII trong log. Tắt connector sau test.
-4. **Idempotency/restart:** poll cùng version và restart worker; số request/audit
-   không tăng. Sửa nội dung tạo version mới phải được xem như input mới; không
-   sửa file trong lúc đang xử lý.
+4. **Idempotency/restart:** poll và restart worker; số request/audit không tăng
+   khi chỉ đổi metadata. Sửa **bytes** tạo checksum mới mới được xem là input
+   mới; không sửa file trong lúc đang xử lý.
 5. **Negative tests:** từ chối extension/MIME/magic bytes sai, quá cỡ, sai
    folder, source đổi giữa lúc tải; quá ngưỡng file fail-closed không intake
    một phần; không tạo SQL job. Kiểm rejection log chỉ có hash/reason/timestamp
    và không phình do poll/restart lặp.
-6. **Batch tăng dần:** chỉ sau khi 1-file và negative tests pass, chạy 5, rồi
-   20, rồi tối đa 100 synthetic images; mỗi cấp ghi số nguồn, accepted,
-   terminal, error, p50/p95 latency, max queue age và dung lượng storage. Dừng
-   nếu có mất/trùng job, raw secret/PII trong log, tăng lỗi hoặc provider quota.
+6. **Batch tăng dần:** đã chạy 5/20/100 và phát hiện, sửa, kiểm lại lỗi nhân
+   job. Với lần đo tiếp theo dùng 100 ảnh **khác nhau**, giữ ca lỗi trong mẫu,
+   chốt ground truth trước và đo thêm tài nguyên/cost. Không gọi 2/100 lỗi
+   kỹ thuật là tỷ lệ sai quyết định.
 7. **Chỉ sau phê duyệt riêng:** thiết kế scanner/quarantine, identity/RBAC,
    retention/restore, privacy/provider, secret management và vận hành trước
    bất kỳ pilot dữ liệu cá nhân hay publish production nào.
 
 ## Quyết định hiện tại
 
-**GO có điều kiện** cho thử nghiệm local với fixture tổng hợp và folder test
-Restricted. **NO-GO** cho hóa đơn cá nhân/doanh nghiệp, public demo intake,
-publish Drive connector lên hosting, batch hàng trăm/hàng nghìn, hoặc tuyên bố
-production-ready. Bộ test hiện tại và một E2E nhỏ chứng minh các nhánh đã thử
-hoạt động; chúng chưa thay thế load, security, privacy, operational hay
-compliance review.
+**GO có điều kiện** cho MVP local với fixture tổng hợp/folder Restricted và
+thử nghiệm ảnh thật có consent từng lần. **NO-GO** cho pilot công khai với dữ
+liệu cá nhân/doanh nghiệp, publish Drive connector lên hosting, quy mô 1.000,
+hoặc tuyên bố production-ready. Batch 100 chứng minh một worker xử lý tuần tự
+và fail-safe, nhưng P95 chờ hàng đợi ~14 phút, có lỗi provider/model, chưa
+đánh giá accuracy độc lập hoặc các gate security/privacy/compliance.

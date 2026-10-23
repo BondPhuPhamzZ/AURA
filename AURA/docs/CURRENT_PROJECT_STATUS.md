@@ -1,18 +1,21 @@
-# Trạng thái hiện hành AURA ngày 22/10/2026
+# Trạng thái hiện hành AURA ngày 23/10/2026
 
-> Bản hardening mới nhất trong ngày: Drive GET retry giới hạn cho 429/5xx,
-> audit mới không lặp lại tên file/mã người gửi/hash ảnh/free-text reason;
-> **218/218** test pass, Release build 0 warning/error, EF không pending model
-> changes. LocalDB đã chạy được ngoài sandbox của phiên công cụ với DB thử
-> riêng, health `ok` và dashboard 200; E2E Drive/OpenRouter sau thay đổi
-> hoàn tất 3/3 job synthetic, 0 lỗi, không tạo trùng sau poll/restart.
-> Kết quả này chưa phải benchmark batch hay phép đo hóa đơn thật. Xem
-> [evidence và các gate còn mở](DRIVE_PIPELINE_HARDENING_2026-10-22.md).
+> **Source hiện hành:** **220/220** Release tests pass, Release build 0
+> warning/error với `--no-restore`, EF không có pending model changes. Drive
+> synthetic sandbox vẫn chỉ chạy Development/loopback và tắt mặc định. Batch
+> 5/20/100 đã chạy qua Google Drive API, SQL queue, OpenRouter và policy.
+> Bản 100 đầu sinh 104 job từ 100 file do metadata version đổi; sau sửa
+> identity theo folder ID + file ID + MD5 nội dung, DB thử mới sinh đúng
+> 100 job, 98 completed và 2 fail-safe. Poll và restart không tạo thêm job.
+> 15 ảnh thật có consent chạy qua **manual intake local**, 15/15 completed;
+> không upload lên Drive và không có ground truth khớp hash để tính accuracy.
+> Xem [báo cáo đo MVP](DRIVE_MVP_VALIDATION_2026-10-22.md). Đây không phải
+> bằng chứng production-ready hay cho phép publish Drive connector.
 
-> Source 22/10 có **Drive synthetic sandbox Development-only**, tắt mặc định,
+> **Mốc lịch sử trước batch:** Source 22/10 có Drive sandbox Development-only, tắt mặc định,
 > không thêm EF migration. Manual upload và Drive staging cùng dùng
 > ReceiptIntakeService; Drive chỉ đọc file con trực tiếp của folder test riêng,
-> chống trùng bằng request ID tất định theo file ID + version. **E2E local thật**
+> chống trùng bằng request ID tất định theo file ID + version lúc đó. **E2E local thật**
 > đã đọc Google Drive qua service account, tạo SQL job và gọi OpenRouter:
 > 3/3 lần xử lý job synthetic hoàn tất (2 fixture khác nhau, một fixture chạy
 > lại để xác nhận sửa lỗi), một file `.txt` bị chặn, restart không tạo trùng.
@@ -22,7 +25,7 @@
 > lại sau test; **bản live chưa publish lại, không nhận dữ liệu thật**.
 > Rejection log được hardening để cùng source-version/reason chỉ ghi một lần;
 > vượt giới hạn scan 100 entries cũng fail-closed, không intake một phần.
-> Hiện **216/216** Release tests pass, build 0 warning/error, EF không pending
+> Tại mốc đó **216/216** Release tests pass, build 0 warning/error, EF không pending
 > model changes. Xem [evidence Drive local](DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md),
 > [checklist/GO-NO-GO](DRIVE_SANDBOX_CHECKLIST.md) và [runbook](DRIVE_SANDBOX_LOCAL.md).
 
