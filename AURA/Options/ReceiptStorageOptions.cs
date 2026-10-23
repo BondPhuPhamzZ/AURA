@@ -13,4 +13,10 @@ public sealed class ReceiptStorageOptions
 
     [Range(1, 20)]
     public int MaxFileSizeMb { get; set; } = 5;
+
+    [Range(1, 720)]
+    public int StaleTempFileAgeHours { get; set; } = 24;
+
+    [Range(5, 1440)]
+    public int TempFileCleanupIntervalMinutes { get; set; } = 60;
 }

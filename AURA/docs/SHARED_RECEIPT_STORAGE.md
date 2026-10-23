@@ -14,6 +14,12 @@ checks the stored size and SHA-256 against SQL before sending bytes to the exist
 semantic validation, privacy triage, and deterministic policy pipeline. The application serves
 image bytes through its controller; it does not expose bucket URLs or generate signed URLs.
 
+For the local filesystem provider, a background sweeper removes only AURA-generated staging
+`.tmp` files older than the configured `ReceiptStorage__StaleTempFileAgeHours` (default 24 hours),
+and only when it can open them exclusively. It does not delete completed receipt files. This cleanup
+is disabled for GCS and is unrelated to receipt retention; no receipt-object lifecycle deletion is
+implemented by the application.
+
 ## GCS configuration (opt-in only)
 
 Create a dedicated private bucket, enable [uniform bucket-level access](https://cloud.google.com/storage/docs/uniform-bucket-level-access) and [public access prevention](https://cloud.google.com/storage/docs/public-access-prevention),

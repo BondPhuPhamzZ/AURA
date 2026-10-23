@@ -50,6 +50,44 @@ public sealed class ReceiptFileStoreTests
     }
 
     [Fact]
+    public void Staging_cleanup_removes_only_old_unlocked_AURA_temp_files()
+    {
+        var root = NewRoot();
+        try
+        {
+            var now = DateTime.UtcNow;
+            var stalePath = Path.Combine(root,
+                ".0123456789abcdef0123456789abcdef.jpg.abcdef0123456789abcdef0123456789.tmp");
+            var recentPath = Path.Combine(root,
+                ".1123456789abcdef0123456789abcdef.png.abcdef0123456789abcdef0123456789.tmp");
+            var busyPath = Path.Combine(root,
+                ".2123456789abcdef0123456789abcdef.jpeg.abcdef0123456789abcdef0123456789.tmp");
+            var unrelatedPath = Path.Combine(root, ".user-data.tmp");
+            var receiptPath = Path.Combine(root, "0123456789abcdef0123456789abcdef.jpg");
+            foreach (var path in new[] { stalePath, recentPath, busyPath, unrelatedPath, receiptPath })
+                File.WriteAllText(path, "test data");
+            File.SetLastWriteTimeUtc(stalePath, now.AddDays(-2));
+            File.SetLastWriteTimeUtc(busyPath, now.AddDays(-2));
+
+            using var activeWriter = new FileStream(busyPath, FileMode.Open, FileAccess.ReadWrite,
+                FileShare.None);
+            var result = ReceiptTemporaryFileCleanup.Clean(root, now, TimeSpan.FromHours(24));
+
+            Assert.Equal(1, result.DeletedCount);
+            Assert.Equal(1, result.SkippedCount);
+            Assert.False(File.Exists(stalePath));
+            Assert.True(File.Exists(recentPath));
+            Assert.True(File.Exists(busyPath));
+            Assert.True(File.Exists(unrelatedPath));
+            Assert.True(File.Exists(receiptPath));
+        }
+        finally
+        {
+            DeleteRoot(root);
+        }
+    }
+
+    [Fact]
     public async Task Gcs_store_uses_create_only_and_reuses_only_matching_content()
     {
         var client = new FakeGoogleStorageClient();
