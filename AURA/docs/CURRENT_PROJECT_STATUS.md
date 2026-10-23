@@ -1,5 +1,14 @@
 # Trạng thái hiện hành AURA ngày 23/10/2026
 
+> **Chẩn đoán tiếp theo (23/10):** đã bổ sung mã lý do schema an toàn,
+> không ghi phản hồi model thô hoặc giá trị hóa đơn. Ca 13 của bộ 15 ảnh cũ
+> chạy lại riêng 3/3 completed nên chưa tái hiện được lỗi trước đó; không
+> được xem là cải thiện accuracy. Default suite 248/248 pass (hai ca LocalDB
+> integration opt-in không nằm trong lượt này). Vẫn **NO-GO** cho publish/
+> scale. Đã xác định thêm khoảng trống code: với version v2 hiện diện,
+> parser chưa bắt buộc đủ mọi trường required; cần fix và chạy regression
+> trước khi tiếp tục. Xem [evidence chẩn đoán](SCHEMA_FAILURE_DIAGNOSTIC_2026-10-23.md).
+
 Đánh giá về mức supervised MVP, yêu cầu Track A, phạm vi nghiệp vụ, UX reload
 và điều phối nhiều máy chủ nằm tại
 [readiness and scale assessment](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
