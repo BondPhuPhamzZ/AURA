@@ -9,12 +9,14 @@
 > retry/reconciliation. Regression unit test mô phỏng đúng entity còn tracked
 > nhưng chưa persist. Focused suite 29/29; full Debug và Release 299/299 mỗi
 > lượt; Release build 0 warning/error, EF không pending model change và
-> `git diff --check` pass. LocalDB opt-in regression
-> với SQL trigger chưa chạy được trong phiên này: `sqllocaldb info/start
-> MSSQLLocalDB` báo lỗi registry/automatic instance. Không dùng hay sửa DB
-> người dùng; cần chạy integration này lại khi LocalDB khả dụng. Vì vậy test
-> đếm 299 gồm các integration case đã return sớm khi env var chưa bật, không
-> phải bằng chứng SQL integration mới đã pass.
+> `git diff --check` pass. SQL-trigger integration test đã chạy trên LocalDB
+> thật: audit-trigger làm transaction rollback, intake ném lỗi thay vì trả
+> phantom success; retry bằng scope mới tạo đúng một request và một audit.
+> Full Debug/Release chạy với `AURA_RUN_LOCALDB_INTEGRATION=1`, toàn bộ 17
+> integration cases được bật (299/299, không skip). Sandbox process ban đầu
+> không truy cập được automatic instance; sau khi xác nhận đúng instance
+> `MSSQLLocalDB` và chạy test dưới user sở hữu instance, integration pass.
+> Chỉ database test tên ngẫu nhiên được tạo/xóa; không chạm DB ứng dụng.
 
 > **Latest verification 24/10:** Full Debug and Release suites each pass
 > **297/297 with all 16 SQL LocalDB integration cases actively enabled**
