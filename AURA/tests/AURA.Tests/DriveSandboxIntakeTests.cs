@@ -2,10 +2,12 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using AURA.Data;
 using AURA.Interfaces;
 using AURA.Models;
 using AURA.Options;
 using AURA.Services;
+using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -176,6 +178,83 @@ public sealed class DriveSandboxIntakeTests
             Assert.Single(Directory.GetFiles(Path.Combine(root, "receipts")));
         }
         finally { DeleteTestRoot(root); }
+    }
+
+    [Fact]
+    public async Task Failed_source_insert_does_not_treat_tracked_entity_as_durable()
+    {
+        var root = NewTestRoot();
+        try
+        {
+            var repository = new FakeRepository { TrackUnpersistedThenFailNextAdd = true };
+            var service = CreateIntake(root, repository);
+            var input = new ReceiptIntakeInput(Png, "receipt.png", "image/png", 0,
+                "DRIVE-SANDBOX", "Synthetic", "Test", "drive:folder:file:rollback-unit");
+
+            await Assert.ThrowsAsync<DbUpdateException>(() => service.AcceptAsync(input));
+
+            Assert.Empty(repository.Requests);
+            Assert.Single(Directory.GetFiles(Path.Combine(root, "receipts")));
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Fact]
+    public async Task Rolled_back_source_insert_is_not_mistaken_for_a_persisted_job()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        var root = NewTestRoot();
+        var databaseName = "AuraIntakeRollbackIT_" + Guid.NewGuid().ToString("N");
+        var connectionString = $"Server=(localdb)\\MSSQLLocalDB;Database={databaseName};Trusted_Connection=True;TrustServerCertificate=True";
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(connectionString).Options;
+        var created = false;
+        try
+        {
+            await using (var setup = new AppDbContext(options))
+                created = await setup.Database.EnsureCreatedAsync();
+            Assert.True(created);
+
+            await using var database = new AppDbContext(options);
+            await database.Database.ExecuteSqlRawAsync("""
+                CREATE TRIGGER dbo.TR_AuditLogs_RejectIntakeTest ON dbo.AuditLogs
+                AFTER INSERT AS
+                BEGIN
+                    THROW 51000, 'Synthetic audit write failure', 1;
+                END
+                """);
+            var input = new ReceiptIntakeInput(Png, "receipt.png", "image/png", 0,
+                "DRIVE-SANDBOX", "Synthetic", "Test", "drive:folder:file:rollback");
+            var intake = CreateIntake(root, new ReimbursementRepository(database));
+
+            await Assert.ThrowsAsync<DbUpdateException>(() => intake.AcceptAsync(input));
+
+            Assert.Empty(await database.ReimbursementRequests.AsNoTracking().ToListAsync());
+            Assert.Empty(await database.AuditLogs.AsNoTracking().ToListAsync());
+            Assert.Single(Directory.GetFiles(Path.Combine(root, "receipts")));
+
+            await database.Database.ExecuteSqlRawAsync(
+                "DROP TRIGGER dbo.TR_AuditLogs_RejectIntakeTest;");
+            await using var retryDatabase = new AppDbContext(options);
+            var retryIntake = CreateIntake(root, new ReimbursementRepository(retryDatabase));
+            var retried = await retryIntake.AcceptAsync(input);
+            Assert.Equal(ReceiptIntakeService.SourceRequestId(input.SourceKey!), retried.Id);
+            Assert.Single(await retryDatabase.ReimbursementRequests.AsNoTracking().ToListAsync());
+            Assert.Single(await retryDatabase.AuditLogs.AsNoTracking().ToListAsync());
+        }
+        finally
+        {
+            if (created)
+            {
+                await using var cleanup = new SqlConnection(new SqlConnectionStringBuilder(connectionString)
+                    { InitialCatalog = "master" }.ConnectionString);
+                await cleanup.OpenAsync();
+                await using var command = cleanup.CreateCommand();
+                command.CommandText = $"IF DB_ID(@name) IS NOT NULL BEGIN ALTER DATABASE [{databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [{databaseName}]; END";
+                command.Parameters.AddWithValue("@name", databaseName);
+                await command.ExecuteNonQueryAsync();
+            }
+            DeleteTestRoot(root);
+        }
     }
 
     [Theory]
@@ -496,7 +575,7 @@ public sealed class DriveSandboxIntakeTests
         .AddInMemoryCollection(new Dictionary<string, string?>
             { ["urls"] = "http://127.0.0.1:5097" }).Build();
 
-    private static ReceiptIntakeService CreateIntake(string root, FakeRepository repository,
+    private static ReceiptIntakeService CreateIntake(string root, IReimbursementRepository repository,
         ReceiptProcessingQueue? queue = null) =>
         new(new LocalReceiptFileStore(new TestEnvironment(root),
                 OptionsFactory.Create(new ReceiptStorageOptions { Directory = "receipts", MaxFileSizeMb = 5 })), repository,
@@ -652,11 +731,16 @@ public sealed class DriveSandboxIntakeTests
     {
         public List<ReimbursementRequest> Requests { get; } = [];
         public bool FailNextAdd { get; set; }
+        public bool TrackUnpersistedThenFailNextAdd { get; set; }
         public bool FailNextHashLookup { get; set; }
         public bool CommitThenReportUniqueConflict { get; set; }
+        private ReimbursementRequest? TrackedRequest { get; set; }
         public string LastAudit { get; private set; } = string.Empty;
         public TaskCompletionSource Accepted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public Task<ReimbursementRequest?> GetRequestByIdAsync(string id) =>
+            Task.FromResult(Requests.SingleOrDefault(item => item.Id == id) ??
+                (TrackedRequest?.Id == id ? TrackedRequest : null));
+        public Task<ReimbursementRequest?> GetPersistedRequestByIdAsync(string id) =>
             Task.FromResult(Requests.SingleOrDefault(item => item.Id == id));
         public Task<bool> ExistsByFileHashAsync(string sha256)
         {
@@ -669,6 +753,12 @@ public sealed class DriveSandboxIntakeTests
         }
         public Task AddRequestWithAuditAsync(ReimbursementRequest request, string action, string details)
         {
+            if (TrackUnpersistedThenFailNextAdd)
+            {
+                TrackUnpersistedThenFailNextAdd = false;
+                TrackedRequest = request;
+                throw new DbUpdateException("Simulated rollback with entity retained in change tracker.");
+            }
             if (FailNextAdd)
             {
                 FailNextAdd = false;

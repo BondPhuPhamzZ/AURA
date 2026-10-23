@@ -9,6 +9,7 @@ namespace AURA.Interfaces
         Task<List<ReimbursementRequest>> GetAllRequestsAsync();
         Task AddRequestWithAuditAsync(ReimbursementRequest request, string action, string details);
         Task<ReimbursementRequest?> GetRequestByIdAsync(string id);
+        Task<ReimbursementRequest?> GetPersistedRequestByIdAsync(string id);
         Task UpdateRequestAsync(ReimbursementRequest request);
         Task UpdateRequestWithAuditAsync(ReimbursementRequest request, string action, string details);
         Task UpdateRequestsWithAuditAsync(IEnumerable<(ReimbursementRequest Request, string Details)> requests,

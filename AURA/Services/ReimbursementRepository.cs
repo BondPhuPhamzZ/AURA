@@ -42,6 +42,14 @@ namespace AURA.Services
             return await _context.ReimbursementRequests.FindAsync(id);
         }
 
+        public Task<ReimbursementRequest?> GetPersistedRequestByIdAsync(string id)
+        {
+            // Unlike FindAsync, this must bypass entities left in the change tracker
+            // after a failed SaveChanges. Intake uses it to verify ambiguous writes.
+            return _context.ReimbursementRequests.AsNoTracking()
+                .SingleOrDefaultAsync(request => request.Id == id);
+        }
+
         public async Task UpdateRequestAsync(ReimbursementRequest request)
         {
             _context.ReimbursementRequests.Update(request);

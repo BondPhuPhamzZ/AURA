@@ -111,7 +111,7 @@ public sealed class ReceiptIntakeService
                 // The primary key arbitrates concurrent pollers. A second insert may
                 // lose after the first transaction has committed; resolve that race
                 // to the durable row when its bytes match rather than failing the scan.
-                var concurrent = await _repository.GetRequestByIdAsync(id);
+                var concurrent = await _repository.GetPersistedRequestByIdAsync(id);
                 if (concurrent is null ||
                     !string.Equals(concurrent.FileSha256, sha256, StringComparison.OrdinalIgnoreCase))
                     throw;

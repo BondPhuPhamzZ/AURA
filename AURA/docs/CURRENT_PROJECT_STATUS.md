@@ -1,5 +1,21 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
+> **Cập nhật tiếp nối 24/10 — source intake write xác nhận bền vững:** Khi
+> xử lý `DbUpdateException` sau khi tạo receipt nguồn, `ReceiptIntakeService`
+> nay dùng `GetPersistedRequestByIdAsync` (`AsNoTracking`) để xác nhận job đã
+> thật sự có trong SQL; không dùng `FindAsync`, vốn có thể trả entity `Added`
+> còn trong change tracker dù transaction vừa rollback. Nếu không có row bền
+> vững hoặc hash không khớp, lỗi được ném lại; object nguồn vẫn được giữ để
+> retry/reconciliation. Regression unit test mô phỏng đúng entity còn tracked
+> nhưng chưa persist. Focused suite 29/29; full Debug và Release 299/299 mỗi
+> lượt; Release build 0 warning/error, EF không pending model change và
+> `git diff --check` pass. LocalDB opt-in regression
+> với SQL trigger chưa chạy được trong phiên này: `sqllocaldb info/start
+> MSSQLLocalDB` báo lỗi registry/automatic instance. Không dùng hay sửa DB
+> người dùng; cần chạy integration này lại khi LocalDB khả dụng. Vì vậy test
+> đếm 299 gồm các integration case đã return sớm khi env var chưa bật, không
+> phải bằng chứng SQL integration mới đã pass.
+
 > **Latest verification 24/10:** Full Debug and Release suites each pass
 > **297/297 with all 16 SQL LocalDB integration cases actively enabled**
 > (`AURA_RUN_LOCALDB_INTEGRATION=1`, isolated temporary databases); Release
