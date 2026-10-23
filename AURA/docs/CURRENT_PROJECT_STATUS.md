@@ -20,6 +20,8 @@
 > `MSSQLLocalDB` và chạy test dưới user sở hữu instance, integration pass.
 > Chỉ database test tên ngẫu nhiên được tạo/xóa; không chạm DB ứng dụng.
 
+> **Privacy request invariant 24/10:** Nếu `OpenRouter__RequireZeroDataRetention=true`, AURA nay luôn gửi `provider.data_collection="deny"` kể cả khi `OpenRouter__DenyProviderDataCollection=false`; `/healthz` báo cùng giá trị hiệu lực thay vì chỉ phản ánh biến riêng. Regression test xác nhận payload dưới cấu hình mâu thuẫn. Full Debug/Release **300/300** với 18 LocalDB integration cases bật, Release build 0 warning/error, EF không pending model change. Đây chỉ là tính nhất quán của yêu cầu routing AURA; không chứng minh model/provider hỗ trợ ZDR, và không có request thật được gửi.
+
 > **Earlier isolated app-smoke evidence 24/10:** Full Debug and Release suites
 > at that checkpoint passed **297/297 with all 16 SQL LocalDB integration cases enabled**
 > (`AURA_RUN_LOCALDB_INTEGRATION=1`, isolated temporary databases); Release

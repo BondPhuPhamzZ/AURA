@@ -311,7 +311,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
             {
                 ApiKey = "test-key",
                 RequireZeroDataRetention = true,
-                DenyProviderDataCollection = true
+                DenyProviderDataCollection = false
             });
             var client = new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) };
             var service = new OpenRouterVisionExtractorService(client, options,

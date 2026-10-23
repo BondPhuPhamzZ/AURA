@@ -105,7 +105,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             ["max_tokens"] = _options.MaxOutputTokens,
             ["provider"] = new
             {
-                data_collection = _options.DenyProviderDataCollection ? "deny" : "allow",
+                data_collection = _options.DeniesProviderDataCollection ? "deny" : "allow",
                 zdr = _options.RequireZeroDataRetention
             },
             ["plugins"] = new[] { new { id = "response-healing" } },

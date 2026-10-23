@@ -45,6 +45,9 @@ public sealed class OpenRouterOptions
     /// </summary>
     public bool RequireZeroDataRetention { get; set; }
 
+    public bool DeniesProviderDataCollection =>
+        DenyProviderDataCollection || RequireZeroDataRetention;
+
     [Required]
     public string HttpReferer { get; set; } = "https://github.com/BondPhuPhamzZ/AURA";
 
