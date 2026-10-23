@@ -121,6 +121,37 @@ public sealed class OpenRouterVisionExtractorServiceTests
         }
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Oversized_provider_response_is_rejected_with_or_without_accurate_length_header(
+        bool accurateLengthHeader)
+    {
+        var root = CreateFixtureRoot();
+        try
+        {
+            var handler = new StubHandler(_ =>
+            {
+                var content = new ByteArrayContent(new byte[2 * 1024 * 1024 + 1]);
+                if (!accurateLengthHeader) content.Headers.ContentLength = 1;
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = content });
+            });
+            var options = Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions { ApiKey = "test-key" });
+            var service = new OpenRouterVisionExtractorService(
+                new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) }, options,
+                new TestEnvironment(root), NullLogger<OpenRouterVisionExtractorService>.Instance);
+
+            var exception = await Assert.ThrowsAsync<VisionExtractionException>(() =>
+                service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg")));
+
+            Assert.Equal("AI_RESPONSE_TOO_LARGE", exception.Code);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Fact]
     public async Task Sends_image_to_openrouter_chat_completions_with_configured_model()
     {

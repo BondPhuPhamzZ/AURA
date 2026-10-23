@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using AURA.Interfaces;
 using AURA.Models;
@@ -12,6 +13,7 @@ namespace AURA.Services;
 
 public sealed class OpenRouterVisionExtractorService : IVisionExtractor
 {
+    private const int MaxResponseBytes = 2 * 1024 * 1024;
     private readonly HttpClient _httpClient;
     private readonly OpenRouterOptions _options;
     private readonly IWebHostEnvironment _environment;
@@ -298,7 +300,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
 
             using var response = await _httpClient.SendAsync(
                 request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            var body = await ReadBoundedResponseBodyAsync(response.Content, cancellationToken);
             var retryAfter = response.Headers.RetryAfter?.Delta;
             var requestId = ReadFirstHeader(response, "X-Request-Id") ??
                 ReadFirstHeader(response, "X-OpenRouter-Generation-Id");
@@ -308,6 +310,31 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             await Task.Delay(retryAfter ?? TimeSpan.FromMilliseconds(750 * attempt), cancellationToken);
         }
         throw new UnreachableException();
+    }
+
+    private static async Task<string> ReadBoundedResponseBodyAsync(HttpContent content,
+        CancellationToken cancellationToken)
+    {
+        if (content.Headers.ContentLength is > MaxResponseBytes)
+            throw new VisionExtractionException("AI_RESPONSE_TOO_LARGE",
+                "Phản hồi AI vượt giới hạn kích thước an toàn; hồ sơ cần kiểm tra thủ công.");
+
+        await using var source = await content.ReadAsStreamAsync(cancellationToken);
+        using var destination = new MemoryStream();
+        var buffer = new byte[8192];
+        while (true)
+        {
+            var remainingWithSentinel = MaxResponseBytes - (int)destination.Length + 1;
+            var read = await source.ReadAsync(buffer.AsMemory(0, Math.Min(buffer.Length, remainingWithSentinel)),
+                cancellationToken);
+            if (read == 0) break;
+            if (destination.Length + read > MaxResponseBytes)
+                throw new VisionExtractionException("AI_RESPONSE_TOO_LARGE",
+                    "Phản hồi AI vượt giới hạn kích thước an toàn; hồ sơ cần kiểm tra thủ công.");
+            destination.Write(buffer, 0, read);
+        }
+
+        return Encoding.UTF8.GetString(destination.GetBuffer().AsSpan(0, (int)destination.Length));
     }
 
     private static bool IsTransient(HttpStatusCode statusCode) => statusCode is
