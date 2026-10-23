@@ -7,7 +7,7 @@
 
 Việc cần làm trước khi mở lại gate publish/pilot:
 
-- [x] Khóa schema đầu vào, field backend-only, metadata/log lỗi provider và tín hiệu Semantic có thể chứa dữ liệu cá nhân; chặn response provider quá 2 MiB; Release/Debug 271/271, LocalDB 6/6, build/EF sạch.
+- [x] Khóa schema đầu vào, field backend-only, metadata/log lỗi provider và tín hiệu Semantic có thể chứa dữ liệu cá nhân; chặn response provider quá 2 MiB; Release/Debug 272/272, LocalDB 7/7, build/EF sạch.
 - [x] Đối chứng cùng 15 synthetic: Qwen3.6 Flash 15/15 quyết định, Qwen3.8 Flash 13/15; đây là bộ đã biết, không phải holdout mù.
 - [ ] Tạo tập synthetic mới có nhãn độc lập, tách riêng tổng bị mờ với mô tả mặt hàng chung chung; đo missed escalation, critical fields, lỗi provider và latency qua nhiều lượt.
 - [ ] Chỉ gửi 15 ảnh thật qua model thay thế sau khi chủ dữ liệu chấp thuận rõ route mới; giữ ảnh và kết quả chi tiết ngoài Git.
@@ -16,6 +16,7 @@ Việc cần làm trước khi mở lại gate publish/pilot:
 - [x] Thêm SQL application lock opt-in cho một permit xuyên process; LocalDB kiểm tra hai coordinator và cancellation. Giữ `Vision__UseSqlDistributedGate=false` trên hosting cho tới khi có shared private storage, cooldown chung và chaos/load test cho trường hợp mất SQL session giữa AI call.
 - [x] Worker đối chiếu size/SHA-256 ảnh đã lưu với SQL trước khi gọi AI; ca file bị sửa dừng fail-safe. Chưa có bằng chứng private share hoạt động xuyên host, ACL/backup/restore hoặc tính bất biến trên mọi loại storage.
 - [x] Smoke Development localhost sau khi xác minh 0 job đang chờ và tắt Drive: `/healthz` OK, DB/schema/storage và key presence sẵn sàng; không gọi model, không publish.
+- [x] Diễn tập BACKUP/RESTORE trên DB LocalDB tạm chỉ chứa job và audit synthetic; DB phục hồi giữ trạng thái đúng lúc backup, DB/file tạm được dọn. Chưa có diễn tập restore DB hosting **cùng** kho ảnh và kiểm tra RPO/RTO.
 
 ## Checklist publish lịch sử (không áp dụng cho candidate hiện tại)
 

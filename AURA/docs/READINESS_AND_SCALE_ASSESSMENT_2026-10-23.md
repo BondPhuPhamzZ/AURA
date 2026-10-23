@@ -41,6 +41,8 @@ An opt-in `Vision__UseSqlDistributedGate=true` now serializes AI calls from sepa
 
 The storage path accepts an absolute private directory outside `wwwroot`, so a restricted shared file mount could be configured without changing receipt IDs. The worker now checks stored size and SHA-256 against the intake record before calling AI and keeps a read-only handle during extraction; a same-size tamper test stops before the model call. This **does not** provision a shared store, verify cross-host ACLs/SMB semantics, or replace a private object-storage design. Rows predating persisted file metadata may contain the migration defaults (`0`/empty hash) and will now fail safe for manual recovery rather than sending unverifiable bytes.
 
+An isolated LocalDB drill now backs up a database containing one synthetic pending job and audit marker, changes the source job after backup, restores into a second temporary database, and verifies the restored job is still pending with its audit marker. The test removes its temporary restored database and backup. This proves point-in-time SQL restore works in that controlled environment; it does **not** prove hosting-provider backup availability, restore permissions, image-file recovery, cross-host storage recovery, RPO/RTO, or a full incident runbook. Those remain pilot gates.
+
 ## Change gates before any broader pilot
 
 1. Replace the expired provider key in private configuration and smoke one synthetic image. Keep Drive disabled and Verify disabled on public hosting.
