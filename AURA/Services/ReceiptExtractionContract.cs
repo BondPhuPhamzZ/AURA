@@ -18,6 +18,10 @@ internal static class ReceiptExtractionContract
         "subtotal", "discountAmount", "tax", "totalAmount", "totalAmountSource", "totalAmountEvidence",
         "lineItems", "missingFields", "warnings", "suspiciousSignals", "confidence"
     ];
+    private static readonly string[] RequiredLineItemFields =
+        ["description", "quantity", "unitPrice", "amount"];
+    private static readonly string[] RequiredArrayFields =
+        ["lineItems", "missingFields", "warnings", "suspiciousSignals"];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -99,16 +103,14 @@ internal static class ReceiptExtractionContract
         var inferredVersion = false;
         var parsed = JsonNode.Parse(json) as JsonObject
             ?? throw new JsonException("Extraction must be a JSON object.");
-        if (!HasProperty(parsed, "evidenceContractVersion"))
+        var versionMissing = !HasProperty(parsed, "evidenceContractVersion");
+        var shapeFailure = FindRequiredShapeFailure(parsed, versionMissing);
+        if (shapeFailure is not null)
+            throw new JsonException("Extraction does not satisfy the required response shape.");
+        if (versionMissing)
         {
             // The contract version is backend protocol metadata, not a fact read
             // from the receipt. Only restore it for an otherwise complete object.
-            if (RequiredFields.Skip(1).Any(field => !HasProperty(parsed, field)) ||
-                GetProperty(parsed, "lineItems") is not JsonArray items ||
-                items.Any(item => item is not JsonObject line ||
-                    new[] { "description", "quantity", "unitPrice", "amount" }
-                        .Any(field => !HasProperty(line, field))))
-                throw new JsonException("Missing contract version and required evidence fields.");
             parsed["evidenceContractVersion"] = CurrentEvidenceContractVersion;
             inferredVersion = true;
         }
@@ -151,22 +153,10 @@ internal static class ReceiptExtractionContract
         }
 
         if (parsed is null) return ("NOT_JSON_OBJECT", "<none>");
-        if (!HasProperty(parsed, "evidenceContractVersion"))
-        {
-            var firstMissing = RequiredFields.Skip(1).FirstOrDefault(field => !HasProperty(parsed, field));
-            if (firstMissing is not null) return ("MISSING_VERSION_AND_FIELD", firstMissing);
-            if (GetProperty(parsed, "lineItems") is not JsonArray items)
-                return ("MISSING_VERSION_AND_LINE_ITEMS", "lineItems");
-            foreach (var item in items)
-            {
-                if (item is not JsonObject line)
-                    return ("INVALID_LINE_ITEM", "lineItems");
-                var missing = new[] { "description", "quantity", "unitPrice", "amount" }
-                    .FirstOrDefault(field => !HasProperty(line, field));
-                if (missing is not null) return ("MISSING_LINE_ITEM_FIELD", missing);
-            }
-        }
-        else if (GetProperty(parsed, "evidenceContractVersion") is JsonValue version &&
+        var shapeFailure = FindRequiredShapeFailure(parsed,
+            !HasProperty(parsed, "evidenceContractVersion"));
+        if (shapeFailure is not null) return shapeFailure.Value;
+        if (GetProperty(parsed, "evidenceContractVersion") is JsonValue version &&
                  version.TryGetValue<int>(out var number) && number != CurrentEvidenceContractVersion)
         {
             return ("UNSUPPORTED_CONTRACT_VERSION", "evidenceContractVersion");
@@ -176,6 +166,36 @@ internal static class ReceiptExtractionContract
         return fieldAtPath is null
             ? ("DTO_DESERIALIZATION", "<none>")
             : ("FIELD_TYPE_OR_VALUE", fieldAtPath);
+    }
+
+    private static (string ReasonCode, string SchemaField)? FindRequiredShapeFailure(
+        JsonObject parsed, bool versionMissing)
+    {
+        foreach (var field in RequiredFields.Skip(versionMissing ? 1 : 0))
+        {
+            if (!HasProperty(parsed, field))
+                return (versionMissing ? "MISSING_VERSION_AND_FIELD" : "MISSING_REQUIRED_FIELD", field);
+        }
+
+        foreach (var field in RequiredArrayFields)
+        {
+            if (GetProperty(parsed, field) is not JsonArray)
+                return ("INVALID_REQUIRED_ARRAY", field);
+        }
+
+        var items = (JsonArray)GetProperty(parsed, "lineItems")!;
+        foreach (var item in items)
+        {
+            if (item is not JsonObject line)
+                return ("INVALID_LINE_ITEM", "lineItems");
+            foreach (var field in RequiredLineItemFields)
+            {
+                if (!HasProperty(line, field))
+                    return ("MISSING_LINE_ITEM_FIELD", field);
+            }
+        }
+
+        return null;
     }
 
     private static string? KnownSchemaFieldAtPath(string? path)

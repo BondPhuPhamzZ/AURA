@@ -32,6 +32,52 @@ public sealed class ReceiptExtractionContractVersionTests
     }
 
     [Fact]
+    public void Explicit_version_does_not_hide_missing_required_evidence()
+    {
+        var response = CompleteResponse();
+        response.Remove("totalAmountEvidence");
+        var content = response.ToJsonString();
+
+        var error = Assert.Throws<JsonException>(() => ReceiptExtractionContract.ParseFacts(content));
+        var diagnostic = ReceiptExtractionContract.DiagnoseParseFailure(content, error);
+
+        Assert.Equal("MISSING_REQUIRED_FIELD", diagnostic.ReasonCode);
+        Assert.Equal("totalAmountEvidence", diagnostic.SchemaField);
+    }
+
+    [Fact]
+    public void Explicit_version_requires_complete_line_item_shape()
+    {
+        var response = CompleteResponse();
+        response["lineItems"] = new JsonArray(new JsonObject
+        {
+            ["description"] = "Synthetic item", ["quantity"] = 1,
+            ["unitPrice"] = 100
+        });
+        var content = response.ToJsonString();
+
+        var error = Assert.Throws<JsonException>(() => ReceiptExtractionContract.ParseFacts(content));
+        var diagnostic = ReceiptExtractionContract.DiagnoseParseFailure(content, error);
+
+        Assert.Equal("MISSING_LINE_ITEM_FIELD", diagnostic.ReasonCode);
+        Assert.Equal("amount", diagnostic.SchemaField);
+    }
+
+    [Fact]
+    public void Required_array_cannot_be_null_even_with_explicit_version()
+    {
+        var response = CompleteResponse();
+        response["warnings"] = null;
+        var content = response.ToJsonString();
+
+        var error = Assert.Throws<JsonException>(() => ReceiptExtractionContract.ParseFacts(content));
+        var diagnostic = ReceiptExtractionContract.DiagnoseParseFailure(content, error);
+
+        Assert.Equal("INVALID_REQUIRED_ARRAY", diagnostic.ReasonCode);
+        Assert.Equal("warnings", diagnostic.SchemaField);
+    }
+
+    [Fact]
     public void Explicit_wrong_version_is_rejected()
     {
         var response = CompleteResponse();

@@ -136,6 +136,24 @@ public static class ReceiptSemanticValidator
             """;
     }
 
+    // Validation can inspect OCR evidence and may produce value-bearing internal
+    // descriptions. Persist and log only static field/code pairs.
+    public static IReadOnlyList<string> ToSafeIssueCodes(IReadOnlyList<string> issues) =>
+        issues.Select(issue =>
+            {
+                // Amount-consistency descriptions can also mention totalAmount. Keep
+                // that category distinct from an invalid printed-final-total line.
+                if (issue.StartsWith("tổng lineItems", StringComparison.OrdinalIgnoreCase) ||
+                    issue.StartsWith("subtotal", StringComparison.OrdinalIgnoreCase) ||
+                    issue.StartsWith("discountAmount", StringComparison.OrdinalIgnoreCase))
+                    return "discountAmount:AMOUNT_CONSISTENCY_INVALID";
+
+                var target = BuildRepairTargets([issue])[0];
+                return $"{target.Path}:{target.ErrorCode}";
+            })
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
     private static IReadOnlyList<(string Path, string ErrorCode)> BuildRepairTargets(
         IReadOnlyList<string> issues)
     {
@@ -203,7 +221,7 @@ public static class ReceiptSemanticValidator
     public static ReceiptExtractionDto MarkUnresolved(ReceiptExtractionDto facts,
         IReadOnlyList<string> issues)
     {
-        facts.ValidationIssues = issues.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        facts.ValidationIssues = ToSafeIssueCodes(issues).ToList();
 
         if (issues.Any(issue => issue.Contains("thiếu lineItems", StringComparison.OrdinalIgnoreCase)))
         {
@@ -228,9 +246,7 @@ public static class ReceiptSemanticValidator
         IReadOnlyList<string> originalIssues)
     {
         facts.SemanticRepairApplied = true;
-        facts.SemanticRepairIssues = originalIssues
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        facts.SemanticRepairIssues = ToSafeIssueCodes(originalIssues).ToList();
         return facts;
     }
 

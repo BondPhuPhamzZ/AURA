@@ -21,6 +21,28 @@ public sealed class ReceiptSemanticValidatorTests
     }
 
     [Fact]
+    public void Value_bearing_semantic_issues_are_not_logged_or_persisted_as_repair_metadata()
+    {
+        var facts = CorrectedTc01();
+        facts.TotalAmountEvidence = "customer@example.test";
+        var issues = ReceiptSemanticValidator.Validate(facts);
+        Assert.Contains(issues, issue => issue.Contains("customer@example.test", StringComparison.Ordinal));
+
+        var safeCodes = ReceiptSemanticValidator.ToSafeIssueCodes(issues);
+        ReceiptSemanticValidator.MarkRepairAttempt(facts, issues);
+        ReceiptSemanticValidator.MarkUnresolved(facts, issues);
+
+        Assert.DoesNotContain("customer@example.test", string.Join('|', safeCodes));
+        Assert.DoesNotContain("customer@example.test", string.Join('|', facts.SemanticRepairIssues));
+        Assert.DoesNotContain("customer@example.test", string.Join('|', facts.ValidationIssues));
+        Assert.NotEmpty(facts.ValidationIssues);
+        var decision = PolicyDecisionEngine.Evaluate(facts, facts.TotalAmount!.Value,
+            utcNow: new DateTime(2026, 9, 20, 0, 0, 0, DateTimeKind.Utc));
+        Assert.Equal("ESCALATE_FACT", decision.Status);
+        Assert.DoesNotContain("customer@example.test", decision.Reason);
+    }
+
+    [Fact]
     public void Detects_the_exact_ollama_tc01_semantic_failures()
     {
         var facts = FaultyOllamaTc01();
@@ -258,7 +280,7 @@ public sealed class ReceiptSemanticValidatorTests
             utcNow: new DateTime(2026, 10, 2, 0, 0, 0, DateTimeKind.Utc));
 
         Assert.Equal("ESCALATE_FACT", paperResult.Status);
-        Assert.Contains("policy", paperResult.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("lineItems", paperResult.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

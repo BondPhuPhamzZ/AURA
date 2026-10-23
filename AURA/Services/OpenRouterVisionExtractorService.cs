@@ -43,8 +43,8 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         if (firstIssues.Count == 0) return firstFacts;
 
         _logger.LogWarning(
-            "Qwen returned schema-valid but semantically inconsistent receipt facts: {Issues}. Retrying once with correction guidance.",
-            string.Join(" | ", firstIssues));
+            "Qwen returned schema-valid but semantically inconsistent receipt facts: {IssueCodes}. Retrying once with correction guidance.",
+            string.Join(" | ", ReceiptSemanticValidator.ToSafeIssueCodes(firstIssues)));
 
         try
         {
@@ -177,8 +177,11 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
                 "Qwen không trả về kết quả trích xuất; hồ sơ cần kiểm tra thủ công.");
 
         var choice = choices[0];
-        if (choice.TryGetProperty("finish_reason", out var finishReasonElement) &&
-            string.Equals(finishReasonElement.GetString(), "length", StringComparison.OrdinalIgnoreCase))
+        var finishReason = choice.TryGetProperty("finish_reason", out var finishReasonElement) &&
+                           finishReasonElement.ValueKind == JsonValueKind.String
+            ? finishReasonElement.GetString()
+            : null;
+        if (string.Equals(finishReason, "length", StringComparison.OrdinalIgnoreCase))
             throw new VisionExtractionException("AI_RESPONSE_TRUNCATED",
                 "Qwen đã dừng vì đạt giới hạn output trước khi hoàn tất JSON; hồ sơ cần kiểm tra thủ công.");
 
@@ -200,9 +203,12 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         catch (JsonException exception)
         {
             var diagnostic = ReceiptExtractionContract.DiagnoseParseFailure(contentStr, exception);
+            var safeFinishReason = finishReason is "stop" or "length" or "tool_calls"
+                ? finishReason
+                : "other";
             _logger.LogWarning(
-                "Qwen schema mismatch: {ReasonCode}; schema field={SchemaField}; response characters={ContentLength}.",
-                diagnostic.ReasonCode, diagnostic.SchemaField, contentStr.Length);
+                "Qwen schema mismatch: {ReasonCode}; schema field={SchemaField}; response characters={ContentLength}; finish reason={FinishReason}.",
+                diagnostic.ReasonCode, diagnostic.SchemaField, contentStr.Length, safeFinishReason);
             throw new VisionExtractionException("AI_SCHEMA_MISMATCH",
                 "Qwen trả về kết quả không đúng cấu trúc quy định; hồ sơ cần kiểm tra thủ công.");
         }

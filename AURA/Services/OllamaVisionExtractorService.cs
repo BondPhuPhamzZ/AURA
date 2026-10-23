@@ -37,8 +37,8 @@ public sealed class OllamaVisionExtractorService : IVisionExtractor
         if (firstIssues.Count == 0) return firstFacts;
 
         _logger.LogWarning(
-            "Ollama returned schema-valid but semantically inconsistent receipt facts: {Issues}. Retrying once with correction guidance.",
-            string.Join(" | ", firstIssues));
+            "Ollama returned schema-valid but semantically inconsistent receipt facts: {IssueCodes}. Retrying once with correction guidance.",
+            string.Join(" | ", ReceiptSemanticValidator.ToSafeIssueCodes(firstIssues)));
 
         try
         {
@@ -134,17 +134,30 @@ public sealed class OllamaVisionExtractorService : IVisionExtractor
                     throw new VisionExtractionException("AI_INVALID_RESPONSE",
                         "Ollama không trả về message JSON hợp lệ; hồ sơ cần kiểm tra thủ công.");
 
-                return ReceiptExtractionContract.ParseFacts(content.GetString() ?? string.Empty);
+                var contentText = content.GetString() ?? string.Empty;
+                try
+                {
+                    return ReceiptExtractionContract.ParseFacts(contentText);
+                }
+                catch (JsonException exception)
+                {
+                    var diagnostic = ReceiptExtractionContract.DiagnoseParseFailure(contentText, exception);
+                    _logger.LogWarning(
+                        "Ollama schema mismatch: {ReasonCode}; schema field={SchemaField}; response characters={ContentLength}.",
+                        diagnostic.ReasonCode, diagnostic.SchemaField, contentText.Length);
+                    throw new VisionExtractionException("AI_SCHEMA_MISMATCH",
+                        "Ollama trả về kết quả không đúng cấu trúc quy định; hồ sơ cần kiểm tra thủ công.");
+                }
             }
             catch (VisionExtractionException)
             {
                 throw;
             }
-            catch (JsonException exception)
+            catch (JsonException)
             {
-                _logger.LogWarning(exception, "Ollama returned invalid receipt JSON.");
+                _logger.LogWarning("Ollama returned an invalid response envelope.");
                 throw new VisionExtractionException("AI_SCHEMA_MISMATCH",
-                    "Ollama trả về kết quả không đúng cấu trúc quy định; hồ sơ cần kiểm tra thủ công.", exception);
+                    "Ollama trả về kết quả không đúng cấu trúc quy định; hồ sơ cần kiểm tra thủ công.");
             }
         }
     }
