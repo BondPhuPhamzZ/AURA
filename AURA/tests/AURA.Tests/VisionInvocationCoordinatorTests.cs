@@ -13,14 +13,14 @@ public sealed class VisionInvocationCoordinatorTests
     {
         Assert.False(new VisionOptions().UseSqlDistributedGate);
         var coordinator = CreateCoordinator();
-        using var first = await coordinator.EnterAsync(CancellationToken.None);
+        await using var first = await coordinator.EnterAsync(CancellationToken.None);
 
         var secondTask = coordinator.EnterAsync(CancellationToken.None).AsTask();
         await Task.Delay(50);
         Assert.False(secondTask.IsCompleted);
 
-        first.Dispose();
-        using var second = await secondTask.WaitAsync(TimeSpan.FromSeconds(1));
+        await first.DisposeAsync();
+        await using var second = await secondTask.WaitAsync(TimeSpan.FromSeconds(1));
     }
 
     [Fact]

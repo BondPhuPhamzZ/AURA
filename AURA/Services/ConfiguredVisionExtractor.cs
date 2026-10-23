@@ -33,7 +33,10 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
     public async Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
         CancellationToken cancellationToken = default)
     {
-        using var capacityLease = await _coordinator.EnterAsync(cancellationToken);
+        await using var capacityLease = await _coordinator.EnterAsync(cancellationToken);
+        using var invocationCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken, capacityLease.LostToken);
+        var invocationToken = invocationCancellation.Token;
         var primary = NormalizeProvider(_options.Provider);
         var fallback = NormalizeProvider(_options.FallbackProvider);
         _execution.Begin(primary);
@@ -48,7 +51,7 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
                 _logger.LogWarning(
                     "Skipping primary vision provider {PrimaryProvider} for {CooldownSeconds:F0}s; using {FallbackProvider}.",
                     primary, remainingCooldown.Value.TotalSeconds, fallback);
-                return await ExtractWithFallbackAsync(fallback, physicalImagePath, cancellationToken);
+                return await ExtractWithFallbackAsync(fallback, physicalImagePath, invocationToken);
             }
 
             throw new VisionExtractionException("AI_PROVIDER_COOLDOWN",
@@ -59,16 +62,22 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
         if (canFallback && _circuitBreaker.ShouldSkipPrimary(DateTime.UtcNow))
         {
             _execution.MarkPrimaryFailure("CIRCUIT_OPEN");
-            return await ExtractWithFallbackAsync(fallback, physicalImagePath, cancellationToken);
+            return await ExtractWithFallbackAsync(fallback, physicalImagePath, invocationToken);
         }
 
         try
         {
-            var result = await ExtractWithProviderAsync(primary, physicalImagePath, cancellationToken);
+            var result = await ExtractWithProviderAsync(primary, physicalImagePath, invocationToken);
             _circuitBreaker.RecordSuccess();
             _coordinator.ClearCooldown(primary);
             _execution.MarkSuccess(primary);
             return result;
+        }
+        catch (OperationCanceledException) when (capacityLease.LostToken.IsCancellationRequested)
+        {
+            _execution.MarkPrimaryFailure("AI_GATE_LOST");
+            throw new VisionExtractionException("AI_GATE_LOST",
+                "Quyền gọi AI dùng chung bị gián đoạn; hồ sơ sẽ được xử lý lại sau khi lease hết hạn.");
         }
         catch (VisionExtractionException primaryFailure)
         {
@@ -96,7 +105,7 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
                 _logger.LogWarning(primaryFailure,
                     "Primary vision provider {PrimaryProvider} failed with {ErrorCode}; trying {FallbackProvider} once.",
                     primary, primaryFailure.Code, fallback);
-                return await ExtractWithFallbackAsync(fallback, physicalImagePath, cancellationToken);
+                return await ExtractWithFallbackAsync(fallback, physicalImagePath, invocationToken);
             }
 
             throw;

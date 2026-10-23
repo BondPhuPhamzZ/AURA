@@ -32,14 +32,18 @@ public sealed class VisionInvocationCoordinator
             var configured = configuration.GetConnectionString("DefaultConnection");
             if (string.IsNullOrWhiteSpace(configured))
                 throw new InvalidOperationException("SQL distributed AI gate requires DefaultConnection.");
-            _connectionString = new SqlConnectionStringBuilder(configured) { Pooling = false }.ConnectionString;
+            _connectionString = new SqlConnectionStringBuilder(configured)
+            {
+                Pooling = false,
+                ConnectRetryCount = 0
+            }.ConnectionString;
         }
     }
 
-    public async ValueTask<IDisposable> EnterAsync(CancellationToken cancellationToken)
+    public async ValueTask<VisionInvocationLease> EnterAsync(CancellationToken cancellationToken)
     {
         await _capacity.WaitAsync(cancellationToken);
-        if (!_useSqlDistributedGate) return new Lease(_capacity, null);
+        if (!_useSqlDistributedGate) return new VisionInvocationLease(_capacity, null);
 
         SqlConnection? connection = null;
         try
@@ -54,7 +58,7 @@ public sealed class VisionInvocationCoordinator
                     "@LockOwner = 'Session', @LockTimeout = 0; SELECT @result;";
                 command.CommandTimeout = 5;
                 var result = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
-                if (result >= 0) return new Lease(_capacity, connection);
+                if (result >= 0) return new VisionInvocationLease(_capacity, connection);
                 if (result != -1)
                     throw new InvalidOperationException($"SQL distributed AI gate failed with code {result}.");
                 await Task.Delay(200, cancellationToken);
@@ -105,23 +109,84 @@ public sealed class VisionInvocationCoordinator
         lock (_sync) _cooldownUntilUtc.Remove(provider);
     }
 
-    private sealed class Lease(SemaphoreSlim capacity, SqlConnection? connection) : IDisposable
+    public sealed class VisionInvocationLease : IAsyncDisposable
     {
-        private SemaphoreSlim? _capacity = capacity;
-        private SqlConnection? _connection = connection;
+        private const string LockResource = "AURA_VISION_GLOBAL_PERMIT";
+        private SemaphoreSlim? _capacity;
+        private SqlConnection? _connection;
+        private readonly CancellationTokenSource _monitorStop = new();
+        private readonly CancellationTokenSource _lost = new();
+        private readonly Task _monitorTask;
 
-        public void Dispose()
+        internal VisionInvocationLease(SemaphoreSlim capacity, SqlConnection? connection)
+        {
+            _capacity = capacity;
+            _connection = connection;
+            _monitorTask = connection is null ? Task.CompletedTask : MonitorLockAsync(connection);
+        }
+
+        public CancellationToken LostToken => _lost.Token;
+
+        internal int? SqlSessionId => _connection?.ServerProcessId;
+
+        public async ValueTask DisposeAsync()
         {
             var heldCapacity = Interlocked.Exchange(ref _capacity, null);
             if (heldCapacity is null) return;
+            _monitorStop.Cancel();
             try
             {
-                // Pooling is disabled so closing this physical session releases its application lock.
-                Interlocked.Exchange(ref _connection, null)?.Dispose();
+                await _monitorTask;
+                if (_lost.IsCancellationRequested)
+                    throw new VisionExtractionException("AI_GATE_LOST",
+                        "Quyền gọi AI dùng chung đã mất; hồ sơ sẽ được xử lý lại sau khi lease hết hạn.");
             }
             finally
             {
-                heldCapacity.Release();
+                // Pooling is disabled so closing this physical session releases its application lock.
+                var connection = Interlocked.Exchange(ref _connection, null);
+                try
+                {
+                    if (connection is not null) await connection.DisposeAsync();
+                }
+                finally
+                {
+                    heldCapacity.Release();
+                    _monitorStop.Dispose();
+                    _lost.Dispose();
+                }
+            }
+        }
+
+        private async Task MonitorLockAsync(SqlConnection connection)
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+            try
+            {
+                while (await timer.WaitForNextTickAsync(_monitorStop.Token))
+                {
+                    if (_monitorStop.IsCancellationRequested) break;
+                    await using var command = connection.CreateCommand();
+                    command.CommandText =
+                        $"SELECT APPLOCK_MODE('public', N'{LockResource}', 'Session');";
+                    command.CommandTimeout = 5;
+                    var mode = await command.ExecuteScalarAsync(CancellationToken.None);
+                    if (!string.Equals(mode as string, "Exclusive", StringComparison.Ordinal))
+                    {
+                        _lost.Cancel();
+                        break;
+                    }
+                }
+            }
+            catch (OperationCanceledException) when (_monitorStop.IsCancellationRequested)
+            {
+                // Normal disposal after the provider invocation.
+            }
+            catch
+            {
+                // A broken SQL connection can release the application lock. The caller's
+                // linked cancellation token must stop using the provider result.
+                _lost.Cancel();
             }
         }
     }

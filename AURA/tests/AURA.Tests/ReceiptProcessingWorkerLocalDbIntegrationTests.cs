@@ -39,13 +39,13 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             var first = new VisionInvocationCoordinator(visionOptions, configuration);
             var second = new VisionInvocationCoordinator(visionOptions, configuration);
 
-            using var firstLease = await first.EnterAsync(CancellationToken.None);
+            await using var firstLease = await first.EnterAsync(CancellationToken.None);
             using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             var secondAttempt = second.EnterAsync(cancellation.Token).AsTask();
             await Task.Delay(300);
             Assert.False(secondAttempt.IsCompleted);
-            firstLease.Dispose();
-            using var secondLease = await secondAttempt.WaitAsync(TimeSpan.FromSeconds(4));
+            await firstLease.DisposeAsync();
+            await using var secondLease = await secondAttempt.WaitAsync(TimeSpan.FromSeconds(4));
         });
     }
 
@@ -118,13 +118,55 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             });
             var first = new VisionInvocationCoordinator(visionOptions, configuration);
             var second = new VisionInvocationCoordinator(visionOptions, configuration);
-            using var firstLease = await first.EnterAsync(CancellationToken.None);
+            await using var firstLease = await first.EnterAsync(CancellationToken.None);
             using var canceled = new CancellationTokenSource(TimeSpan.FromMilliseconds(300));
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
                 second.EnterAsync(canceled.Token).AsTask());
-            firstLease.Dispose();
-            using var recoveredLease = await second.EnterAsync(CancellationToken.None)
+            await firstLease.DisposeAsync();
+            await using var recoveredLease = await second.EnterAsync(CancellationToken.None)
                 .AsTask().WaitAsync(TimeSpan.FromSeconds(4));
+        });
+    }
+
+    [Fact]
+    public async Task Sql_ai_gate_signals_loss_when_owning_session_is_killed()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, _) =>
+        {
+            await using var db = new AppDbContext(options);
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:DefaultConnection"] = db.Database.GetConnectionString()
+                }).Build();
+            var coordinator = new VisionInvocationCoordinator(
+                Microsoft.Extensions.Options.Options.Create(new VisionOptions
+                {
+                    MaxConcurrentRequests = 1, UseSqlDistributedGate = true
+                }), configuration);
+            var lease = await coordinator.EnterAsync(CancellationToken.None);
+            var sessionId = lease.SqlSessionId;
+            Assert.NotNull(sessionId);
+
+            await using (var admin = new SqlConnection(db.Database.GetConnectionString()))
+            {
+                await admin.OpenAsync();
+                await using var kill = admin.CreateCommand();
+                kill.CommandText = $"KILL {sessionId.Value};";
+                await kill.ExecuteNonQueryAsync();
+            }
+
+            try
+            {
+                var lost = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                using var registration = lease.LostToken.Register(() => lost.TrySetResult());
+                await lost.Task.WaitAsync(TimeSpan.FromSeconds(12));
+            }
+            finally
+            {
+                await Assert.ThrowsAsync<VisionExtractionException>(() => lease.DisposeAsync().AsTask());
+            }
         });
     }
 
