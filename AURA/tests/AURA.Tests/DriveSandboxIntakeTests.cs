@@ -89,6 +89,31 @@ public sealed class DriveSandboxIntakeTests
     }
 
     [Fact]
+    public async Task Source_object_is_preserved_when_preinsert_database_read_fails()
+    {
+        var root = NewTestRoot();
+        try
+        {
+            var repository = new FakeRepository { FailNextHashLookup = true };
+            var service = CreateIntake(root, repository);
+            var input = new ReceiptIntakeInput(Png, "receipt.png", "image/png", 0,
+                "DRIVE-SANDBOX", "Synthetic", "Test", "drive:folder:file:preinsert-retry");
+            var path = Path.Combine(root, "receipts",
+                ReceiptIntakeService.SourceRequestId(input.SourceKey!) + ".png");
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.AcceptAsync(input));
+            Assert.True(File.Exists(path));
+            Assert.Equal(Png, await File.ReadAllBytesAsync(path));
+
+            var recovered = await service.AcceptAsync(input);
+            Assert.Equal(ReceiptIntakeService.SourceRequestId(input.SourceKey!), recovered.Id);
+            Assert.Single(repository.Requests);
+            Assert.Equal(Png, await File.ReadAllBytesAsync(path));
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Fact]
     public async Task Retry_rejects_conflicting_or_partial_orphan_without_overwrite()
     {
         var root = NewTestRoot();
@@ -627,13 +652,21 @@ public sealed class DriveSandboxIntakeTests
     {
         public List<ReimbursementRequest> Requests { get; } = [];
         public bool FailNextAdd { get; set; }
+        public bool FailNextHashLookup { get; set; }
         public bool CommitThenReportUniqueConflict { get; set; }
         public string LastAudit { get; private set; } = string.Empty;
         public TaskCompletionSource Accepted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public Task<ReimbursementRequest?> GetRequestByIdAsync(string id) =>
             Task.FromResult(Requests.SingleOrDefault(item => item.Id == id));
-        public Task<bool> ExistsByFileHashAsync(string sha256) =>
-            Task.FromResult(Requests.Any(item => item.FileSha256 == sha256));
+        public Task<bool> ExistsByFileHashAsync(string sha256)
+        {
+            if (FailNextHashLookup)
+            {
+                FailNextHashLookup = false;
+                throw new InvalidOperationException("Simulated database read failure before insert.");
+            }
+            return Task.FromResult(Requests.Any(item => item.FileSha256 == sha256));
+        }
         public Task AddRequestWithAuditAsync(ReimbursementRequest request, string action, string details)
         {
             if (FailNextAdd)

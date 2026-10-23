@@ -124,9 +124,11 @@ public sealed class ReceiptIntakeService
         }
         catch
         {
-            // After a database write starts, its result can be ambiguous on network failure.
-            // Preserve the complete final file for source-key retry instead of orphaning a row.
-            if (createdObject && !persistAttempted)
+            // Source-key objects may already be observed by another concurrent poller.
+            // Since SQL and object storage are not one transaction, preserve those bytes for
+            // retry/reconciliation instead of deleting an object another attempt may persist.
+            // Manual requests use a fresh random ID and have no cross-poll source identity.
+            if (createdObject && !persistAttempted && input.SourceKey is null)
                 await _fileStore.DeleteAsync(storedFileName, CancellationToken.None);
             throw;
         }

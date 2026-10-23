@@ -11,13 +11,25 @@
 > been exercised against a real bucket. Keep `LocalFileSystem` until isolated
 > authenticated integration, two-host, backup/restore and failure tests pass.
 > Retention cleanup is deliberately not implemented: never apply one-day
-> lifecycle deletion while jobs may be pending or retryable. Verification after
-> this code change: Debug and Release **287/287**, opt-in LocalDB integration
+> lifecycle deletion while jobs may be pending or retryable. Local fake-client
+> GCS tests cover create-only writes, matching/conflicting retries, generation-
+> pinned reads, pre-download size rejection and a download exceeding its own
+> advertised size. Verification after this code change: Debug and Release
+> **291/291**, opt-in LocalDB integration
 > **15/15** (15 SQL-backed cases active), Release build **0 warnings/errors**,
 > EF reports no pending model changes, and NuGet online audit reports no
 > vulnerable packages in app or tests. These are local/unit + LocalDB results,
-> not GCS/multi-host evidence. See
+> not authenticated real-GCS or multi-host evidence. See
 > [SHARED_RECEIPT_STORAGE.md](SHARED_RECEIPT_STORAGE.md).
+
+> **Stable-source object cleanup race 24/10:** Nếu Drive intake đã ghi object
+> nhưng database lookup lỗi trước khi bắt đầu insert, source-key object nay
+> được giữ lại để retry/reconciliation; không xóa bytes mà poller khác có thể
+> đang tái sử dụng. Manual upload có random ID mới vẫn cleanup object vừa tạo
+> khi SQL chưa bắt đầu. Fault-injection test xác nhận retry hoàn tất cùng object;
+> Debug/Release **291/291**, LocalDB opt-in **15/15**, Release build và EF checks
+> vẫn sạch. Đây không thay thế orphan sweeper; cleanup theo retention cần dựa
+> trên tuổi object và đối soát SQL, chưa được bật.
 
 > **SQL AI permit có fencing 24/10:** Mỗi lần process nhận SQL application
 > lock, SQL tăng token fencing đơn điệu. Trước khi trả facts từ provider,

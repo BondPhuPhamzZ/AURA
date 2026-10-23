@@ -7,7 +7,7 @@
 
 Việc cần làm trước khi mở lại gate publish/pilot:
 
-- [x] Tách receipt storage thành `IReceiptFileStore`; giữ local filesystem mặc định và thêm adapter GCS private opt-in. Intake retry tạo object chỉ khi key vắng mặt, không ghi đè hash khác; worker/controller đọc qua abstraction, worker kiểm size/hash trước inference. Sau thay đổi: Debug/Release **287/287**, LocalDB opt-in **15/15**, Release build **0 warning/error**, EF không có pending model changes.
+- [x] Tách receipt storage thành `IReceiptFileStore`; giữ local filesystem mặc định và thêm adapter GCS private opt-in. Intake retry tạo object chỉ khi key vắng mặt, không ghi đè hash khác; worker/controller đọc qua abstraction, worker kiểm size/hash trước inference. Fake-client tests cover create-only, retry/hash, generation pin và object vượt metadata; fault injection xác nhận giữ source-key object khi DB read lỗi trước insert. Sau thay đổi: Debug/Release **291/291**, LocalDB opt-in **15/15**, Release build **0 warning/error**, EF không có pending model changes.
 - [ ] Chưa tạo bucket GCS thật, cấp IAM, kiểm thử credentials, hay đổi hosting. Trước đó cần bucket private với uniform bucket-level access + public access prevention và service account riêng; chỉ cấp quyền object ở bucket, không dùng Drive read-only account.
 - [ ] Kiểm tra integration thực trên bucket test: health/read/write/retry/hash/missing-object; sau đó 2 host cùng đọc object + DB chung, mất lease/restart, backup/restore SQL và object đồng bộ. Chưa bật SQL distributed AI gate hoặc tăng workers.
 - [ ] Chưa có retention cleanup. Không đặt lifecycle xóa sau một ngày trước khi biết job đã terminal và retention được phê duyệt; bytes cần còn để retry/recovery.

@@ -18,15 +18,25 @@ public sealed class GoogleCloudReceiptFileStore : IReceiptFileStore
 
     public GoogleCloudReceiptFileStore(IOptions<GoogleCloudReceiptStorageOptions> options,
         IOptions<ReceiptStorageOptions> storageOptions)
+        : this(CreateClient(options.Value), options.Value.Bucket, options.Value.Prefix,
+            storageOptions.Value.MaxFileSizeMb * 1024L * 1024L)
     {
-        var value = options.Value;
-        _bucket = value.Bucket;
-        _prefix = value.Prefix.Trim('/');
-        _maxBytes = storageOptions.Value.MaxFileSizeMb * 1024L * 1024L;
-        var serviceAccount = CredentialFactory.FromFile<ServiceAccountCredential>(value.ServiceAccountJsonPath);
+    }
+
+    internal GoogleCloudReceiptFileStore(StorageClient client, string bucket, string prefix, long maxBytes)
+    {
+        _bucket = bucket;
+        _prefix = prefix.Trim('/');
+        _maxBytes = maxBytes;
+        _client = client;
+    }
+
+    private static StorageClient CreateClient(GoogleCloudReceiptStorageOptions options)
+    {
+        var serviceAccount = CredentialFactory.FromFile<ServiceAccountCredential>(options.ServiceAccountJsonPath);
         var credential = GoogleCredential.FromServiceAccountCredential(serviceAccount)
             .CreateScoped("https://www.googleapis.com/auth/devstorage.read_write");
-        _client = StorageClient.Create(credential);
+        return StorageClient.Create(credential);
     }
 
     public async Task<bool> PutIfAbsentAsync(string storedFileName, ReadOnlyMemory<byte> bytes,
@@ -102,7 +112,7 @@ public sealed class GoogleCloudReceiptFileStore : IReceiptFileStore
         var generation = metadata.Generation ?? 0L;
         if (objectSize == 0 || objectSize > (ulong)maximumBytes || objectSize > int.MaxValue || generation <= 0)
             throw new InvalidDataException("Receipt object metadata is invalid or exceeds the configured size limit.");
-        await using var output = new MemoryStream(checked((int)objectSize));
+        await using var output = new BoundedMemoryStream(checked((int)objectSize));
         await _client.DownloadObjectAsync(_bucket, objectName, output,
             new DownloadObjectOptions { Generation = generation },
             cancellationToken);
@@ -115,5 +125,45 @@ public sealed class GoogleCloudReceiptFileStore : IReceiptFileStore
     {
         _ = ReceiptStoragePath.ResolveFile(Path.GetTempPath(), storedFileName);
         return string.IsNullOrEmpty(_prefix) ? storedFileName : $"{_prefix}/{storedFileName}";
+    }
+
+    private sealed class BoundedMemoryStream : MemoryStream
+    {
+        private readonly int _maximumLength;
+
+        public BoundedMemoryStream(int maximumLength) : base(maximumLength) =>
+            _maximumLength = maximumLength;
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            EnsureCapacityFor(count);
+            base.Write(buffer, offset, count);
+        }
+
+        public override void Write(ReadOnlySpan<byte> buffer)
+        {
+            EnsureCapacityFor(buffer.Length);
+            base.Write(buffer);
+        }
+
+        public override Task WriteAsync(byte[] buffer, int offset, int count,
+            CancellationToken cancellationToken)
+        {
+            EnsureCapacityFor(count);
+            return base.WriteAsync(buffer, offset, count, cancellationToken);
+        }
+
+        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer,
+            CancellationToken cancellationToken = default)
+        {
+            EnsureCapacityFor(buffer.Length);
+            return base.WriteAsync(buffer, cancellationToken);
+        }
+
+        private void EnsureCapacityFor(int count)
+        {
+            if (count < 0 || Length + count > _maximumLength)
+                throw new InvalidDataException("Receipt object exceeds its advertised size.");
+        }
     }
 }
