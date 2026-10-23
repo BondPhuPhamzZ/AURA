@@ -40,6 +40,25 @@ public sealed class ReceiptFileStoreTests
     }
 
     [Fact]
+    public async Task Local_store_rejects_declared_hash_mismatch_before_creating_a_file()
+    {
+        var root = NewRoot();
+        try
+        {
+            var store = CreateStore(root);
+            var exception = await Assert.ThrowsAsync<InvalidDataException>(() => store.PutIfAbsentAsync(
+                "receipt.jpg", new byte[] { 1, 2, 3 }, "image/jpeg", new string('0', 64), CancellationToken.None));
+
+            Assert.Contains("SHA-256", exception.Message, StringComparison.Ordinal);
+            Assert.Empty(Directory.GetFiles(Path.Combine(root, "private-receipts")));
+        }
+        finally
+        {
+            DeleteRoot(root);
+        }
+    }
+
+    [Fact]
     public async Task Integrity_reader_rejects_data_larger_than_the_database_size_before_buffering_it()
     {
         await using var source = new MemoryStream(new byte[] { 1, 2, 3, 4 });
@@ -109,6 +128,18 @@ public sealed class ReceiptFileStoreTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => store.PutIfAbsentAsync(
             "case.jpg", different, "image/jpeg",
             Convert.ToHexString(SHA256.HashData(different)), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Gcs_store_rejects_declared_hash_mismatch_before_upload()
+    {
+        var client = new FakeGoogleStorageClient();
+        var store = new GoogleCloudReceiptFileStore(client, "test-bucket", "private/receipts", 1024);
+
+        await Assert.ThrowsAsync<InvalidDataException>(() => store.PutIfAbsentAsync(
+            "case.jpg", new byte[] { 1, 2, 3 }, "image/jpeg", new string('0', 64), CancellationToken.None));
+
+        Assert.Equal(0, client.UploadCount);
     }
 
     [Fact]

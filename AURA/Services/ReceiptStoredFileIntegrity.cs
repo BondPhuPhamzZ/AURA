@@ -4,6 +4,17 @@ namespace AURA.Services;
 
 public static class ReceiptStoredFileIntegrity
 {
+    public static void ValidateContentHash(ReadOnlySpan<byte> bytes, string expectedSha256)
+    {
+        if (expectedSha256 is not { Length: 64 } || !expectedSha256.All(Uri.IsHexDigit))
+            throw new InvalidDataException("Receipt content hash metadata is invalid.");
+
+        var expected = Convert.FromHexString(expectedSha256);
+        var actual = SHA256.HashData(bytes);
+        if (!CryptographicOperations.FixedTimeEquals(actual, expected))
+            throw new InvalidDataException("Receipt content does not match its declared SHA-256.");
+    }
+
     public static async Task<byte[]> ReadVerifiedAsync(Stream source, long expectedSizeBytes,
         string expectedSha256, int maxFileSizeMb, CancellationToken cancellationToken)
     {

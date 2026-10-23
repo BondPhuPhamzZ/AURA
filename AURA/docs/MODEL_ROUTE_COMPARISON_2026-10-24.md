@@ -62,11 +62,9 @@ on `hò`. The stationery phrase allowlist now includes exactly `bia hò sơ`;
 regression tests verify that this OCR reading no longer triggers an alcohol
 policy escalation while explicit beer context (`bia chai`) still does. The
 three-run model figures above are the **pre-fix** benchmark and were not
-rewritten as post-fix model results. Debug and Release suites each passed
-302/302 tests with `AURA_RUN_LOCALDB_INTEGRATION=1`, including the opt-in SQL
-integration cases. After the later SQL intake-capacity work, the complete suites
-were rerun at 305/305 in Debug and 305/305 in Release with LocalDB integration
-enabled; the new shared-capacity race case passed as well.
+rewritten as post-fix model results. The latest complete Debug and Release
+suites passed 307/307 each with `AURA_RUN_LOCALDB_INTEGRATION=1`, including the
+opt-in SQL integration cases, shared-capacity race and storage hash assertions.
 
 ## Decision
 

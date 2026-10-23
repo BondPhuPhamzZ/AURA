@@ -45,6 +45,8 @@ public sealed class GoogleCloudReceiptFileStore : IReceiptFileStore
     public async Task<bool> PutIfAbsentAsync(string storedFileName, ReadOnlyMemory<byte> bytes,
         string contentType, string sha256, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+        ReceiptStoredFileIntegrity.ValidateContentHash(bytes.Span, sha256);
         var objectName = Resolve(storedFileName);
         try
         {

@@ -13,6 +13,8 @@ size and SHA-256 match. On reads, AURA checks object size, downloads a pinned ge
 checks the stored size and SHA-256 against SQL before sending bytes to the existing extraction,
 semantic validation, privacy triage, and deterministic policy pipeline. The application serves
 image bytes through its controller; it does not expose bucket URLs or generate signed URLs.
+Both LocalFileSystem and GCS adapters also verify that newly supplied bytes match the caller's
+declared SHA-256 before writing; malformed or mismatched hashes are rejected before storage I/O.
 
 For the local filesystem provider, a background sweeper removes only AURA-generated staging
 `.tmp` files older than the configured `ReceiptStorage__StaleTempFileAgeHours` (default 24 hours),

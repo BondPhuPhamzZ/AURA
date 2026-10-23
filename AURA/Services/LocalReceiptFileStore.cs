@@ -18,6 +18,8 @@ public sealed class LocalReceiptFileStore : IReceiptFileStore
     public async Task<bool> PutIfAbsentAsync(string storedFileName, ReadOnlyMemory<byte> bytes,
         string contentType, string sha256, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+        ReceiptStoredFileIntegrity.ValidateContentHash(bytes.Span, sha256);
         var destination = Resolve(storedFileName);
         var staged = Resolve($".{storedFileName}.{Guid.NewGuid():N}.tmp");
         try

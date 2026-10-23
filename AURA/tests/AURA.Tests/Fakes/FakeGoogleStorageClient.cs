@@ -12,6 +12,7 @@ internal sealed class FakeGoogleStorageClient : StorageClient
     public string? LastObjectName { get; private set; }
     public bool LastDownloadWasGenerationPinned { get; private set; }
     public bool DownloadCalled { get; private set; }
+    public int UploadCount { get; private set; }
     public ulong? AdvertisedSizeOverride { get; set; }
 
     public void Seed(string name, byte[] bytes) => _objects[name] = bytes;
@@ -21,6 +22,7 @@ internal sealed class FakeGoogleStorageClient : StorageClient
         CancellationToken cancellationToken = default,
         IProgress<Google.Apis.Upload.IUploadProgress>? progress = null)
     {
+        UploadCount++;
         LastObjectName = objectName;
         if (options?.IfGenerationMatch == 0 && _objects.ContainsKey(objectName))
             throw ApiError(System.Net.HttpStatusCode.PreconditionFailed);
