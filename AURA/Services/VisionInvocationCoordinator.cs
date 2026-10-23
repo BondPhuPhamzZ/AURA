@@ -100,11 +100,16 @@ public sealed class VisionInvocationCoordinator
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
         await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT CooldownUntilUtc FROM dbo.VisionProviderCooldowns WHERE Provider = @provider;";
+        command.CommandText = """
+            SELECT DATEDIFF_BIG(millisecond, SYSUTCDATETIME(), CooldownUntilUtc)
+            FROM dbo.VisionProviderCooldowns
+            WHERE Provider = @provider;
+            """;
         command.Parameters.AddWithValue("@provider", provider);
         var value = await command.ExecuteScalarAsync(cancellationToken);
-        if (value is not DateTime untilUtc || untilUtc <= utcNow) return null;
-        return untilUtc - utcNow;
+        if (value is not long remainingMilliseconds || remainingMilliseconds <= 0) return null;
+        return TimeSpan.FromMilliseconds(Math.Min((double)remainingMilliseconds,
+            TimeSpan.MaxValue.TotalMilliseconds));
     }
 
     public void RecordCooldown(string provider, DateTime utcNow, TimeSpan duration)
@@ -127,21 +132,28 @@ public sealed class VisionInvocationCoordinator
             return;
         }
         if (duration <= TimeSpan.Zero) return;
+        var durationMilliseconds = duration.Ticks / TimeSpan.TicksPerMillisecond;
+        if (duration.Ticks % TimeSpan.TicksPerMillisecond != 0) durationMilliseconds++;
+        var durationDays = checked((int)(durationMilliseconds / (24L * 60 * 60 * 1000)));
+        var remainderMilliseconds = (int)(durationMilliseconds % (24L * 60 * 60 * 1000));
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
         await using var command = connection.CreateCommand();
         command.CommandText = """
             SET XACT_ABORT ON;
             BEGIN TRANSACTION;
+            DECLARE @candidateUtc datetime2(7) = DATEADD(millisecond, @remainderMilliseconds,
+                DATEADD(day, @durationDays, SYSUTCDATETIME()));
             UPDATE dbo.VisionProviderCooldowns WITH (UPDLOCK, HOLDLOCK)
-                SET CooldownUntilUtc = CASE WHEN CooldownUntilUtc < @untilUtc THEN @untilUtc ELSE CooldownUntilUtc END
+                SET CooldownUntilUtc = CASE WHEN CooldownUntilUtc < @candidateUtc THEN @candidateUtc ELSE CooldownUntilUtc END
                 WHERE Provider = @provider;
             IF @@ROWCOUNT = 0
-                INSERT dbo.VisionProviderCooldowns (Provider, CooldownUntilUtc) VALUES (@provider, @untilUtc);
+                INSERT dbo.VisionProviderCooldowns (Provider, CooldownUntilUtc) VALUES (@provider, @candidateUtc);
             COMMIT TRANSACTION;
             """;
         command.Parameters.AddWithValue("@provider", provider);
-        command.Parameters.AddWithValue("@untilUtc", utcNow.Add(duration));
+        command.Parameters.AddWithValue("@durationDays", durationDays);
+        command.Parameters.AddWithValue("@remainderMilliseconds", remainderMilliseconds);
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 

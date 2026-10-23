@@ -171,7 +171,7 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
-    public async Task Sql_ai_gate_shares_provider_cooldown_between_coordinators()
+    public async Task Sql_ai_gate_uses_database_clock_for_shared_provider_cooldown()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
         await WithIsolatedDatabase(async (options, _) =>
@@ -188,23 +188,25 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             });
             var first = new VisionInvocationCoordinator(settings, configuration);
             var second = new VisionInvocationCoordinator(settings, configuration);
-            var now = DateTime.UtcNow;
-
-            await first.RecordCooldownAsync("OpenRouter", now, TimeSpan.FromSeconds(120),
+            // Deliberately model hosts whose clocks differ by years. Shared SQL cooldown
+            // must use the database clock and must not inherit either caller's timestamp.
+            await first.RecordCooldownAsync("OpenRouter", DateTime.MinValue,
+                TimeSpan.FromSeconds(120),
                 CancellationToken.None);
 
             var remaining = await second.GetRemainingCooldownAsync("OpenRouter",
-                now.AddSeconds(30), CancellationToken.None);
-            Assert.InRange(remaining!.Value.TotalSeconds, 89, 91);
+                DateTime.MaxValue, CancellationToken.None);
+            Assert.InRange(remaining!.Value.TotalSeconds, 118, 120);
 
-            await second.RecordCooldownAsync("OpenRouter", now.AddSeconds(10),
+            // A future-skewed host must not extend the cooldown by using its own clock.
+            await second.RecordCooldownAsync("OpenRouter", DateTime.MaxValue,
                 TimeSpan.FromSeconds(20), CancellationToken.None);
-            var extended = await first.GetRemainingCooldownAsync(
-                "OpenRouter", now.AddSeconds(40), CancellationToken.None);
-            Assert.InRange(extended!.Value.TotalSeconds, 79, 81);
+            var notExtended = await first.GetRemainingCooldownAsync(
+                "OpenRouter", DateTime.MinValue, CancellationToken.None);
+            Assert.InRange(notExtended!.Value.TotalSeconds, 117, 120);
 
             await first.ClearCooldownAsync("OpenRouter", CancellationToken.None);
-            Assert.Null(await second.GetRemainingCooldownAsync("OpenRouter", now,
+            Assert.Null(await second.GetRemainingCooldownAsync("OpenRouter", DateTime.UtcNow,
                 CancellationToken.None));
         });
     }

@@ -4,14 +4,17 @@
 > `Vision__UseSqlDistributedGate=true`, cooldown sau rate-limit được ghi/đọc
 > trong bảng `VisionProviderCooldowns`; thời hạn mới chỉ được kéo dài, không
 > rút ngắn. Các process dùng chung database vì vậy không gọi nối tiếp khi một
-> host vừa nhận 429. LocalDB test hai coordinator xác nhận read/write/extend/
-> clear. Thêm migration `20261023181204_AddSharedVisionProviderCooldown`;
+> host vừa nhận 429. SQL `SYSUTCDATETIME()` là nguồn thời gian chuẩn cho
+> cooldown phân tán khi ghi lẫn đọc; test LocalDB truyền giờ host lệch ±nhiều
+> năm xác nhận không bỏ qua hoặc kéo dài cooldown sai. Test hai coordinator
+> cũng xác nhận read/extend/clear. Thêm migration `20261023181204_AddSharedVisionProviderCooldown`;
 > phải backup, áp migration có kiểm soát trước khi bật SQL gate. Không tự bật
 > startup migration và chưa chạy migration trên hosting. Migration chain đã
 > được áp trên database LocalDB mới, bảng ghi/đọc được, không còn pending
 > migration, database tạm đã xóa. Debug/Release **284/284**, LocalDB
 > integration **14/14**, Release build 0 warning/error, EF không pending model
-> change.
+> change. Đây là kiểm thử LocalDB cục bộ, không thay thế xác nhận clock/HA của
+> SQL hosting.
 > Đây chưa là kiểm thử 429 từ provider thật hoặc hai host trên mạng; gate mặc
 > định vẫn false.
 
