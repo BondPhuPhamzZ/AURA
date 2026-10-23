@@ -22,14 +22,23 @@
 > và `20261023182852_AddVisionInvocationFence` phải được backup, áp có kiểm
 > soát trước khi bật SQL gate. Không tự bật
 > startup migration và chưa chạy migration trên hosting. Cả hai migration đã
-> được áp trên LocalDB mới; cooldown ghi/đọc được, fencing row được seed và
-> không còn pending
-> migration, database tạm đã xóa. Debug/Release **284/284**, LocalDB
-> integration **14/14**, Release build 0 warning/error, EF không pending model
-> change. Đây là kiểm thử LocalDB cục bộ, không thay thế xác nhận clock/HA của
-> SQL hosting.
+> được áp trên LocalDB mới; cooldown ghi/đọc được, fencing row được seed,
+> không còn pending migration và database tạm đã xóa. Debug/Release
+> **285/285**, LocalDB integration **15/15**, Release build 0 warning/error,
+> EF không pending model change. Đây là kiểm thử LocalDB cục bộ, không thay
+> thế xác nhận clock/HA của SQL hosting.
 > Đây chưa là kiểm thử 429 từ provider thật hoặc hai host trên mạng; gate mặc
 > định vẫn false.
+
+> **SQL UTC cho job lease/heartbeat 24/10:** Claim/reclaim, heartbeat, kiểm tra
+> lease trước terminal write và timestamp audit xử lý dùng `SYSUTCDATETIME()`
+> đọc từ SQL thay vì đồng hồ process. LocalDB xác nhận helper lấy giờ SQL,
+> lease ban đầu còn hạn và heartbeat gia hạn lease qua extraction dài. Sau phần
+> này Debug/Release **285/285**, LocalDB worker integration **15/15**; Release
+> build **0 warning/error**, EF không pending model change. Lượt `dotnet test`
+> báo `NU1900` do NuGet advisory feed không truy cập được; đây không phải
+> vulnerability audit thành công. Chưa kiểm tra clock skew trên hai SQL host,
+> vì đây chỉ là LocalDB.
 
 > **Idempotency khi hai poller insert đồng thời 24/10:** SQL primary key tiếp
 > tục là trọng tài cho source-derived request ID. Nếu một poller thua insert

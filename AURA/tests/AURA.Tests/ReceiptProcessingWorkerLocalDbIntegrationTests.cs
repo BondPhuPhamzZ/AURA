@@ -20,6 +20,20 @@ namespace AURA.Tests;
 public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
 {
     [Fact]
+    public async Task Database_utc_clock_reads_authoritative_sql_server_time()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, _) =>
+        {
+            await using var database = new AppDbContext(options);
+            var before = DateTime.UtcNow.AddSeconds(-2);
+            var databaseNow = await DatabaseUtcClock.ReadAsync(database, CancellationToken.None);
+            var after = DateTime.UtcNow.AddSeconds(2);
+            Assert.InRange(databaseNow, before, after);
+        });
+    }
+
+    [Fact]
     public async Task Sql_ai_gate_serializes_two_independent_coordinators()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
@@ -438,9 +452,10 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             {
                 await using (var db = new AppDbContext(options))
                 {
+                    var databaseNow = await DatabaseUtcClock.ReadAsync(db, CancellationToken.None);
                     await db.ReimbursementRequests.Where(x => x.Id == id)
                         .ExecuteUpdateAsync(update => update.SetProperty(x => x.ProcessingLeaseUntil,
-                            DateTime.UtcNow.AddSeconds(-1)));
+                            databaseNow.AddSeconds(-1)));
                 }
                 await ProcessOnceAsync(options, root, new StubExtractor(() => new ReceiptExtractionDto()));
             }
@@ -471,8 +486,12 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
             DateTime? originalExpiry;
             await using (var db = new AppDbContext(options))
+            {
+                var databaseNow = await DatabaseUtcClock.ReadAsync(db, CancellationToken.None);
                 originalExpiry = await db.ReimbursementRequests.Where(x => x.Id == id)
                     .Select(x => x.ProcessingLeaseUntil).SingleAsync();
+                Assert.InRange((originalExpiry!.Value - databaseNow).TotalSeconds, 25, 30);
+            }
 
             try
             {
@@ -481,6 +500,8 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
                 var current = await db.ReimbursementRequests.AsNoTracking().SingleAsync(x => x.Id == id);
                 Assert.True(current.ProcessingLeaseUntil > originalExpiry);
                 Assert.Equal(1, current.ProcessingAttemptCount);
+                var databaseNow = await DatabaseUtcClock.ReadAsync(db, CancellationToken.None);
+                Assert.True(current.ProcessingLeaseUntil > databaseNow);
             }
             finally
             {

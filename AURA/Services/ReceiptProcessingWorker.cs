@@ -116,7 +116,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var vision = scope.ServiceProvider.GetRequiredService<IVisionExtractor>();
         var execution = scope.ServiceProvider.GetRequiredService<VisionExecutionContext>();
-        var now = DateTime.UtcNow;
+        var now = await DatabaseUtcClock.ReadAsync(db, cancellationToken);
 
         var requestId = await db.ReimbursementRequests
             .Where(request =>
@@ -150,6 +150,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
         ReceiptExtractionDto? extractedFacts = null;
         VisionExtractionException? providerFailure = null;
         string auditAction;
+        DateTime? terminalTimestamp = null;
 
         try
         {
@@ -221,11 +222,12 @@ public sealed class ReceiptProcessingWorker : BackgroundService
             {
                 // A renewal can finish just as the timer is stopped. Reload after it has
                 // fully stopped, and only while this attempt still owns a live lease.
+                terminalTimestamp = await DatabaseUtcClock.ReadAsync(db, cancellationToken);
                 var currentVersion = await db.ReimbursementRequests.AsNoTracking()
                     .Where(x => x.Id == request.Id &&
                         x.ProcessingState == ProcessingStates.Processing &&
                         x.ProcessingAttemptCount == request.ProcessingAttemptCount &&
-                        x.ProcessingLeaseUntil > DateTime.UtcNow)
+                        x.ProcessingLeaseUntil > terminalTimestamp.Value)
                     .Select(x => x.RowVersion)
                     .SingleOrDefaultAsync(cancellationToken) ??
                     throw new InvalidOperationException("Receipt processing lease ownership was lost before save.");
@@ -236,7 +238,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
 
         request.ProcessingLatencyMs = stopwatch.ElapsedMilliseconds;
         request.ProcessingCompletedAt = request.ProcessingState == ProcessingStates.Pending
-            ? null : DateTime.UtcNow;
+            ? null : terminalTimestamp ?? await DatabaseUtcClock.ReadAsync(db, cancellationToken);
         request.ProcessingLeaseUntil = null;
         request.PrimaryProvider = execution.PrimaryProvider;
         request.ServedProvider = execution.ServedProvider;
@@ -246,7 +248,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
         {
             RequestId = request.Id,
             Action = auditAction,
-            Timestamp = DateTime.UtcNow,
+            Timestamp = terminalTimestamp ?? await DatabaseUtcClock.ReadAsync(db, cancellationToken),
             Details = $"DuplicateDetected={request.DuplicateDetected}; DuplicatePolicyEnabled={request.DuplicatePolicyEnabled}; " +
                 $"PrimaryProvider={request.PrimaryProvider}; ServedProvider={request.ServedProvider}; " +
                 $"FallbackUsed={request.FallbackUsed}; ProviderErrorCode={request.ProviderErrorCode}; " +
@@ -278,7 +280,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
                 if (stopToken.IsCancellationRequested) break;
                 await using var scope = _scopeFactory.CreateAsyncScope();
                 var database = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                var now = DateTime.UtcNow;
+                var now = await DatabaseUtcClock.ReadAsync(database, CancellationToken.None);
                 var renewed = await database.ReimbursementRequests
                     .Where(request => request.Id == requestId &&
                         request.ProcessingState == ProcessingStates.Processing &&
