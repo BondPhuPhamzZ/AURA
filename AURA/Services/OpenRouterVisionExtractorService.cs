@@ -162,21 +162,25 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         {
             var details = ReadProviderError(responseText);
             _logger.LogWarning(
-                "OpenRouter returned HTTP {StatusCode} after retries. UpstreamProvider={UpstreamProvider}; RequestId={RequestId}; RetryAfterSeconds={RetryAfterSeconds}; ProviderMessage={ProviderMessage}",
-                (int)statusCode, details.Provider ?? "<unknown>", requestId ?? "<none>",
-                retryAfter?.TotalSeconds, details.Message);
+                "OpenRouter returned HTTP {StatusCode} after retries. UpstreamProviderKind={UpstreamProviderKind}; RequestId={RequestId}; RetryAfterSeconds={RetryAfterSeconds}.",
+                (int)statusCode, details.ProviderKind, requestId ?? "<none>", retryAfter?.TotalSeconds);
             throw CreateHttpFailure(statusCode, details, _options.Model, retryAfter, requestId);
         }
 
         using var responseDocument = ParseResponseDocument(responseText);
         var root = responseDocument.RootElement;
-        LogUsage(root);
+        LogProviderTelemetry(root);
 
-        if (!root.TryGetProperty("choices", out var choices) || choices.GetArrayLength() == 0)
+        if (root.ValueKind != JsonValueKind.Object ||
+            !root.TryGetProperty("choices", out var choices) ||
+            choices.ValueKind != JsonValueKind.Array || choices.GetArrayLength() == 0)
             throw new VisionExtractionException("AI_EMPTY_RESPONSE",
                 "Qwen không trả về kết quả trích xuất; hồ sơ cần kiểm tra thủ công.");
 
         var choice = choices[0];
+        if (choice.ValueKind != JsonValueKind.Object)
+            throw new VisionExtractionException("AI_INVALID_RESPONSE",
+                "Qwen không trả về choice hợp lệ; hồ sơ cần kiểm tra thủ công.");
         var finishReason = choice.TryGetProperty("finish_reason", out var finishReasonElement) &&
                            finishReasonElement.ValueKind == JsonValueKind.String
             ? finishReasonElement.GetString()
@@ -185,7 +189,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             throw new VisionExtractionException("AI_RESPONSE_TRUNCATED",
                 "Qwen đã dừng vì đạt giới hạn output trước khi hoàn tất JSON; hồ sơ cần kiểm tra thủ công.");
 
-        if (!choice.TryGetProperty("message", out var message))
+        if (!choice.TryGetProperty("message", out var message) || message.ValueKind != JsonValueKind.Object)
             throw new VisionExtractionException("AI_INVALID_RESPONSE",
                 "Qwen không trả về message hợp lệ; hồ sơ cần kiểm tra thủ công.");
 
@@ -216,21 +220,66 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         return facts;
     }
 
-    private void LogUsage(JsonElement root)
+    private void LogProviderTelemetry(JsonElement root)
     {
-        if (!root.TryGetProperty("usage", out var usage) || usage.ValueKind != JsonValueKind.Object)
+        if (root.ValueKind != JsonValueKind.Object)
             return;
 
+        var providerKind = ReadSelectedProviderKind(root);
+        if (!root.TryGetProperty("usage", out var usage) || usage.ValueKind != JsonValueKind.Object)
+        {
+            _logger.LogInformation("OpenRouter response metadata for {Model}: provider kind={ProviderKind}; token usage unavailable.",
+                _options.Model, providerKind);
+            return;
+        }
         var promptTokens = ReadInt64(usage, "prompt_tokens");
         var completionTokens = ReadInt64(usage, "completion_tokens");
         var totalTokens = ReadInt64(usage, "total_tokens");
+        var reasoningTokens = usage.TryGetProperty("completion_tokens_details", out var details) &&
+                              details.ValueKind == JsonValueKind.Object
+            ? ReadInt64(details, "reasoning_tokens")
+            : null;
         _logger.LogInformation(
-            "OpenRouter token usage for {Model}: prompt={PromptTokens}, completion={CompletionTokens}, total={TotalTokens}, configured output cap={MaxOutputTokens}.",
-            _options.Model, promptTokens, completionTokens, totalTokens, _options.MaxOutputTokens);
+            "OpenRouter token usage for {Model}: provider kind={ProviderKind}; prompt={PromptTokens}, completion={CompletionTokens}, reasoning={ReasoningTokens}, total={TotalTokens}, configured output cap={MaxOutputTokens}.",
+            _options.Model, providerKind, promptTokens, completionTokens, reasoningTokens, totalTokens,
+            _options.MaxOutputTokens);
     }
 
+    private static string ReadSelectedProviderKind(JsonElement root)
+    {
+        if (!root.TryGetProperty("openrouter_metadata", out var metadata) ||
+            metadata.ValueKind != JsonValueKind.Object ||
+            !metadata.TryGetProperty("endpoints", out var endpoints) ||
+            endpoints.ValueKind != JsonValueKind.Object ||
+            !endpoints.TryGetProperty("available", out var available) ||
+            available.ValueKind != JsonValueKind.Array)
+            return "Unknown";
+
+        foreach (var endpoint in available.EnumerateArray())
+        {
+            if (endpoint.ValueKind != JsonValueKind.Object ||
+                !endpoint.TryGetProperty("selected", out var selected) ||
+                selected.ValueKind != JsonValueKind.True ||
+                !endpoint.TryGetProperty("provider", out var provider) ||
+                provider.ValueKind != JsonValueKind.String)
+                continue;
+            return ClassifyProvider(provider.GetString());
+        }
+
+        return "Unknown";
+    }
+
+    private static string ClassifyProvider(string? provider) => provider switch
+    {
+        null or "" => "Unknown",
+        _ when provider.Contains("Alibaba", StringComparison.OrdinalIgnoreCase) => "Alibaba",
+        "Parasail" => "Parasail",
+        _ => "Other"
+    };
+
     private static long? ReadInt64(JsonElement source, string propertyName) =>
-        source.TryGetProperty(propertyName, out var value) && value.TryGetInt64(out var number)
+        source.TryGetProperty(propertyName, out var value) &&
+        value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var number)
             ? number
             : null;
 
@@ -272,7 +321,6 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
     private static VisionExtractionException CreateHttpFailure(HttpStatusCode statusCode,
         ProviderErrorDetails details, string model, TimeSpan? retryAfter, string? requestId)
     {
-        var providerMessage = details.Message;
         return statusCode switch
         {
             HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => new VisionExtractionException("AI_AUTH_ERROR",
@@ -280,18 +328,18 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             HttpStatusCode.PaymentRequired => new VisionExtractionException("AI_CREDITS_REQUIRED",
                 "Tài khoản OpenRouter không đủ credit hoặc key không được phép sử dụng model đã chọn."),
             HttpStatusCode.NotFound => new VisionExtractionException("AI_MODEL_UNAVAILABLE",
-                $"OpenRouter không tìm thấy model '{model}' hoặc model đã bị gỡ khỏi catalog (HTTP 404). {providerMessage}".Trim(),
-                retryAfter: retryAfter, provider: details.Provider, requestId: requestId),
+                $"OpenRouter không tìm thấy model '{model}' hoặc model đã bị gỡ khỏi catalog (HTTP 404).",
+                retryAfter: retryAfter, provider: details.ProviderKind, requestId: requestId),
             HttpStatusCode.TooManyRequests => new VisionExtractionException("AI_RATE_LIMIT",
                 "OpenRouter hoặc upstream provider đang giới hạn tải (HTTP 429). Hệ thống tạm dừng lời gọi tiếp theo để bảo vệ quota.",
-                retryAfter: retryAfter, provider: details.Provider, requestId: requestId),
+                retryAfter: retryAfter, provider: details.ProviderKind, requestId: requestId),
             HttpStatusCode.BadRequest => new VisionExtractionException("AI_REQUEST_INVALID",
-                $"OpenRouter không chấp nhận payload ảnh/JSON hiện tại (HTTP 400). {providerMessage}".Trim()),
+                "OpenRouter không chấp nhận payload ảnh/JSON hiện tại (HTTP 400)."),
             HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or
                 HttpStatusCode.GatewayTimeout => new VisionExtractionException("AI_TEMPORARILY_UNAVAILABLE",
                     $"OpenRouter hoặc nhà cung cấp Qwen đang tạm thời không khả dụng (HTTP {(int)statusCode}) sau 2 lần thử."),
             _ => new VisionExtractionException("AI_HTTP_ERROR",
-                $"OpenRouter từ chối yêu cầu (HTTP {(int)statusCode}). {providerMessage}".Trim())
+                $"OpenRouter từ chối yêu cầu (HTTP {(int)statusCode}).")
         };
     }
 
@@ -300,20 +348,17 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         try
         {
             using var document = JsonDocument.Parse(responseBody);
-            if (document.RootElement.TryGetProperty("error", out var error) &&
+            if (document.RootElement.ValueKind == JsonValueKind.Object &&
+                document.RootElement.TryGetProperty("error", out var error) &&
                 error.ValueKind == JsonValueKind.Object)
             {
-                var message = error.TryGetProperty("message", out var messageElement)
-                    ? messageElement.GetString() ?? string.Empty
-                    : string.Empty;
                 string? provider = null;
                 if (error.TryGetProperty("metadata", out var metadata) && metadata.ValueKind == JsonValueKind.Object)
                 {
                     provider = ReadString(metadata, "provider_name") ?? ReadString(metadata, "provider");
                 }
 
-                return new ProviderErrorDetails(SanitizeDiagnostic(message) ?? string.Empty,
-                    SanitizeDiagnostic(provider));
+                return new ProviderErrorDetails(ClassifyProvider(provider));
             }
         }
         catch (JsonException)
@@ -321,28 +366,26 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             // Keep the status-specific message; never echo an unknown raw response body.
         }
 
-        return new ProviderErrorDetails(string.Empty, null);
+        return new ProviderErrorDetails("Unknown");
     }
 
     private static string? ReadFirstHeader(HttpResponseMessage response, string headerName) =>
-        response.Headers.TryGetValues(headerName, out var values) ? values.FirstOrDefault() : null;
+        response.Headers.TryGetValues(headerName, out var values) &&
+        values.FirstOrDefault() is { } value &&
+        value.Length is > 0 and <= 80 &&
+        value.All(character => char.IsAsciiLetterOrDigit(character) || character is '-' or '_')
+            ? value
+            : null;
 
     private static string? ReadString(JsonElement source, string propertyName) =>
         source.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String
             ? value.GetString()
             : null;
 
-    private static string? SanitizeDiagnostic(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return value;
-        var compact = string.Join(' ', value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-        return compact.Length <= 300 ? compact : compact[..300];
-    }
-
     private sealed record ProviderResponse(HttpStatusCode StatusCode, string Body,
         TimeSpan? RetryAfter, string? RequestId);
 
-    private sealed record ProviderErrorDetails(string Message, string? Provider);
+    private sealed record ProviderErrorDetails(string ProviderKind);
 
     private static JsonDocument ParseResponseDocument(string responseText)
     {
@@ -350,10 +393,10 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         {
             return JsonDocument.Parse(responseText);
         }
-        catch (JsonException exception)
+        catch (JsonException)
         {
             throw new VisionExtractionException("AI_INVALID_RESPONSE",
-                "Qwen trả về phản hồi không phải JSON hợp lệ; hồ sơ cần kiểm tra thủ công.", exception);
+                "Qwen trả về phản hồi không phải JSON hợp lệ; hồ sơ cần kiểm tra thủ công.");
         }
     }
 

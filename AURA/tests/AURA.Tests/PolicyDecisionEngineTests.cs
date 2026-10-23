@@ -73,7 +73,37 @@ public sealed class PolicyDecisionEngineTests
         var result = PolicyDecisionEngine.Evaluate(facts, 150_000m, utcNow: Now);
 
         Assert.Equal("ESCALATE_FACT", result.Status);
-        Assert.Contains("impossible arithmetic", result.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ARITHMETIC_CONFLICT", result.Reason, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("Chi phí cần xác minh")]
+    [InlineData("Chi phí khác")]
+    [InlineData("Miscellaneous expense")]
+    public void Unverifiable_item_description_cannot_clear_prohibited_item_policy(string description)
+    {
+        var facts = ValidFacts();
+        facts.LineItems[0].Description = description;
+
+        var decision = Decide(facts);
+
+        Assert.Equal("ESCALATE_FACT", decision.Status);
+        Assert.Contains("quá chung chung", decision.Reason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Untrusted_warning_value_does_not_enter_decision_reason()
+    {
+        const string privateValue = "customer@example.test";
+        var facts = ValidFacts();
+        facts.Warnings.Add($"blurry total for {privateValue}");
+
+        var decision = Decide(facts);
+
+        Assert.Equal("ESCALATE_FACT", decision.Status);
+        Assert.Contains("IMAGE_EVIDENCE_UNCLEAR", decision.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain(privateValue, decision.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain(privateValue, decision.ManagerQuestion, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -235,7 +265,7 @@ public sealed class PolicyDecisionEngineTests
 
         Assert.Equal("ESCALATE_FACT", result.Status);
         Assert.Contains("tiếng Trung", result.Reason, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("CNY", result.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("tiền tệ", result.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -248,7 +278,7 @@ public sealed class PolicyDecisionEngineTests
         var result = Decide(facts);
 
         Assert.Equal("ESCALATE_FACT", result.Status);
-        Assert.Contains("青岛啤酒", result.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("青岛啤酒", result.Reason, StringComparison.Ordinal);
         Assert.Contains("policy", result.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -337,7 +367,21 @@ public sealed class PolicyDecisionEngineTests
 
         Assert.Equal("ESCALATE_FACT", result.Status);
         Assert.Contains("hạng mục cần kiểm tra policy", result.Reason, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Tiger Beer", result.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Tiger Beer", result.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Prohibited_item_description_with_personal_data_is_not_copied_to_reason()
+    {
+        const string privateValue = "customer@example.test";
+        var facts = ValidFacts();
+        facts.LineItems = [new ReceiptLineItem { Description = $"Beer for {privateValue}", Amount = 150_000m }];
+
+        var result = Decide(facts);
+
+        Assert.Equal("ESCALATE_POLICY", result.Status);
+        Assert.DoesNotContain(privateValue, result.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain(privateValue, result.ManagerQuestion, StringComparison.Ordinal);
     }
 
     [Theory]

@@ -171,6 +171,13 @@ internal static class ReceiptExtractionContract
     private static (string ReasonCode, string SchemaField)? FindRequiredShapeFailure(
         JsonObject parsed, bool versionMissing)
     {
+        // Provider-side strict schemas are advisory at this trust boundary. In
+        // particular, DTO-only audit and privacy fields must never be set by a model.
+        if (parsed.Select(property => property.Key).Distinct(StringComparer.OrdinalIgnoreCase).Count() != parsed.Count)
+            return ("DUPLICATE_FIELD", "<none>");
+        if (parsed.Any(property => !RequiredFields.Contains(property.Key, StringComparer.OrdinalIgnoreCase)))
+            return ("UNEXPECTED_FIELD", "<none>");
+
         foreach (var field in RequiredFields.Skip(versionMissing ? 1 : 0))
         {
             if (!HasProperty(parsed, field))
@@ -188,6 +195,10 @@ internal static class ReceiptExtractionContract
         {
             if (item is not JsonObject line)
                 return ("INVALID_LINE_ITEM", "lineItems");
+            if (line.Select(property => property.Key).Distinct(StringComparer.OrdinalIgnoreCase).Count() != line.Count)
+                return ("DUPLICATE_LINE_ITEM_FIELD", "lineItems");
+            if (line.Any(property => !RequiredLineItemFields.Contains(property.Key, StringComparer.OrdinalIgnoreCase)))
+                return ("UNEXPECTED_LINE_ITEM_FIELD", "lineItems");
             foreach (var field in RequiredLineItemFields)
             {
                 if (!HasProperty(line, field))

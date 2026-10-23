@@ -5,6 +5,7 @@ using AURA.Options;
 using AURA.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -72,6 +73,47 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.Equal("req-safe-123", exception.RequestId);
             Assert.Equal("enabled", metadataHeader);
             Assert.DoesNotContain("Alibaba", exception.UserMessage, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Provider_error_text_and_invalid_request_id_are_not_exposed()
+    {
+        var root = CreateFixtureRoot();
+        try
+        {
+            const string privateValue = "customer@example.test";
+            var logger = new CollectingLogger();
+            var handler = new StubHandler(_ =>
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.BadRequest)
+                {
+                    Content = new StringContent(
+                        "{\"error\":{\"message\":\"Receipt email customer@example.test\",\"metadata\":{\"provider_name\":\"Unknown customer@example.test\"}}}",
+                        Encoding.UTF8, "application/json")
+                };
+                response.Headers.TryAddWithoutValidation("X-Request-Id", privateValue);
+                return Task.FromResult(response);
+            });
+            var options = Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions
+            {
+                ApiKey = "test-key"
+            });
+            var service = new OpenRouterVisionExtractorService(
+                new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) }, options,
+                new TestEnvironment(root), logger);
+
+            var exception = await Assert.ThrowsAsync<VisionExtractionException>(() =>
+                service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg")));
+
+            Assert.Equal("AI_REQUEST_INVALID", exception.Code);
+            Assert.Null(exception.RequestId);
+            Assert.DoesNotContain(privateValue, exception.UserMessage);
+            Assert.DoesNotContain(privateValue, string.Join(' ', logger.Messages));
         }
         finally
         {
@@ -354,13 +396,17 @@ public sealed class OpenRouterVisionExtractorServiceTests
                   "completionDate":null,"invoiceTime":"10:30","currency":"VND","subtotal":"88000",
                   "discountAmount":null,"tax":"0","totalAmount":"88000","totalAmountSource":"PRINTED_FINAL_TOTAL","totalAmountEvidence":"Tổng cộng 88.000 VND","lineItems":[{"description":"Phở bò","quantity":"1",
                   "unitPrice":"88000","amount":"88000"}],"missingFields":[],"warnings":[],
-                  "suspiciousSignals":[],"confidence":"0.91","providerNote":"ignored safely"
+                  "suspiciousSignals":[],"confidence":"0.91"
                 }
                 ```
                 """;
             var responseJson = JsonSerializer.Serialize(new
             {
-                choices = new[] { new { finish_reason = "stop", message = new { content = factsJson } } }
+                choices = new[] { new { finish_reason = "stop", message = new { content = factsJson } } },
+                openrouter_metadata = new
+                {
+                    endpoints = new { available = new[] { new { selected = true, provider = "Alibaba Cloud" } } }
+                }
             });
             var handler = new StubHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -493,12 +539,25 @@ public sealed class OpenRouterVisionExtractorServiceTests
         try
         {
             var attempts = 0;
+            var logger = new CollectingLogger();
             var handler = new StubHandler(_ =>
             {
                 attempts++;
                 var body = JsonSerializer.Serialize(new
                 {
-                    choices = new[] { new { finish_reason = "stop", message = new { content = "[]" } } }
+                    choices = new[] { new { finish_reason = "stop", message = new { content = "[]" } } },
+                    usage = new
+                    {
+                        prompt_tokens = 700L, completion_tokens = 2L, total_tokens = 702L,
+                        completion_tokens_details = new { reasoning_tokens = 0L }
+                    },
+                    openrouter_metadata = new
+                    {
+                        endpoints = new
+                        {
+                            available = new[] { new { selected = true, provider = "Alibaba Cloud" } }
+                        }
+                    }
                 });
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
                 {
@@ -511,7 +570,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
             });
             var service = new OpenRouterVisionExtractorService(
                 new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) }, options,
-                new TestEnvironment(root), NullLogger<OpenRouterVisionExtractorService>.Instance);
+                new TestEnvironment(root), logger);
 
             var failure = await Assert.ThrowsAsync<VisionExtractionException>(() =>
                 service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg")));
@@ -519,6 +578,9 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.Equal("AI_SCHEMA_MISMATCH", failure.Code);
             Assert.Equal(2, attempts);
             Assert.Null(failure.InnerException); // Do not carry provider-derived JSON into worker logs.
+            Assert.Contains(logger.Messages, message => message.Contains("provider kind=Alibaba", StringComparison.Ordinal));
+            Assert.Contains(logger.Messages, message => message.Contains("completion=2", StringComparison.Ordinal));
+            Assert.Contains(logger.Messages, message => message.Contains("reasoning=0", StringComparison.Ordinal));
         }
         finally
         {
@@ -709,6 +771,17 @@ public sealed class OpenRouterVisionExtractorServiceTests
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
             CancellationToken cancellationToken) => callback(request);
+    }
+
+    private sealed class CollectingLogger : ILogger<OpenRouterVisionExtractorService>
+    {
+        public List<string> Messages { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state,
+            Exception? exception, Func<TState, Exception?, string> formatter) =>
+            Messages.Add(formatter(state, exception));
     }
 
     private sealed class TestEnvironment(string root) : IWebHostEnvironment

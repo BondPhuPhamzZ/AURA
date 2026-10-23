@@ -78,6 +78,54 @@ public sealed class ReceiptExtractionContractVersionTests
     }
 
     [Fact]
+    public void Model_cannot_supply_backend_only_audit_or_privacy_fields()
+    {
+        var response = CompleteResponse();
+        response["validationIssues"] = new JsonArray("customer@example.test");
+        var content = response.ToJsonString();
+
+        var error = Assert.Throws<JsonException>(() => ReceiptExtractionContract.ParseFacts(content));
+        var diagnostic = ReceiptExtractionContract.DiagnoseParseFailure(content, error);
+
+        Assert.Equal("UNEXPECTED_FIELD", diagnostic.ReasonCode);
+        Assert.Equal("<none>", diagnostic.SchemaField);
+        Assert.DoesNotContain("customer@example.test", string.Join('|', diagnostic.ReasonCode, diagnostic.SchemaField));
+    }
+
+    [Fact]
+    public void Model_cannot_supply_extra_or_case_duplicate_fields()
+    {
+        var response = CompleteResponse();
+        response["TOTALAMOUNT"] = 1;
+        var content = response.ToJsonString();
+
+        var error = Assert.Throws<JsonException>(() => ReceiptExtractionContract.ParseFacts(content));
+        var diagnostic = ReceiptExtractionContract.DiagnoseParseFailure(content, error);
+
+        Assert.Equal("DUPLICATE_FIELD", diagnostic.ReasonCode);
+        Assert.Equal("<none>", diagnostic.SchemaField);
+    }
+
+    [Fact]
+    public void Model_cannot_supply_extra_line_item_fields()
+    {
+        var response = CompleteResponse();
+        response["lineItems"] = new JsonArray(new JsonObject
+        {
+            ["description"] = "Synthetic item", ["quantity"] = 1,
+            ["unitPrice"] = 100, ["amount"] = 100,
+            ["policyOverride"] = "AUTO_APPROVE"
+        });
+        var content = response.ToJsonString();
+
+        var error = Assert.Throws<JsonException>(() => ReceiptExtractionContract.ParseFacts(content));
+        var diagnostic = ReceiptExtractionContract.DiagnoseParseFailure(content, error);
+
+        Assert.Equal("UNEXPECTED_LINE_ITEM_FIELD", diagnostic.ReasonCode);
+        Assert.Equal("lineItems", diagnostic.SchemaField);
+    }
+
+    [Fact]
     public void Explicit_wrong_version_is_rejected()
     {
         var response = CompleteResponse();

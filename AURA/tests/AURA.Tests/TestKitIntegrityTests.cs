@@ -216,7 +216,8 @@ public sealed class TestKitIntegrityTests
             utcNow: new DateTime(2026, 10, 6, 0, 0, 0, DateTimeKind.Utc));
 
         Assert.Equal(sourceCase.GetProperty("expected_status").GetString(), decision.Status);
-        Assert.Contains("Vé xem phim", decision.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("hạng mục ngoài chính sách", decision.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Vé xem phim", decision.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

@@ -32,6 +32,13 @@ public static class PolicyDecisionEngine
         "bia lon", "bia chai", "bia hơi", "bia hoi", "bia tươi", "bia tuoi", "bia keg", "bia draft"
     ];
 
+    private static readonly HashSet<string> NonVerifiableItemDescriptions = new(StringComparer.Ordinal)
+    {
+        "chi phí cần xác minh", "chi phi can xac minh", "chi phí khác", "chi phi khac",
+        "hàng hóa dịch vụ", "hang hoa dich vu", "miscellaneous expense", "other expense",
+        "unspecified item"
+    };
+
     public static (string Status, string Reason, string ManagerQuestion) Evaluate(
         ReceiptExtractionDto? facts,
         decimal claimedAmount,
@@ -48,7 +55,7 @@ public static class PolicyDecisionEngine
         if (facts.Confidence < MinimumConfidence)
             factProblems.Add($"độ tin cậy trích xuất chỉ {facts.Confidence:P0}");
         if (ContainsAny(facts.DocumentStatus, "draft", "nháp", "unissued", "chưa phát hành", "cancelled", "canceled", "đã hủy", "refunded", "hoàn tiền", "returned", "trả hàng"))
-            factProblems.Add($"chứng từ ở trạng thái {facts.DocumentStatus}, chưa phải hóa đơn đã phát hành hợp lệ");
+            factProblems.Add("chứng từ chưa ở trạng thái phát hành/hoàn tất hợp lệ");
         if (isDuplicate)
             factProblems.Add("ảnh hóa đơn trùng với hồ sơ đã lưu");
         if (facts.TotalAmount is null or <= 0)
@@ -78,6 +85,8 @@ public static class PolicyDecisionEngine
         // this and allows one targeted re-read; this check keeps direct policy calls fail-safe.
         if (facts.LineItems.Count == 0 && facts.ValidationIssues.Count == 0)
             factProblems.Add("không đọc được danh sách hàng hóa/dịch vụ để kiểm tra policy");
+        else if (facts.LineItems.Any(item => IsNonVerifiableItemDescription(item.Description)))
+            factProblems.Add("mô tả hàng hóa/dịch vụ quá chung chung để kiểm tra hạng mục ngoài chính sách");
 
         var isEcommerce = ContainsAny(facts.DocumentType, "ecommerce", "e-commerce", "online order");
         var isRideHailing = ContainsAny(facts.DocumentType, "ride_hailing", "ride-hailing", "ride hailing");
@@ -108,11 +117,11 @@ public static class PolicyDecisionEngine
             }
             else if (ContainsAny(facts.OrderStatus, "cancelled", "canceled", "đã hủy", "refunded", "hoàn tiền", "returned", "trả hàng"))
             {
-                factProblems.Add($"đơn hàng trực tuyến có trạng thái không đủ điều kiện ({facts.OrderStatus})");
+                factProblems.Add("đơn hàng trực tuyến có trạng thái không đủ điều kiện");
             }
             else if (!ContainsAny(facts.OrderStatus, "completed", "delivered", "paid", "hoàn thành", "giao hàng thành công", "đã thanh toán"))
             {
-                factProblems.Add($"đơn hàng trực tuyến chưa có trạng thái hoàn tất đáng tin cậy ({facts.OrderStatus})");
+                factProblems.Add("đơn hàng trực tuyến chưa có trạng thái hoàn tất đáng tin cậy");
             }
 
             if (facts.LineItems.Count == 0 && facts.ValidationIssues.Count > 0)
@@ -132,7 +141,7 @@ public static class PolicyDecisionEngine
         if (!string.Equals(facts.Currency, "VND", StringComparison.OrdinalIgnoreCase))
             factProblems.Add(string.IsNullOrWhiteSpace(facts.Currency)
                 ? "không xác định được tiền tệ"
-                : $"tiền tệ {facts.Currency} chưa có tỷ giá/quy tắc quy đổi");
+                : "tiền tệ chưa có tỷ giá/quy tắc quy đổi được hỗ trợ");
 
         var evidenceDate = isDigital
             ? facts.TransactionDate ?? facts.InvoiceDate
@@ -159,20 +168,21 @@ public static class PolicyDecisionEngine
                 factProblems.Add($"thời điểm {time:HH:mm} nằm ngoài khung 06:00-22:00");
         }
 
-        var criticalWarnings = facts.Warnings
+        var criticalWarningCodes = facts.Warnings
             .Concat(facts.SuspiciousSignals)
-            .Where(x => ContainsAny(x, "blurry", "mờ", "cropped", "cắt", "unreadable", "tamper", "sửa", "partial", "thiếu trang", "prompt injection", "PROMPT_INJECTION", "impossible arithmetic", "sai số học"))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(ClassifyCriticalSignal)
+            .Where(code => code is not null)
+            .Distinct(StringComparer.Ordinal)
             .ToList();
-        if (criticalWarnings.Count > 0)
-            factProblems.Add("ảnh có dấu hiệu cần xác minh: " + string.Join(", ", criticalWarnings));
+        if (criticalWarningCodes.Count > 0)
+            factProblems.Add("ảnh hoặc dữ kiện có tín hiệu cần xác minh: " + string.Join(", ", criticalWarningCodes));
 
         var prohibitedItems = FindProhibitedItems(facts);
         if (factProblems.Count > 0)
         {
             var summary = string.Join("; ", factProblems);
             if (prohibitedItems.Count > 0)
-                summary += $"; đồng thời phát hiện hạng mục cần kiểm tra policy: {string.Join(", ", prohibitedItems)}";
+                summary += $"; đồng thời phát hiện {prohibitedItems.Count} hạng mục cần kiểm tra policy";
             return Fact("Không đủ dữ kiện đáng tin cậy: " + summary + ".",
                 $"Hồ sơ có vấn đề dữ kiện: {summary}. Quản lý có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]");
         }
@@ -187,10 +197,9 @@ public static class PolicyDecisionEngine
 
         if (prohibitedItems.Count > 0)
         {
-            var items = string.Join(", ", prohibitedItems);
             return ("ESCALATE_POLICY",
-                $"Phát hiện hạng mục ngoài chính sách: {items}.",
-                $"Hóa đơn có hạng mục ngoài chính sách ({items}). Quản lý có đồng ý duyệt ngoại lệ khoản chi này không? [CÓ/KHÔNG]");
+                $"Phát hiện {prohibitedItems.Count} hạng mục ngoài chính sách; xem chứng từ để xác minh.",
+                $"Hóa đơn có {prohibitedItems.Count} hạng mục ngoài chính sách. Quản lý có đồng ý duyệt ngoại lệ khoản chi này không? [CÓ/KHÔNG]");
         }
 
         if (facts.TotalAmount!.Value > AutoApprovalLimitVnd)
@@ -213,6 +222,20 @@ public static class PolicyDecisionEngine
 
     private static bool ContainsAny(string? source, params string[] terms) =>
         !string.IsNullOrWhiteSpace(source) && terms.Any(term => source.Contains(term, StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsNonVerifiableItemDescription(string? description) =>
+        string.IsNullOrWhiteSpace(description) ||
+        NonVerifiableItemDescriptions.Contains(NormalizePolicyText(description));
+
+    private static string? ClassifyCriticalSignal(string? signal)
+    {
+        if (ContainsAny(signal, "prompt injection", "PROMPT_INJECTION")) return "PROMPT_INJECTION";
+        if (ContainsAny(signal, "impossible arithmetic", "sai số học")) return "ARITHMETIC_CONFLICT";
+        if (ContainsAny(signal, "tamper", "sửa")) return "TAMPER_SIGNAL";
+        if (ContainsAny(signal, "blurry", "mờ", "cropped", "cắt", "unreadable", "partial", "thiếu trang"))
+            return "IMAGE_EVIDENCE_UNCLEAR";
+        return null;
+    }
 
     private static List<string> FindProhibitedItems(ReceiptExtractionDto facts) => facts.LineItems
         .Select(item => item.Description)
