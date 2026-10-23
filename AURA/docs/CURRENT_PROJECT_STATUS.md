@@ -7,7 +7,7 @@
 > Qwen3.6 đã bỏ lọt một ca FACT do dòng tổng bị mờ nhưng model dựng evidence
 > hợp lý từ số dòng hàng. Gate mới chuyển ca đó cho người kiểm tra, **không**
 > giải quyết tổng quát việc model tưởng tượng pixel. Adapter đã chặn response
-> provider quá 2 MiB. Debug/Release 264/264, LocalDB opt-in 2/2,
+> provider quá 2 MiB. Release/Debug 265/265 và LocalDB opt-in 3/3 sau test reclaim lease;
 > build sạch và EF không đổi sau guard.
 > Không đổi default model hay
 > SmartASP; chưa có holdout mù/ảnh thật được phép dùng với model thay thế.
