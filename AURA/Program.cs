@@ -59,6 +59,8 @@ builder.Services.AddOptions<VisionOptions>()
     .Validate(options => !options.FallbackEnabled ||
         !string.Equals(options.Provider, options.FallbackProvider, StringComparison.OrdinalIgnoreCase),
         "Vision:FallbackProvider phải khác Vision:Provider khi bật fallback.")
+    .Validate(options => !options.UseSqlDistributedGate || options.MaxConcurrentRequests == 1,
+        "Vision:UseSqlDistributedGate hiện chỉ hỗ trợ một AI permit toàn hệ thống.")
     .ValidateOnStart();
 builder.Services.AddOptions<OpenRouterOptions>()
     .Bind(builder.Configuration.GetSection(OpenRouterOptions.SectionName))
@@ -247,6 +249,7 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
         strictZeroDataRetention = useOllama ? (bool?)null : openRouter.RequireZeroDataRetention,
         processingMode = "durable-background-queue",
         maxConcurrentAiRequests = vision.MaxConcurrentRequests,
+        sqlDistributedAiGateEnabled = vision.UseSqlDistributedGate,
         providerCooldownSeconds = vision.ProviderCooldownSeconds,
         verifyHarnessEnabled = VerifyExecutionPolicy.IsAllowed(
             configuredVerify.Value.Enabled, environment.EnvironmentName),

@@ -1,5 +1,6 @@
 using AURA.Options;
 using AURA.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Xunit;
 
@@ -10,6 +11,7 @@ public sealed class VisionInvocationCoordinatorTests
     [Fact]
     public async Task Serializes_AI_calls_when_capacity_is_one()
     {
+        Assert.False(new VisionOptions().UseSqlDistributedGate);
         var coordinator = CreateCoordinator();
         using var first = await coordinator.EnterAsync(CancellationToken.None);
 
@@ -45,7 +47,24 @@ public sealed class VisionInvocationCoordinatorTests
         Assert.Equal(TimeSpan.FromSeconds(110), coordinator.GetRemainingCooldown("OpenRouter", now.AddSeconds(10)));
     }
 
+    [Fact]
+    public void Sql_gate_fails_closed_without_database_or_single_permit()
+    {
+        var emptyConfiguration = new ConfigurationBuilder().Build();
+        Assert.Throws<InvalidOperationException>(() => new VisionInvocationCoordinator(
+            Microsoft.Extensions.Options.Options.Create(new VisionOptions
+            {
+                MaxConcurrentRequests = 1, UseSqlDistributedGate = true
+            }), emptyConfiguration));
+        Assert.Throws<InvalidOperationException>(() => new VisionInvocationCoordinator(
+            Microsoft.Extensions.Options.Options.Create(new VisionOptions
+            {
+                MaxConcurrentRequests = 2, UseSqlDistributedGate = true
+            }), emptyConfiguration));
+    }
+
     private static VisionInvocationCoordinator CreateCoordinator() => new(
         Microsoft.Extensions.Options.Options.Create(
-            new VisionOptions { MaxConcurrentRequests = 1 }));
+            new VisionOptions { MaxConcurrentRequests = 1 }),
+        new ConfigurationBuilder().Build());
 }

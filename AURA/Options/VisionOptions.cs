@@ -25,6 +25,9 @@ public sealed class VisionOptions
     [Range(1, 8)]
     public int MaxConcurrentRequests { get; set; } = 1;
 
+    // Opt-in SQL Server application lock; the existing single-process gate remains the default.
+    public bool UseSqlDistributedGate { get; set; }
+
     [Range(10, 900)]
     public int ProviderCooldownSeconds { get; set; } = 120;
 

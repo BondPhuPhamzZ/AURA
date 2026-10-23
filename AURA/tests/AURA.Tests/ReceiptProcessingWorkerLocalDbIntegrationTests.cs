@@ -6,6 +6,7 @@ using AURA.Options;
 using AURA.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -16,6 +17,65 @@ namespace AURA.Tests;
 
 public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
 {
+    [Fact]
+    public async Task Sql_ai_gate_serializes_two_independent_coordinators()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, _) =>
+        {
+            await using var db = new AppDbContext(options);
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:DefaultConnection"] = db.Database.GetConnectionString()
+                }).Build();
+            var visionOptions = Microsoft.Extensions.Options.Options.Create(new VisionOptions
+            {
+                MaxConcurrentRequests = 1,
+                UseSqlDistributedGate = true
+            });
+            var first = new VisionInvocationCoordinator(visionOptions, configuration);
+            var second = new VisionInvocationCoordinator(visionOptions, configuration);
+
+            using var firstLease = await first.EnterAsync(CancellationToken.None);
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var secondAttempt = second.EnterAsync(cancellation.Token).AsTask();
+            await Task.Delay(300);
+            Assert.False(secondAttempt.IsCompleted);
+            firstLease.Dispose();
+            using var secondLease = await secondAttempt.WaitAsync(TimeSpan.FromSeconds(4));
+        });
+    }
+
+    [Fact]
+    public async Task Sql_ai_gate_cancellation_does_not_leave_a_waiting_permit()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, _) =>
+        {
+            await using var db = new AppDbContext(options);
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:DefaultConnection"] = db.Database.GetConnectionString()
+                }).Build();
+            var visionOptions = Microsoft.Extensions.Options.Options.Create(new VisionOptions
+            {
+                MaxConcurrentRequests = 1,
+                UseSqlDistributedGate = true
+            });
+            var first = new VisionInvocationCoordinator(visionOptions, configuration);
+            var second = new VisionInvocationCoordinator(visionOptions, configuration);
+            using var firstLease = await first.EnterAsync(CancellationToken.None);
+            using var canceled = new CancellationTokenSource(TimeSpan.FromMilliseconds(300));
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+                second.EnterAsync(canceled.Token).AsTask());
+            firstLease.Dispose();
+            using var recoveredLease = await second.EnterAsync(CancellationToken.None)
+                .AsTask().WaitAsync(TimeSpan.FromSeconds(4));
+        });
+    }
+
     [Fact]
     public async Task Rate_limited_job_survives_worker_restart_and_completes_once()
     {
