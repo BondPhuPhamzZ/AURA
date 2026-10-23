@@ -40,6 +40,13 @@
 > vulnerability audit thành công. Chưa kiểm tra clock skew trên hai SQL host,
 > vì đây chỉ là LocalDB.
 
+> **Dependency vulnerability audit 24/10:** Chạy riêng `dotnet list package
+> --vulnerable --include-transitive` qua NuGet advisory feed cho cả `AURA.csproj`
+> và `tests/AURA.Tests/AURA.Tests.csproj`; cả hai báo không có package dễ tổn
+> thương theo nguồn hiện tại. Đây không thay cho kiểm thử runtime, license
+> review hoặc kiểm tra lại khi package/feed thay đổi. Các lần `--no-restore`
+> vẫn có thể hiện `NU1900` vì invocation đó không tải được advisory metadata.
+
 > **Idempotency khi hai poller insert đồng thời 24/10:** SQL primary key tiếp
 > tục là trọng tài cho source-derived request ID. Nếu một poller thua insert
 > vì row cùng ID vừa được commit, intake đọc lại row, so SHA-256 rồi trả cùng
