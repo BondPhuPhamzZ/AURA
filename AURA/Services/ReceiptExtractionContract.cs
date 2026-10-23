@@ -132,6 +132,59 @@ internal static class ReceiptExtractionContract
         return ReceiptSemanticValidator.NormalizeCanonicalFields(facts);
     }
 
+    // This diagnostic intentionally returns schema identifiers only. Never include
+    // a model response, exception message, or receipt value in operational logs.
+    internal static (string ReasonCode, string SchemaField) DiagnoseParseFailure(
+        string content, JsonException exception)
+    {
+        var json = ExtractJsonObject(content);
+        if (string.IsNullOrWhiteSpace(json)) return ("EMPTY_CONTENT", "<none>");
+
+        JsonObject? parsed;
+        try
+        {
+            parsed = JsonNode.Parse(json) as JsonObject;
+        }
+        catch (JsonException)
+        {
+            return ("INVALID_JSON_SYNTAX", "<none>");
+        }
+
+        if (parsed is null) return ("NOT_JSON_OBJECT", "<none>");
+        if (!HasProperty(parsed, "evidenceContractVersion"))
+        {
+            var firstMissing = RequiredFields.Skip(1).FirstOrDefault(field => !HasProperty(parsed, field));
+            if (firstMissing is not null) return ("MISSING_VERSION_AND_FIELD", firstMissing);
+            if (GetProperty(parsed, "lineItems") is not JsonArray items)
+                return ("MISSING_VERSION_AND_LINE_ITEMS", "lineItems");
+            foreach (var item in items)
+            {
+                if (item is not JsonObject line)
+                    return ("INVALID_LINE_ITEM", "lineItems");
+                var missing = new[] { "description", "quantity", "unitPrice", "amount" }
+                    .FirstOrDefault(field => !HasProperty(line, field));
+                if (missing is not null) return ("MISSING_LINE_ITEM_FIELD", missing);
+            }
+        }
+        else if (GetProperty(parsed, "evidenceContractVersion") is JsonValue version &&
+                 version.TryGetValue<int>(out var number) && number != CurrentEvidenceContractVersion)
+        {
+            return ("UNSUPPORTED_CONTRACT_VERSION", "evidenceContractVersion");
+        }
+
+        var fieldAtPath = KnownSchemaFieldAtPath(exception.Path);
+        return fieldAtPath is null
+            ? ("DTO_DESERIALIZATION", "<none>")
+            : ("FIELD_TYPE_OR_VALUE", fieldAtPath);
+    }
+
+    private static string? KnownSchemaFieldAtPath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return null;
+        var fields = RequiredFields.Concat(["description", "quantity", "unitPrice", "amount"]);
+        return fields.FirstOrDefault(field => path.EndsWith("." + field, StringComparison.OrdinalIgnoreCase));
+    }
+
     public static object BuildResponseSchema() => new
     {
         type = "object",

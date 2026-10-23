@@ -199,11 +199,12 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         }
         catch (JsonException exception)
         {
-            _logger.LogError(exception,
-                "Failed to parse Qwen JSON response ({ContentLength} characters) at JSON path {JsonPath}.",
-                contentStr.Length, exception.Path ?? "<unknown>");
+            var diagnostic = ReceiptExtractionContract.DiagnoseParseFailure(contentStr, exception);
+            _logger.LogWarning(
+                "Qwen schema mismatch: {ReasonCode}; schema field={SchemaField}; response characters={ContentLength}.",
+                diagnostic.ReasonCode, diagnostic.SchemaField, contentStr.Length);
             throw new VisionExtractionException("AI_SCHEMA_MISMATCH",
-                "Qwen trả về kết quả không đúng cấu trúc quy định; hồ sơ cần kiểm tra thủ công.", exception);
+                "Qwen trả về kết quả không đúng cấu trúc quy định; hồ sơ cần kiểm tra thủ công.");
         }
 
         return facts;

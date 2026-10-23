@@ -40,6 +40,65 @@ public sealed class ReceiptExtractionContractVersionTests
         Assert.Throws<JsonException>(() => ReceiptExtractionContract.ParseFacts(response.ToJsonString()));
     }
 
+    [Fact]
+    public void Diagnostic_identifies_missing_schema_field_without_returning_values()
+    {
+        var response = CompleteResponse();
+        response.Remove("evidenceContractVersion");
+        response.Remove("totalAmountEvidence");
+        response["merchantName"] = "PRIVATE MERCHANT NAME";
+        var content = response.ToJsonString();
+        var error = Assert.ThrowsAny<JsonException>(() => ReceiptExtractionContract.ParseFacts(content));
+
+        var diagnostic = ReceiptExtractionContract.DiagnoseParseFailure(content, error);
+
+        Assert.Equal("MISSING_VERSION_AND_FIELD", diagnostic.ReasonCode);
+        Assert.Equal("totalAmountEvidence", diagnostic.SchemaField);
+        Assert.DoesNotContain("PRIVATE MERCHANT NAME", diagnostic.ToString());
+    }
+
+    [Fact]
+    public void Diagnostic_distinguishes_invalid_json_syntax()
+    {
+        const string content = "{\"merchantName\":\"PRIVATE MERCHANT NAME\",\"lineItems\":[{";
+        var error = Assert.ThrowsAny<JsonException>(() => ReceiptExtractionContract.ParseFacts(content));
+
+        var diagnostic = ReceiptExtractionContract.DiagnoseParseFailure(content, error);
+
+        Assert.Equal("INVALID_JSON_SYNTAX", diagnostic.ReasonCode);
+        Assert.Equal("<none>", diagnostic.SchemaField);
+        Assert.DoesNotContain("PRIVATE MERCHANT NAME", diagnostic.ToString());
+    }
+
+    [Fact]
+    public void Diagnostic_distinguishes_unsupported_contract_version()
+    {
+        var response = CompleteResponse();
+        response["evidenceContractVersion"] = 1;
+        var content = response.ToJsonString();
+        var error = Assert.Throws<JsonException>(() => ReceiptExtractionContract.ParseFacts(content));
+
+        var diagnostic = ReceiptExtractionContract.DiagnoseParseFailure(content, error);
+
+        Assert.Equal("UNSUPPORTED_CONTRACT_VERSION", diagnostic.ReasonCode);
+        Assert.Equal("evidenceContractVersion", diagnostic.SchemaField);
+    }
+
+    [Fact]
+    public void Diagnostic_reports_only_known_field_for_invalid_value_type()
+    {
+        var response = CompleteResponse();
+        response["totalAmount"] = "PRIVATE INVALID VALUE";
+        var content = response.ToJsonString();
+        var error = Assert.ThrowsAny<JsonException>(() => ReceiptExtractionContract.ParseFacts(content));
+
+        var diagnostic = ReceiptExtractionContract.DiagnoseParseFailure(content, error);
+
+        Assert.Equal("FIELD_TYPE_OR_VALUE", diagnostic.ReasonCode);
+        Assert.Equal("totalAmount", diagnostic.SchemaField);
+        Assert.DoesNotContain("PRIVATE INVALID VALUE", diagnostic.ToString());
+    }
+
     private static JsonObject CompleteResponse()
     {
         var schema = JsonSerializer.SerializeToElement(ReceiptExtractionContract.BuildResponseSchema());

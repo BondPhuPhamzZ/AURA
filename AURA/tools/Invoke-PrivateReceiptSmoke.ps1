@@ -4,6 +4,7 @@ param(
     [Parameter()] [string]$BaseUrl = 'http://127.0.0.1:5110',
     [Parameter(Mandatory)] [switch]$ConfirmExternalProviderSend,
     [Parameter()] [ValidateRange(1, 30)] [int]$MaxCases = 15,
+    [Parameter()] [ValidateRange(1, 30)] [int]$StartSequence = 1,
     [Parameter()] [ValidateRange(1, 30)] [int]$CaseTimeoutMinutes = 10,
     [Parameter()] [string]$OutputDirectory = ''
 )
@@ -21,7 +22,7 @@ if (-not $ConfirmExternalProviderSend) { throw 'Explicit provider-send confirmat
 $source = (Resolve-Path -LiteralPath $ImagesDirectory).Path
 $files = @(Get-ChildItem -LiteralPath $source -File |
     Where-Object { $_.Extension -in @('.jpg', '.jpeg', '.png') } |
-    Sort-Object Name | Select-Object -First $MaxCases)
+    Sort-Object Name | Select-Object -Skip ($StartSequence - 1) -First $MaxCases)
 if ($files.Count -ne $MaxCases) { throw "Expected $MaxCases supported images; found $($files.Count)." }
 $inputHashes = @($files | ForEach-Object { (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash })
 
@@ -91,7 +92,7 @@ try {
         finally { $watch.Stop() }
 
         $results.Add([pscustomobject]@{
-            Sequence = $i + 1
+            Sequence = $StartSequence + $i
             InputSha256 = $inputHashes[$i]
             RequestId = $requestId
             ProcessingState = $state
@@ -103,7 +104,7 @@ try {
         })
         # Persist each case so an interrupted run retains auditable progress.
         $results | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $resolvedOutput 'results.json') -Encoding UTF8
-        Write-Host "Private receipt $($i + 1)/$($files.Count): $state"
+        Write-Host "Private receipt sequence $($StartSequence + $i): $state"
     }
 }
 finally {
