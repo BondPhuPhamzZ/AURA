@@ -60,6 +60,40 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
         });
     }
 
+    [Fact]
+    public async Task Reclaimed_lease_prevents_stale_worker_result_and_audit()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var id = await SeedAsync(options, root);
+            var entered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var first = ProcessOnceAsync(options, root, new BlockingExtractor(entered, release));
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+            try
+            {
+                await using (var db = new AppDbContext(options))
+                {
+                    await db.ReimbursementRequests.Where(x => x.Id == id)
+                        .ExecuteUpdateAsync(update => update.SetProperty(x => x.ProcessingLeaseUntil,
+                            DateTime.UtcNow.AddSeconds(-1)));
+                }
+                await ProcessOnceAsync(options, root, new StubExtractor(() => new ReceiptExtractionDto()));
+            }
+            finally
+            {
+                release.TrySetResult(true);
+            }
+
+            await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => first);
+            await AssertStateAsync(options, id, ProcessingStates.Completed, 2, null);
+            await using var finalDb = new AppDbContext(options);
+            Assert.Equal(1, await finalDb.AuditLogs.CountAsync(a => a.RequestId == id));
+        });
+    }
+
     private static async Task WithIsolatedDatabase(
         Func<DbContextOptions<AppDbContext>, string, Task> test)
     {
@@ -145,6 +179,18 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     {
         public Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
             CancellationToken cancellationToken = default) => Task.FromResult(response());
+    }
+
+    private sealed class BlockingExtractor(TaskCompletionSource<bool> entered,
+        TaskCompletionSource<bool> release) : IVisionExtractor
+    {
+        public async Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
+            CancellationToken cancellationToken = default)
+        {
+            entered.SetResult(true);
+            await release.Task.WaitAsync(cancellationToken);
+            return new ReceiptExtractionDto();
+        }
     }
 
     private sealed class TestEnvironment(string root) : IWebHostEnvironment
