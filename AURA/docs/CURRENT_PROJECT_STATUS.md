@@ -1,5 +1,18 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
+> **Lease heartbeat 24/10:** Trong khi worker giữ một job `PROCESSING`,
+> heartbeat SQL riêng gia hạn lease theo `Id + ProcessingAttemptCount` trước
+> khi hết hạn, kể cả lúc chờ AI permit. Mất ownership hoặc lỗi SQL tại nhịp
+> gia hạn sẽ hủy lượt trích xuất; trước khi lưu terminal, worker dừng heartbeat
+> và đọc lại rowversion của đúng attempt/lease còn hiệu lực. LocalDB test
+> xác nhận lượt AI dài được gia hạn và chỉ có một audit, đổi ownership sẽ hủy
+> lượt đang chờ mà không ghi audit. Debug/Release **280/280**, LocalDB opt-in
+> **11/11**, build Release 0 warning/error, EF không pending model change.
+> Lượt Release test chạy song song với build ban đầu gặp khóa file `obj`;
+> chạy tuần tự sau đó 280/280 pass. Vẫn chưa kiểm chứng hai máy chủ thật,
+> mất SQL session trong khi provider đang chạy, hoặc load/chaos; **NO-GO**
+> cho nhiều worker/live production.
+
 > **Intake crash-retry 24/10:** Ảnh được ghi vào file tạm cùng thư mục rồi
 > chuyển tên trước khi tạo SQL job. Nếu một lần ghi SQL có kết quả không chắc
 > chắn, file hoàn chỉnh được giữ lại; lần quét Drive sau chỉ tái sử dụng khi
