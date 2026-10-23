@@ -50,6 +50,35 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
+    public async Task Queue_snapshot_reports_only_aggregate_counts_and_age()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var pendingId = await SeedAsync(options, root);
+            var processingId = await SeedAsync(options, root);
+            var failedId = await SeedAsync(options, root);
+            var now = DateTime.UtcNow;
+            await using var db = new AppDbContext(options);
+            await db.ReimbursementRequests.Where(x => x.Id == pendingId)
+                .ExecuteUpdateAsync(update => update.SetProperty(x => x.QueuedAt, now.AddMinutes(-7)));
+            await db.ReimbursementRequests.Where(x => x.Id == processingId)
+                .ExecuteUpdateAsync(update => update.SetProperty(x => x.ProcessingState,
+                    ProcessingStates.Processing));
+            await db.ReimbursementRequests.Where(x => x.Id == failedId)
+                .ExecuteUpdateAsync(update => update.SetProperty(x => x.ProcessingState,
+                    ProcessingStates.Failed));
+
+            var snapshot = await ReceiptQueueSnapshot.ReadAsync(db, now, CancellationToken.None);
+
+            Assert.Equal(1, snapshot.PendingCount);
+            Assert.Equal(1, snapshot.ProcessingCount);
+            Assert.Equal(1, snapshot.FailedCount);
+            Assert.InRange(snapshot.OldestPendingAgeSeconds!.Value, 419, 421);
+        });
+    }
+
+    [Fact]
     public async Task Sql_ai_gate_cancellation_does_not_leave_a_waiting_permit()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;

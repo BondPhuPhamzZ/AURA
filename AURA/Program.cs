@@ -143,6 +143,7 @@ builder.Services.AddSingleton<VisionCircuitBreaker>();
 builder.Services.AddSingleton<VisionInvocationCoordinator>();
 builder.Services.AddScoped<VisionExecutionContext>();
 builder.Services.AddHostedService<ReceiptProcessingWorker>();
+builder.Services.AddHostedService<ReceiptQueueMonitor>();
 builder.Services.AddHttpClient<DriveSandboxClient>(client =>
     client.Timeout = TimeSpan.FromSeconds(30))
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
