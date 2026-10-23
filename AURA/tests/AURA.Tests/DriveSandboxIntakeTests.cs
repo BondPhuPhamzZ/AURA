@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 using OptionsFactory = Microsoft.Extensions.Options.Options;
 
@@ -126,6 +127,26 @@ public sealed class DriveSandboxIntakeTests
             var changed = input with { Bytes = [137, 80, 78, 71, 13, 10, 26, 10, 0, 1] };
             await Assert.ThrowsAsync<ReceiptIntakeException>(() => service.AcceptAsync(changed));
 
+            Assert.Single(repository.Requests);
+            Assert.Single(Directory.GetFiles(Path.Combine(root, "receipts")));
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Fact]
+    public async Task Concurrent_source_insert_resolves_to_already_committed_job()
+    {
+        var root = NewTestRoot();
+        try
+        {
+            var repository = new FakeRepository { CommitThenReportUniqueConflict = true };
+            var service = CreateIntake(root, repository);
+            var input = new ReceiptIntakeInput(Png, "receipt.png", "image/png", 0,
+                "DRIVE-SANDBOX", "Synthetic", "Test", "drive:folder:file:race");
+
+            var accepted = await service.AcceptAsync(input);
+
+            Assert.Equal(ReceiptIntakeService.SourceRequestId(input.SourceKey!), accepted.Id);
             Assert.Single(repository.Requests);
             Assert.Single(Directory.GetFiles(Path.Combine(root, "receipts")));
         }
@@ -605,6 +626,7 @@ public sealed class DriveSandboxIntakeTests
     {
         public List<ReimbursementRequest> Requests { get; } = [];
         public bool FailNextAdd { get; set; }
+        public bool CommitThenReportUniqueConflict { get; set; }
         public string LastAudit { get; private set; } = string.Empty;
         public TaskCompletionSource Accepted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public Task<ReimbursementRequest?> GetRequestByIdAsync(string id) =>
@@ -621,6 +643,11 @@ public sealed class DriveSandboxIntakeTests
             Requests.Add(request);
             LastAudit = details;
             Accepted.TrySetResult();
+            if (CommitThenReportUniqueConflict)
+            {
+                CommitThenReportUniqueConflict = false;
+                throw new DbUpdateException("Simulated concurrent primary-key winner.");
+            }
             return Task.CompletedTask;
         }
         public Task<List<ReimbursementRequest>> GetAllRequestsAsync() => throw new NotSupportedException();

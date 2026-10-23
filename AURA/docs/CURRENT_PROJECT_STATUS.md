@@ -1,5 +1,15 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
+> **Idempotency khi hai poller insert đồng thời 24/10:** SQL primary key tiếp
+> tục là trọng tài cho source-derived request ID. Nếu một poller thua insert
+> vì row cùng ID vừa được commit, intake đọc lại row, so SHA-256 rồi trả cùng
+> job và phát tín hiệu queue; nội dung hash khác vẫn bị từ chối. Test fault
+> injection xác nhận chỉ có một request/file. Debug/Release **282/282**,
+> LocalDB worker integration được khởi chạy lại sau thay đổi, Release build
+> 0 warning/error, EF không pending model change. Điều này kiểm chứng xử lý
+> phía intake cho conflict SQL đã commit, chưa phải kiểm thử hai Drive poller
+> trên hai máy thật hoặc race network/share filesystem.
+
 > **SQL AI gate mất session 24/10:** Với SQL gate bật, lease permit nay theo
 > dõi `APPLOCK_MODE` trên đúng session mỗi 5 giây. Mất session/lock sẽ hủy
 > cancellation token của provider; hồ sơ nhận `AI_GATE_LOST`, không được ghi

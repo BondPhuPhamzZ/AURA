@@ -3,6 +3,7 @@ using System.Text;
 using AURA.Interfaces;
 using AURA.Models;
 using AURA.Options;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace AURA.Services;
@@ -110,11 +111,27 @@ public sealed class ReceiptIntakeService
                 SubmitterDepartment = NormalizeIdentity(input.SubmitterDepartment, "Demo", 200)
             };
             persistAttempted = true;
-            await _repository.AddRequestWithAuditAsync(request, "AI_QUEUED",
-                $"Source={(input.SourceKey is null ? "MANUAL" : "DRIVE_SANDBOX")}; " +
-                $"AmountSource={(input.ClaimedAmount > 0 ? AmountSources.UserProvided : "AI_PENDING")}; " +
-                $"DuplicateDetected={duplicate}; " +
-                $"DuplicatePolicyEnabled={request.DuplicatePolicyEnabled}");
+            try
+            {
+                await _repository.AddRequestWithAuditAsync(request, "AI_QUEUED",
+                    $"Source={(input.SourceKey is null ? "MANUAL" : "DRIVE_SANDBOX")}; " +
+                    $"AmountSource={(input.ClaimedAmount > 0 ? AmountSources.UserProvided : "AI_PENDING")}; " +
+                    $"DuplicateDetected={duplicate}; " +
+                    $"DuplicatePolicyEnabled={request.DuplicatePolicyEnabled}");
+            }
+            catch (DbUpdateException) when (input.SourceKey is not null)
+            {
+                // The primary key arbitrates concurrent pollers. A second insert may
+                // lose after the first transaction has committed; resolve that race
+                // to the durable row when its bytes match rather than failing the scan.
+                var concurrent = await _repository.GetRequestByIdAsync(id);
+                if (concurrent is null ||
+                    !string.Equals(concurrent.FileSha256, sha256, StringComparison.OrdinalIgnoreCase))
+                    throw;
+
+                _queue.Signal(id);
+                return concurrent;
+            }
             _queue.Signal(id);
             return request;
         }
