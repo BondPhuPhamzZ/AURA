@@ -7,7 +7,7 @@
 
 Việc cần làm trước khi mở lại gate publish/pilot:
 
-- [x] Khóa schema đầu vào, field backend-only, metadata/log lỗi provider và tín hiệu Semantic có thể chứa dữ liệu cá nhân; chặn response provider quá 2 MiB; Release/Debug 274/274, LocalDB 9/9, build/EF sạch.
+- [x] Khóa schema đầu vào, field backend-only, metadata/log lỗi provider và tín hiệu Semantic có thể chứa dữ liệu cá nhân; chặn response provider quá 2 MiB. Lượt mới nhất 24/10: Release/Debug 280/280, LocalDB opt-in 11/11, Release build 0 warning/error, EF không pending model change. `NU1900` không phải vulnerability audit thành công.
 - [x] Đối chứng cùng 15 synthetic: Qwen3.6 Flash 15/15 quyết định, Qwen3.8 Flash 13/15; đây là bộ đã biết, không phải holdout mù.
 - [ ] Tạo tập synthetic mới có nhãn độc lập, tách riêng tổng bị mờ với mô tả mặt hàng chung chung; đo missed escalation, critical fields, lỗi provider và latency qua nhiều lượt.
 - [ ] Chỉ gửi 15 ảnh thật qua model thay thế sau khi chủ dữ liệu chấp thuận rõ route mới; giữ ảnh và kết quả chi tiết ngoài Git.
@@ -17,8 +17,10 @@ Việc cần làm trước khi mở lại gate publish/pilot:
 - [x] Worker đối chiếu size/SHA-256 ảnh đã lưu với SQL trước khi gọi AI; ca file bị sửa dừng fail-safe. Chưa có bằng chứng private share hoạt động xuyên host, ACL/backup/restore hoặc tính bất biến trên mọi loại storage.
 - [x] Smoke Development localhost sau khi xác minh 0 job đang chờ và tắt Drive: `/healthz` OK, DB/schema/storage và key presence sẵn sàng; không gọi model, không publish.
 - [x] Diễn tập BACKUP/RESTORE trên DB LocalDB tạm chỉ chứa job và audit synthetic; DB phục hồi giữ trạng thái đúng lúc backup, DB/file tạm được dọn. Chưa có diễn tập restore DB hosting **cùng** kho ảnh và kiểm tra RPO/RTO.
-- [x] Monitor nội bộ log số pending/processing/failed và tuổi pending lâu nhất mỗi phút; không lộ trên public healthz hoặc ghi ID/file. Chưa có SLO/cảnh báo, chi phí AI hay metrics xuyên instance.
+- [x] Monitor nội bộ log số pending/processing/failed và tuổi pending lâu nhất mỗi phút; không lộ trên public healthz hoặc ghi ID/file. Adapter log `usage.cost` hợp lệ theo từng response, không ghi chuỗi provider vào cost. Chưa có SLO/cảnh báo, billing reconciliation hay metrics xuyên instance.
 - [x] Hai host giả lập khác content root cùng dùng thư mục ảnh tuyệt đối private và DB chung; host B xử lý được job. Chưa có test share mạng/ACL/đứt kết nối hay backup ảnh trên hai máy thật.
+- [x] Intake source-key ghi ảnh qua file tạm, retry chỉ dùng lại file đích nếu size/SHA-256 khớp; không ghi đè file thiếu/sai byte. Chưa có dọn `.tmp` sau crash, atomicity SQL + filesystem hoặc đối chứng SMB thật.
+- [x] Worker gia hạn lease SQL theo đúng attempt trong lúc chờ AI và trích xuất; LocalDB chứng minh lượt dài lưu đúng một audit và đổi ownership hủy lượt cũ. Chưa chứng minh SQL application-lock session loss, provider bỏ qua cancellation hoặc tải nhiều host thật; không bật nhiều worker.
 
 ## Checklist publish lịch sử (không áp dụng cho candidate hiện tại)
 
