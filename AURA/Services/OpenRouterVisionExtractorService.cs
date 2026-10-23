@@ -236,11 +236,12 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         if (root.ValueKind != JsonValueKind.Object)
             return;
 
-        var providerKind = ReadSelectedProviderKind(root);
+        var providerName = ReadSelectedProviderName(root);
+        var providerKind = ClassifyProvider(providerName);
         if (!root.TryGetProperty("usage", out var usage) || usage.ValueKind != JsonValueKind.Object)
         {
-            _logger.LogInformation("OpenRouter response metadata for {Model}: provider kind={ProviderKind}; token usage unavailable.",
-                _options.Model, providerKind);
+            _logger.LogInformation("OpenRouter response metadata for {Model}: provider={ProviderName}; provider kind={ProviderKind}; token usage unavailable.",
+                _options.Model, providerName, providerKind);
             return;
         }
         var promptTokens = ReadInt64(usage, "prompt_tokens");
@@ -256,12 +257,12 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             ? ReadInt64(details, "reasoning_tokens")
             : null;
         _logger.LogInformation(
-            "OpenRouter token usage for {Model}: provider kind={ProviderKind}; prompt={PromptTokens}, completion={CompletionTokens}, reasoning={ReasoningTokens}, total={TotalTokens}, cost USD={CostUsd}, configured output cap={MaxOutputTokens}.",
-            _options.Model, providerKind, promptTokens, completionTokens, reasoningTokens, totalTokens, costUsd,
+            "OpenRouter token usage for {Model}: provider={ProviderName}; provider kind={ProviderKind}; prompt={PromptTokens}, completion={CompletionTokens}, reasoning={ReasoningTokens}, total={TotalTokens}, cost USD={CostUsd}, configured output cap={MaxOutputTokens}.",
+            _options.Model, providerName, providerKind, promptTokens, completionTokens, reasoningTokens, totalTokens, costUsd,
             _options.MaxOutputTokens);
     }
 
-    private static string ReadSelectedProviderKind(JsonElement root)
+    private static string ReadSelectedProviderName(JsonElement root)
     {
         if (!root.TryGetProperty("openrouter_metadata", out var metadata) ||
             metadata.ValueKind != JsonValueKind.Object ||
@@ -279,7 +280,11 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
                 !endpoint.TryGetProperty("provider", out var provider) ||
                 provider.ValueKind != JsonValueKind.String)
                 continue;
-            return ClassifyProvider(provider.GetString());
+            var safeName = new string(provider.GetString()!
+                .Where(character => char.IsAsciiLetterOrDigit(character) || character is ' ' or '-' or '_' or '.')
+                .Take(64)
+                .ToArray()).Trim();
+            return string.IsNullOrWhiteSpace(safeName) ? "Unknown" : safeName;
         }
 
         return "Unknown";

@@ -571,6 +571,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
         {
             var attempts = 0;
             var logger = new CollectingLogger();
+            const string unsafeProviderName = "Alibaba Cloud\r\ncustomer@example.test";
             var handler = new StubHandler(_ =>
             {
                 attempts++;
@@ -587,7 +588,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
                     {
                         endpoints = new
                         {
-                            available = new[] { new { selected = true, provider = "Alibaba Cloud" } }
+                            available = new[] { new { selected = true, provider = unsafeProviderName } }
                         }
                     }
                 });
@@ -610,6 +611,8 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.Equal("AI_SCHEMA_MISMATCH", failure.Code);
             Assert.Equal(2, attempts);
             Assert.Null(failure.InnerException); // Do not carry provider-derived JSON into worker logs.
+            Assert.Contains(logger.Messages, message => message.Contains("provider=Alibaba Cloudcustomerexample.test", StringComparison.Ordinal));
+            Assert.DoesNotContain(unsafeProviderName, string.Join('\n', logger.Messages), StringComparison.Ordinal);
             Assert.Contains(logger.Messages, message => message.Contains("provider kind=Alibaba", StringComparison.Ordinal));
             Assert.Contains(logger.Messages, message => message.Contains("completion=2", StringComparison.Ordinal));
             Assert.Contains(logger.Messages, message => message.Contains("reasoning=0", StringComparison.Ordinal));
