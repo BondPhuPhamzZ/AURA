@@ -7,8 +7,11 @@
 > host vừa nhận 429. LocalDB test hai coordinator xác nhận read/write/extend/
 > clear. Thêm migration `20261023181204_AddSharedVisionProviderCooldown`;
 > phải backup, áp migration có kiểm soát trước khi bật SQL gate. Không tự bật
-> startup migration và chưa chạy migration trên hosting. Debug/Release
-> **283/283**, Release build 0 warning/error, EF không pending model change.
+> startup migration và chưa chạy migration trên hosting. Migration chain đã
+> được áp trên database LocalDB mới, bảng ghi/đọc được, không còn pending
+> migration, database tạm đã xóa. Debug/Release **284/284**, LocalDB
+> integration **14/14**, Release build 0 warning/error, EF không pending model
+> change.
 > Đây chưa là kiểm thử 429 từ provider thật hoặc hai host trên mạng; gate mặc
 > định vẫn false.
 

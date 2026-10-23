@@ -210,6 +210,39 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
+    public async Task Migration_chain_creates_shared_provider_cooldown_table()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        var name = "AuraMigrateIT_" + Guid.NewGuid().ToString("N");
+        var connection = $"Server=(localdb)\\MSSQLLocalDB;Database={name};Trusted_Connection=True;TrustServerCertificate=True";
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(connection).Options;
+        var exists = false;
+        try
+        {
+            await using var database = new AppDbContext(options);
+            await database.Database.MigrateAsync();
+            exists = true;
+            Assert.Empty(await database.Database.GetPendingMigrationsAsync());
+            Assert.Contains("20261023181204_AddSharedVisionProviderCooldown",
+                await database.Database.GetAppliedMigrationsAsync());
+            database.VisionProviderCooldowns.Add(new VisionProviderCooldown
+            {
+                Provider = "OpenRouter", CooldownUntilUtc = DateTime.UtcNow.AddMinutes(2)
+            });
+            await database.SaveChangesAsync();
+            Assert.NotNull(await database.VisionProviderCooldowns.FindAsync("OpenRouter"));
+        }
+        finally
+        {
+            if (exists)
+            {
+                await using var cleanup = new AppDbContext(options);
+                await cleanup.Database.EnsureDeletedAsync();
+            }
+        }
+    }
+
+    [Fact]
     public async Task Tampered_stored_bytes_fail_before_AI_is_called()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
