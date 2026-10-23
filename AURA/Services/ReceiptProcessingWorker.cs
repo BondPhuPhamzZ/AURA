@@ -154,6 +154,9 @@ public sealed class ReceiptProcessingWorker : BackgroundService
                 throw new VisionExtractionException("RECEIPT_FILE_MISSING",
                     "Không tìm thấy file hóa đơn đã lưu để xử lý.");
 
+            await using var protectedFile = await ReceiptStoredFileIntegrity.OpenVerifiedAsync(
+                physicalPath, request.FileSizeBytes, request.FileSha256,
+                _storageOptions.MaxFileSizeMb, cancellationToken);
             extractedFacts = await vision.ExtractFactsAsync(physicalPath, cancellationToken);
             ReceiptPrivacyClassifier.Apply(extractedFacts);
             var amountResolution = ReceiptAmountResolver.Resolve(request.ClaimedAmount, extractedFacts);

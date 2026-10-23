@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Security.Cryptography;
 using AURA.Data;
 using AURA.Interfaces;
 using AURA.Models;
@@ -73,6 +74,25 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             firstLease.Dispose();
             using var recoveredLease = await second.EnterAsync(CancellationToken.None)
                 .AsTask().WaitAsync(TimeSpan.FromSeconds(4));
+        });
+    }
+
+    [Fact]
+    public async Task Tampered_stored_bytes_fail_before_AI_is_called()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var id = await SeedAsync(options, root);
+            await File.WriteAllBytesAsync(Path.Combine(root, "receipts", "synthetic.jpg"), [1, 2, 4]);
+            await ProcessOnceAsync(options, root, new StubExtractor(() =>
+                throw new InvalidOperationException("AI must not receive tampered bytes.")));
+            await using var db = new AppDbContext(options);
+            var request = await db.ReimbursementRequests.SingleAsync(x => x.Id == id);
+            Assert.Equal(ProcessingStates.Failed, request.ProcessingState);
+            Assert.Equal("ESCALATE_SYSTEM_ERROR", request.Status);
+            Assert.Equal("RECEIPT_FILE_INTEGRITY", request.ProviderErrorCode);
+            Assert.Equal(1, await db.AuditLogs.CountAsync(a => a.RequestId == id));
         });
     }
 
@@ -186,7 +206,8 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     private static async Task<string> SeedAsync(DbContextOptions<AppDbContext> options, string root)
     {
         const string storedFileName = "synthetic.jpg";
-        await File.WriteAllBytesAsync(Path.Combine(root, "receipts", storedFileName), [1, 2, 3]);
+        byte[] bytes = [1, 2, 3];
+        await File.WriteAllBytesAsync(Path.Combine(root, "receipts", storedFileName), bytes);
         var item = new ReimbursementRequest
         {
             Id = Guid.NewGuid().ToString("N"),
@@ -194,7 +215,8 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             StoredFileName = storedFileName,
             ImageUrl = "private",
             ContentType = "image/jpeg",
-            FileSha256 = new string('a', 64),
+            FileSha256 = Convert.ToHexString(SHA256.HashData(bytes)),
+            FileSizeBytes = bytes.Length,
             Status = ProcessingStates.Pending,
             ProcessingState = ProcessingStates.Pending
         };
