@@ -1,16 +1,18 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
-> **Latest verification 24/10:** Debug and Release default suites both pass
-> **292/292**; Release build has 0 warnings/errors; EF reports no pending model
-> changes; `git diff --check` is clean. A new opt-in LocalDB integration case
-> now connects real intake + SQL persistence to a worker with a second storage
-> adapter over one shared fake GCS client. The default suite compiles/counts
-> this case but does not execute its body unless `AURA_RUN_LOCALDB_INTEGRATION=1`.
-> That opt-in run could not start here: `sqllocaldb info MSSQLLocalDB` failed
-> reading LocalDB registry configuration and SQL returned error 50 / Win32
-> `0x89c50118` (“Cannot create an automatic instance”). Therefore this newest
-> intake-to-worker integration case is **not runtime-verified**. The previously
-> recorded 15/15 LocalDB evidence predates this added case and remains historical.
+> **Latest verification 24/10:** Full Debug and Release suites each pass
+> **292/292 with all 16 SQL LocalDB integration cases actively enabled**
+> (`AURA_RUN_LOCALDB_INTEGRATION=1`, isolated temporary databases); Release
+> build has 0 warnings/errors; EF
+> reports no pending model changes; `git diff --check` is clean. New coverage
+> connects actual intake + SQL persistence to a worker with a second storage
+> adapter over one shared fake GCS client. The first LocalDB attempt failed
+> because the user-owned instance was stopped and sandbox registry access was
+> restricted; inspecting outside the sandbox confirmed it was `Stopped`, then
+> starting the existing instance allowed both full suites to pass. Localhost
+> `http://127.0.0.1:5097/healthz` actively refused connection during a read-only
+> probe; no app process was launched to avoid consuming user DB jobs. This is
+> fake-GCS integration evidence, not a real bucket or separate-machine test.
 
 > **Shared receipt storage adapter 24/10 (candidate, not live):** Receipt intake,
 > worker inference and receipt serving now depend on `IReceiptFileStore`, with
@@ -28,7 +30,7 @@
 > pinned reads, pre-download size rejection and a download exceeding its own
 > advertised size. Verification after this code change: Debug and Release
 > **292/292**, opt-in LocalDB integration
-> previous run **15/15** (before the newest integration case), Release build **0 warnings/errors**,
+> latest LocalDB run **16/16**, Release build **0 warnings/errors**,
 > EF reports no pending model changes, and NuGet online audit reports no
 > vulnerable packages in app or tests. These are local/unit + LocalDB results,
 > not authenticated real-GCS or multi-host evidence. See
