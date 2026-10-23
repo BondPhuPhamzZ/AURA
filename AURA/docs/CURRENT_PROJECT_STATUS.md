@@ -1,5 +1,14 @@
 # Trạng thái hiện hành AURA ngày 23/10/2026
 
+> **Gate mới nhất (23/10): NO-GO publish/scale.** Parser v2 đã bắt buộc đủ
+> shape; log/audit Semantic không còn ghi nguyên văn issue có thể chứa dữ
+> liệu hóa đơn. Release và Debug 253/253 test pass; LocalDB opt-in 2/2 pass
+> trên DB tạm; Release build 0 warning/error, EF không có pending model change.
+> Hai lượt 5 ảnh synthetic khớp nhãn 3/5 và 4/5. Lượt 15 ảnh thật đã dùng
+> trước chỉ 13/15 completed, hai phản hồi provider HTTP 200 nhưng không là
+> JSON object sau retry. Không có benchmark accuracy mới; chưa publish.
+> Xem [evidence strict-schema](STRICT_SCHEMA_REGRESSION_2026-10-23.md).
+
 > **Chẩn đoán tiếp theo (23/10):** đã bổ sung mã lý do schema an toàn,
 > không ghi phản hồi model thô hoặc giá trị hóa đơn. Ca 13 của bộ 15 ảnh cũ
 > chạy lại riêng 3/3 completed nên chưa tái hiện được lỗi trước đó; không
