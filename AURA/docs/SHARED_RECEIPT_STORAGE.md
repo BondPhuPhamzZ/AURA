@@ -19,10 +19,16 @@ image bytes through its controller; it does not expose bucket URLs or generate s
 Create a dedicated private bucket, enable [uniform bucket-level access](https://cloud.google.com/storage/docs/uniform-bucket-level-access) and [public access prevention](https://cloud.google.com/storage/docs/public-access-prevention),
 and give a dedicated runtime service account only the bucket-scoped `Storage Object User`
 ([`roles/storage.objectUser`](https://cloud.google.com/storage/docs/access-control/iam-roles)) role. Do not reuse the Drive read-only service account. Keep its JSON
-credential outside the repository and deployment package. On managed Google Cloud compute, prefer
-an attached service account / Application Default Credentials over a downloadable key; the current
-adapter is configured for an external JSON key, so that support should be added before relying on
-keyless managed identity.
+credential outside the repository and deployment package if a key is necessary. The adapter now
+supports both explicit JSON credentials and Application Default Credentials (ADC). On Google Cloud
+compute, prefer ADC with an attached workload service account so no private key is distributed. The
+.NET Storage client supports ADC through its normal credential discovery flow; see [Google's ADC
+overview](https://cloud.google.com/docs/authentication/application-default-credentials).
+
+For local testing, prefer service-account impersonation rather than a downloaded key or a broad
+personal user credential. Google documents this C#-supported setup as
+`gcloud auth application-default login --impersonate-service-account=<service-account-email>`; it
+requires `roles/iam.serviceAccountTokenCreator` on the target service account. See [local ADC setup](https://cloud.google.com/docs/authentication/set-up-adc-local-dev-environment).
 
 Configure the following app settings only after the bucket and IAM policy are ready:
 
@@ -30,9 +36,18 @@ Configure the following app settings only after the bucket and IAM policy are re
 ReceiptStorage__Provider=GoogleCloudStorage
 ReceiptStorage__GoogleCloudStorage__Bucket=<private bucket name>
 ReceiptStorage__GoogleCloudStorage__Prefix=aura/receipts
-ReceiptStorage__GoogleCloudStorage__ServiceAccountJsonPath=<absolute path outside the app/repository>
+ReceiptStorage__GoogleCloudStorage__CredentialMode=ApplicationDefault
 ReceiptStorage__MaxFileSizeMb=5
 ```
+
+For a legacy/external key instead, set
+`ReceiptStorage__GoogleCloudStorage__CredentialMode=ServiceAccountJson` and
+`ReceiptStorage__GoogleCloudStorage__ServiceAccountJsonPath=<absolute path outside the app/repository>`.
+The two modes are mutually exclusive at the AURA setting level; ADC mode rejects an explicit JSON
+key path. ADC itself follows Google's standard discovery order, which can include
+`GOOGLE_APPLICATION_CREDENTIALS` or a local user ADC file. On a server, explicitly attach the
+intended runtime service account and verify its identity/permissions; for local testing, prefer the
+impersonation command above. Never point the JSON mode at the Drive connector's read-only key.
 
 Do not add the JSON contents, private key, bucket URLs, or local credential path to source control.
 The currently configured Drive folder is a separate source; Drive originals are not deleted by this

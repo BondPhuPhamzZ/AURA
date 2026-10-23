@@ -33,10 +33,13 @@ public sealed class GoogleCloudReceiptFileStore : IReceiptFileStore
 
     private static StorageClient CreateClient(GoogleCloudReceiptStorageOptions options)
     {
-        var serviceAccount = CredentialFactory.FromFile<ServiceAccountCredential>(options.ServiceAccountJsonPath);
-        var credential = GoogleCredential.FromServiceAccountCredential(serviceAccount)
-            .CreateScoped("https://www.googleapis.com/auth/devstorage.read_write");
-        return StorageClient.Create(credential);
+        var credential = string.Equals(options.CredentialMode,
+            GoogleCloudReceiptStorageOptions.ApplicationDefault, StringComparison.OrdinalIgnoreCase)
+            ? GoogleCredential.GetApplicationDefault()
+            : GoogleCredential.FromServiceAccountCredential(
+                CredentialFactory.FromFile<ServiceAccountCredential>(options.ServiceAccountJsonPath));
+        var scopedCredential = credential.CreateScoped("https://www.googleapis.com/auth/devstorage.read_write");
+        return new StorageClientBuilder { Credential = scopedCredential }.Build();
     }
 
     public async Task<bool> PutIfAbsentAsync(string storedFileName, ReadOnlyMemory<byte> bytes,

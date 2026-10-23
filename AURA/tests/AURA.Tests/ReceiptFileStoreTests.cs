@@ -98,6 +98,76 @@ public sealed class ReceiptFileStoreTests
         Assert.True(client.DownloadCalled);
     }
 
+    [Fact]
+    public void Gcs_configuration_accepts_explicit_ADC_without_a_key_file()
+    {
+        var options = new GoogleCloudReceiptStorageOptions
+        {
+            Bucket = "aura-receipts-test",
+            Prefix = "aura/receipts",
+            CredentialMode = GoogleCloudReceiptStorageOptions.ApplicationDefault
+        };
+
+        Assert.True(GoogleCloudReceiptStorageConfiguration.IsValid(options,
+            Path.GetTempPath(), isProviderEnabled: true));
+        Assert.False(GoogleCloudReceiptStorageConfiguration.IsValid(new GoogleCloudReceiptStorageOptions
+        {
+            Bucket = options.Bucket,
+            Prefix = options.Prefix,
+            CredentialMode = options.CredentialMode,
+            ServiceAccountJsonPath = "unexpected.json"
+        }, Path.GetTempPath(), isProviderEnabled: true));
+    }
+
+    [Fact]
+    public void Gcs_configuration_does_not_require_credentials_when_cloud_storage_is_not_selected()
+    {
+        Assert.True(GoogleCloudReceiptStorageConfiguration.IsValid(
+            new GoogleCloudReceiptStorageOptions(), Path.GetTempPath(), isProviderEnabled: false));
+    }
+
+    [Fact]
+    public void Gcs_configuration_requires_JSON_key_to_exist_outside_the_app_root()
+    {
+        var root = NewRoot();
+        try
+        {
+            var appRoot = Path.Combine(root, "app");
+            var externalKey = Path.Combine(root, "private", "service-account.json");
+            Directory.CreateDirectory(appRoot);
+            Directory.CreateDirectory(Path.GetDirectoryName(externalKey)!);
+            File.WriteAllText(externalKey, "test fixture, not a credential");
+            var options = new GoogleCloudReceiptStorageOptions
+            {
+                Bucket = "aura-receipts-test",
+                Prefix = "aura/receipts",
+                CredentialMode = GoogleCloudReceiptStorageOptions.JsonServiceAccount,
+                ServiceAccountJsonPath = externalKey
+            };
+
+            Assert.True(GoogleCloudReceiptStorageConfiguration.IsValid(options, appRoot,
+                isProviderEnabled: true));
+            Assert.False(GoogleCloudReceiptStorageConfiguration.IsValid(new GoogleCloudReceiptStorageOptions
+            {
+                Bucket = options.Bucket,
+                Prefix = options.Prefix,
+                CredentialMode = options.CredentialMode,
+                ServiceAccountJsonPath = Path.Combine(appRoot, "service-account.json")
+            }, appRoot, isProviderEnabled: true));
+            Assert.False(GoogleCloudReceiptStorageConfiguration.IsValid(new GoogleCloudReceiptStorageOptions
+            {
+                Bucket = options.Bucket,
+                Prefix = options.Prefix,
+                CredentialMode = options.CredentialMode,
+                ServiceAccountJsonPath = Path.Combine(root, "missing.json")
+            }, appRoot, isProviderEnabled: true));
+        }
+        finally
+        {
+            DeleteRoot(root);
+        }
+    }
+
     private static LocalReceiptFileStore CreateStore(string root)
     {
         var options = Microsoft.Extensions.Options.Options.Create(

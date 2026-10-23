@@ -1,7 +1,7 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
 > **Latest verification 24/10:** Full Debug and Release suites each pass
-> **292/292 with all 16 SQL LocalDB integration cases actively enabled**
+> **295/295 with all 16 SQL LocalDB integration cases actively enabled**
 > (`AURA_RUN_LOCALDB_INTEGRATION=1`, isolated temporary databases); Release
 > build has 0 warnings/errors; EF
 > reports no pending model changes; `git diff --check` is clean. New coverage
@@ -16,6 +16,16 @@
 > receipt upload occurred; `strictZeroDataRetention=false`. The app was stopped
 > and only that isolated DB/temp folder was removed. Port 5097 remains stopped.
 > This is fake-GCS integration evidence, not a real bucket or separate-machine test.
+
+> **GCS credential mode hardening 24/10:** GCS storage configuration can now
+> explicitly select `ApplicationDefault` or `ServiceAccountJson`; JSON mode
+> remains the default for backward compatibility. ADC mode requires an empty
+> explicit key path, JSON mode requires an existing absolute key file outside
+> app content root, and no credential is required while LocalFileSystem is
+> selected. This validates configuration policy only; ADC identity discovery,
+> impersonation, actual IAM and bucket access have not been exercised. Full
+> Debug/Release suites: **295/295 each**, all 16 LocalDB cases enabled;
+> Release build 0 warnings/errors; EF no pending model changes.
 
 > **Shared receipt storage adapter 24/10 (candidate, not live):** Receipt intake,
 > worker inference and receipt serving now depend on `IReceiptFileStore`, with
@@ -32,7 +42,7 @@
 > GCS tests cover create-only writes, matching/conflicting retries, generation-
 > pinned reads, pre-download size rejection and a download exceeding its own
 > advertised size. Verification after this code change: Debug and Release
-> **292/292**, opt-in LocalDB integration
+> **295/295**, opt-in LocalDB integration
 > latest LocalDB run **16/16**, Release build **0 warnings/errors**,
 > EF reports no pending model changes, and NuGet online audit reports no
 > vulnerable packages in app or tests. These are local/unit + LocalDB results,

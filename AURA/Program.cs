@@ -99,25 +99,11 @@ builder.Services.AddOptions<ReceiptStorageOptions>()
     .ValidateOnStart();
 builder.Services.AddOptions<GoogleCloudReceiptStorageOptions>()
     .Bind(builder.Configuration.GetSection(GoogleCloudReceiptStorageOptions.SectionName))
-    .Validate(options =>
-    {
-        var storage = builder.Configuration.GetSection(ReceiptStorageOptions.SectionName)
-            .Get<ReceiptStorageOptions>() ?? new ReceiptStorageOptions();
-        if (!string.Equals(storage.Provider, "GoogleCloudStorage", StringComparison.OrdinalIgnoreCase))
-            return true;
-        if (string.IsNullOrWhiteSpace(options.Bucket) ||
-            !System.Text.RegularExpressions.Regex.IsMatch(options.Bucket, "^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$") ||
-            !Path.IsPathFullyQualified(options.ServiceAccountJsonPath) ||
-            !File.Exists(options.ServiceAccountJsonPath) ||
-            string.IsNullOrWhiteSpace(options.Prefix) ||
-            !System.Text.RegularExpressions.Regex.IsMatch(options.Prefix, "^[A-Za-z0-9._/-]+$") ||
-            options.Prefix.Contains("..", StringComparison.Ordinal) || options.Prefix.Contains("//", StringComparison.Ordinal))
-            return false;
-        var relative = Path.GetRelativePath(builder.Environment.ContentRootPath,
-            Path.GetFullPath(options.ServiceAccountJsonPath));
-        return Path.IsPathFullyQualified(relative) || relative == ".." ||
-            relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal);
-    }, "Google Cloud receipt storage requires a bucket, a valid prefix, and an external service-account JSON file.")
+    .Validate(options => GoogleCloudReceiptStorageConfiguration.IsValid(options,
+            builder.Environment.ContentRootPath,
+            string.Equals(builder.Configuration[$"{ReceiptStorageOptions.SectionName}:Provider"],
+                "GoogleCloudStorage", StringComparison.OrdinalIgnoreCase)),
+        "Google Cloud receipt storage requires a bucket/prefix and either explicit ADC or an external service-account JSON file.")
     .ValidateOnStart();
 builder.Services.AddOptions<DecisionPolicyOptions>()
     .Bind(builder.Configuration.GetSection(DecisionPolicyOptions.SectionName));
