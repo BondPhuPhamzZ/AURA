@@ -1,5 +1,17 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
+> **Cooldown provider dùng chung qua SQL 24/10:** Khi
+> `Vision__UseSqlDistributedGate=true`, cooldown sau rate-limit được ghi/đọc
+> trong bảng `VisionProviderCooldowns`; thời hạn mới chỉ được kéo dài, không
+> rút ngắn. Các process dùng chung database vì vậy không gọi nối tiếp khi một
+> host vừa nhận 429. LocalDB test hai coordinator xác nhận read/write/extend/
+> clear. Thêm migration `20261023181204_AddSharedVisionProviderCooldown`;
+> phải backup, áp migration có kiểm soát trước khi bật SQL gate. Không tự bật
+> startup migration và chưa chạy migration trên hosting. Debug/Release
+> **283/283**, Release build 0 warning/error, EF không pending model change.
+> Đây chưa là kiểm thử 429 từ provider thật hoặc hai host trên mạng; gate mặc
+> định vẫn false.
+
 > **Idempotency khi hai poller insert đồng thời 24/10:** SQL primary key tiếp
 > tục là trọng tài cho source-derived request ID. Nếu một poller thua insert
 > vì row cùng ID vừa được commit, intake đọc lại row, so SHA-256 rồi trả cùng
