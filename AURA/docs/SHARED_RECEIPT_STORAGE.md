@@ -45,9 +45,16 @@ For a legacy/external key instead, set
 `ReceiptStorage__GoogleCloudStorage__ServiceAccountJsonPath=<absolute path outside the app/repository>`.
 The two modes are mutually exclusive at the AURA setting level; ADC mode rejects an explicit JSON
 key path. ADC itself follows Google's standard discovery order, which can include
-`GOOGLE_APPLICATION_CREDENTIALS` or a local user ADC file. On a server, explicitly attach the
-intended runtime service account and verify its identity/permissions; for local testing, prefer the
-impersonation command above. Never point the JSON mode at the Drive connector's read-only key.
+`GOOGLE_APPLICATION_CREDENTIALS` or a local user ADC file. If the environment variable is set, AURA
+requires its credential file to exist outside the app content root. On a server, explicitly attach
+the intended runtime service account and verify its identity/permissions; for local testing, prefer
+the impersonation command above. Never point the JSON mode at the Drive connector's read-only key.
+
+If hosting remains on SmartASP or another non-Google host, do not assume a Google workload identity
+is attached. Use ADC only if the host can securely provide a supported federated/impersonated ADC
+identity; otherwise use a separate GCS-only service-account key outside the deployed site and set
+`CredentialMode=ServiceAccountJson`. If the host cannot keep that key outside the site root with
+restricted access, leave GCS disabled and run the worker on infrastructure with workload identity.
 
 Do not add the JSON contents, private key, bucket URLs, or local credential path to source control.
 The currently configured Drive folder is a separate source; Drive originals are not deleted by this

@@ -120,6 +120,39 @@ public sealed class ReceiptFileStoreTests
     }
 
     [Fact]
+    public void Gcs_ADC_environment_credential_path_must_be_external_to_the_app_root()
+    {
+        var root = NewRoot();
+        try
+        {
+            var appRoot = Path.Combine(root, "app");
+            var externalKey = Path.Combine(root, "private", "adc-credential.json");
+            var inAppKey = Path.Combine(appRoot, "adc-credential.json");
+            Directory.CreateDirectory(appRoot);
+            Directory.CreateDirectory(Path.GetDirectoryName(externalKey)!);
+            File.WriteAllText(externalKey, "external test fixture");
+            File.WriteAllText(inAppKey, "in-app test fixture");
+            var options = new GoogleCloudReceiptStorageOptions
+            {
+                Bucket = "aura-receipts-test",
+                Prefix = "aura/receipts",
+                CredentialMode = GoogleCloudReceiptStorageOptions.ApplicationDefault
+            };
+
+            Assert.True(GoogleCloudReceiptStorageConfiguration.IsValid(options, appRoot,
+                isProviderEnabled: true, applicationCredentialsPath: externalKey));
+            Assert.False(GoogleCloudReceiptStorageConfiguration.IsValid(options, appRoot,
+                isProviderEnabled: true, applicationCredentialsPath: inAppKey));
+            Assert.False(GoogleCloudReceiptStorageConfiguration.IsValid(options, appRoot,
+                isProviderEnabled: true, applicationCredentialsPath: Path.Combine(root, "missing.json")));
+        }
+        finally
+        {
+            DeleteRoot(root);
+        }
+    }
+
+    [Fact]
     public void Gcs_configuration_does_not_require_credentials_when_cloud_storage_is_not_selected()
     {
         Assert.True(GoogleCloudReceiptStorageConfiguration.IsValid(

@@ -102,7 +102,8 @@ builder.Services.AddOptions<GoogleCloudReceiptStorageOptions>()
     .Validate(options => GoogleCloudReceiptStorageConfiguration.IsValid(options,
             builder.Environment.ContentRootPath,
             string.Equals(builder.Configuration[$"{ReceiptStorageOptions.SectionName}:Provider"],
-                "GoogleCloudStorage", StringComparison.OrdinalIgnoreCase)),
+                "GoogleCloudStorage", StringComparison.OrdinalIgnoreCase),
+            Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS")),
         "Google Cloud receipt storage requires a bucket/prefix and either explicit ADC or an external service-account JSON file.")
     .ValidateOnStart();
 builder.Services.AddOptions<DecisionPolicyOptions>()
