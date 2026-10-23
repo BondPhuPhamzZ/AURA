@@ -237,13 +237,18 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         var promptTokens = ReadInt64(usage, "prompt_tokens");
         var completionTokens = ReadInt64(usage, "completion_tokens");
         var totalTokens = ReadInt64(usage, "total_tokens");
+        var costUsd = usage.TryGetProperty("cost", out var cost) &&
+                      cost.ValueKind == JsonValueKind.Number && cost.TryGetDecimal(out var parsedCost) &&
+                      parsedCost >= 0
+            ? (decimal?)parsedCost
+            : null;
         var reasoningTokens = usage.TryGetProperty("completion_tokens_details", out var details) &&
                               details.ValueKind == JsonValueKind.Object
             ? ReadInt64(details, "reasoning_tokens")
             : null;
         _logger.LogInformation(
-            "OpenRouter token usage for {Model}: provider kind={ProviderKind}; prompt={PromptTokens}, completion={CompletionTokens}, reasoning={ReasoningTokens}, total={TotalTokens}, configured output cap={MaxOutputTokens}.",
-            _options.Model, providerKind, promptTokens, completionTokens, reasoningTokens, totalTokens,
+            "OpenRouter token usage for {Model}: provider kind={ProviderKind}; prompt={PromptTokens}, completion={CompletionTokens}, reasoning={ReasoningTokens}, total={TotalTokens}, cost USD={CostUsd}, configured output cap={MaxOutputTokens}.",
+            _options.Model, providerKind, promptTokens, completionTokens, reasoningTokens, totalTokens, costUsd,
             _options.MaxOutputTokens);
     }
 

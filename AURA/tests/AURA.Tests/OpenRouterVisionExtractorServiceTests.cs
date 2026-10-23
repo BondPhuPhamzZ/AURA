@@ -580,6 +580,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
                     usage = new
                     {
                         prompt_tokens = 700L, completion_tokens = 2L, total_tokens = 702L,
+                        cost = 0.0012m,
                         completion_tokens_details = new { reasoning_tokens = 0L }
                     },
                     openrouter_metadata = new
@@ -612,6 +613,49 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.Contains(logger.Messages, message => message.Contains("provider kind=Alibaba", StringComparison.Ordinal));
             Assert.Contains(logger.Messages, message => message.Contains("completion=2", StringComparison.Ordinal));
             Assert.Contains(logger.Messages, message => message.Contains("reasoning=0", StringComparison.Ordinal));
+            Assert.Contains(logger.Messages, message =>
+                message.Contains("cost USD=0.0012", StringComparison.Ordinal) ||
+                message.Contains("cost USD=0,0012", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Untrusted_non_numeric_provider_cost_is_not_logged()
+    {
+        var root = CreateFixtureRoot();
+        try
+        {
+            const string privateValue = "customer@example.test";
+            var logger = new CollectingLogger();
+            var handler = new StubHandler(_ =>
+            {
+                var body = JsonSerializer.Serialize(new
+                {
+                    choices = new[] { new { finish_reason = "stop", message = new { content = "[]" } } },
+                    usage = new { prompt_tokens = 1L, cost = privateValue }
+                });
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(body, Encoding.UTF8, "application/json")
+                });
+            });
+            var options = Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions
+            {
+                ApiKey = "test-key", PolicyPath = "BUSINESS_RULES.md"
+            });
+            var service = new OpenRouterVisionExtractorService(
+                new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) }, options,
+                new TestEnvironment(root), logger);
+
+            await Assert.ThrowsAsync<VisionExtractionException>(() =>
+                service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg")));
+
+            Assert.Contains(logger.Messages, message => message.Contains("cost USD=(null)", StringComparison.Ordinal));
+            Assert.DoesNotContain(logger.Messages, message => message.Contains(privateValue, StringComparison.Ordinal));
         }
         finally
         {
