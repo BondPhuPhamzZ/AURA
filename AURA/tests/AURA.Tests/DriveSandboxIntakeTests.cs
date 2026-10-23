@@ -257,6 +257,58 @@ public sealed class DriveSandboxIntakeTests
         }
     }
 
+    [Fact]
+    public async Task Two_sql_intake_instances_accept_the_same_source_once()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        var root = NewTestRoot();
+        var databaseName = "AuraIntakeRaceIT_" + Guid.NewGuid().ToString("N");
+        var connectionString = $"Server=(localdb)\\MSSQLLocalDB;Database={databaseName};Trusted_Connection=True;TrustServerCertificate=True";
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(connectionString).Options;
+        var created = false;
+        try
+        {
+            await using (var setup = new AppDbContext(options))
+                created = await setup.Database.EnsureCreatedAsync();
+            Assert.True(created);
+
+            await using var firstDatabase = new AppDbContext(options);
+            await using var secondDatabase = new AppDbContext(options);
+            var readBarrier = new PreflightBarrier();
+            var preflight = new ConcurrentPreflightRepository(readBarrier,
+                new ReimbursementRepository(firstDatabase));
+            var secondPreflight = new ConcurrentPreflightRepository(readBarrier,
+                new ReimbursementRepository(secondDatabase));
+            var firstIntake = CreateIntake(root, preflight);
+            var secondIntake = CreateIntake(root, secondPreflight);
+            var input = new ReceiptIntakeInput(Png, "receipt.png", "image/png", 0,
+                "DRIVE-SANDBOX", "Synthetic", "Test", "drive:folder:file:concurrent-sql");
+
+            var accepted = await Task.WhenAll(firstIntake.AcceptAsync(input),
+                secondIntake.AcceptAsync(input)).WaitAsync(TimeSpan.FromSeconds(20));
+
+            Assert.Equal(accepted[0].Id, accepted[1].Id);
+            Assert.Equal(ReceiptIntakeService.SourceRequestId(input.SourceKey!), accepted[0].Id);
+            Assert.Single(await firstDatabase.ReimbursementRequests.AsNoTracking().ToListAsync());
+            Assert.Single(await firstDatabase.AuditLogs.AsNoTracking().ToListAsync());
+            Assert.Single(Directory.GetFiles(Path.Combine(root, "receipts")));
+        }
+        finally
+        {
+            if (created)
+            {
+                await using var cleanup = new SqlConnection(new SqlConnectionStringBuilder(connectionString)
+                    { InitialCatalog = "master" }.ConnectionString);
+                await cleanup.OpenAsync();
+                await using var command = cleanup.CreateCommand();
+                command.CommandText = $"IF DB_ID(@name) IS NOT NULL BEGIN ALTER DATABASE [{databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [{databaseName}]; END";
+                command.Parameters.AddWithValue("@name", databaseName);
+                await command.ExecuteNonQueryAsync();
+            }
+            DeleteTestRoot(root);
+        }
+    }
+
     [Theory]
     [InlineData("Production", false)]
     [InlineData("Development", true)]
@@ -780,5 +832,37 @@ public sealed class DriveSandboxIntakeTests
             throw new NotSupportedException();
         public Task UpdateRequestsWithAuditAsync(IEnumerable<(ReimbursementRequest Request, string Details)> requests,
             string action) => throw new NotSupportedException();
+    }
+
+    private sealed class PreflightBarrier
+    {
+        public TaskCompletionSource BothPreflights { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public int PreflightCount;
+    }
+
+    private sealed class ConcurrentPreflightRepository(PreflightBarrier barrier,
+        IReimbursementRepository inner) : IReimbursementRepository
+    {
+        public async Task<ReimbursementRequest?> GetRequestByIdAsync(string id)
+        {
+            var request = await inner.GetRequestByIdAsync(id);
+            if (Interlocked.Increment(ref barrier.PreflightCount) == 2)
+                barrier.BothPreflights.TrySetResult();
+            await barrier.BothPreflights.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            return request;
+        }
+
+        public Task<ReimbursementRequest?> GetPersistedRequestByIdAsync(string id) =>
+            inner.GetPersistedRequestByIdAsync(id);
+        public Task<List<ReimbursementRequest>> GetAllRequestsAsync() => inner.GetAllRequestsAsync();
+        public Task AddRequestWithAuditAsync(ReimbursementRequest request, string action, string details) =>
+            inner.AddRequestWithAuditAsync(request, action, details);
+        public Task UpdateRequestAsync(ReimbursementRequest request) => inner.UpdateRequestAsync(request);
+        public Task UpdateRequestWithAuditAsync(ReimbursementRequest request, string action, string details) =>
+            inner.UpdateRequestWithAuditAsync(request, action, details);
+        public Task UpdateRequestsWithAuditAsync(IEnumerable<(ReimbursementRequest Request, string Details)> requests,
+            string action) => inner.UpdateRequestsWithAuditAsync(requests, action);
+        public Task<bool> ExistsByFileHashAsync(string sha256) => inner.ExistsByFileHashAsync(sha256);
     }
 }

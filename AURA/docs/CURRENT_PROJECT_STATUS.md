@@ -7,19 +7,21 @@
 > còn trong change tracker dù transaction vừa rollback. Nếu không có row bền
 > vững hoặc hash không khớp, lỗi được ném lại; object nguồn vẫn được giữ để
 > retry/reconciliation. Regression unit test mô phỏng đúng entity còn tracked
-> nhưng chưa persist. Focused suite 29/29; full Debug và Release 299/299 mỗi
-> lượt; Release build 0 warning/error, EF không pending model change và
+> nhưng chưa persist. SQL integration xác nhận transaction rollback fail-safe
+> và hai intake instance đọc cùng source key song song chỉ tạo một request,
+> một audit và một private file. Focused suite 29/29; full Debug và Release mỗi
+> lượt 300/300; Release build 0 warning/error, EF không pending model change và
 > `git diff --check` pass. SQL-trigger integration test đã chạy trên LocalDB
 > thật: audit-trigger làm transaction rollback, intake ném lỗi thay vì trả
 > phantom success; retry bằng scope mới tạo đúng một request và một audit.
-> Full Debug/Release chạy với `AURA_RUN_LOCALDB_INTEGRATION=1`, toàn bộ 17
-> integration cases được bật (299/299, không skip). Sandbox process ban đầu
+> Full Debug/Release chạy với `AURA_RUN_LOCALDB_INTEGRATION=1`, toàn bộ 18
+> integration cases được bật (300/300, không skip). Sandbox process ban đầu
 > không truy cập được automatic instance; sau khi xác nhận đúng instance
 > `MSSQLLocalDB` và chạy test dưới user sở hữu instance, integration pass.
 > Chỉ database test tên ngẫu nhiên được tạo/xóa; không chạm DB ứng dụng.
 
-> **Latest verification 24/10:** Full Debug and Release suites each pass
-> **297/297 with all 16 SQL LocalDB integration cases actively enabled**
+> **Earlier isolated app-smoke evidence 24/10:** Full Debug and Release suites
+> at that checkpoint passed **297/297 with all 16 SQL LocalDB integration cases enabled**
 > (`AURA_RUN_LOCALDB_INTEGRATION=1`, isolated temporary databases); Release
 > build has 0 warnings/errors; EF
 > reports no pending model changes; `git diff --check` is clean. New coverage
