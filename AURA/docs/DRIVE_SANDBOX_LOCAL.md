@@ -23,6 +23,13 @@
   tạo checksum/job mới; đừng sửa ảnh đang ingest. Sau thay đổi thuật toán
   idempotency ngày 22/10/2026, dùng **DB local mới** khi bật connector; không
   trỏ bản mới vào DB test Drive cũ nếu chưa reconcile vì có thể nhập lại file.
+- Intake hiện ghi vào file tạm trong thư mục riêng rồi chuyển tên khi đã đủ
+  bytes. Nếu SQL trả kết quả không chắc chắn sau bước lưu file, lần poll sau
+  có thể nhận lại file hoàn chỉnh theo source ID/size/SHA-256; file đích thiếu
+  hoặc khác byte bị giữ nguyên và từ chối để kiểm tra thủ công, không ghi đè.
+  Mất điện có thể để lại file `.tmp`; chưa có dọn dẹp tự động hay kiểm chứng
+  atomic rename trên network share. Đừng xóa ảnh gốc trên Drive theo một
+  khoảng thời gian cố định khi SQL job chưa terminal và chưa backup.
 - Poll hiện quét chỉ file con trực tiếp của một folder, tối đa 100 entries
   mặc định. Vượt giới hạn thì dừng scan, không nhận một phần. Đây là local
   pilot, chưa chứng minh 1.000 ảnh/đa instance. AI permit vẫn là 1.

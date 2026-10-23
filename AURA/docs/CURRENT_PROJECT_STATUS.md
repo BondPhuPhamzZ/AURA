@@ -1,5 +1,16 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
+> **Intake crash-retry 24/10:** Ảnh được ghi vào file tạm cùng thư mục rồi
+> chuyển tên trước khi tạo SQL job. Nếu một lần ghi SQL có kết quả không chắc
+> chắn, file hoàn chỉnh được giữ lại; lần quét Drive sau chỉ tái sử dụng khi
+> size và SHA-256 khớp. File nguồn thiếu/sai byte và source key bị dùng lại
+> với nội dung khác đều bị từ chối, không ghi đè. Drive intake **25/25**;
+> toàn bộ Debug/Release **278/278**, LocalDB opt-in **9/9**, Release build
+> 0 warning/error, EF không pending model change. Đây là kiểm thử fault
+> injection local, **không** phải kiểm chứng mất điện, SMB/object storage,
+> dọn file tạm hay giao dịch nguyên tử SQL + filesystem. Không đổi default
+> connector hoặc deploy live; gate nhiều host vẫn đóng.
+
 > **Telemetry chi phí OpenRouter 24/10:** Khi response có `usage.cost` là số
 > không âm, adapter ghi chi phí USD cùng token/provider-kind mà không ghi
 > nội dung ảnh hay JSON model. Thiếu hoặc không hợp lệ thì ghi `null`, không
