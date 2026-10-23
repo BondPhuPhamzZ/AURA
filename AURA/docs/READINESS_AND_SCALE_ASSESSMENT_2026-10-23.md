@@ -43,6 +43,8 @@ The storage path accepts an absolute private directory outside `wwwroot`, so a r
 
 An isolated LocalDB drill now backs up a database containing one synthetic pending job and audit marker, changes the source job after backup, restores into a second temporary database, and verifies the restored job is still pending with its audit marker. The test removes its temporary restored database and backup. This proves point-in-time SQL restore works in that controlled environment; it does **not** prove hosting-provider backup availability, restore permissions, image-file recovery, cross-host storage recovery, RPO/RTO, or a full incident runbook. Those remain pilot gates.
 
+A separate in-process queue monitor now logs aggregate pending/processing/failed counts and the oldest pending age once per minute. It does not expose those values through public `/healthz` or include receipt identifiers or filenames. A LocalDB test checks the aggregate projection; a localhost Development smoke with zero active jobs confirmed a snapshot was logged and `/healthz` stayed `ok`. Failed count is cumulative, not a recent error rate or SLA alert. Metrics export, provider-cost tracking, alert thresholds and multi-instance monitoring remain open operational gates.
+
 ## Change gates before any broader pilot
 
 1. Replace the expired provider key in private configuration and smoke one synthetic image. Keep Drive disabled and Verify disabled on public hosting.
