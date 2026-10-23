@@ -16,8 +16,9 @@
 > hợp lý từ số dòng hàng. Gate mới chuyển ca đó cho người kiểm tra, **không**
 > giải quyết tổng quát việc model tưởng tượng pixel. Adapter đã chặn response
 > provider quá 2 MiB. Worker kiểm tra size/SHA-256 file trước AI.
-> Release/Debug 273/273 và LocalDB opt-in 8/8 sau test reclaim lease,
-> SQL application lock, file bị sửa, backup/restore synthetic và monitor queue;
+> Release/Debug 274/274 và LocalDB opt-in 9/9 sau test reclaim lease,
+> SQL application lock, file bị sửa, backup/restore synthetic, monitor queue
+> và hai host giả lập dùng chung thư mục ảnh;
 > build sạch và EF không đổi sau guard.
 > Không đổi default model hay
 > SmartASP; chưa có holdout mù/ảnh thật được phép dùng với model thay thế.

@@ -7,7 +7,7 @@
 
 Việc cần làm trước khi mở lại gate publish/pilot:
 
-- [x] Khóa schema đầu vào, field backend-only, metadata/log lỗi provider và tín hiệu Semantic có thể chứa dữ liệu cá nhân; chặn response provider quá 2 MiB; Release/Debug 273/273, LocalDB 8/8, build/EF sạch.
+- [x] Khóa schema đầu vào, field backend-only, metadata/log lỗi provider và tín hiệu Semantic có thể chứa dữ liệu cá nhân; chặn response provider quá 2 MiB; Release/Debug 274/274, LocalDB 9/9, build/EF sạch.
 - [x] Đối chứng cùng 15 synthetic: Qwen3.6 Flash 15/15 quyết định, Qwen3.8 Flash 13/15; đây là bộ đã biết, không phải holdout mù.
 - [ ] Tạo tập synthetic mới có nhãn độc lập, tách riêng tổng bị mờ với mô tả mặt hàng chung chung; đo missed escalation, critical fields, lỗi provider và latency qua nhiều lượt.
 - [ ] Chỉ gửi 15 ảnh thật qua model thay thế sau khi chủ dữ liệu chấp thuận rõ route mới; giữ ảnh và kết quả chi tiết ngoài Git.
@@ -18,6 +18,7 @@ Việc cần làm trước khi mở lại gate publish/pilot:
 - [x] Smoke Development localhost sau khi xác minh 0 job đang chờ và tắt Drive: `/healthz` OK, DB/schema/storage và key presence sẵn sàng; không gọi model, không publish.
 - [x] Diễn tập BACKUP/RESTORE trên DB LocalDB tạm chỉ chứa job và audit synthetic; DB phục hồi giữ trạng thái đúng lúc backup, DB/file tạm được dọn. Chưa có diễn tập restore DB hosting **cùng** kho ảnh và kiểm tra RPO/RTO.
 - [x] Monitor nội bộ log số pending/processing/failed và tuổi pending lâu nhất mỗi phút; không lộ trên public healthz hoặc ghi ID/file. Chưa có SLO/cảnh báo, chi phí AI hay metrics xuyên instance.
+- [x] Hai host giả lập khác content root cùng dùng thư mục ảnh tuyệt đối private và DB chung; host B xử lý được job. Chưa có test share mạng/ACL/đứt kết nối hay backup ảnh trên hai máy thật.
 
 ## Checklist publish lịch sử (không áp dụng cho candidate hiện tại)
 
