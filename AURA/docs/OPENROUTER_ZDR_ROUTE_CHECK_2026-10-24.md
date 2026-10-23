@@ -52,3 +52,13 @@ is dynamic and must be rechecked before deployment or real-data use.
 
 The source configuration/model was not changed by this experiment. Existing
 production/demo settings are not implicitly switched to `qwen/qwen3.8-27b`.
+
+## Locked synthetic regression follow-up
+
+The ZDR candidate was then evaluated on all 15 v3.1 synthetic judge cases in
+three isolated runs. Results: 15/15, 14/15 and 15/15 decision matches; no missed
+escalations or system/provider errors; one conservative policy over-escalation
+in run 2. Semantic repair was attempted on the same invalid-total evidence in
+all three runs and correctly left the case at `ESCALATE_FACT`. This still does
+not justify switching the default. Detailed metrics and exact-match breakdown:
+[Qwen route comparison](MODEL_ROUTE_COMPARISON_2026-10-24.md).
