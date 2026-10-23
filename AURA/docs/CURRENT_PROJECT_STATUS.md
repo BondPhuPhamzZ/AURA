@@ -1,6 +1,6 @@
 # Trạng thái hiện hành AURA ngày 23/10/2026
 
-> **Source hiện hành:** **220/220** Release tests pass, Release build 0
+> **Source hiện hành:** **231/231** Release tests pass, Release build 0
 > warning/error với `--no-restore`, EF không có pending model changes. Drive
 > synthetic sandbox vẫn chỉ chạy Development/loopback và tắt mặc định. Batch
 > 5/20/100 đã chạy qua Google Drive API, SQL queue, OpenRouter và policy.
@@ -11,6 +11,12 @@
 > không upload lên Drive và không có ground truth khớp hash để tính accuracy.
 > Xem [báo cáo đo MVP](DRIVE_MVP_VALIDATION_2026-10-22.md). Đây không phải
 > bằng chứng production-ready hay cho phép publish Drive connector.
+
+> **Hardening 23/10:** storage đặt dưới `wwwroot` bị từ chối lúc startup;
+> tên file đã lưu không được chứa path separator. Dashboard trả `no-store`.
+> Smoke local trên DB thử riêng đạt `/healthz=ok`; bộ 100 hiện có bị chặn bởi
+> gate hash duy nhất vì có 70 bản sao. 15 ảnh thật có 15 hash khác nhau nhưng
+> chưa có nhãn accuracy. Xem [evidence và giới hạn](STORAGE_AND_DATASET_GATE_2026-10-23.md).
 
 > **Mốc lịch sử trước batch:** Source 22/10 có Drive sandbox Development-only, tắt mặc định,
 > không thêm EF migration. Manual upload và Drive staging cùng dùng

@@ -1,6 +1,6 @@
 # AURA — Controlled AI Reimbursement Review
 
-> **Current source status (22 October 2026):** 220/220 offline tests pass; the Release build has 0 warnings and 0 errors; EF Core reports no pending model changes. A Development-only, Restricted-folder Drive run ingested 100 synthetic files as exactly 100 durable jobs after an idempotency fix; 98 completed and 2 stopped fail-safe on model/provider errors. A separate, explicitly consented 15-image localhost test completed 15/15 through manual upload. These are pipeline results, **not decision-accuracy or production-readiness claims**. The Drive connector remains off by default, and this source has **not** been republished to the public demo.
+> **Current source status (23 October 2026):** 231/231 offline tests pass; the Release build has 0 warnings and 0 errors; EF Core reports no pending model changes. A Development-only, Restricted-folder Drive run ingested 100 synthetic files as exactly 100 durable jobs after an idempotency fix; 98 completed and 2 stopped fail-safe on model/provider errors. A separate, explicitly consented 15-image localhost test completed 15/15 through manual upload. A storage-path guard now rejects configurations that put receipts under `wwwroot`; the dataset preflight confirms that the 100-file batch contains 70 byte-identical copies. These are pipeline results, **not decision-accuracy or production-readiness claims**. The Drive connector remains off by default, and this source has **not** been republished to the public demo.
 
 AURA is a supervised first-line assistant for employee reimbursement review. A vision model extracts structured facts from receipt images; semantic validation checks the evidence; deterministic C# policy—not the model—selects the route. Uncertain or exceptional cases stop for human review and are recorded in an audit timeline.
 
@@ -26,7 +26,7 @@ The default vision route is Qwen3.8 Flash through OpenRouter. Requests ask the p
 - The dashboard provides processing summaries and CSV export. Sensitive raw AI facts are not included in the management CSV.
 - A Drive connector exists only as a **Development + loopback synthetic sandbox**. It is read-only, off by default, and not a production intake channel. Email is not integrated.
 - A 5 → 20 → 100-file local Drive run found and fixed metadata-only duplicate ingestion. The clean 100-file rerun created exactly 100 jobs, with 98 completed and 2 fail-safe errors; poll/restart did not duplicate jobs. Only 30 image contents are distinct, so this is not a 100-receipt accuracy claim.
-- Production gates remain open: authentication/RBAC, malware scanning and quarantine, managed private object storage, approved retention and deletion, backup/restore, provider privacy verification, distributed coordination, monitoring, and capacity testing.
+- Production gates remain open: authentication/RBAC, malware scanning and quarantine, managed private object storage, approved retention and deletion, backup/restore, provider privacy verification, distributed coordination, monitoring, and capacity testing. The new `wwwroot` path guard is a misconfiguration check, **not** access control.
 
 The public live URL may run an earlier published build. It is not evidence that the current branch or Drive connector is deployed.
 
@@ -98,7 +98,7 @@ dotnet test tests\AURA.Tests\AURA.Tests.csproj -c Release --no-restore
 dotnet ef migrations has-pending-model-changes --no-build
 ```
 
-The current branch baseline is 220 passing tests, a clean Release build, and no pending model changes. Offline tests do not call the paid vision API. A successful test run does not replace security, privacy, independent accuracy, or production load testing.
+The current branch baseline is 231 passing tests, a clean Release build, and no pending model changes. Offline tests do not call the paid vision API. A successful test run does not replace security, privacy, independent accuracy, or production load testing.
 
 Stop the app with `Ctrl+C`. Do not reset or delete the database as a routine shutdown step.
 
@@ -110,6 +110,7 @@ Stop the app with `Ctrl+C`. Do not reset or delete the database as a routine shu
 - [Drive end-to-end evidence and limits](AURA/docs/DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md)
 - [Prior Drive hardening evidence and open gates](AURA/docs/DRIVE_PIPELINE_HARDENING_2026-10-22.md)
 - [Measured 100-file Drive and consented 15-file local validation](AURA/docs/DRIVE_MVP_VALIDATION_2026-10-22.md)
+- [Storage hardening and dataset uniqueness gate](AURA/docs/STORAGE_AND_DATASET_GATE_2026-10-23.md)
 - [Architecture and integration report](AURA/ARCHITECTURE_AND_INTEGRATION_REPORT.md)
 - [Business rules (runtime source)](AURA/BUSINESS_RULES.md)
 - [Operations runbook](AURA/docs/RUNBOOK.md)

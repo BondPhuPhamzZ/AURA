@@ -11,7 +11,9 @@ Drive metadata version đổi; bản sửa đã chạy lại trên DB sạch: đ
 98 hoàn tất và 2 fail-safe, không tăng job/audit sau poll và restart. 15 ảnh
 thật có consent cũng hoàn tất qua manual intake local, nhưng không có nhãn
 khớp hash để tính accuracy. Xem [báo cáo kiểm thử MVP](DRIVE_MVP_VALIDATION_2026-10-22.md).
-E2E 3 ca bên dưới là snapshot lịch sử; hiện Release suite **220/220 pass**.
+E2E 3 ca bên dưới là snapshot lịch sử; hiện Release suite **231/231 pass**.
+Storage dưới `wwwroot` bị chặn và gate hash xác nhận 70 bản sao trong bộ 100;
+xem [evidence hardening 23/10](STORAGE_AND_DATASET_GATE_2026-10-23.md).
 
 ## Đã triển khai và có evidence
 
@@ -39,7 +41,7 @@ E2E 3 ca bên dưới là snapshot lịch sử; hiện Release suite **220/220 p
 - [x] Fake-API boundary test: 101 entries với giới hạn 100 làm scan fail-closed;
   không download, không private file và không intake một phần. Đây không phải
   load test 100 hóa đơn.
-- [x] Regression suite: **220/220 pass** (`dotnet test ... -c Release
+- [x] Regression suite: **231/231 pass** (`dotnet test ... -c Release
   --no-restore`); Release build: **0 warning, 0 error**; EF xác nhận không có
   pending model changes. E2E Drive/OpenRouter là bằng chứng riêng, không được
   suy ra chỉ từ unit test.
@@ -82,7 +84,7 @@ E2E 3 ca bên dưới là snapshot lịch sử; hiện Release suite **220/220 p
 1. **Giữ an toàn baseline:** xác nhận `DriveSandbox:Enabled=false`,
    `RequireMalwareScanner=true`, app không chạy connector khi không test; giữ
    folder Restricted và chỉ synthetic fixtures. Không đưa hóa đơn thật vào.
-2. **Smoke local sau thay đổi:** chạy Release build, 220+ unit tests, kiểm EF
+2. **Smoke local sau thay đổi:** chạy Release build, 231+ unit tests, kiểm EF
    no-pending-model-change; dùng SQL local riêng. Kiểm `/healthz`, dashboard,
    và xác nhận connector vẫn tắt.
 3. **Một file hợp lệ:** bật sandbox tạm theo runbook, dùng một JPG/PNG synthetic
