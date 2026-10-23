@@ -1,5 +1,18 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
+> **Telemetry chi phí OpenRouter 24/10:** Khi response có `usage.cost` là số
+> không âm, adapter ghi chi phí USD cùng token/provider-kind mà không ghi
+> nội dung ảnh hay JSON model. Thiếu hoặc không hợp lệ thì ghi `null`, không
+> xem là $0; test chặn chuỗi có dạng PII từ trường cost lọt vào log.
+> Release/Debug **275/275**, adapter **16/16**, LocalDB opt-in **9/9**,
+> Release build 0 warning/error, EF không pending model change. Lượt LocalDB
+> đầu tiên thất bại vì instance dừng và môi trường kiểm thử không truy cập
+> được registry; sau khi khởi động instance hiện có và chạy bên ngoài sandbox,
+> 9/9 pass. `NU1900` chỉ cho biết không tải được nguồn vulnerability advisory,
+> **không** xác nhận dependency sạch. Telemetry cost chưa phải billing
+> reconciliation, chưa có tổng chi phí/alert đa host hay load test; vẫn NO-GO
+> cho scale/pilot production.
+
 > **Smoke localhost 24/10:** Truy vấn chỉ đếm trên `AuraDb` cho thấy không có
 > job `PENDING/PROCESSING` trước khi khởi chạy; `DriveSandbox__Enabled=false`.
 > `/healthz` trong Development trả `status=ok`, `aiConfigured=true`,
