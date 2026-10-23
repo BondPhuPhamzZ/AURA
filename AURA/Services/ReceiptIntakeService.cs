@@ -44,10 +44,16 @@ public sealed class ReceiptIntakeService
         // key supplies idempotency across polls and restarts without a migration.
         var id = input.SourceKey is null ? Guid.NewGuid().ToString("N") :
             SourceRequestId(input.SourceKey);
+        var sha256 = Convert.ToHexString(SHA256.HashData(input.Bytes));
         if (input.SourceKey is not null)
         {
             var prior = await _repository.GetRequestByIdAsync(id);
-            if (prior is not null) return prior;
+            if (prior is not null)
+            {
+                if (!string.Equals(prior.FileSha256, sha256, StringComparison.OrdinalIgnoreCase))
+                    throw new ReceiptIntakeException("Định danh nguồn đã được dùng cho nội dung ảnh khác.");
+                return prior;
+            }
         }
 
         var extension = Path.GetExtension(input.FileName).ToLowerInvariant();
@@ -55,16 +61,30 @@ public sealed class ReceiptIntakeService
         var storageRoot = ReceiptStoragePath.ResolveRoot(_environment, _storageOptions.Directory);
         Directory.CreateDirectory(storageRoot);
         var physicalPath = ReceiptStoragePath.ResolveFile(storageRoot, storedFileName);
-        var created = false;
+        var stagedPath = ReceiptStoragePath.ResolveFile(storageRoot,
+            $".{storedFileName}.{Guid.NewGuid():N}.tmp");
+        var createdFinal = false;
+        var persistAttempted = false;
         try
         {
-            await using (var output = new FileStream(physicalPath, FileMode.CreateNew, FileAccess.Write,
+            await using (var output = new FileStream(stagedPath, FileMode.CreateNew, FileAccess.Write,
                 FileShare.None, 64 * 1024, FileOptions.Asynchronous))
             {
-                created = true;
                 await output.WriteAsync(input.Bytes, cancellationToken);
+                await output.FlushAsync(cancellationToken);
             }
-            var sha256 = Convert.ToHexString(SHA256.HashData(input.Bytes));
+            try
+            {
+                File.Move(stagedPath, physicalPath);
+                createdFinal = true;
+            }
+            catch (IOException) when (input.SourceKey is not null && File.Exists(physicalPath))
+            {
+                // A previous attempt may have committed the bytes but died before SQL.
+                // Never overwrite a conflicting file or accept a partial write.
+                await VerifyExistingFileAsync(physicalPath, input.Bytes.LongLength, sha256,
+                    cancellationToken);
+            }
             var duplicate = await _repository.ExistsByFileHashAsync(sha256);
             var now = DateTime.UtcNow;
             var safeFileName = new string(Path.GetFileName(input.FileName)
@@ -89,6 +109,7 @@ public sealed class ReceiptIntakeService
                 SubmitterDisplayName = NormalizeIdentity(input.SubmitterDisplayName, "Nhân viên demo", 200),
                 SubmitterDepartment = NormalizeIdentity(input.SubmitterDepartment, "Demo", 200)
             };
+            persistAttempted = true;
             await _repository.AddRequestWithAuditAsync(request, "AI_QUEUED",
                 $"Source={(input.SourceKey is null ? "MANUAL" : "DRIVE_SANDBOX")}; " +
                 $"AmountSource={(input.ClaimedAmount > 0 ? AmountSources.UserProvided : "AI_PENDING")}; " +
@@ -99,8 +120,36 @@ public sealed class ReceiptIntakeService
         }
         catch
         {
-            if (created) File.Delete(physicalPath);
+            // After a database write starts, its result can be ambiguous on network failure.
+            // Preserve the complete final file for source-key retry instead of orphaning a row.
+            if (createdFinal && !persistAttempted) File.Delete(physicalPath);
             throw;
+        }
+        finally
+        {
+            if (File.Exists(stagedPath)) File.Delete(stagedPath);
+        }
+    }
+
+    private static async Task VerifyExistingFileAsync(string path, long expectedSize,
+        string expectedSha256, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var file = new FileStream(path, FileMode.Open, FileAccess.Read,
+                FileShare.Read, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
+            if (file.Length != expectedSize ||
+                !string.Equals(Convert.ToHexString(await SHA256.HashDataAsync(file, cancellationToken)),
+                    expectedSha256, StringComparison.OrdinalIgnoreCase))
+                throw new ReceiptIntakeException("File nguồn đã lưu không khớp nội dung; cần kiểm tra thủ công.");
+        }
+        catch (IOException)
+        {
+            throw new ReceiptIntakeException("File nguồn đang được ghi hoặc không thể đọc; hãy thử lại.");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            throw new ReceiptIntakeException("Không có quyền kiểm tra file nguồn đã lưu.");
         }
     }
 

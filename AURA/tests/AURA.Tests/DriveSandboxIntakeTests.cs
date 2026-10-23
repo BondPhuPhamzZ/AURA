@@ -60,6 +60,78 @@ public sealed class DriveSandboxIntakeTests
         finally { DeleteTestRoot(root); }
     }
 
+    [Fact]
+    public async Task Retry_reuses_complete_file_after_ambiguous_SQL_failure()
+    {
+        var root = NewTestRoot();
+        try
+        {
+            var repository = new FakeRepository { FailNextAdd = true };
+            var service = CreateIntake(root, repository);
+            var input = new ReceiptIntakeInput(Png, "receipt.png", "image/png", 0,
+                "DRIVE-SANDBOX", "Synthetic", "Test", "drive:folder:file:orphan");
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.AcceptAsync(input));
+            var directory = Path.Combine(root, "receipts");
+            var finalPath = Path.Combine(directory, ReceiptIntakeService.SourceRequestId(input.SourceKey!) + ".png");
+            Assert.True(File.Exists(finalPath));
+            Assert.Equal(Png, await File.ReadAllBytesAsync(finalPath));
+            Assert.Single(Directory.GetFiles(directory));
+
+            var recovered = await service.AcceptAsync(input);
+
+            Assert.Equal(ReceiptIntakeService.SourceRequestId(input.SourceKey!), recovered.Id);
+            Assert.Single(repository.Requests);
+            Assert.Single(Directory.GetFiles(directory));
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Fact]
+    public async Task Retry_rejects_conflicting_or_partial_orphan_without_overwrite()
+    {
+        var root = NewTestRoot();
+        try
+        {
+            var repository = new FakeRepository();
+            var service = CreateIntake(root, repository);
+            var input = new ReceiptIntakeInput(Png, "receipt.png", "image/png", 0,
+                "DRIVE-SANDBOX", "Synthetic", "Test", "drive:folder:file:partial");
+            var directory = Path.Combine(root, "receipts");
+            Directory.CreateDirectory(directory);
+            var finalPath = Path.Combine(directory, ReceiptIntakeService.SourceRequestId(input.SourceKey!) + ".png");
+            await File.WriteAllBytesAsync(finalPath, Png[..8]);
+
+            await Assert.ThrowsAsync<ReceiptIntakeException>(() => service.AcceptAsync(input));
+
+            Assert.Equal(Png[..8], await File.ReadAllBytesAsync(finalPath));
+            Assert.Empty(repository.Requests);
+            Assert.Single(Directory.GetFiles(directory));
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Fact]
+    public async Task Source_key_cannot_be_reused_for_different_bytes()
+    {
+        var root = NewTestRoot();
+        try
+        {
+            var repository = new FakeRepository();
+            var service = CreateIntake(root, repository);
+            var input = new ReceiptIntakeInput(Png, "receipt.png", "image/png", 0,
+                "DRIVE-SANDBOX", "Synthetic", "Test", "drive:folder:file:stable");
+            await service.AcceptAsync(input);
+
+            var changed = input with { Bytes = [137, 80, 78, 71, 13, 10, 26, 10, 0, 1] };
+            await Assert.ThrowsAsync<ReceiptIntakeException>(() => service.AcceptAsync(changed));
+
+            Assert.Single(repository.Requests);
+            Assert.Single(Directory.GetFiles(Path.Combine(root, "receipts")));
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
     [Theory]
     [InlineData("Production", false)]
     [InlineData("Development", true)]
@@ -532,6 +604,7 @@ public sealed class DriveSandboxIntakeTests
     private sealed class FakeRepository : IReimbursementRepository
     {
         public List<ReimbursementRequest> Requests { get; } = [];
+        public bool FailNextAdd { get; set; }
         public string LastAudit { get; private set; } = string.Empty;
         public TaskCompletionSource Accepted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public Task<ReimbursementRequest?> GetRequestByIdAsync(string id) =>
@@ -540,6 +613,11 @@ public sealed class DriveSandboxIntakeTests
             Task.FromResult(Requests.Any(item => item.FileSha256 == sha256));
         public Task AddRequestWithAuditAsync(ReimbursementRequest request, string action, string details)
         {
+            if (FailNextAdd)
+            {
+                FailNextAdd = false;
+                throw new InvalidOperationException("Simulated uncertain SQL write result.");
+            }
             Requests.Add(request);
             LastAudit = details;
             Accepted.TrySetResult();
