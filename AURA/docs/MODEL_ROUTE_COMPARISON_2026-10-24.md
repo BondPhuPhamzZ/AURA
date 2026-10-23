@@ -49,18 +49,36 @@ Semantic repair was attempted for `R3-06` in all three runs. Its final-total
 evidence remained invalid after repair, so all three results stayed
 `ESCALATE_FACT`; no unsafe approval occurred. This demonstrates the repair
 attempt plus fail-safe escalation path, **not** successful repair of that
-contradiction.
+contradiction. The fixture intentionally obscures the printed final total;
+reconstructing a number from line-item arithmetic would not satisfy the
+required printed-final-total evidence contract.
+
+## Root-cause fix after the recorded runs
+
+The R3-04 false escalation was traced to a narrow OCR variant: `Bìa hồ sơ`
+became `Bia hò sơ`. The policy already exempted common stationery readings such
+as `Bia hồ sơ` and `Bia ho so`, but did not include the erroneous grave accent
+on `hò`. The stationery phrase allowlist now includes exactly `bia hò sơ`;
+regression tests verify that this OCR reading no longer triggers an alcohol
+policy escalation while explicit beer context (`bia chai`) still does. The
+three-run model figures above are the **pre-fix** benchmark and were not
+rewritten as post-fix model results. Debug and Release suites each passed
+302/302 tests with `AURA_RUN_LOCALDB_INTEGRATION=1`, including the opt-in SQL
+integration cases. The sandboxed attempt could not access the LocalDB instance
+registry; rerunning in a LocalDB-capable environment completed cleanly.
 
 ## Decision
 
 `qwen/qwen3.8-27b` is a technically working Strict-ZDR candidate and a possible
 supervised-MVP evaluation route. Keep it **out of the default configuration**
 for now: the small locked synthetic set showed one variable false escalation,
-date-evidence formatting differences, and merchant-name OCR variance. This set
-does not establish generalization, legal compliance, provider contract terms,
-real-user accuracy, latency SLOs or multi-host capacity. In particular, the
-SQL distributed AI gate was off and no real receipt, bucket, or production host
-was used.
+date-evidence formatting differences, and merchant-name OCR variance. The
+false-escalation policy cause has a narrow code fix with regression coverage,
+but no full provider benchmark has been rerun after that fix. This set does not
+establish generalization, legal compliance, provider contract terms, real-user
+accuracy, latency SLOs or multi-host capacity. In particular, the SQL
+distributed AI gate was off and no real receipt, bucket, or production host was
+used.
 
 Next quality gate: independently label a new synthetic set that stresses
 Vietnamese diacritics, near-policy words (such as “Bìa” vs “Bia”), faint totals,

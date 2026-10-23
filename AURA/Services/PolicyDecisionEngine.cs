@@ -22,7 +22,7 @@ public static class PolicyDecisionEngine
 
     private static readonly string[] StationeryBiaPhrases =
     [
-        "bia hồ sơ", "bia ho so", "bia còng", "bia cong", "bia nhựa", "bia nhua", "bia cứng", "bia cung",
+        "bia hồ sơ", "bia ho so", "bia hò sơ", "bia còng", "bia cong", "bia nhựa", "bia nhua", "bia cứng", "bia cung",
         "bia trình ký", "bia trinh ky", "bia đựng tài liệu", "bia dung tai lieu", "bia lưu tài liệu", "bia luu tai lieu",
         "bia sách", "bia sach"
     ];

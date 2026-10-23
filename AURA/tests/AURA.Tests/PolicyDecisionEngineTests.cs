@@ -287,6 +287,7 @@ public sealed class PolicyDecisionEngineTests
     [InlineData("Bìa còng lưu tài liệu")]
     [InlineData("Bia hồ sơ")]
     [InlineData("Bia ho so")]
+    [InlineData("Bia hò sơ")]
     [InlineData("Bia còng lưu tài liệu")]
     public void Stationery_bia_even_when_ocr_loses_diacritic_is_not_alcohol(string item)
     {
@@ -294,6 +295,15 @@ public sealed class PolicyDecisionEngineTests
         facts.LineItems = [new ReceiptLineItem { Description = item, Amount = 150_000 }];
 
         Assert.Equal("AUTO_APPROVE", Decide(facts).Status);
+    }
+
+    [Fact]
+    public void Explicit_beer_context_is_not_exempted_by_ocr_stationery_phrase()
+    {
+        var facts = ValidFacts();
+        facts.LineItems = [new ReceiptLineItem { Description = "Bia hò sơ, bia chai", Amount = 150_000 }];
+
+        Assert.Equal("ESCALATE_POLICY", Decide(facts).Status);
     }
 
     [Fact]
