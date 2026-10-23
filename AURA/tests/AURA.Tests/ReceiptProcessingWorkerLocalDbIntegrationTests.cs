@@ -79,6 +79,27 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
+    public async Task Second_host_can_process_receipt_from_absolute_private_shared_directory()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var id = await SeedAsync(options, root);
+            var secondHostRoot = Path.Combine(root, "host-b");
+            var sharedDirectory = Path.Combine(root, "private-shared");
+            Directory.CreateDirectory(secondHostRoot);
+            Directory.CreateDirectory(sharedDirectory);
+            var sharedFile = Path.Combine(sharedDirectory, "synthetic.jpg");
+            File.Copy(Path.Combine(root, "receipts", "synthetic.jpg"), sharedFile);
+
+            await ProcessOnceAsync(options, secondHostRoot,
+                new PathAssertingExtractor(sharedFile), sharedDirectory);
+
+            await AssertStateAsync(options, id, ProcessingStates.Completed, 1, null);
+        });
+    }
+
+    [Fact]
     public async Task Sql_ai_gate_cancellation_does_not_leave_a_waiting_permit()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
@@ -355,7 +376,7 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     private static async Task ProcessOnceAsync(DbContextOptions<AppDbContext> options,
-        string root, IVisionExtractor extractor)
+        string root, IVisionExtractor extractor, string storageDirectory = "receipts")
     {
         using var services = new ServiceCollection()
             .AddScoped(_ => new AppDbContext(options))
@@ -365,7 +386,10 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
         var worker = new ReceiptProcessingWorker(
             services.GetRequiredService<IServiceScopeFactory>(), new ReceiptProcessingQueue(),
             Microsoft.Extensions.Options.Options.Create(new ReceiptProcessingOptions { MaxRateLimitAttempts = 3 }),
-            Microsoft.Extensions.Options.Options.Create(new ReceiptStorageOptions { Directory = "receipts" }),
+            Microsoft.Extensions.Options.Options.Create(new ReceiptStorageOptions
+            {
+                Directory = storageDirectory
+            }),
             new TestEnvironment(root), NullLogger<ReceiptProcessingWorker>.Instance);
         var method = typeof(ReceiptProcessingWorker).GetMethod("ProcessNextAsync",
             BindingFlags.Instance | BindingFlags.NonPublic)!;
@@ -389,6 +413,16 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     {
         public Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
             CancellationToken cancellationToken = default) => Task.FromResult(response());
+    }
+
+    private sealed class PathAssertingExtractor(string expectedPath) : IVisionExtractor
+    {
+        public Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
+            CancellationToken cancellationToken = default)
+        {
+            Assert.Equal(Path.GetFullPath(expectedPath), Path.GetFullPath(physicalImagePath));
+            return Task.FromResult(new ReceiptExtractionDto());
+        }
     }
 
     private sealed class BlockingExtractor(TaskCompletionSource<bool> entered,
