@@ -6,8 +6,10 @@
 > và một over-escalation. Trước khi bổ sung gate mô tả hàng hóa chung chung,
 > Qwen3.6 đã bỏ lọt một ca FACT do dòng tổng bị mờ nhưng model dựng evidence
 > hợp lý từ số dòng hàng. Gate mới chuyển ca đó cho người kiểm tra, **không**
-> giải quyết tổng quát việc model tưởng tượng pixel. Debug/Release 262/262,
-> LocalDB opt-in 2/2, build sạch, EF không đổi. Không đổi default model hay
+> giải quyết tổng quát việc model tưởng tượng pixel. Adapter đã chặn response
+> provider quá 2 MiB. Debug/Release 264/264, LocalDB opt-in 2/2,
+> build sạch và EF không đổi sau guard.
+> Không đổi default model hay
 > SmartASP; chưa có holdout mù/ảnh thật được phép dùng với model thay thế.
 > Xem [đối chứng route và giới hạn](MODEL_ROUTE_COMPARISON_2026-10-23.md).
 

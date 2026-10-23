@@ -7,6 +7,7 @@ This is a regression on previously known synthetic images, not a blind accuracy 
 On the configured `qwen/qwen3.8-flash` route, a sampled failure was HTTP 200 with a two-character non-object completion, `finish_reason=stop`, two completion tokens, zero reasoning tokens, and a configured 4,096-token output cap. Sampled routing metadata identified Alibaba. This is not output-cap exhaustion; increasing the cap is not an evidence-based remedy. OpenRouter's [chat API](https://openrouter.ai/docs/api/api-reference/chat/create-a-chat-completion) documents token usage and opt-in routing metadata. Its [response-healing description](https://openrouter.ai/blog/announcements/response-healing-reduce-json-defects-by-80percent/) says it repairs JSON syntax, not schema adherence. Neither source identifies the exact cause of this response.
 
 The adapter now records only bounded token counts, an allowlisted provider kind, schema reason/field, content length and finish reason. Arbitrary provider error text and invalid request-ID headers no longer enter log or user messages. The parser rejects unapproved model fields, including DTO-only audit/privacy fields, and case-insensitive duplicate keys; unknown field names are not echoed in diagnostics.
+Provider HTTP response bodies are capped at 2 MiB both by declared `Content-Length` and by actual bytes read, so an oversized or misleading response fails safely without being fully buffered.
 
 ## Same-set synthetic results
 
@@ -29,6 +30,6 @@ The policy reason and manager question no longer repeat arbitrary warning text, 
 
 ## Verification and decision
 
-Release and Debug suites: **262/262 passed** each. Isolated opt-in LocalDB worker tests: **2/2 passed**. Release build: **0 warnings/errors**; EF: **no pending model changes**. `NU1900` during `dotnet test` reflects an unreachable NuGet advisory feed and is not a fresh vulnerability audit. `git diff --check` passed. The local test process was stopped after each batch.
+Release and Debug suites: **264/264 passed** each after the response-size guard (the original comparison gate was 262/262). Isolated opt-in LocalDB worker tests: **2/2 passed** after the guard. Release build: **0 warnings/errors**; EF: **no pending model changes**. `NU1900` during `dotnet test` reflects an unreachable NuGet advisory feed and is not a fresh vulnerability audit. `git diff --check` passed. The local test process was stopped after each batch.
 
 **Keep NO-GO for public publish, model switch, multi-worker scale and production claims.** Qwen3.6 Flash is a candidate for the next consented evaluation, not the new default. Next gates: a fresh independently labeled synthetic set that separates blurred-total, generic-item and prohibited-item cases; explicit owner authorization before sending real receipts through an alternate model route; repeatability and critical-field comparison on that set; route-specific privacy/ZDR verification; then the existing storage, distributed coordination, authorization, malware, retention and restore/load gates. The current route still reports `strictZeroDataRetention=false`.
