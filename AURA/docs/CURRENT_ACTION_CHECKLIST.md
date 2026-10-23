@@ -7,12 +7,13 @@
 
 Việc cần làm trước khi mở lại gate publish/pilot:
 
-- [x] Khóa schema đầu vào, field backend-only, metadata/log lỗi provider và tín hiệu Semantic có thể chứa dữ liệu cá nhân; chặn response provider quá 2 MiB; Release/Debug 265/265, LocalDB 3/3, build/EF sạch.
+- [x] Khóa schema đầu vào, field backend-only, metadata/log lỗi provider và tín hiệu Semantic có thể chứa dữ liệu cá nhân; chặn response provider quá 2 MiB; Release/Debug 268/268, LocalDB 5/5, build/EF sạch.
 - [x] Đối chứng cùng 15 synthetic: Qwen3.6 Flash 15/15 quyết định, Qwen3.8 Flash 13/15; đây là bộ đã biết, không phải holdout mù.
 - [ ] Tạo tập synthetic mới có nhãn độc lập, tách riêng tổng bị mờ với mô tả mặt hàng chung chung; đo missed escalation, critical fields, lỗi provider và latency qua nhiều lượt.
 - [ ] Chỉ gửi 15 ảnh thật qua model thay thế sau khi chủ dữ liệu chấp thuận rõ route mới; giữ ảnh và kết quả chi tiết ngoài Git.
 - [ ] Xác minh route ZDR, kiểm soát truy cập, lưu trữ riêng dùng chung, AI lease/fencing phân tán, malware/quarantine, retention, restore drill và tải nhiều instance trước pilot/scale.
 - [x] Xác minh `rowversion` chặn stale write: LocalDB hai worker, A bị giữ qua thời điểm lease hết hạn, B reclaim và hoàn tất; A nhận concurrency exception, chỉ còn một kết quả/audit. Đây chưa phải bằng chứng an toàn để bật nhiều worker vì giới hạn AI/cooldown và ảnh vẫn theo process/host.
+- [x] Thêm SQL application lock opt-in cho một permit xuyên process; LocalDB kiểm tra hai coordinator và cancellation. Giữ `Vision__UseSqlDistributedGate=false` trên hosting cho tới khi có shared private storage, cooldown chung và chaos/load test cho trường hợp mất SQL session giữa AI call.
 
 ## Checklist publish lịch sử (không áp dụng cho candidate hiện tại)
 
