@@ -10,9 +10,12 @@
 > because the user-owned instance was stopped and sandbox registry access was
 > restricted; inspecting outside the sandbox confirmed it was `Stopped`, then
 > starting the existing instance allowed both full suites to pass. Localhost
-> `http://127.0.0.1:5097/healthz` actively refused connection during a read-only
-> probe; no app process was launched to avoid consuming user DB jobs. This is
-> fake-GCS integration evidence, not a real bucket or separate-machine test.
+> `http://127.0.0.1:5099/healthz` then returned HTTP 200 / `status=ok` against
+> a newly migrated, empty smoke DB; DB/schema/storage were available, queue
+> empty, Drive/Verify off, concurrency 1, SQL AI gate off. No AI request or
+> receipt upload occurred; `strictZeroDataRetention=false`. The app was stopped
+> and only that isolated DB/temp folder was removed. Port 5097 remains stopped.
+> This is fake-GCS integration evidence, not a real bucket or separate-machine test.
 
 > **Shared receipt storage adapter 24/10 (candidate, not live):** Receipt intake,
 > worker inference and receipt serving now depend on `IReceiptFileStore`, with
