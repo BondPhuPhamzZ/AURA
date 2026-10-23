@@ -37,9 +37,10 @@ public sealed class ApplicantController : Controller
         if (request is null || string.IsNullOrWhiteSpace(request.StoredFileName)) return NotFound();
 
         var storageRoot = GetStorageRoot();
-        var fullPath = Path.GetFullPath(Path.Combine(storageRoot, Path.GetFileName(request.StoredFileName)));
-        if (!fullPath.StartsWith(storageRoot, StringComparison.OrdinalIgnoreCase) || !System.IO.File.Exists(fullPath))
-            return NotFound();
+        string fullPath;
+        try { fullPath = ReceiptStoragePath.ResolveFile(storageRoot, request.StoredFileName); }
+        catch (InvalidOperationException) { return NotFound(); }
+        if (!System.IO.File.Exists(fullPath)) return NotFound();
 
         var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024,
             FileOptions.Asynchronous | FileOptions.SequentialScan);
@@ -196,14 +197,7 @@ public sealed class ApplicantController : Controller
 
     private string GetStorageRoot()
     {
-        if (string.IsNullOrWhiteSpace(_storageOptions.Directory))
-            throw new InvalidOperationException("ReceiptStorage:Directory không được để trống.");
-
-        // Relative paths stay anchored to ContentRoot. Cloud hosts can provide an absolute
-        // mount such as /home/data/receipts for durable evidence storage.
-        return Path.GetFullPath(Path.IsPathRooted(_storageOptions.Directory)
-            ? _storageOptions.Directory
-            : Path.Combine(_environment.ContentRootPath, _storageOptions.Directory));
+        return ReceiptStoragePath.ResolveRoot(_environment, _storageOptions.Directory);
     }
 
 }

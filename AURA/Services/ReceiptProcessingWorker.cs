@@ -233,13 +233,15 @@ public sealed class ReceiptProcessingWorker : BackgroundService
 
     private string ResolveReceiptPath(string storedFileName)
     {
-        var storageRoot = Path.GetFullPath(Path.IsPathRooted(_storageOptions.Directory)
-            ? _storageOptions.Directory
-            : Path.Combine(_environment.ContentRootPath, _storageOptions.Directory));
-        var path = Path.GetFullPath(Path.Combine(storageRoot, Path.GetFileName(storedFileName)));
-        if (!path.StartsWith(storageRoot, StringComparison.OrdinalIgnoreCase))
+        try
+        {
+            var storageRoot = ReceiptStoragePath.ResolveRoot(_environment, _storageOptions.Directory);
+            return ReceiptStoragePath.ResolveFile(storageRoot, storedFileName);
+        }
+        catch (InvalidOperationException)
+        {
             throw new VisionExtractionException("RECEIPT_PATH_INVALID", "Đường dẫn file hóa đơn không hợp lệ.");
-        return path;
+        }
     }
 
     private readonly record struct ProcessResult(bool Processed, bool ProviderBlocked,

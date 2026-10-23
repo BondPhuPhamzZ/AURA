@@ -4,7 +4,14 @@ param(
     [string]$ImageDirectory,
 
     [Parameter(Mandatory)]
-    [string]$OutputPath
+    [string]$OutputPath,
+
+    [Parameter()]
+    [ValidateRange(0, 10000)]
+    [int]$ExpectedCount = 0,
+
+    [Parameter()]
+    [switch]$RequireUniqueContent
 )
 
 Set-StrictMode -Version Latest
@@ -23,6 +30,9 @@ $files = @(Get-ChildItem -LiteralPath $resolvedDirectory -File |
 if ($files.Count -eq 0) {
     throw "No JPG/PNG images found in: $resolvedDirectory"
 }
+if ($ExpectedCount -gt 0 -and $files.Count -ne $ExpectedCount) {
+    throw "Expected $ExpectedCount images; found $($files.Count)."
+}
 
 $items = foreach ($file in $files) {
     [pscustomobject]@{
@@ -32,6 +42,11 @@ $items = foreach ($file in $files) {
         lastWriteTimeUtc = $file.LastWriteTimeUtc.ToString('o')
     }
 }
+$distinctHashCount = @($items | Select-Object -ExpandProperty sha256 -Unique).Count
+$duplicateContentCount = $items.Count - $distinctHashCount
+if ($RequireUniqueContent -and $duplicateContentCount -gt 0) {
+    throw "Unique-content gate failed: $duplicateContentCount byte-identical copies among $($items.Count) images. No inventory was written."
+}
 
 $report = [pscustomobject]@{
     schemaVersion = 1
@@ -40,6 +55,9 @@ $report = [pscustomobject]@{
     generatedAtUtc = [DateTime]::UtcNow.ToString('o')
     imageDirectory = $resolvedDirectory
     imageCount = $items.Count
+    distinctHashCount = $distinctHashCount
+    duplicateContentCount = $duplicateContentCount
+    uniqueContentGatePassed = ($duplicateContentCount -eq 0)
     images = @($items)
 }
 

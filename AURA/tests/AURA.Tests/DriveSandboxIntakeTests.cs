@@ -523,7 +523,7 @@ public sealed class DriveSandboxIntakeTests
     {
         public string ApplicationName { get; set; } = "AURA.Tests";
         public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
-        public string WebRootPath { get; set; } = root;
+        public string WebRootPath { get; set; } = Path.Combine(root, "wwwroot");
         public string EnvironmentName { get; set; } = "Development";
         public string ContentRootPath { get; set; } = root;
         public IFileProvider ContentRootFileProvider { get; set; } = new PhysicalFileProvider(root);

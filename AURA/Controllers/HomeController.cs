@@ -14,6 +14,7 @@ public class HomeController : Controller
         _logger = logger;
     }
 
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public IActionResult Index(string? tab, string? dashboardPeriod = null)
     {
         var initialTab = tab?.Trim().ToLowerInvariant() switch

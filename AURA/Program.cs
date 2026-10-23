@@ -165,9 +165,7 @@ builder.Services.AddScoped<IVisionExtractor, ConfiguredVisionExtractor>();
 var app = builder.Build();
 
 var configuredStorage = app.Services.GetRequiredService<IOptions<ReceiptStorageOptions>>().Value;
-var receiptStorageRoot = Path.GetFullPath(Path.IsPathRooted(configuredStorage.Directory)
-    ? configuredStorage.Directory
-    : Path.Combine(app.Environment.ContentRootPath, configuredStorage.Directory));
+var receiptStorageRoot = ReceiptStoragePath.ResolveRoot(app.Environment, configuredStorage.Directory);
 Directory.CreateDirectory(receiptStorageRoot);
 
 if (builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))

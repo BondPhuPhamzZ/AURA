@@ -52,11 +52,9 @@ public sealed class ReceiptIntakeService
 
         var extension = Path.GetExtension(input.FileName).ToLowerInvariant();
         var storedFileName = id + extension;
-        var storageRoot = Path.GetFullPath(Path.IsPathRooted(_storageOptions.Directory)
-            ? _storageOptions.Directory
-            : Path.Combine(_environment.ContentRootPath, _storageOptions.Directory));
+        var storageRoot = ReceiptStoragePath.ResolveRoot(_environment, _storageOptions.Directory);
         Directory.CreateDirectory(storageRoot);
-        var physicalPath = Path.Combine(storageRoot, storedFileName);
+        var physicalPath = ReceiptStoragePath.ResolveFile(storageRoot, storedFileName);
         var created = false;
         try
         {
