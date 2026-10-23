@@ -5,6 +5,7 @@ Thư mục này chứa tài liệu kỹ thuật hiện hành **và các báo cá
 | Tài liệu | Mục đích |
 |---|---|
 | `CURRENT_PROJECT_STATUS.md` | Nguồn sự thật duy nhất về baseline đã xác minh và các gate còn mở |
+| `SHARED_RECEIPT_STORAGE.md` | Adapter GCS opt-in, cấu hình bucket private và các gate integration/restore còn thiếu |
 | `READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md` | Kết luận supervised MVP/Track A/production, phạm vi phòng ban, UX refresh và đa máy chủ |
 | `STORAGE_AND_DATASET_GATE_2026-10-23.md` | Gate storage dưới `wwwroot`, kiểm hash dataset và smoke local |
 | `DRIVE_MVP_VALIDATION_2026-10-22.md` | Bằng chứng batch Drive 5/20/100 và 15 ảnh consent qua manual intake; không phải accuracy |

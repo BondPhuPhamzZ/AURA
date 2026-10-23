@@ -92,7 +92,32 @@ builder.Services.AddOptions<OllamaOptions>()
     .ValidateOnStart();
 builder.Services.AddOptions<ReceiptStorageOptions>()
     .Bind(builder.Configuration.GetSection(ReceiptStorageOptions.SectionName))
+    .Validate(options => string.Equals(options.Provider, "LocalFileSystem", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(options.Provider, "GoogleCloudStorage", StringComparison.OrdinalIgnoreCase),
+        "ReceiptStorage:Provider phải là LocalFileSystem hoặc GoogleCloudStorage.")
     .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddOptions<GoogleCloudReceiptStorageOptions>()
+    .Bind(builder.Configuration.GetSection(GoogleCloudReceiptStorageOptions.SectionName))
+    .Validate(options =>
+    {
+        var storage = builder.Configuration.GetSection(ReceiptStorageOptions.SectionName)
+            .Get<ReceiptStorageOptions>() ?? new ReceiptStorageOptions();
+        if (!string.Equals(storage.Provider, "GoogleCloudStorage", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (string.IsNullOrWhiteSpace(options.Bucket) ||
+            !System.Text.RegularExpressions.Regex.IsMatch(options.Bucket, "^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$") ||
+            !Path.IsPathFullyQualified(options.ServiceAccountJsonPath) ||
+            !File.Exists(options.ServiceAccountJsonPath) ||
+            string.IsNullOrWhiteSpace(options.Prefix) ||
+            !System.Text.RegularExpressions.Regex.IsMatch(options.Prefix, "^[A-Za-z0-9._/-]+$") ||
+            options.Prefix.Contains("..", StringComparison.Ordinal) || options.Prefix.Contains("//", StringComparison.Ordinal))
+            return false;
+        var relative = Path.GetRelativePath(builder.Environment.ContentRootPath,
+            Path.GetFullPath(options.ServiceAccountJsonPath));
+        return Path.IsPathFullyQualified(relative) || relative == ".." ||
+            relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal);
+    }, "Google Cloud receipt storage requires a bucket, a valid prefix, and an external service-account JSON file.")
     .ValidateOnStart();
 builder.Services.AddOptions<DecisionPolicyOptions>()
     .Bind(builder.Configuration.GetSection(DecisionPolicyOptions.SectionName));
@@ -135,6 +160,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Đăng ký Dependency Injection
 builder.Services.AddScoped<IReimbursementRepository, ReimbursementRepository>();
+var receiptStorageProvider = builder.Configuration[$"{ReceiptStorageOptions.SectionName}:Provider"] ?? "LocalFileSystem";
+if (string.Equals(receiptStorageProvider, "GoogleCloudStorage", StringComparison.OrdinalIgnoreCase))
+    builder.Services.AddSingleton<IReceiptFileStore, GoogleCloudReceiptFileStore>();
+else
+    builder.Services.AddSingleton<IReceiptFileStore, LocalReceiptFileStore>();
 builder.Services.AddScoped<ReceiptIntakeService>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 builder.Services.AddSingleton<WorkflowOperationGate>();
@@ -167,10 +197,6 @@ builder.Services.AddScoped<IVisionExtractor, ConfiguredVisionExtractor>();
 
 var app = builder.Build();
 
-var configuredStorage = app.Services.GetRequiredService<IOptions<ReceiptStorageOptions>>().Value;
-var receiptStorageRoot = ReceiptStoragePath.ResolveRoot(app.Environment, configuredStorage.Directory);
-Directory.CreateDirectory(receiptStorageRoot);
-
 if (builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
 {
     await using var scope = app.Services.CreateAsyncScope();
@@ -201,6 +227,7 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
     IOptions<VerifyOptions> configuredVerify,
     IOptions<DriveSandboxOptions> configuredDriveSandbox,
     IWebHostEnvironment environment,
+    IReceiptFileStore receiptFileStore,
     AppDbContext database,
     CancellationToken cancellationToken) =>
 {
@@ -229,7 +256,15 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
         databaseAvailable = false;
     }
 
-    var storageAvailable = Directory.Exists(receiptStorageRoot);
+    var storageAvailable = false;
+    try
+    {
+        storageAvailable = await receiptFileStore.IsAvailableAsync(cancellationToken);
+    }
+    catch
+    {
+        storageAvailable = false;
+    }
     var databaseUpToDate = databaseAvailable && pendingMigrationCount == 0;
     var ready = policyAvailable && aiConfigured && databaseUpToDate && storageAvailable;
 

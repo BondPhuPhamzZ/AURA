@@ -7,6 +7,11 @@
 
 Việc cần làm trước khi mở lại gate publish/pilot:
 
+- [x] Tách receipt storage thành `IReceiptFileStore`; giữ local filesystem mặc định và thêm adapter GCS private opt-in. Intake retry tạo object chỉ khi key vắng mặt, không ghi đè hash khác; worker/controller đọc qua abstraction, worker kiểm size/hash trước inference. Sau thay đổi: Debug/Release **287/287**, LocalDB opt-in **15/15**, Release build **0 warning/error**, EF không có pending model changes.
+- [ ] Chưa tạo bucket GCS thật, cấp IAM, kiểm thử credentials, hay đổi hosting. Trước đó cần bucket private với uniform bucket-level access + public access prevention và service account riêng; chỉ cấp quyền object ở bucket, không dùng Drive read-only account.
+- [ ] Kiểm tra integration thực trên bucket test: health/read/write/retry/hash/missing-object; sau đó 2 host cùng đọc object + DB chung, mất lease/restart, backup/restore SQL và object đồng bộ. Chưa bật SQL distributed AI gate hoặc tăng workers.
+- [ ] Chưa có retention cleanup. Không đặt lifecycle xóa sau một ngày trước khi biết job đã terminal và retention được phê duyệt; bytes cần còn để retry/recovery.
+
 - [x] Khóa schema đầu vào, field backend-only, metadata/log lỗi provider và tín hiệu Semantic có thể chứa dữ liệu cá nhân; chặn response provider quá 2 MiB. Evidence riêng tại mốc schema 24/10: Release/Debug 280/280, LocalDB opt-in 11/11, Release build 0 warning/error, EF không pending model change. Bộ kiểm thử hiện hành được ghi ở mục SQL clock bên dưới; `NU1900` không phải vulnerability audit thành công.
 - [x] Đối chứng cùng 15 synthetic: Qwen3.6 Flash 15/15 quyết định, Qwen3.8 Flash 13/15; đây là bộ đã biết, không phải holdout mù.
 - [ ] Tạo tập synthetic mới có nhãn độc lập, tách riêng tổng bị mờ với mô tả mặt hàng chung chung; đo missed escalation, critical fields, lỗi provider và latency qua nhiều lượt.

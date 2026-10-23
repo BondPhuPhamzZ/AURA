@@ -1,5 +1,24 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
+> **Shared receipt storage adapter 24/10 (candidate, not live):** Receipt intake,
+> worker inference and receipt serving now depend on `IReceiptFileStore`, with
+> local-file default and opt-in private GCS adapter. Cloud creation uses a
+> generation-match-zero precondition; retries reuse only exact size/SHA matches;
+> reads are generation-pinned and verified against SQL before inference. The
+> inference API now accepts verified bytes, so cloud images do not need a
+> temporary local copy. Health checks probe storage. No GCS bucket, IAM grant,
+> key or hosting setting has been provisioned/changed; GCS integration has not
+> been exercised against a real bucket. Keep `LocalFileSystem` until isolated
+> authenticated integration, two-host, backup/restore and failure tests pass.
+> Retention cleanup is deliberately not implemented: never apply one-day
+> lifecycle deletion while jobs may be pending or retryable. Verification after
+> this code change: Debug and Release **287/287**, opt-in LocalDB integration
+> **15/15** (15 SQL-backed cases active), Release build **0 warnings/errors**,
+> EF reports no pending model changes, and NuGet online audit reports no
+> vulnerable packages in app or tests. These are local/unit + LocalDB results,
+> not GCS/multi-host evidence. See
+> [SHARED_RECEIPT_STORAGE.md](SHARED_RECEIPT_STORAGE.md).
+
 > **SQL AI permit có fencing 24/10:** Mỗi lần process nhận SQL application
 > lock, SQL tăng token fencing đơn điệu. Trước khi trả facts từ provider,
 > extractor kiểm tra lại session lock và token trên chính session đó; watchdog

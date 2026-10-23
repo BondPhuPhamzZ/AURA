@@ -4,14 +4,42 @@ namespace AURA.Services;
 
 public static class ReceiptStoredFileIntegrity
 {
+    public static async Task<byte[]> ReadVerifiedAsync(Stream source, long expectedSizeBytes,
+        string expectedSha256, int maxFileSizeMb, CancellationToken cancellationToken)
+    {
+        ValidateMetadata(expectedSizeBytes, expectedSha256, maxFileSizeMb);
+        try
+        {
+            await using var buffer = new MemoryStream(checked((int)expectedSizeBytes));
+            var chunk = new byte[64 * 1024];
+            while (true)
+            {
+                var count = await source.ReadAsync(chunk, cancellationToken);
+                if (count == 0) break;
+                if (buffer.Length + count > expectedSizeBytes)
+                    throw new VisionExtractionException("RECEIPT_FILE_INTEGRITY",
+                        "Ảnh hóa đơn đã lưu vượt kích thước đã tiếp nhận; hồ sơ cần kiểm tra thủ công.");
+                await buffer.WriteAsync(chunk.AsMemory(0, count), cancellationToken);
+            }
+            var bytes = buffer.ToArray();
+            if (bytes.LongLength != expectedSizeBytes || !string.Equals(
+                    Convert.ToHexString(SHA256.HashData(bytes)), expectedSha256,
+                    StringComparison.OrdinalIgnoreCase))
+                throw new VisionExtractionException("RECEIPT_FILE_INTEGRITY",
+                    "Ảnh hóa đơn đã lưu không còn khớp dữ kiện lúc tiếp nhận; hồ sơ cần kiểm tra thủ công.");
+            return bytes;
+        }
+        catch (IOException)
+        {
+            throw new VisionExtractionException("RECEIPT_FILE_UNAVAILABLE",
+                "Không thể đọc ảnh hóa đơn đã lưu; hồ sơ cần kiểm tra thủ công.");
+        }
+    }
+
     public static async Task<FileStream> OpenVerifiedAsync(string path, long expectedSizeBytes,
         string expectedSha256, int maxFileSizeMb, CancellationToken cancellationToken)
     {
-        if (expectedSizeBytes <= 0 || maxFileSizeMb <= 0 ||
-            expectedSizeBytes > maxFileSizeMb * 1024L * 1024L ||
-            expectedSha256 is not { Length: 64 } || !expectedSha256.All(Uri.IsHexDigit))
-            throw new VisionExtractionException("RECEIPT_FILE_INTEGRITY",
-                "Thông tin toàn vẹn ảnh hóa đơn không hợp lệ; hồ sơ cần kiểm tra thủ công.");
+        ValidateMetadata(expectedSizeBytes, expectedSha256, maxFileSizeMb);
 
         FileStream? stream = null;
         var verified = false;
@@ -48,5 +76,14 @@ public static class ReceiptStoredFileIntegrity
             if (stream is not null && !verified)
                 await stream.DisposeAsync();
         }
+    }
+
+    private static void ValidateMetadata(long expectedSizeBytes, string expectedSha256, int maxFileSizeMb)
+    {
+        if (expectedSizeBytes <= 0 || maxFileSizeMb <= 0 ||
+            expectedSizeBytes > maxFileSizeMb * 1024L * 1024L ||
+            expectedSha256 is not { Length: 64 } || !expectedSha256.All(Uri.IsHexDigit))
+            throw new VisionExtractionException("RECEIPT_FILE_INTEGRITY",
+                "Thông tin toàn vẹn ảnh hóa đơn không hợp lệ; hồ sơ cần kiểm tra thủ công.");
     }
 }

@@ -6,6 +6,8 @@ public sealed class ReceiptStorageOptions
 {
     public const string SectionName = "ReceiptStorage";
 
+    public string Provider { get; set; } = "LocalFileSystem";
+
     [Required]
     public string Directory { get; set; } = "App_Data/receipts";
 

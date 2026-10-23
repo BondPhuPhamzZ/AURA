@@ -16,17 +16,17 @@ public sealed class ReceiptIntakeException(string message) : Exception(message);
 
 public sealed class ReceiptIntakeService
 {
-    private readonly IWebHostEnvironment _environment;
+    private readonly IReceiptFileStore _fileStore;
     private readonly IReimbursementRepository _repository;
     private readonly ReceiptStorageOptions _storageOptions;
     private readonly DecisionPolicyOptions _policyOptions;
     private readonly ReceiptProcessingQueue _queue;
 
-    public ReceiptIntakeService(IWebHostEnvironment environment, IReimbursementRepository repository,
+    public ReceiptIntakeService(IReceiptFileStore fileStore, IReimbursementRepository repository,
         IOptions<ReceiptStorageOptions> storageOptions, IOptions<DecisionPolicyOptions> policyOptions,
         ReceiptProcessingQueue queue)
     {
-        _environment = environment;
+        _fileStore = fileStore;
         _repository = repository;
         _storageOptions = storageOptions.Value;
         _policyOptions = policyOptions.Value;
@@ -59,32 +59,19 @@ public sealed class ReceiptIntakeService
 
         var extension = Path.GetExtension(input.FileName).ToLowerInvariant();
         var storedFileName = id + extension;
-        var storageRoot = ReceiptStoragePath.ResolveRoot(_environment, _storageOptions.Directory);
-        Directory.CreateDirectory(storageRoot);
-        var physicalPath = ReceiptStoragePath.ResolveFile(storageRoot, storedFileName);
-        var stagedPath = ReceiptStoragePath.ResolveFile(storageRoot,
-            $".{storedFileName}.{Guid.NewGuid():N}.tmp");
-        var createdFinal = false;
+        var createdObject = false;
         var persistAttempted = false;
         try
         {
-            await using (var output = new FileStream(stagedPath, FileMode.CreateNew, FileAccess.Write,
-                FileShare.None, 64 * 1024, FileOptions.Asynchronous))
-            {
-                await output.WriteAsync(input.Bytes, cancellationToken);
-                await output.FlushAsync(cancellationToken);
-            }
             try
             {
-                File.Move(stagedPath, physicalPath);
-                createdFinal = true;
+                createdObject = await _fileStore.PutIfAbsentAsync(storedFileName, input.Bytes,
+                    input.ContentType, sha256, cancellationToken);
             }
-            catch (IOException) when (input.SourceKey is not null && File.Exists(physicalPath))
+            catch (InvalidOperationException)
             {
-                // A previous attempt may have committed the bytes but died before SQL.
-                // Never overwrite a conflicting file or accept a partial write.
-                await VerifyExistingFileAsync(physicalPath, input.Bytes.LongLength, sha256,
-                    cancellationToken);
+                throw new ReceiptIntakeException(
+                    "Định danh nguồn đã có file khác nội dung; cần kiểm tra thủ công.");
             }
             var duplicate = await _repository.ExistsByFileHashAsync(sha256);
             var now = DateTime.UtcNow;
@@ -139,34 +126,9 @@ public sealed class ReceiptIntakeService
         {
             // After a database write starts, its result can be ambiguous on network failure.
             // Preserve the complete final file for source-key retry instead of orphaning a row.
-            if (createdFinal && !persistAttempted) File.Delete(physicalPath);
+            if (createdObject && !persistAttempted)
+                await _fileStore.DeleteAsync(storedFileName, CancellationToken.None);
             throw;
-        }
-        finally
-        {
-            if (File.Exists(stagedPath)) File.Delete(stagedPath);
-        }
-    }
-
-    private static async Task VerifyExistingFileAsync(string path, long expectedSize,
-        string expectedSha256, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await using var file = new FileStream(path, FileMode.Open, FileAccess.Read,
-                FileShare.Read, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
-            if (file.Length != expectedSize ||
-                !string.Equals(Convert.ToHexString(await SHA256.HashDataAsync(file, cancellationToken)),
-                    expectedSha256, StringComparison.OrdinalIgnoreCase))
-                throw new ReceiptIntakeException("File nguồn đã lưu không khớp nội dung; cần kiểm tra thủ công.");
-        }
-        catch (IOException)
-        {
-            throw new ReceiptIntakeException("File nguồn đang được ghi hoặc không thể đọc; hãy thử lại.");
-        }
-        catch (UnauthorizedAccessException)
-        {
-            throw new ReceiptIntakeException("Không có quyền kiểm tra file nguồn đã lưu.");
         }
     }
 

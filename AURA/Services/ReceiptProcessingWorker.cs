@@ -15,18 +15,18 @@ public sealed class ReceiptProcessingWorker : BackgroundService
     private readonly ReceiptProcessingQueue _queue;
     private readonly ReceiptProcessingOptions _options;
     private readonly ReceiptStorageOptions _storageOptions;
-    private readonly IWebHostEnvironment _environment;
+    private readonly IReceiptFileStore _fileStore;
     private readonly ILogger<ReceiptProcessingWorker> _logger;
 
     public ReceiptProcessingWorker(IServiceScopeFactory scopeFactory, ReceiptProcessingQueue queue,
         IOptions<ReceiptProcessingOptions> options, IOptions<ReceiptStorageOptions> storageOptions,
-        IWebHostEnvironment environment, ILogger<ReceiptProcessingWorker> logger)
+        IReceiptFileStore fileStore, ILogger<ReceiptProcessingWorker> logger)
     {
         _scopeFactory = scopeFactory;
         _queue = queue;
         _options = options.Value;
         _storageOptions = storageOptions.Value;
-        _environment = environment;
+        _fileStore = fileStore;
         _logger = logger;
     }
 
@@ -154,15 +154,19 @@ public sealed class ReceiptProcessingWorker : BackgroundService
 
         try
         {
-            var physicalPath = ResolveReceiptPath(request.StoredFileName);
-            if (!File.Exists(physicalPath))
+            var storedFile = await _fileStore.OpenReadAsync(request.StoredFileName,
+                extractionCancellation.Token);
+            if (storedFile is null)
                 throw new VisionExtractionException("RECEIPT_FILE_MISSING",
                     "Không tìm thấy file hóa đơn đã lưu để xử lý.");
-
-            await using var protectedFile = await ReceiptStoredFileIntegrity.OpenVerifiedAsync(
-                physicalPath, request.FileSizeBytes, request.FileSha256,
-                _storageOptions.MaxFileSizeMb, extractionCancellation.Token);
-            extractedFacts = await vision.ExtractFactsAsync(physicalPath, extractionCancellation.Token);
+            await using (storedFile)
+            {
+                var imageBytes = await ReceiptStoredFileIntegrity.ReadVerifiedAsync(storedFile,
+                    request.FileSizeBytes, request.FileSha256,
+                    _storageOptions.MaxFileSizeMb, extractionCancellation.Token);
+                extractedFacts = await vision.ExtractFactsAsync(imageBytes, request.StoredFileName,
+                    extractionCancellation.Token);
+            }
             ReceiptPrivacyClassifier.Apply(extractedFacts);
             var amountResolution = ReceiptAmountResolver.Resolve(request.ClaimedAmount, extractedFacts);
             extractedFacts.AmountSource = amountResolution.Source;
@@ -301,19 +305,6 @@ public sealed class ReceiptProcessingWorker : BackgroundService
         {
             extractionCancellation.Cancel();
             throw;
-        }
-    }
-
-    private string ResolveReceiptPath(string storedFileName)
-    {
-        try
-        {
-            var storageRoot = ReceiptStoragePath.ResolveRoot(_environment, _storageOptions.Directory);
-            return ReceiptStoragePath.ResolveFile(storageRoot, storedFileName);
-        }
-        catch (InvalidOperationException)
-        {
-            throw new VisionExtractionException("RECEIPT_PATH_INVALID", "Đường dẫn file hóa đơn không hợp lệ.");
         }
     }
 

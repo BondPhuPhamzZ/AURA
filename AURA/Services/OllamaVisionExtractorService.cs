@@ -27,8 +27,17 @@ public sealed class OllamaVisionExtractorService : IVisionExtractor
     public async Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
         CancellationToken cancellationToken = default)
     {
-        var input = await ReceiptExtractionContract.LoadInputAsync(physicalImagePath, _options.PolicyPath,
-            _environment.ContentRootPath, cancellationToken);
+        if (!File.Exists(physicalImagePath))
+            throw new VisionExtractionException("IMAGE_NOT_FOUND", "Không tìm thấy ảnh hóa đơn cần phân tích.");
+        var bytes = await File.ReadAllBytesAsync(physicalImagePath, cancellationToken);
+        return await ExtractFactsAsync(bytes, Path.GetFileName(physicalImagePath), cancellationToken);
+    }
+
+    public async Task<ReceiptExtractionDto> ExtractFactsAsync(ReadOnlyMemory<byte> imageBytes,
+        string imageFileName, CancellationToken cancellationToken = default)
+    {
+        var input = await ReceiptExtractionContract.LoadInputAsync(imageBytes, imageFileName,
+            _options.PolicyPath, _environment.ContentRootPath, cancellationToken);
         var schema = ReceiptExtractionContract.BuildResponseSchema();
         var schemaJson = JsonSerializer.Serialize(schema);
 

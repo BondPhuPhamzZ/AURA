@@ -1,0 +1,59 @@
+# Shared private receipt storage
+
+## Status
+
+AURA now has a storage boundary for local files and an opt-in Google Cloud Storage (GCS) adapter.
+The default remains `LocalFileSystem`; no cloud bucket, credentials, hosting settings, or receipt
+data are changed by this code. The GCS adapter is not production-validated until a private bucket
+is provisioned and an authenticated integration test is run in the target environment.
+
+Images are stored with generated request IDs and extensions, not user-supplied object names. The
+GCS adapter uses create-only generation preconditions; an existing key is reused only when its
+size and SHA-256 match. On reads, AURA checks object size, downloads a pinned generation, then
+checks the stored size and SHA-256 against SQL before sending bytes to the existing extraction,
+semantic validation, privacy triage, and deterministic policy pipeline. The application serves
+image bytes through its controller; it does not expose bucket URLs or generate signed URLs.
+
+## GCS configuration (opt-in only)
+
+Create a dedicated private bucket, enable [uniform bucket-level access](https://cloud.google.com/storage/docs/uniform-bucket-level-access) and [public access prevention](https://cloud.google.com/storage/docs/public-access-prevention),
+and give a dedicated runtime service account only the bucket-scoped `Storage Object User`
+([`roles/storage.objectUser`](https://cloud.google.com/storage/docs/access-control/iam-roles)) role. Do not reuse the Drive read-only service account. Keep its JSON
+credential outside the repository and deployment package. On managed Google Cloud compute, prefer
+an attached service account / Application Default Credentials over a downloadable key; the current
+adapter is configured for an external JSON key, so that support should be added before relying on
+keyless managed identity.
+
+Configure the following app settings only after the bucket and IAM policy are ready:
+
+```text
+ReceiptStorage__Provider=GoogleCloudStorage
+ReceiptStorage__GoogleCloudStorage__Bucket=<private bucket name>
+ReceiptStorage__GoogleCloudStorage__Prefix=aura/receipts
+ReceiptStorage__GoogleCloudStorage__ServiceAccountJsonPath=<absolute path outside the app/repository>
+ReceiptStorage__MaxFileSizeMb=5
+```
+
+Do not add the JSON contents, private key, bucket URLs, or local credential path to source control.
+The currently configured Drive folder is a separate source; Drive originals are not deleted by this
+storage adapter.
+
+## Safe rollout and recovery gates
+
+1. Keep `LocalFileSystem` until a test bucket is private and restricted to the application identity.
+2. In an isolated Development/staging DB, verify health check, upload, readback, SHA-256, worker
+   extraction, and a repeated source scan. Confirm a missing object fails closed and is not approved.
+3. Verify object deletion is not enabled by a lifecycle rule before pending SQL jobs have completed.
+   No application retention cleanup is implemented here. In particular, do not set a one-day bucket
+   lifecycle rule: pending/retry jobs must keep their source bytes until terminal processing and any
+   approved retention period.
+4. Test two app instances against the same private bucket and shared SQL, including object readback
+   from the second instance, a lost SQL lease, provider throttling, and retry after restart.
+5. Back up and restore the SQL database and object data together; record RPO/RTO and demonstrate that
+   restored rows still resolve to the correct object generation and hash.
+6. Only after those checks may the storage provider be enabled in a hosting environment. Keep the
+   SQL distributed AI gate disabled until multi-host chaos/load tests and backup/restore gates pass.
+
+This adapter does not by itself make the system production-ready: business identity/authorization,
+retention/legal approval, malware scanning, monitoring/alerting, provider privacy assurances, and
+multi-host operational evidence remain separate release gates.

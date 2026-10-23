@@ -31,12 +31,21 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
     public async Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
         CancellationToken cancellationToken = default)
     {
+        if (!File.Exists(physicalImagePath))
+            throw new VisionExtractionException("IMAGE_NOT_FOUND", "Không tìm thấy ảnh hóa đơn cần phân tích.");
+        var bytes = await File.ReadAllBytesAsync(physicalImagePath, cancellationToken);
+        return await ExtractFactsAsync(bytes, Path.GetFileName(physicalImagePath), cancellationToken);
+    }
+
+    public async Task<ReceiptExtractionDto> ExtractFactsAsync(ReadOnlyMemory<byte> imageBytes,
+        string imageFileName, CancellationToken cancellationToken = default)
+    {
         if (string.IsNullOrWhiteSpace(_options.ApiKey))
             throw new VisionExtractionException("AI_NOT_CONFIGURED",
                 "OpenRouter API chưa được cấu hình; hồ sơ cần được kiểm tra thủ công.");
 
-        var input = await ReceiptExtractionContract.LoadInputAsync(physicalImagePath, _options.PolicyPath,
-            _environment.ContentRootPath, cancellationToken);
+        var input = await ReceiptExtractionContract.LoadInputAsync(imageBytes, imageFileName,
+            _options.PolicyPath, _environment.ContentRootPath, cancellationToken);
         var responseSchema = ReceiptExtractionContract.BuildResponseSchema();
 
         var firstFacts = await RequestFactsWithMalformedRetryAsync(

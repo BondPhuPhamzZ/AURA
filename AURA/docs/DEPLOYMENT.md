@@ -76,12 +76,26 @@ OpenRouter__ApiKey=<OPENROUTER_KEY_MỚI>
 OpenRouter__Model=qwen/qwen3.8-flash
 OpenRouter__ReasoningEffort=none
 ConnectionStrings__DefaultConnection=<SQL_SERVER_CONNECTION_STRING>
-Database__ApplyMigrationsOnStartup=true
+Database__ApplyMigrationsOnStartup=false
+ReceiptStorage__Provider=LocalFileSystem
 ReceiptStorage__Directory=App_Data/receipts
 ReceiptStorage__MaxFileSizeMb=5
 ```
 
-Sau migration đầu tiên chạy thành công, nên đổi `Database__ApplyMigrationsOnStartup=false` và recycle application pool. Không đặt key vào `appsettings.json`, publish profile hoặc ảnh/video.
+Giữ `Database__ApplyMigrationsOnStartup=false` mặc định. Chỉ bật trong một cửa sổ migration có backup đã xác minh, kế hoạch rollback và người vận hành theo dõi; recycle pool sau khi migration hoàn tất. Không đặt key vào `appsettings.json`, publish profile hoặc ảnh/video.
+
+### Shared GCS storage (not yet approved for live use)
+
+Source có adapter tùy chọn, nhưng giữ `ReceiptStorage__Provider=LocalFileSystem` cho tới khi bucket test được tạo private, bật uniform bucket-level access và public access prevention, cấp identity riêng quyền tối thiểu ở bucket, rồi hoàn thành [runbook kiểm thử shared storage](SHARED_RECEIPT_STORAGE.md). Không dùng Google Drive folder làm object storage hay tái dùng Drive read-only service account. Chưa có bucket key/environment variables cần thêm vào SmarterASP ở thời điểm này; không chuyển live host sang GCS chỉ bằng cách đổi provider.
+
+Khi các gate staging đã qua, các khóa cấu hình (không chứa credential value) là:
+
+```text
+ReceiptStorage__Provider=GoogleCloudStorage
+ReceiptStorage__GoogleCloudStorage__Bucket=<private bucket name>
+ReceiptStorage__GoogleCloudStorage__Prefix=aura/receipts
+ReceiptStorage__GoogleCloudStorage__ServiceAccountJsonPath=<absolute external credential path>
+```
 
 ## 4. Publish bằng Web Deploy
 

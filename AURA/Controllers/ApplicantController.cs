@@ -11,17 +11,17 @@ namespace AURA.Controllers;
 
 public sealed class ApplicantController : Controller
 {
-    private readonly IWebHostEnvironment _environment;
     private readonly IReimbursementRepository _repository;
+    private readonly IReceiptFileStore _fileStore;
     private readonly ReceiptStorageOptions _storageOptions;
     private readonly ReceiptIntakeService _intake;
 
-    public ApplicantController(IWebHostEnvironment environment, IReimbursementRepository repository,
+    public ApplicantController(IReimbursementRepository repository, IReceiptFileStore fileStore,
         IOptions<ReceiptStorageOptions> storageOptions,
         ReceiptIntakeService intake)
     {
-        _environment = environment;
         _repository = repository;
+        _fileStore = fileStore;
         _storageOptions = storageOptions.Value;
         _intake = intake;
     }
@@ -36,15 +36,19 @@ public sealed class ApplicantController : Controller
         var request = await _repository.GetRequestByIdAsync(id);
         if (request is null || string.IsNullOrWhiteSpace(request.StoredFileName)) return NotFound();
 
-        var storageRoot = GetStorageRoot();
-        string fullPath;
-        try { fullPath = ReceiptStoragePath.ResolveFile(storageRoot, request.StoredFileName); }
-        catch (InvalidOperationException) { return NotFound(); }
-        if (!System.IO.File.Exists(fullPath)) return NotFound();
-
-        var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024,
-            FileOptions.Asynchronous | FileOptions.SequentialScan);
-        return File(stream, request.ContentType, enableRangeProcessing: true);
+        try
+        {
+            await using var stored = await _fileStore.OpenReadAsync(request.StoredFileName, cancellationToken);
+            if (stored is null) return NotFound();
+            var bytes = await ReceiptStoredFileIntegrity.ReadVerifiedAsync(stored,
+                request.FileSizeBytes, request.FileSha256, _storageOptions.MaxFileSizeMb, cancellationToken);
+            return File(new MemoryStream(bytes, writable: false), request.ContentType,
+                enableRangeProcessing: true);
+        }
+        catch (VisionExtractionException)
+        {
+            return NotFound();
+        }
     }
 
     [HttpPost]
@@ -193,11 +197,6 @@ public sealed class ApplicantController : Controller
         var request = await _repository.GetRequestByIdAsync(id);
         if (request is null) return NotFound(new { error = "Không tìm thấy hồ sơ." });
         return Json(ReimbursementResultDto.FromRequest(request));
-    }
-
-    private string GetStorageRoot()
-    {
-        return ReceiptStoragePath.ResolveRoot(_environment, _storageOptions.Directory);
     }
 
 }

@@ -39,6 +39,16 @@ internal static class ReceiptExtractionContract
         if (!File.Exists(fullImagePath))
             throw new VisionExtractionException("IMAGE_NOT_FOUND", "Không tìm thấy ảnh hóa đơn cần phân tích.");
 
+        var imageBytes = await File.ReadAllBytesAsync(fullImagePath, cancellationToken);
+        return await LoadInputAsync(imageBytes, Path.GetFileName(fullImagePath), policyPath,
+            contentRootPath, cancellationToken);
+    }
+
+    public static async Task<Input> LoadInputAsync(ReadOnlyMemory<byte> imageBytes, string imageFileName,
+        string policyPath, string contentRootPath, CancellationToken cancellationToken)
+    {
+        if (imageBytes.IsEmpty)
+            throw new VisionExtractionException("IMAGE_NOT_FOUND", "Không tìm thấy ảnh hóa đơn cần phân tích.");
         var contentRoot = Path.GetFullPath(contentRootPath);
         var fullPolicyPath = Path.GetFullPath(Path.Combine(contentRoot, policyPath));
         var contentRootPrefix = contentRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
@@ -48,10 +58,9 @@ internal static class ReceiptExtractionContract
             throw new VisionExtractionException("POLICY_NOT_FOUND",
                 "Không tìm thấy tài liệu chính sách bắt buộc; không thể trích xuất dữ kiện an toàn.");
 
-        var imageBytes = await File.ReadAllBytesAsync(fullImagePath, cancellationToken);
         var policy = await File.ReadAllTextAsync(fullPolicyPath, cancellationToken);
         var extractionRules = ExtractModelFacingRules(policy);
-        var mimeType = Path.GetExtension(fullImagePath).ToLowerInvariant() switch
+        var mimeType = Path.GetExtension(imageFileName).ToLowerInvariant() switch
         {
             ".png" => "image/png",
             ".jpg" or ".jpeg" => "image/jpeg",
@@ -79,7 +88,7 @@ internal static class ReceiptExtractionContract
             END_RECEIPT_EXTRACTION_CONTRACT
             """;
 
-        return new Input(Convert.ToBase64String(imageBytes), mimeType, systemPrompt);
+        return new Input(Convert.ToBase64String(imageBytes.Span), mimeType, systemPrompt);
     }
 
     private static string ExtractModelFacingRules(string policy)

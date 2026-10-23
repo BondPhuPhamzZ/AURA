@@ -33,6 +33,15 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
     public async Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
         CancellationToken cancellationToken = default)
     {
+        if (!File.Exists(physicalImagePath))
+            throw new VisionExtractionException("IMAGE_NOT_FOUND", "Không tìm thấy ảnh hóa đơn cần phân tích.");
+        var imageBytes = await File.ReadAllBytesAsync(physicalImagePath, cancellationToken);
+        return await ExtractFactsAsync(imageBytes, Path.GetFileName(physicalImagePath), cancellationToken);
+    }
+
+    public async Task<ReceiptExtractionDto> ExtractFactsAsync(ReadOnlyMemory<byte> imageBytes,
+        string imageFileName, CancellationToken cancellationToken = default)
+    {
         await using var capacityLease = await _coordinator.EnterAsync(cancellationToken);
         using var invocationCancellation = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken, capacityLease.LostToken);
@@ -52,7 +61,7 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
                 _logger.LogWarning(
                     "Skipping primary vision provider {PrimaryProvider} for {CooldownSeconds:F0}s; using {FallbackProvider}.",
                     primary, remainingCooldown.Value.TotalSeconds, fallback);
-                return await ExtractWithFallbackAsync(fallback, physicalImagePath, invocationToken,
+                return await ExtractWithFallbackAsync(fallback, imageBytes, imageFileName, invocationToken,
                     capacityLease);
             }
 
@@ -64,13 +73,13 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
         if (canFallback && _circuitBreaker.ShouldSkipPrimary(DateTime.UtcNow))
         {
             _execution.MarkPrimaryFailure("CIRCUIT_OPEN");
-            return await ExtractWithFallbackAsync(fallback, physicalImagePath, invocationToken,
+            return await ExtractWithFallbackAsync(fallback, imageBytes, imageFileName, invocationToken,
                 capacityLease);
         }
 
         try
         {
-            var result = await ExtractWithProviderAsync(primary, physicalImagePath, invocationToken);
+            var result = await ExtractWithProviderAsync(primary, imageBytes, imageFileName, invocationToken);
             await capacityLease.AssertOwnershipAsync(invocationToken);
             _circuitBreaker.RecordSuccess();
             await _coordinator.ClearCooldownAsync(primary, invocationToken);
@@ -110,7 +119,7 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
                 _logger.LogWarning(primaryFailure,
                     "Primary vision provider {PrimaryProvider} failed with {ErrorCode}; trying {FallbackProvider} once.",
                     primary, primaryFailure.Code, fallback);
-                return await ExtractWithFallbackAsync(fallback, physicalImagePath, invocationToken,
+                return await ExtractWithFallbackAsync(fallback, imageBytes, imageFileName, invocationToken,
                     capacityLease);
             }
 
@@ -118,7 +127,8 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
         }
     }
 
-    private async Task<ReceiptExtractionDto> ExtractWithFallbackAsync(string fallback, string imagePath,
+    private async Task<ReceiptExtractionDto> ExtractWithFallbackAsync(string fallback,
+        ReadOnlyMemory<byte> imageBytes, string imageFileName,
         CancellationToken cancellationToken,
         VisionInvocationCoordinator.VisionInvocationLease capacityLease)
     {
@@ -133,7 +143,7 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
 
         try
         {
-            var result = await ExtractWithProviderAsync(fallback, imagePath, cancellationToken);
+            var result = await ExtractWithProviderAsync(fallback, imageBytes, imageFileName, cancellationToken);
             await capacityLease.AssertOwnershipAsync(cancellationToken);
             await _coordinator.ClearCooldownAsync(fallback, cancellationToken);
             _execution.MarkSuccess(fallback, fallbackUsed: true);
@@ -160,11 +170,11 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
         }
     }
 
-    private Task<ReceiptExtractionDto> ExtractWithProviderAsync(string provider, string physicalImagePath,
-        CancellationToken cancellationToken) => provider.ToUpperInvariant() switch
+    private Task<ReceiptExtractionDto> ExtractWithProviderAsync(string provider, ReadOnlyMemory<byte> imageBytes,
+        string imageFileName, CancellationToken cancellationToken) => provider.ToUpperInvariant() switch
         {
-            "OPENROUTER" => _openRouter.ExtractFactsAsync(physicalImagePath, cancellationToken),
-            "OLLAMA" => _ollama.ExtractFactsAsync(physicalImagePath, cancellationToken),
+            "OPENROUTER" => _openRouter.ExtractFactsAsync(imageBytes, imageFileName, cancellationToken),
+            "OLLAMA" => _ollama.ExtractFactsAsync(imageBytes, imageFileName, cancellationToken),
             _ => throw new InvalidOperationException($"Vision provider '{provider}' is not supported.")
         };
 

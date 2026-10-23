@@ -2,6 +2,10 @@
 
 This is a **source-and-evidence assessment**, not a certification or a statement that the public host runs this commit. The dated proposal, build log and five-slide deck remain the contest submission snapshot. See the [post-contest submission addendum](../submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) for a short outward-facing update.
 
+## Source update — 24 October 2026
+
+The historical assessment below remains as-of 23 October. Since then, the code adds an `IReceiptFileStore` abstraction, a local default and an opt-in GCS adapter. GCS uploads are create-only and reads are generation-pinned; image bytes are size/hash-verified against SQL before inference. The adapter has not been exercised with a real bucket or IAM identity, so this does not change the **NO-GO** decision for multi-host/live production. Current local verification is Debug/Release **287/287**, LocalDB integration **15/15**, Release build 0 warnings/errors, EF no pending model changes, and online NuGet vulnerability audits clear for app/tests. See [the storage rollout gates](SHARED_RECEIPT_STORAGE.md). Retention deletion remains intentionally absent until retry/recovery and retention approval are addressed.
+
 ## Decision
 
 | Level | Decision | Basis and limit |

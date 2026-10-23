@@ -473,7 +473,8 @@ public sealed class DriveSandboxIntakeTests
 
     private static ReceiptIntakeService CreateIntake(string root, FakeRepository repository,
         ReceiptProcessingQueue? queue = null) =>
-        new(new TestEnvironment(root), repository,
+        new(new LocalReceiptFileStore(new TestEnvironment(root),
+                OptionsFactory.Create(new ReceiptStorageOptions { Directory = "receipts", MaxFileSizeMb = 5 })), repository,
             OptionsFactory.Create(new ReceiptStorageOptions { Directory = "receipts", MaxFileSizeMb = 5 }),
             OptionsFactory.Create(new DecisionPolicyOptions()), queue ?? new ReceiptProcessingQueue());
 

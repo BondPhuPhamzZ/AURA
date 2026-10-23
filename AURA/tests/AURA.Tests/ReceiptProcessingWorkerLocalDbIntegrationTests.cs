@@ -603,6 +603,9 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             .AddScoped(_ => new AppDbContext(options))
             .AddScoped(_ => new VisionExecutionContext())
             .AddScoped(_ => extractor)
+            .AddSingleton<AURA.Interfaces.IReceiptFileStore>(_ => new LocalReceiptFileStore(
+                new TestEnvironment(root), Microsoft.Extensions.Options.Options.Create(
+                    new ReceiptStorageOptions { Directory = storageDirectory })))
             .BuildServiceProvider();
         var worker = new ReceiptProcessingWorker(
             services.GetRequiredService<IServiceScopeFactory>(), new ReceiptProcessingQueue(),
@@ -614,7 +617,7 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             {
                 Directory = storageDirectory
             }),
-            new TestEnvironment(root), NullLogger<ReceiptProcessingWorker>.Instance);
+            services.GetRequiredService<AURA.Interfaces.IReceiptFileStore>(), NullLogger<ReceiptProcessingWorker>.Instance);
         var method = typeof(ReceiptProcessingWorker).GetMethod("ProcessNextAsync",
             BindingFlags.Instance | BindingFlags.NonPublic)!;
         var task = (Task)method.Invoke(worker, [CancellationToken.None])!;
@@ -637,6 +640,8 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     {
         public Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
             CancellationToken cancellationToken = default) => Task.FromResult(response());
+        public Task<ReceiptExtractionDto> ExtractFactsAsync(ReadOnlyMemory<byte> imageBytes, string imageFileName,
+            CancellationToken cancellationToken = default) => Task.FromResult(response());
     }
 
     private sealed class PathAssertingExtractor(string expectedPath) : IVisionExtractor
@@ -647,6 +652,13 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             Assert.Equal(Path.GetFullPath(expectedPath), Path.GetFullPath(physicalImagePath));
             return Task.FromResult(new ReceiptExtractionDto());
         }
+        public Task<ReceiptExtractionDto> ExtractFactsAsync(ReadOnlyMemory<byte> imageBytes, string imageFileName,
+            CancellationToken cancellationToken = default)
+        {
+            Assert.Equal(Path.GetFileName(expectedPath), imageFileName);
+            Assert.Equal(File.ReadAllBytes(expectedPath), imageBytes.ToArray());
+            return Task.FromResult(new ReceiptExtractionDto());
+        }
     }
 
     private sealed class BlockingExtractor(TaskCompletionSource<bool> entered,
@@ -654,6 +666,13 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     {
         public async Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
             CancellationToken cancellationToken = default)
+        {
+            entered.SetResult(true);
+            await release.Task.WaitAsync(cancellationToken);
+            return new ReceiptExtractionDto();
+        }
+        public async Task<ReceiptExtractionDto> ExtractFactsAsync(ReadOnlyMemory<byte> imageBytes,
+            string imageFileName, CancellationToken cancellationToken = default)
         {
             entered.SetResult(true);
             await release.Task.WaitAsync(cancellationToken);

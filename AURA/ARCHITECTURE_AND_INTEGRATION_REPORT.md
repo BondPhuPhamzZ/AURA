@@ -2,7 +2,7 @@
 
 ## AURA Automated Underwriting and Reimbursement AI
 
-Cập nhật ngày 02/10/2026. Tài liệu mô tả baseline sau feedback Sprint 1 và phần hardening chuẩn bị Sprint 2. Cách đánh giá chuẩn là clone và chạy localhost theo README. OpenRouter vẫn là provider chính; Ollama là tùy chọn local/offline có kiểm soát và mặc định chưa bật auto-fallback.
+Cập nhật ngày 24/10/2026. Đây là mô tả kiến trúc source; không xác nhận live host đang chạy commit này. Cách đánh giá chuẩn là clone và chạy localhost theo hướng dẫn repo. OpenRouter vẫn là provider chính; Ollama là tùy chọn local/offline có kiểm soát và mặc định chưa bật auto-fallback. Receipt storage mặc định vẫn là local filesystem; có GCS adapter opt-in nhưng chưa cấu hình hoặc kiểm thử trên bucket thật.
 
 ## 1. Sơ đồ thành phần
 
@@ -49,7 +49,7 @@ SmarterASP.NET / IIS / ASP.NET Core 8
     ├── DB-backed receipt queue + background worker
     ├── PolicyDecisionEngine
     ├── SQL Server: hồ sơ và audit event
-    └── App_Data/receipts: ảnh riêng tư, tên ngẫu nhiên và SHA-256
+    └── IReceiptFileStore: local App_Data/receipts mặc định; GCS private adapter opt-in, chưa provision
              │
              ▼
     ConfiguredVisionExtractor
@@ -198,4 +198,4 @@ Kết quả fixture tổng hợp không phải accuracy trên tập hóa đơn �
 | Audit event và timeline projection | Giữ dấu vết đầy đủ nhưng UI chỉ hiển thị một hồ sơ nhất quán |
 | Fixture tổng hợp tái lập | BGK có expected result rõ ràng mà không nhận dữ liệu cá nhân |
 
-Baseline chưa hỗ trợ PDF/nhiều trang, antivirus, tra cứu MST/e-invoice, tỷ giá, object storage hoặc authentication thực. Ngữ cảnh người gửi hiện là metadata demo, chưa phải danh tính đã xác thực. Image resize chưa bật vì cần benchmark lại độ chính xác OCR trước khi thay đổi pixel đầu vào. Xem thêm [workflow đầy đủ](submission/AURA_WORKFLOW_SPEC.md), [runbook](docs/RUNBOOK.md), [trạng thái hiện hành](docs/CURRENT_PROJECT_STATUS.md), [evaluation evidence](docs/EVALUATION_EVIDENCE.md) và [hướng dẫn deploy](docs/DEPLOYMENT.md).
+Baseline chưa hỗ trợ PDF/nhiều trang, antivirus, tra cứu MST/e-invoice, tỷ giá hoặc authentication thực. Có GCS adapter cho object storage nhưng chưa có bucket/IAM thật, cross-host test hay restore evidence; không tuyên bố shared-storage readiness. Ngữ cảnh người gửi hiện là metadata demo, chưa phải danh tính đã xác thực. Image resize chưa bật vì cần benchmark lại độ chính xác OCR trước khi thay đổi pixel đầu vào. Xem thêm [workflow đầy đủ](submission/AURA_WORKFLOW_SPEC.md), [runbook](docs/RUNBOOK.md), [trạng thái hiện hành](docs/CURRENT_PROJECT_STATUS.md), [shared-storage rollout gates](docs/SHARED_RECEIPT_STORAGE.md), [evaluation evidence](docs/EVALUATION_EVIDENCE.md) và [hướng dẫn deploy](docs/DEPLOYMENT.md).
