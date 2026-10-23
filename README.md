@@ -1,126 +1,66 @@
-# AURA — Controlled AI Reimbursement Review
+# AURA — AI-Assisted Reimbursement Review
 
-> **Current source status (23 October 2026):** 231/231 offline tests pass; the Release build has 0 warnings and 0 errors; EF Core reports no pending model changes. A Development-only, Restricted-folder Drive run ingested 100 synthetic files as exactly 100 durable jobs after an idempotency fix; 98 completed and 2 stopped fail-safe on model/provider errors. A separate, explicitly consented 15-image localhost test completed 15/15 through manual upload. A storage-path guard now rejects configurations that put receipts under `wwwroot`; the dataset preflight confirms that the 100-file batch contains 70 byte-identical copies. These are pipeline results, **not decision-accuracy or production-readiness claims**. The Drive connector remains off by default, and this source has **not** been republished to the public demo.
+AURA helps review employee expense receipts. It extracts candidate facts from an image, validates them with a schema and semantic checks, then applies deterministic C# policy. Cases that are uncertain or need authority go to a human reviewer. The model does not approve or pay expenses.
 
-AURA is a supervised first-line assistant for employee reimbursement review. A vision model extracts structured facts from receipt images; semantic validation checks the evidence; deterministic C# policy—not the model—selects the route. Uncertain or exceptional cases stop for human review and are recorded in an audit timeline.
+## Processing flow
 
-## How it works
+`JPG/PNG upload → private receipt storage → durable SQL queue → vision extraction → schema/Semantic validation → policy routing → human review when required → audit trail`
 
-```text
-JPG/PNG upload (up to 10 images per selection; 5 MB each)
-  -> validate and persist each case -> return HTTP 202
-  -> SQL-backed worker claims a job with a lease
-  -> vision model extracts facts as JSON
-  -> schema + semantic validation; at most one repair attempt
-  -> deterministic C# policy chooses AUTO_APPROVE or ESCALATE_*
-  -> employee/manager handles exceptions -> audit history
-```
+The current source supports manual image intake, a durable background queue, privacy-risk triage, reviewer actions, and dashboard/CSV reporting. The optional Google Drive connector is a **Development-only synthetic sandbox**, disabled by default; it is not a production mail or Drive integration.
 
-Each image is an independent case and status URL; there is no server-side batch transaction. AI concurrency is limited to one request per process. SQL is the durable queue source of truth; leases allow interrupted work to be reclaimed. A provider failure may end in `FAILED` and require operator handling—automatic retry is not guaranteed for every failure type.
+## Run locally (Windows / PowerShell)
 
-The default vision route is Qwen3.8 Flash through OpenRouter. Requests ask the provider not to collect data (`data_collection=deny`); **Strict Zero Data Retention is not confirmed or claimed**. The model extracts facts only. C# policy applies business rules, and humans decide escalations.
-
-## Current scope and safety boundary
-
-- Manual intake accepts JPG/PNG up to 5 MB; the UI allows up to 10 images in one selection and submits them sequentially. PDF and multi-page documents are not supported.
-- The dashboard provides processing summaries and CSV export. Sensitive raw AI facts are not included in the management CSV.
-- A Drive connector exists only as a **Development + loopback synthetic sandbox**. It is read-only, off by default, and not a production intake channel. Email is not integrated.
-- A 5 → 20 → 100-file local Drive run found and fixed metadata-only duplicate ingestion. The clean 100-file rerun created exactly 100 jobs, with 98 completed and 2 fail-safe errors; poll/restart did not duplicate jobs. Only 30 image contents are distinct, so this is not a 100-receipt accuracy claim.
-- Production gates remain open: authentication/RBAC, malware scanning and quarantine, managed private object storage, approved retention and deletion, backup/restore, provider privacy verification, distributed coordination, monitoring, and capacity testing. The new `wwwroot` path guard is a misconfiguration check, **not** access control.
-
-The public live URL may run an earlier published build. It is not evidence that the current branch or Drive connector is deployed.
-
-## Public demo and submission artifacts
-
-These repository files are public and were checked to exist in the public `master` branch. The proposal and build log are **dated submission snapshots**; use the current-status and architecture documents below for the latest source state.
-
-For the 23 October source, read the [post-contest addendum](AURA/submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) and [readiness and scale assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md). The submitted proposal, build log and slides are preserved as historical evidence; the newer source is **not** confirmed published at the live URL.
-
-| Resource | Link |
-|---|---|
-| Live demo (earlier published build) | [Open AURA](https://bondphupham-001-site1.ltempurl.com/) |
-| Live health endpoint | [Open `/healthz`](https://bondphupham-001-site1.ltempurl.com/healthz) |
-| Public repository | [BondPhuPhamzZ/AURA](https://github.com/BondPhuPhamzZ/AURA) |
-| Final five-slide deck | [Download PPTX](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx) |
-| English proposal (submission snapshot) | [Download PDF](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_EN.pdf) |
-| Vietnamese proposal (submission snapshot) | [Download PDF](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_PROPOSAL_VI.pdf) |
-| Project build log (submission snapshot) | [Download PDF](https://raw.githubusercontent.com/BondPhuPhamzZ/AURA/master/AURA/submission/AURA_BUILD_LOG.pdf) |
-
-No evaluation-key folder or private Drive folder is linked from this public README. Credentials and any reviewer-only materials must be shared through an authorized private channel.
-
-## Clone and run locally (Windows)
-
-### Requirements
-
-- Windows 10/11, .NET 8 SDK, PowerShell, and SQL Server Express LocalDB.
-- An OpenRouter API key is needed only to process receipts through the default vision provider. Never commit it or paste it into shared logs.
-
-### 1. Clone and restore
+Prerequisites: Git, .NET 8 SDK, and SQL Server LocalDB. From the directory where you want the checkout:
 
 ```powershell
 git clone https://github.com/BondPhuPhamzZ/AURA.git
-cd AURA\AURA
+cd .\AURA
 dotnet tool restore
 dotnet restore
 ```
 
-### 2. Configure local secrets and database
-
-The checked-in default connection string targets a local database named `AuraDb`. Start LocalDB and apply the repository migrations before running the app:
+Store the OpenRouter key and local database connection string in .NET User Secrets (never commit either value):
 
 ```powershell
-sqllocaldb start MSSQLLocalDB
+dotnet user-secrets set "OpenRouter:ApiKey" "<YOUR_OPENROUTER_API_KEY>"
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\MSSQLLocalDB;Database=AuraDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0"
+```
+
+Create or update the local schema, then build, test, and run:
+
+```powershell
 dotnet ef database update
+dotnet build AURA.csproj -c Release
+dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release
+dotnet run --project AURA.csproj
 ```
 
-To use vision extraction, store your own OpenRouter key in .NET User Secrets (replace the placeholder locally; never commit the real value):
+Open the local URL printed by `dotnet run`. Database migrations are **not** applied automatically at startup by default. For the opt-in SQL/LocalDB integration tests, start the existing LocalDB instance if needed and run:
 
 ```powershell
-dotnet user-secrets set "OpenRouter:ApiKey" "REPLACE_WITH_YOUR_OWN_KEY"
+$env:AURA_RUN_LOCALDB_INTEGRATION = "1"
+dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release
+Remove-Item Env:\AURA_RUN_LOCALDB_INTEGRATION
 ```
 
-Do not run `dotnet user-secrets list` while screen-sharing or recording; it can print secret values. The Drive connector remains disabled unless explicitly configured for a local synthetic-only test. Do not enable it on a public host or point it at personal receipts.
+These integration tests create uniquely named temporary databases and remove them when complete. Use a LocalDB instance owned by the current Windows account.
 
-### 3. Run AURA
+## Privacy and readiness
 
-```powershell
-dotnet run
-```
+The default storage provider is local filesystem storage; private GCS support is opt-in and has not been validated against a real bucket in this repository's current evidence. OpenRouter requests ask for provider data collection to be denied, but **Strict Zero Data Retention is not enabled or verified**. Privacy triage runs after extraction, so do not use sensitive real receipts for an unapproved provider route.
 
-Open the local URL printed by ASP.NET Core (the default launch profile uses `http://localhost:5000`).
+This is a supervised MVP / contest project, **not production-ready software**. Authentication/RBAC, malware scanning and quarantine for manual uploads, approved retention and restore, real private-cloud storage validation, provider-specific privacy verification, and multi-host load/chaos testing remain open gates. See the [current status and checklist](AURA/docs/CURRENT_PROJECT_STATUS.md) and [readiness/scale assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md) before any pilot.
 
-### 4. Run offline checks
+## Project documents
 
-From the `AURA\AURA` project directory:
+- [Local setup for reviewers](AURA/docs/JUDGE_LOCAL_SETUP.md)
+- [Operational runbook](AURA/docs/RUNBOOK.md)
+- [Business rules](AURA/BUSINESS_RULES.md)
+- [Shared private receipt storage design](AURA/docs/SHARED_RECEIPT_STORAGE.md)
+- [English proposal — contest snapshot](AURA/submission/AURA_PROPOSAL_EN.pdf)
+- [Vietnamese proposal — contest snapshot](AURA/submission/AURA_PROPOSAL_VI.pdf)
+- [Contest slides — submitted snapshot](AURA/submission/AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx)
+- [Build log — submitted snapshot](AURA/submission/AURA_BUILD_LOG.pdf)
+- [Post-contest status addendum](AURA/submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md)
 
-```powershell
-dotnet build AURA.csproj -c Release --no-restore
-dotnet test tests\AURA.Tests\AURA.Tests.csproj -c Release --no-restore
-dotnet ef migrations has-pending-model-changes --no-build
-```
-
-The current branch baseline is 231 passing tests, a clean Release build, and no pending model changes. Offline tests do not call the paid vision API. A successful test run does not replace security, privacy, independent accuracy, or production load testing.
-
-Stop the app with `Ctrl+C`. Do not reset or delete the database as a routine shutdown step.
-
-## Current technical documentation
-
-- [Current project status](AURA/docs/CURRENT_PROJECT_STATUS.md)
-- [Drive sandbox checklist and GO/NO-GO gates](AURA/docs/DRIVE_SANDBOX_CHECKLIST.md)
-- [Drive sandbox local setup and rollback](AURA/docs/DRIVE_SANDBOX_LOCAL.md)
-- [Drive end-to-end evidence and limits](AURA/docs/DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md)
-- [Prior Drive hardening evidence and open gates](AURA/docs/DRIVE_PIPELINE_HARDENING_2026-10-22.md)
-- [Measured 100-file Drive and consented 15-file local validation](AURA/docs/DRIVE_MVP_VALIDATION_2026-10-22.md)
-- [Storage hardening and dataset uniqueness gate](AURA/docs/STORAGE_AND_DATASET_GATE_2026-10-23.md)
-- [Architecture and integration report](AURA/ARCHITECTURE_AND_INTEGRATION_REPORT.md)
-- [Business rules (runtime source)](AURA/BUSINESS_RULES.md)
-- [Operations runbook](AURA/docs/RUNBOOK.md)
-- [End-to-end workflow specification](AURA/submission/AURA_WORKFLOW_SPEC.md)
-- [Submission index](AURA/submission/README.md)
-- [Evaluation evidence summary](AURA/docs/EVALUATION_EVIDENCE.md)
-- [User-study protocol](AURA/docs/USER_STUDY_PROTOCOL.md)
-
-## Maintainer
-
-Pham Gia Phu — The Deciders, VNG Track, MLAI Hackathon 2026.
+The proposal, slides, and build log are preserved submission snapshots; consult the current status report for later source changes. Do not commit API keys, connection strings, User Secrets, receipt images, database files, raw provider responses, or private evidence.
