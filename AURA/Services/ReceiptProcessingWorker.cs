@@ -142,6 +142,10 @@ public sealed class ReceiptProcessingWorker : BackgroundService
 
         var request = await db.ReimbursementRequests.SingleAsync(x => x.Id == requestId, cancellationToken);
         request.ProviderErrorCode = null;
+        using var extractionCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        using var renewalCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var renewalTask = MaintainLeaseAsync(request.Id, request.ProcessingAttemptCount,
+            extractionCancellation, renewalCancellation.Token);
         var stopwatch = Stopwatch.StartNew();
         ReceiptExtractionDto? extractedFacts = null;
         VisionExtractionException? providerFailure = null;
@@ -156,8 +160,8 @@ public sealed class ReceiptProcessingWorker : BackgroundService
 
             await using var protectedFile = await ReceiptStoredFileIntegrity.OpenVerifiedAsync(
                 physicalPath, request.FileSizeBytes, request.FileSha256,
-                _storageOptions.MaxFileSizeMb, cancellationToken);
-            extractedFacts = await vision.ExtractFactsAsync(physicalPath, cancellationToken);
+                _storageOptions.MaxFileSizeMb, extractionCancellation.Token);
+            extractedFacts = await vision.ExtractFactsAsync(physicalPath, extractionCancellation.Token);
             ReceiptPrivacyClassifier.Apply(extractedFacts);
             var amountResolution = ReceiptAmountResolver.Resolve(request.ClaimedAmount, extractedFacts);
             extractedFacts.AmountSource = amountResolution.Source;
@@ -194,9 +198,9 @@ public sealed class ReceiptProcessingWorker : BackgroundService
                 if (VisionProviderFailurePolicy.IsBlocking(exception.Code)) providerFailure = exception;
             }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (extractionCancellation.IsCancellationRequested)
         {
-            // Leave the lease in place. A later worker can safely reclaim it after expiry.
+            // Shutdown or lost lease: never save an extraction with uncertain ownership.
             throw;
         }
         catch (Exception exception)
@@ -211,6 +215,22 @@ public sealed class ReceiptProcessingWorker : BackgroundService
         }
         finally
         {
+            renewalCancellation.Cancel();
+            await renewalTask;
+            if (!extractionCancellation.IsCancellationRequested)
+            {
+                // A renewal can finish just as the timer is stopped. Reload after it has
+                // fully stopped, and only while this attempt still owns a live lease.
+                var currentVersion = await db.ReimbursementRequests.AsNoTracking()
+                    .Where(x => x.Id == request.Id &&
+                        x.ProcessingState == ProcessingStates.Processing &&
+                        x.ProcessingAttemptCount == request.ProcessingAttemptCount &&
+                        x.ProcessingLeaseUntil > DateTime.UtcNow)
+                    .Select(x => x.RowVersion)
+                    .SingleOrDefaultAsync(cancellationToken) ??
+                    throw new InvalidOperationException("Receipt processing lease ownership was lost before save.");
+                db.Entry(request).Property(x => x.RowVersion).OriginalValue = currentVersion;
+            }
             stopwatch.Stop();
         }
 
@@ -244,6 +264,42 @@ public sealed class ReceiptProcessingWorker : BackgroundService
         return providerFailure is null
             ? ProcessResult.Success
             : ProcessResult.Blocked(providerFailure.Code, providerFailure.RetryAfter);
+    }
+
+    private async Task MaintainLeaseAsync(string requestId, int attempt,
+        CancellationTokenSource extractionCancellation, CancellationToken stopToken)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(
+            Math.Min(30, Math.Max(1, _options.LeaseSeconds / 3))));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(stopToken))
+            {
+                if (stopToken.IsCancellationRequested) break;
+                await using var scope = _scopeFactory.CreateAsyncScope();
+                var database = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var now = DateTime.UtcNow;
+                var renewed = await database.ReimbursementRequests
+                    .Where(request => request.Id == requestId &&
+                        request.ProcessingState == ProcessingStates.Processing &&
+                        request.ProcessingAttemptCount == attempt &&
+                        request.ProcessingLeaseUntil > now)
+                    .ExecuteUpdateAsync(updates => updates.SetProperty(
+                        request => request.ProcessingLeaseUntil,
+                        now.AddSeconds(_options.LeaseSeconds)), CancellationToken.None);
+                if (renewed != 1)
+                    throw new InvalidOperationException("Receipt processing lease ownership was lost.");
+            }
+        }
+        catch (OperationCanceledException) when (stopToken.IsCancellationRequested)
+        {
+            // Normal shutdown after extraction or host cancellation.
+        }
+        catch
+        {
+            extractionCancellation.Cancel();
+            throw;
+        }
     }
 
     private string ResolveReceiptPath(string storedFileName)

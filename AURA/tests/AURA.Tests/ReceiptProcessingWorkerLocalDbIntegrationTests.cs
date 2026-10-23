@@ -316,10 +316,76 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
                 release.TrySetResult(true);
             }
 
-            await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => first);
+            var lost = await Assert.ThrowsAsync<InvalidOperationException>(() => first);
+            Assert.Contains("lease ownership was lost", lost.Message, StringComparison.Ordinal);
             await AssertStateAsync(options, id, ProcessingStates.Completed, 2, null);
             await using var finalDb = new AppDbContext(options);
             Assert.Equal(1, await finalDb.AuditLogs.CountAsync(a => a.RequestId == id));
+        });
+    }
+
+    [Fact]
+    public async Task Long_extraction_renews_its_lease_without_invalidating_terminal_write()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var id = await SeedAsync(options, root);
+            var entered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var processing = ProcessOnceAsync(options, root, new BlockingExtractor(entered, release),
+                leaseSeconds: 30);
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            DateTime? originalExpiry;
+            await using (var db = new AppDbContext(options))
+                originalExpiry = await db.ReimbursementRequests.Where(x => x.Id == id)
+                    .Select(x => x.ProcessingLeaseUntil).SingleAsync();
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(12));
+                await using var db = new AppDbContext(options);
+                var current = await db.ReimbursementRequests.AsNoTracking().SingleAsync(x => x.Id == id);
+                Assert.True(current.ProcessingLeaseUntil > originalExpiry);
+                Assert.Equal(1, current.ProcessingAttemptCount);
+            }
+            finally
+            {
+                release.TrySetResult(true);
+            }
+
+            await processing.WaitAsync(TimeSpan.FromSeconds(10));
+            await AssertStateAsync(options, id, ProcessingStates.Completed, 1, null);
+            await using var finalDb = new AppDbContext(options);
+            Assert.Equal(1, await finalDb.AuditLogs.CountAsync(a => a.RequestId == id));
+        });
+    }
+
+    [Fact]
+    public async Task Lease_heartbeat_cancels_extraction_after_ownership_changes()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var id = await SeedAsync(options, root);
+            var entered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var neverRelease = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var processing = ProcessOnceAsync(options, root,
+                new BlockingExtractor(entered, neverRelease), leaseSeconds: 30);
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+            await using (var db = new AppDbContext(options))
+                await db.ReimbursementRequests.Where(x => x.Id == id)
+                    .ExecuteUpdateAsync(update => update.SetProperty(x => x.ProcessingAttemptCount,
+                        x => x.ProcessingAttemptCount + 1));
+
+            var lost = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                processing.WaitAsync(TimeSpan.FromSeconds(20)));
+            Assert.Contains("lease ownership was lost", lost.Message, StringComparison.Ordinal);
+            await using var finalDb = new AppDbContext(options);
+            Assert.Equal(2, await finalDb.ReimbursementRequests.Where(x => x.Id == id)
+                .Select(x => x.ProcessingAttemptCount).SingleAsync());
+            Assert.Empty(await finalDb.AuditLogs.Where(x => x.RequestId == id).ToListAsync());
         });
     }
 
@@ -376,7 +442,8 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     private static async Task ProcessOnceAsync(DbContextOptions<AppDbContext> options,
-        string root, IVisionExtractor extractor, string storageDirectory = "receipts")
+        string root, IVisionExtractor extractor, string storageDirectory = "receipts",
+        int leaseSeconds = 600)
     {
         using var services = new ServiceCollection()
             .AddScoped(_ => new AppDbContext(options))
@@ -385,7 +452,10 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             .BuildServiceProvider();
         var worker = new ReceiptProcessingWorker(
             services.GetRequiredService<IServiceScopeFactory>(), new ReceiptProcessingQueue(),
-            Microsoft.Extensions.Options.Options.Create(new ReceiptProcessingOptions { MaxRateLimitAttempts = 3 }),
+            Microsoft.Extensions.Options.Options.Create(new ReceiptProcessingOptions
+            {
+                MaxRateLimitAttempts = 3, LeaseSeconds = leaseSeconds
+            }),
             Microsoft.Extensions.Options.Options.Create(new ReceiptStorageOptions
             {
                 Directory = storageDirectory
