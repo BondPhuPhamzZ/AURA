@@ -1,10 +1,21 @@
 # Tổng hợp bằng chứng đánh giá AURA
 
-**Mốc evidence hiện hành:** 14/10/2026
+**Mốc baseline nộp bài:** 14/10/2026. **Cập nhật trạng thái source:** 23/10/2026.
 
 **Mục đích:** tạo một chỉ mục công khai duy nhất cho các phép đo được dùng trong proposal, slide, Build Log, README và gói Demo Day.
 
-## Baseline hiện hành
+## Evidence hậu cuộc thi, không thay thế baseline nộp bài
+
+| Phép kiểm | Kết quả | Không được suy ra |
+|---|---|---|
+| Release test/build/EF 23/10 | 231/231 test pass; build 0 warning/error; EF không có pending model change | Production safety hoặc 231 hóa đơn đúng |
+| Drive local Development 5/20/100 | 100 file tạo đúng 100 job sau fix; 98 completed, 2 fail-safe; 30 nội dung ảnh khác nhau | 98% accuracy, 100 ca độc lập hoặc connector production |
+| 15 ảnh thật có consent | 15/15 hoàn tất qua manual localhost; 15 hash khác nhau | Accuracy, blind holdout hay Drive nhận ảnh thật |
+| Storage/dataset gate 23/10 | Chặn receipt storage dưới `wwwroot`; bộ 100 bị chặn khi yêu cầu 100 hash độc lập | RBAC, scanner hoặc bảo đảm privacy toàn diện |
+
+Chi tiết và các giới hạn nằm ở [MVP validation](DRIVE_MVP_VALIDATION_2026-10-22.md), [storage/dataset gate](STORAGE_AND_DATASET_GATE_2026-10-23.md) và [readiness assessment](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md). Source mới chưa được xác minh là đã publish lên host công khai. Test no-restore có cảnh báo `NU1900` do advisory feed không truy cập được trong invocation đó; không được diễn giải invocation này là một fresh dependency audit.
+
+## Baseline nộp bài ngày 14/10
 
 | Nhóm evidence | Kết quả đã xác minh | Ranh giới claim |
 |---|---|---|

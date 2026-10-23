@@ -1,5 +1,10 @@
 # Trạng thái hiện hành AURA ngày 23/10/2026
 
+Đánh giá về mức supervised MVP, yêu cầu Track A, phạm vi nghiệp vụ, UX reload
+và điều phối nhiều máy chủ nằm tại
+[readiness and scale assessment](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
+Các artifact cuộc thi được giữ nguyên; xem [addendum hậu cuộc thi](../submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md).
+
 > **Source hiện hành:** **231/231** Release tests pass, Release build 0
 > warning/error với `--no-restore`, EF không có pending model changes. Drive
 > synthetic sandbox vẫn chỉ chạy Development/loopback và tắt mặc định. Batch

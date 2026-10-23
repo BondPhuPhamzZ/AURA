@@ -34,6 +34,8 @@ The public live URL may run an earlier published build. It is not evidence that 
 
 These repository files are public and were checked to exist in the public `master` branch. The proposal and build log are **dated submission snapshots**; use the current-status and architecture documents below for the latest source state.
 
+For the 23 October source, read the [post-contest addendum](AURA/submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) and [readiness and scale assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md). The submitted proposal, build log and slides are preserved as historical evidence; the newer source is **not** confirmed published at the live URL.
+
 | Resource | Link |
 |---|---|
 | Live demo (earlier published build) | [Open AURA](https://bondphupham-001-site1.ltempurl.com/) |

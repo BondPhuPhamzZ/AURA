@@ -1,17 +1,21 @@
 # Tài liệu kỹ thuật AURA
 
-Thư mục này chỉ chứa các tài liệu kỹ thuật hiện hành dành cho BGK. Các báo cáo tiến độ cũ và snapshot theo ngày đã được đưa khỏi cây tài liệu đang dùng để tránh hướng dẫn mâu thuẫn; nội dung vẫn có thể truy xuất từ Git history và release tag đóng băng.
+Thư mục này chứa tài liệu kỹ thuật hiện hành **và các báo cáo evidence theo ngày**. Báo cáo có ngày là snapshot tại thời điểm đo; không dùng số liệu trong đó thay cho trạng thái source hiện tại. Tài liệu cá nhân về pitching và ôn phản biện nằm ngoài repository tại `D:\aura\phan_bien`.
 
 | Tài liệu | Mục đích |
 |---|---|
 | `CURRENT_PROJECT_STATUS.md` | Nguồn sự thật duy nhất về baseline đã xác minh và các gate còn mở |
+| `READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md` | Kết luận supervised MVP/Track A/production, phạm vi phòng ban, UX refresh và đa máy chủ |
+| `STORAGE_AND_DATASET_GATE_2026-10-23.md` | Gate storage dưới `wwwroot`, kiểm hash dataset và smoke local |
+| `DRIVE_MVP_VALIDATION_2026-10-22.md` | Bằng chứng batch Drive 5/20/100 và 15 ảnh consent qua manual intake; không phải accuracy |
+| `DRIVE_PIPELINE_HARDENING_2026-10-22.md` | Thay đổi idempotency và giới hạn scan Drive |
 | `DRIVE_SANDBOX_LOCAL.md` | Setup và rollback connector Drive synthetic chỉ cho localhost Development |
 | `DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md` | E2E Drive→SQL→AI ngày 22/10, false positive đã sửa và giới hạn claim |
 | `DRIVE_SANDBOX_CHECKLIST.md` | Checklist đã xác minh/chưa có evidence, bước kiểm thử tiếp theo và GO/NO-GO hiện tại |
 | `AFTER_FEEDBACK_IMPLEMENTATION.md` | Phạm vi triển khai ngày 17/10, bằng chứng test, demo flow mới và các ranh giới chưa-production |
 | `POST_CONTEST_HARDENING_2026-10-21.md` | Gate Verify/rate limit mới, evidence 196 test và điều kiện NO-GO pilot dữ liệu thật |
 | `AFTER_FEEDBACK_ARCHITECTURE_CHECKLIST.md` | Đối chiếu recommend check, 10 architecture gates, khác biệt trước/sau và thứ tự phát triển tiếp theo |
-| `EVALUATION_EVIDENCE.md` | Bản đồ kết quả công khai, ranh giới claim và vị trí evidence thô riêng tư |
+| `EVALUATION_EVIDENCE.md` | Chỉ mục tách rõ baseline nộp bài và evidence hậu cuộc thi |
 | `RUNBOOK.md` | Quy trình vận hành và khôi phục |
 | `JUDGE_LOCAL_SETUP.md` | Hướng dẫn BGK chạy AURA tại máy local |
 | `DEPLOYMENT.md` | Cấu hình triển khai và ranh giới an toàn |
@@ -21,7 +25,7 @@ Thư mục này chỉ chứa các tài liệu kỹ thuật hiện hành dành ch
 | `MEASUREMENT_PLAN.md` | Metric và quy tắc diễn giải |
 | `EVIDENCE_LOCALIZATION_PLAN.md` | Tính khả thi của overlay khoanh vùng và giới hạn chưa-production |
 | `USER_STUDY_PROTOCOL.md` | Protocol lấy ý kiến ba người dùng dựa trên consent |
-| `SUBMISSION_CHECKLIST.md` | Checklist nộp bài và rehearsal cuối |
+| `SUBMISSION_CHECKLIST.md` | Checklist điều phối nộp bài và rehearsal lịch sử; không phải release gate hiện hành |
 | `CURRENT_ACTION_CHECKLIST.md` | Checklist publish sạch, smoke baseline và gate hóa đơn tiếng Trung |
 | `../BUSINESS_RULES.md` | Bản tiếng Anh chuẩn đang đồng bộ với model contract và policy hiện hành |
 | `BUSINESS_RULES_VI.md` | Bảng dịch tiếng Việt công khai cho BGK; được loại khỏi build output và gói publish |

@@ -1,0 +1,46 @@
+# AURA readiness, Track A fit and scale boundary — 23 October 2026
+
+This is a **source-and-evidence assessment**, not a certification or a statement that the public host runs this commit. The dated proposal, build log and five-slide deck remain the contest submission snapshot. See the [post-contest submission addendum](../submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) for a short outward-facing update.
+
+## Decision
+
+| Level | Decision | Basis and limit |
+|---|---|---|
+| Supervised contest MVP | **Yes, for a controlled demo** | Manual image intake, durable SQL queue, schema and semantic validation, deterministic C# policy, specific escalation, manager action, audit and undo are implemented. Release tests: 231/231. Prior live Verify: 5/5 within 90 seconds on the earlier deployed candidate. |
+| All Track A requirements | **Core minimum demonstrated; advanced evidence incomplete** | Enterprise feedback marked the six minimum requirements and spec checks as met. The independent prospective ten-case sample was 8/10 with zero missed and two over-escalations; it is too small to settle general accuracy. Three qualifying hands-on user sessions, confirmed quotations, a feedback-derived change and a negative-effect measurement have not been evidenced. New unseen judge cases cannot be guaranteed. |
+| Near production-ready | **No** | Anonymous case/image/status/manager/report surfaces, no server-side identity/RBAC, no malware quarantine, no approved retention/deletion and restore drill, no independently verified route-specific ZDR, no distributed provider limit, and no sustained capacity/operations evidence. These are release gates, not optional polish. |
+
+The current source is not claimed to be published on the live URL. An expired OpenRouter key also means `/healthz` can report `aiConfigured=true` while inference fails: health checks configuration presence, not a charged model call. Rotate the secret and run a single synthetic inference smoke before relying on the demo. Never commit the key.
+
+## What the measured runs prove
+
+- 231/231 Release offline tests pass (23 October rerun); they are code tests, not receipt accuracy. Release build and EF model checks from the same baseline reported zero warnings/errors and no pending model changes. A `NU1900` advisory-feed warning appeared in a no-restore test invocation, so that invocation alone is not a fresh vulnerability audit.
+- The local Restricted-folder Drive test ingested 100 files as 100 SQL jobs after the identity fix; **only 30 image byte streams were distinct**. Ninety-eight completed and two stopped fail-safe. Queue-wait P95 was about 847 seconds. This proves a bounded single-worker pipeline and restart/idempotency behavior, not 98% decision accuracy or 1,000-file capacity.
+- Fifteen consented, distinct real images completed through **manual localhost intake**, not Drive. There is no hash-matched independent label set for that run, so accuracy was not calculated. `data_collection=deny` was requested; Strict ZDR was not verified.
+- The prospective contest mini-holdout of ten images produced 8/10 exact routes, zero missed escalations and two over-escalations in one small run. Keep this separate from known-data regression and the later unlabeled tests.
+
+## Scope in an organization
+
+The workflow concerns **employee expense reimbursement**. Employees from any department *could* submit receipts if their employer adopts one common expense policy; accounting/finance or an operations reviewer checks exceptions, and a designated budget owner/manager decides authority and policy exceptions. The current code does **not** implement organization-wide rollout, department-specific policy, cost-center routing, delegated authority, tax validation, ERP/payment posting or roles. Therefore “covers all departments” is a possible future deployment model, **not** a demonstrated capability. AURA does not transfer money or certify invoice authenticity.
+
+## UX: why some actions reload the page
+
+The applicant escalation queue already refreshes a read-only HTML fragment every five seconds, and individual job status is polled. However, `ForwardToManager`, `ForwardAllToManager` and `.js-workflow-form` send a fetch POST and then call `window.location.assign(...)`; tab navigation also reloads the page. This was an intentional way to reconstruct all tables from committed SQL state and avoid stale, conflicting fragments, but it makes the UI feel as though it requires refresh after each action.
+
+**Low-risk next UX iteration:** keep POST endpoints and SQL as the only source of truth; after a successful mutation, fetch fresh read-only `EmployeeEscalations`, `ReviewerQueue`, `AuditTrail` and dashboard fragments (or one versioned summary response), then replace only affected DOM regions. Preserve the selected tab, date filter, focus and scroll; announce updates through an accessible live region. Disable duplicate submissions until the response, show an explicit stale/error state if any fragment fetch fails, and retain a manual full-page refresh as recovery. Never optimistically display an approval before server confirmation. Cover forward/decision/undo, two-tab races, failed fragment fetches and accessibility in browser tests before changing the existing reload behavior. SignalR is unnecessary at this scale; bounded polling is simpler and already partly implemented.
+
+## Multi-instance concurrency
+
+The SQL worker **conditionally claims individual jobs** with a processing lease, so multiple workers can compete without normally claiming the same pending row. This is not sufficient for safe multi-server operation. `VisionInvocationCoordinator` uses an in-memory `SemaphoreSlim` and cooldown dictionary: with three server processes configured as `MaxConcurrentRequests=1`, up to **three** provider calls can run concurrently. `WorkflowOperationGate` is also process-local. Expired leases can be reclaimed while the former call is still in flight, and a stale worker must not be able to overwrite a newer result. Local receipt files on one host are not automatically available on another.
+
+The smallest safe scale path is to keep one **logical** provider capacity budget while adding web replicas separately from workers. Put receipt bytes in private shared/object storage; use a durable global lease or token-bucket backed by SQL/Redis with a fencing token and shared cooldown, and enforce that token on state writes. Give job leases renewal/expiry semantics, idempotency keys and a terminal-write compare-and-swap. Separate provider concurrency from web request count; initially one worker may still be the right choice under the provider quota. Only then load-test 100 **distinct** and 1,000 distinct labeled scenarios, measure queue wait/processing P50/P95, provider 429, cost, crash/reclaim and lost/duplicate work. Do not simply increase `Vision__MaxConcurrentRequests` or server count.
+
+## Change gates before any broader pilot
+
+1. Replace the expired provider key in private configuration and smoke one synthetic image. Keep Drive disabled and Verify disabled on public hosting.
+2. Lock independent labels and run a diverse accuracy set; separately finish the three-person user study and operational baseline, including negative effects.
+3. Decide organizational identity/role ownership, then protect **every** read and mutation endpoint. No bespoke registration is necessary: enterprise SSO plus server-side authorization can be added later, but omitting it means no general real-user pilot now.
+4. Add image quarantine/decoder safety, private shared storage access controls, secret rotation, approved retention and restore tests; review provider route and data-processing terms. One-week retention is not yet implemented or approved.
+5. Add distributed coordination and observability before multiple instances or unattended high-volume Drive intake. The Drive connector remains Development/loopback synthetic-only and off by default.
+
+The contest-era solution should remain intact as a tagged snapshot; post-contest improvements are additive and evaluated against that baseline. No new login/registration implementation, production deploy, or policy change is implied by this document.

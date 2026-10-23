@@ -119,6 +119,17 @@ Thực hiện theo thứ tự để không tốn quota vô ích:
 | 429/provider capacity | mở OpenRouter **Upstream Requests**, ghi provider/status/request ID; chờ cooldown; không tạo key mới để né limit |
 | App chạy nhưng redirect HTTPS lỗi | giữ URL HTTPS do host cấp và kiểm proxy/header; không hard-code domain |
 
+## Thay API key OpenRouter đã hết hạn
+
+Key `btc_key_test` hết hạn không thể được “gia hạn” bằng cách đổi tên. Trong [OpenRouter Keys](https://openrouter.ai/settings/keys), tạo **key riêng mới** cho AURA, đặt tên có môi trường, giới hạn chi tiêu và ngày hết hạn phù hợp. Lưu giá trị bí mật ngay lúc tạo vào trình quản lý bí mật của bạn; không gửi qua chat, ảnh chụp, Git, tài liệu, `appsettings.json` hoặc script. Không dùng `Default key` dùng chung để né giới hạn của key demo. Nếu cần sao chép cấu hình thì chỉ sao chép model/guardrails, không sao chép key cũ.
+
+1. **Local Development:** trong thư mục `AURA\AURA`, chạy `dotnet user-secrets set "OpenRouter:ApiKey" "<NEW_PRIVATE_KEY>"` tại PowerShell riêng không ghi hình; đóng terminal sau thao tác. Chỉ đặt secret, không sửa source. Tránh `dotnet user-secrets list` khi chia sẻ màn hình vì có thể in giá trị.
+2. **Hosting:** trong biến môi trường của đúng website/app pool, **thay giá trị** `OpenRouter__ApiKey` bằng key mới; giữ nguyên `OpenRouter__Model`, `ReasoningEffort`, `Vision__MaxConcurrentRequests=1`, `Vision__FallbackEnabled=false`, `Verify__Enabled=false`, `DriveSandbox__Enabled=false` và các biến database/storage đang hợp lệ. Lưu rồi recycle pool. Không cần publish lại DLL chỉ để đổi key; nếu có publish source khác, kiểm đúng commit và migration riêng.
+3. **Xác minh:** kiểm `/healthz` cho database/storage/migration, nhưng `aiConfigured=true` chỉ chứng minh key có giá trị cấu hình. Dùng **một hóa đơn tổng hợp** tại localhost hoặc host được cho phép, chờ trạng thái cuối, kiểm không có `AI_AUTH_FAILED`/401/403/429, audit và model route. Không dùng ảnh thật để thử key. Nếu thất bại, giữ các job đã lưu và dừng gửi thêm; kiểm hạn mức, quyền, model, route và log đã loại secret.
+4. **Thu hồi:** sau khi key mới chạy thành công ở từng môi trường, xóa/revoke key đã hết hạn hoặc không dùng trong dashboard và ghi ngày xoay vòng trong hồ sơ vận hành riêng. Không tạo nhiều key để vượt provider rate limit. Nếu key từng bị lộ, revoke ngay thay vì chờ hết hạn.
+
+`data_collection=deny` và `OpenRouter__RequireZeroDataRetention=false` là hai điều kiện khác nhau. Không bật Strict ZDR chỉ từ trạng thái `/healthz`; cần xác minh route/model Alibaba còn endpoint hợp lệ với `zdr=true`, kiểm một synthetic request và có rollback. Key mới tự nó không chứng minh quyền riêng tư hoặc sửa các gate production.
+
 Chỉ bật stdout startup log khi cần chẩn đoán, tải log về rồi tắt lại để tránh đầy storage hoặc lộ cấu hình.
 
 Hosted deployment không thể gọi Ollama trên laptop qua `127.0.0.1`; loopback khi đó là chính server hosting. Chỉ bật fallback Ollama nếu model chạy trên cùng server hoặc một endpoint HTTPS riêng đã được bảo vệ. Bản demo trên máy cá nhân có thể bật fallback vì ASP.NET và Ollama cùng máy.

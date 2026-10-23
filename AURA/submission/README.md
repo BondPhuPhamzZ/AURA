@@ -1,6 +1,6 @@
 # Gói nộp bài chính thức AURA
 
-Thư mục này chỉ giữ một phiên bản hiện hành cho mỗi hạng mục. Tên file ổn định thay cho nhiều bản theo ngày để liên kết trong README và bản sao trên Drive không bị lệch nhau.
+Thư mục này giữ các artifact **đã nộp ở thời điểm cuộc thi**; các bản DOCX/PDF/slide không được viết lại thành số liệu hậu cuộc thi. Xem [addendum 23/10](AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) khi giới thiệu source mới. Tên file lịch sử được giữ ổn định để liên kết cũ không bị lệch.
 
 | Hạng mục | File chốt |
 |---|---|
@@ -13,6 +13,7 @@ Thư mục này chỉ giữ một phiên bản hiện hành cho mỗi hạng m�
 | Phiếu phản hồi người dùng | `AURA_USER_FEEDBACK_FORM.docx`, `.pdf` |
 | Đặc tả workflow | `AURA_WORKFLOW_SPEC.md` |
 | Báo cáo sau feedback | `AURA_AFTER_FEEDBACK_REPORT.docx`, `.pdf` |
+| Addendum hậu cuộc thi | `AURA_POST_CONTEST_ADDENDUM_2026-10-23.md` — không thay thế proposal/build log/slide đã nộp |
 
 Proposal và Build Log là artifact nộp đã khóa trước feedback ngày 17/10. Trạng thái kiến trúc hiện hành, thay đổi candidate và các giới hạn mới phải đọc cùng `AURA_AFTER_FEEDBACK_REPORT.*`, `../docs/CURRENT_PROJECT_STATUS.md` và `../docs/AFTER_FEEDBACK_ARCHITECTURE_CHECKLIST.md`; không dùng riêng proposal cũ để suy ra candidate đã publish.
 
