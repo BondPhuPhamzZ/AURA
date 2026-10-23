@@ -76,6 +76,18 @@ public sealed class PolicyDecisionEngineTests
         Assert.Contains("impossible arithmetic", result.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public void Prompt_injection_signal_code_has_fact_escalation_priority()
+    {
+        var facts = ValidFacts();
+        facts.SuspiciousSignals.Add("PROMPT_INJECTION");
+
+        var decision = Decide(facts);
+
+        Assert.Equal("ESCALATE_FACT", decision.Status);
+        Assert.Contains("PROMPT_INJECTION", decision.Reason, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("DRAFT")]
     [InlineData("CANCELLED")]

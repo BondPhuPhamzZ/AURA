@@ -123,13 +123,10 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.Contains("\"type\":\"text\"", requestJson);
             Assert.Contains("\"type\":\"image_url\"", requestJson);
             Assert.Contains("PRINTED_FINAL_TOTAL", requestJson, StringComparison.Ordinal);
-            Assert.Contains("taxAuthorityCode", requestJson, StringComparison.Ordinal);
-            Assert.Contains("04-10-26", requestJson, StringComparison.Ordinal);
             using var payload = JsonDocument.Parse(requestJson!);
             var rootElement = payload.RootElement;
-            Assert.Contains("Bìa hồ sơ",
-                rootElement.GetProperty("messages")[0].GetProperty("content").GetString(),
-                StringComparison.Ordinal);
+            var systemPrompt = rootElement.GetProperty("messages")[0].GetProperty("content").GetString();
+            Assert.Contains("BEGIN_RECEIPT_EXTRACTION_CONTRACT", systemPrompt, StringComparison.Ordinal);
             Assert.Equal(4096, rootElement.GetProperty("max_tokens").GetInt32());
             Assert.Equal("none", rootElement.GetProperty("reasoning").GetProperty("effort").GetString());
             Assert.Equal("deny", rootElement.GetProperty("provider").GetProperty("data_collection").GetString());
@@ -158,6 +155,62 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.True(schema.GetProperty("properties").TryGetProperty("totalAmountSource", out _));
             Assert.True(schema.GetProperty("properties").TryGetProperty("totalAmountEvidence", out _));
             Assert.True(schema.GetProperty("properties").TryGetProperty("invoiceDateEvidence", out _));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task System_prompt_delimits_extraction_rules_and_excludes_deterministic_policy()
+    {
+        const string policy = """
+            ## 1. Role
+            Extract visible receipt evidence only.
+
+            ## 4. Output signals
+            Use stable signal codes.
+
+            ## 5. Deterministic policy applied by the application
+            INTERNAL_POLICY_SENTINEL: never send this section to the vision model.
+
+            ## 6. Output quality checklist
+            CHECKLIST_SENTINEL: backend owns these validations.
+            """;
+        var root = CreateFixtureRoot(policy);
+        try
+        {
+            string? requestJson = null;
+            var handler = new StubHandler(async request =>
+            {
+                requestJson = await request.Content!.ReadAsStringAsync();
+                return new HttpResponseMessage(HttpStatusCode.NotFound)
+                {
+                    Content = new StringContent("{\"error\":{\"message\":\"No endpoints found\"}}",
+                        Encoding.UTF8, "application/json")
+                };
+            });
+            var options = Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions
+            {
+                ApiKey = "test-key", PolicyPath = "BUSINESS_RULES.md"
+            });
+            var service = new OpenRouterVisionExtractorService(
+                new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) }, options,
+                new TestEnvironment(root), NullLogger<OpenRouterVisionExtractorService>.Instance);
+
+            await Assert.ThrowsAsync<VisionExtractionException>(() =>
+                service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg")));
+
+            using var payload = JsonDocument.Parse(requestJson!);
+            var systemPrompt = payload.RootElement.GetProperty("messages")[0]
+                .GetProperty("content").GetString()!;
+            Assert.Contains("SECURITY BOUNDARY - HIGHEST PRIORITY", systemPrompt, StringComparison.Ordinal);
+            Assert.Contains("PROMPT_INJECTION", systemPrompt, StringComparison.Ordinal);
+            Assert.Contains("BEGIN_RECEIPT_EXTRACTION_CONTRACT", systemPrompt, StringComparison.Ordinal);
+            Assert.Contains("Extract visible receipt evidence only.", systemPrompt, StringComparison.Ordinal);
+            Assert.DoesNotContain("INTERNAL_POLICY_SENTINEL", systemPrompt, StringComparison.Ordinal);
+            Assert.DoesNotContain("CHECKLIST_SENTINEL", systemPrompt, StringComparison.Ordinal);
         }
         finally
         {
@@ -546,11 +599,11 @@ public sealed class OpenRouterVisionExtractorServiceTests
         "missingFields":[],"warnings":[],"suspiciousSignals":[],"confidence":0.95}
         """;
 
-    private static string CreateFixtureRoot()
+    private static string CreateFixtureRoot(string policy = "Return receipt evidence as JSON.")
     {
         var root = Path.Combine(Path.GetTempPath(), "aura-openrouter-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
-        File.WriteAllText(Path.Combine(root, "BUSINESS_RULES.md"), "Return receipt evidence as JSON.");
+        File.WriteAllText(Path.Combine(root, "BUSINESS_RULES.md"), policy);
         File.WriteAllBytes(Path.Combine(root, "receipt.jpg"), [0xFF, 0xD8, 0xFF, 0xD9]);
         return root;
     }

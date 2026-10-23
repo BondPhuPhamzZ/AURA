@@ -29,6 +29,7 @@ Thư mục này chứa tài liệu kỹ thuật hiện hành **và các báo cá
 | `CURRENT_ACTION_CHECKLIST.md` | Checklist publish sạch, smoke baseline và gate hóa đơn tiếng Trung |
 | `../BUSINESS_RULES.md` | Bản tiếng Anh chuẩn đang đồng bộ với model contract và policy hiện hành |
 | `BUSINESS_RULES_VI.md` | Bảng dịch tiếng Việt công khai cho BGK; được loại khỏi build output và gói publish |
+| `PROMPT_BUSINESS_RULES_BENCHMARK_20261023.md` | Phản hồi đánh giá prompt/business rules, thay đổi đã test và benchmark mới cần chạy |
 
 Hóa đơn thô, raw provider response, API dashboard, database, secret và dữ liệu định danh cá nhân được chủ động loại khỏi Git. Gói evidence riêng tư giữ nguyên timestamp và hash ban đầu; không đổi tên hoặc tạo lại để làm chúng trông mới hơn.
 
