@@ -1,5 +1,16 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
+> **SQL AI gate mất session 24/10:** Với SQL gate bật, lease permit nay theo
+> dõi `APPLOCK_MODE` trên đúng session mỗi 5 giây. Mất session/lock sẽ hủy
+> cancellation token của provider; hồ sơ nhận `AI_GATE_LOST`, không được ghi
+> như quyết định AI hoàn tất và được giữ cho retry theo worker policy.
+> LocalDB integration chủ động `KILL` session xác nhận watchdog phát hiện và
+> dispose báo lỗi; Debug/Release **281/281**, LocalDB opt-in đã gồm test này,
+> Release build 0 warning/error, EF không pending model change. Đây vẫn là
+> phát hiện theo chu kỳ, provider có thể đã nhận request trước khi hủy; chưa
+> chứng minh provider ngừng xử lý tức thì hay không phát sinh billing/request
+> trùng. Chưa có test hai máy chủ thật hoặc outage/chaos trên hosting.
+
 > **Lease heartbeat 24/10:** Trong khi worker giữ một job `PROCESSING`,
 > heartbeat SQL riêng gia hạn lease theo `Id + ProcessingAttemptCount` trước
 > khi hết hạn, kể cả lúc chờ AI permit. Mất ownership hoặc lỗi SQL tại nhịp
