@@ -1,8 +1,8 @@
 # Checklist kiến trúc sau feedback doanh nghiệp
 
-**Cập nhật:** 17/10/2026  
+**Snapshot kiến trúc:** 17/10/2026; các trạng thái hiện hành được đối chiếu lại 24/10/2026.
 **Nguồn đối chiếu:** `Hackathon_2h30_Implementation_Recommend.docx` trong thư mục `recommend_check`  
-**Trạng thái:** candidate `de101f2` đã live-smoke; UX follow-up đã qua gate offline và chờ publish lại
+**Trạng thái tại snapshot:** candidate `de101f2` đã live-smoke; UX follow-up đã qua gate offline và chờ publish lại. Đây không phải trạng thái publish hiện hành; xem [CURRENT_PROJECT_STATUS.md](CURRENT_PROJECT_STATUS.md).
 
 ## 1. Quyết định chốt
 
@@ -18,8 +18,8 @@ Quyết định này giữ được các invariant đã đo, tránh migration g�
 | SQL là source of truth | Đạt | Job, status, facts, quyết định và audit nằm trong SQL; dashboard/report đọc repository | Thêm backup/restore, retention và read model nếu tải lớn |
 | Agent không có authority | Đạt | Model chỉ trả facts; `PolicyDecisionEngine` chọn route; nhân viên/quản lý xử lý ngoại lệ | Thêm SSO/RBAC và actor identity thật |
 | Extraction integrity | Đạt có điều kiện | JSON Schema, semantic validation, tối đa một repair; thiếu/mâu thuẫn chuyển `ESCALATE_FACT` | Mở rộng evaluation độc lập, không nới guard bằng keyword sát demo |
-| Idempotency | Một phần | SHA-256 phát hiện trùng và audit `DuplicateDetected` | Hiện vẫn có thể tạo row/job mới để phục vụ rerun demo. Production cần source-scoped idempotency key + unique DB constraint + response trả record cũ |
-| Quarantine | Một phần | Extension, MIME, magic bytes và 5 MB chặn trước VLM | File sai hiện bị HTTP 400, chưa có quarantine record/malware scan để điều tra vận hành |
+| Idempotency | Một phần, cập nhật 24/10 | Drive sandbox dùng source key ổn định thành request ID; SQL primary key phân xử hai intake đồng thời. LocalDB race test: hai intake độc lập cùng source tạo đúng một request, audit và file; SQL rollback không bị báo thành công giả. | Chỉ áp dụng cho Drive sandbox/source-key input. Manual upload vẫn nhận ID mới mỗi lần; SHA-256 chỉ gắn cờ trùng, không phải idempotency. Cần chính sách source identity/idempotency cho từng nguồn production và kiểm thử GCS/host thật. |
+| Quarantine / malware | Một phần | Extension, MIME, magic bytes và 5 MB chặn trước VLM; file sai bị HTTP 400. Drive sandbox từ chối chạy khi `RequireMalwareScanner=true` vì chưa tích hợp scanner. | Manual upload chưa có malware scan hoặc quarantine record. Format checks không thay thế antivirus. |
 | Privacy | Một phần, fail-safe | Category allow-list, backend email/phone checks, không lặp raw match, `ESCALATE_PRIVACY`, `data_collection=deny` | Triage chạy sau VLM nên không ngăn ảnh nhạy cảm rời trust boundary. Production cần pre-inference redaction/local VLM, strict ZDR đã xác minh, RBAC và retention |
 | Failure visibility | Đạt | `FAILED`/`ESCALATE_SYSTEM_ERROR`, error code, audit và status URL; dashboard candidate không hiển thị số 0 giả khi SQL lỗi | Monitoring/alerting cho queue age, latency, error rate và backlog |
 | Scope discipline | Đạt | Không nối OAuth/mailbox gấp; không đổi model, policy hoặc evidence contract | Chỉ mở connector khi có token vault, least privilege, cursor, revoke, allow-list và quarantine |
@@ -86,7 +86,7 @@ Các phần không đổi: SQL queue bền, model không tự phê duyệt, poli
 
 1. Publish candidate hiện tại, smoke single + multi-file + privacy + CSV; freeze nếu pass.
 2. Thêm pre-inference privacy boundary hoặc local VLM cho dữ liệu nhạy cảm; benchmark trước khi đổi route.
-3. Thêm source-scoped idempotency và persisted quarantine/malware scan.
+3. Mở rộng idempotency theo source/transport production (manual upload hiện chưa idempotent); triển khai persisted quarantine và malware scan trong hạ tầng được kiểm soát.
 4. Chỉ khi có nhu cầu vận hành thật mới thêm `InvoiceBatch` và batch status API.
 5. Sau đó mới triển khai mailbox connector với OIDC/OAuth, token vault, least privilege, sync cursor, revoke và audit.
 6. Cuối cùng mới scale multi-instance bằng distributed limiter/lock/circuit state và managed queue/object storage.
@@ -95,4 +95,4 @@ Các phần không đổi: SQL queue bền, model không tự phê duyệt, poli
 
 **GO cho demo có giám sát** sau khi candidate rollback được publish đúng commit, Release build sạch, 190/190 test pass, không có pending migration, `/healthz` khỏe và smoke lại dashboard/CSV cùng một upload synthetic.
 
-**NO GO cho claim production-ready** khi chưa có SSO/RBAC, pre-inference privacy control, strict ZDR/local route đã đo, idempotency unique ở DB, persisted quarantine/malware scan, managed storage, retention, monitoring và distributed coordination.
+**NO GO cho claim production-ready** khi chưa có SSO/RBAC, pre-inference privacy control, strict ZDR/local route đã đo, source-specific idempotency cho mọi input được bật, persisted quarantine/malware scan, managed storage, retention, monitoring và distributed coordination.
