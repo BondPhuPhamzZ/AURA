@@ -141,6 +141,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
         if (claimed == 0) return ProcessResult.Success;
 
         var request = await db.ReimbursementRequests.SingleAsync(x => x.Id == requestId, cancellationToken);
+        request.ProviderErrorCode = null;
         var stopwatch = Stopwatch.StartNew();
         ReceiptExtractionDto? extractedFacts = null;
         VisionExtractionException? providerFailure = null;
@@ -173,13 +174,22 @@ public sealed class ReceiptProcessingWorker : BackgroundService
         {
             _logger.LogWarning(exception, "Vision extraction stopped with {ErrorCode} for request {RequestId}.",
                 exception.Code, request.Id);
-            request.Status = "ESCALATE_SYSTEM_ERROR";
-            request.AiReasoning = $"{exception.UserMessage} Mã lỗi: {exception.Code}. Không có quyết định tự động nào được đưa ra.";
-            request.ManagerQuestion = "AI chưa xử lý được ảnh. Quản lý có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]";
-            request.ProviderErrorCode = exception.Code;
-            request.ProcessingState = ProcessingStates.Failed;
-            auditAction = "AI_PROCESSED_ESCALATE_SYSTEM_ERROR";
-            if (VisionProviderFailurePolicy.IsBlocking(exception.Code)) providerFailure = exception;
+            if (ReceiptProcessingRetryPolicy.TryRescheduleRateLimit(
+                    request, exception, _options.MaxRateLimitAttempts))
+            {
+                providerFailure = exception;
+                auditAction = "AI_RATE_LIMIT_RETRY_SCHEDULED";
+            }
+            else
+            {
+                request.Status = "ESCALATE_SYSTEM_ERROR";
+                request.AiReasoning = $"{exception.UserMessage} Mã lỗi: {exception.Code}. Không có quyết định tự động nào được đưa ra.";
+                request.ManagerQuestion = "AI chưa xử lý được ảnh. Quản lý có đồng ý tiếp nhận hồ sơ để kiểm tra thủ công không? [CÓ/KHÔNG]";
+                request.ProviderErrorCode = exception.Code;
+                request.ProcessingState = ProcessingStates.Failed;
+                auditAction = "AI_PROCESSED_ESCALATE_SYSTEM_ERROR";
+                if (VisionProviderFailurePolicy.IsBlocking(exception.Code)) providerFailure = exception;
+            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -202,7 +212,8 @@ public sealed class ReceiptProcessingWorker : BackgroundService
         }
 
         request.ProcessingLatencyMs = stopwatch.ElapsedMilliseconds;
-        request.ProcessingCompletedAt = DateTime.UtcNow;
+        request.ProcessingCompletedAt = request.ProcessingState == ProcessingStates.Pending
+            ? null : DateTime.UtcNow;
         request.ProcessingLeaseUntil = null;
         request.PrimaryProvider = execution.PrimaryProvider;
         request.ServedProvider = execution.ServedProvider;
@@ -217,6 +228,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
                 $"PrimaryProvider={request.PrimaryProvider}; ServedProvider={request.ServedProvider}; " +
                 $"FallbackUsed={request.FallbackUsed}; ProviderErrorCode={request.ProviderErrorCode}; " +
                 $"EvidenceContractVersion={extractedFacts?.EvidenceContractVersion ?? 0}; " +
+                $"EvidenceContractVersionInferred={extractedFacts?.EvidenceContractVersionInferred ?? false}; " +
                 $"TotalAmountSource={extractedFacts?.TotalAmountSource ?? "<none>"}; " +
                 $"AmountSource={extractedFacts?.AmountSource ?? AmountSources.Unknown}; " +
                 $"PrivacyRisk={extractedFacts?.PrivacyRisk ?? PrivacyRiskLevels.None}; " +

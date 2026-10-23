@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Nodes;
 using AURA.Models;
 
 namespace AURA.Services;
@@ -7,6 +8,16 @@ namespace AURA.Services;
 internal static class ReceiptExtractionContract
 {
     internal const int CurrentEvidenceContractVersion = ReceiptExtractionDto.CurrentEvidenceContractVersion;
+    private static readonly string[] RequiredFields =
+    [
+        "evidenceContractVersion", "documentType", "documentStatus", "merchantName", "taxId", "merchantId", "terminalId",
+        "platformName", "orderId", "bookingId", "shippingTrackingCode", "shippingProvider", "orderStatus",
+        "invoiceNumber", "receiptNumber", "transactionReference", "taxAuthorityCode", "invoiceSerial",
+        "documentNumber", "posNumber", "invoiceDate", "invoiceDateEvidence", "transactionDate",
+        "transactionDateEvidence", "completionDate", "invoiceTime", "currency",
+        "subtotal", "discountAmount", "tax", "totalAmount", "totalAmountSource", "totalAmountEvidence",
+        "lineItems", "missingFields", "warnings", "suspiciousSignals", "confidence"
+    ];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -85,12 +96,30 @@ internal static class ReceiptExtractionContract
     public static ReceiptExtractionDto ParseFacts(string content)
     {
         var json = ExtractJsonObject(content);
-        var facts = JsonSerializer.Deserialize<ReceiptExtractionDto>(json, JsonOptions)
+        var inferredVersion = false;
+        var parsed = JsonNode.Parse(json) as JsonObject
+            ?? throw new JsonException("Extraction must be a JSON object.");
+        if (!HasProperty(parsed, "evidenceContractVersion"))
+        {
+            // The contract version is backend protocol metadata, not a fact read
+            // from the receipt. Only restore it for an otherwise complete object.
+            if (RequiredFields.Skip(1).Any(field => !HasProperty(parsed, field)) ||
+                GetProperty(parsed, "lineItems") is not JsonArray items ||
+                items.Any(item => item is not JsonObject line ||
+                    new[] { "description", "quantity", "unitPrice", "amount" }
+                        .Any(field => !HasProperty(line, field))))
+                throw new JsonException("Missing contract version and required evidence fields.");
+            parsed["evidenceContractVersion"] = CurrentEvidenceContractVersion;
+            inferredVersion = true;
+        }
+        var facts = parsed.Deserialize<ReceiptExtractionDto>(JsonOptions)
             ?? throw new JsonException("Empty extraction object.");
 
         if (facts.EvidenceContractVersion != CurrentEvidenceContractVersion)
             throw new JsonException(
                 $"Unsupported or missing evidenceContractVersion. Expected {CurrentEvidenceContractVersion}.");
+
+        facts.EvidenceContractVersionInferred = inferredVersion;
 
         facts.LineItems ??= [];
         facts.MissingFields ??= [];
@@ -107,15 +136,7 @@ internal static class ReceiptExtractionContract
     {
         type = "object",
         additionalProperties = false,
-        required = new[] { "evidenceContractVersion", "documentType", "documentStatus", "merchantName", "taxId", "merchantId", "terminalId",
-            "platformName", "orderId", "bookingId", "shippingTrackingCode", "shippingProvider", "orderStatus",
-            "invoiceNumber", "receiptNumber", "transactionReference", "taxAuthorityCode", "invoiceSerial",
-            "documentNumber", "posNumber", "invoiceDate", "invoiceDateEvidence", "transactionDate",
-            "transactionDateEvidence",
-            "completionDate", "invoiceTime", "currency",
-            "subtotal", "discountAmount", "tax", "totalAmount", "totalAmountSource", "totalAmountEvidence",
-            "lineItems", "missingFields", "warnings", "suspiciousSignals",
-            "confidence" },
+        required = RequiredFields,
         properties = new Dictionary<string, object>
         {
             ["evidenceContractVersion"] = new { type = "integer", @enum = new[] { CurrentEvidenceContractVersion } },
@@ -172,6 +193,13 @@ internal static class ReceiptExtractionContract
         var firstNewLine = trimmed.IndexOf('\n');
         return firstNewLine < 0 ? trimmed : trimmed[(firstNewLine + 1)..^3].Trim();
     }
+
+    private static bool HasProperty(JsonObject source, string name) =>
+        source.Any(field => string.Equals(field.Key, name, StringComparison.OrdinalIgnoreCase));
+
+    private static JsonNode? GetProperty(JsonObject source, string name) =>
+        source.FirstOrDefault(field => string.Equals(field.Key, name,
+            StringComparison.OrdinalIgnoreCase)).Value;
 
     private static string ExtractJsonObject(string content)
     {

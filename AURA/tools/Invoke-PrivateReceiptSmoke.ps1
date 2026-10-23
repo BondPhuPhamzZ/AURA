@@ -101,6 +101,8 @@ try {
             AcceptedMs = $acceptedMs
             EndToEndMs = $watch.ElapsedMilliseconds
         })
+        # Persist each case so an interrupted run retains auditable progress.
+        $results | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $resolvedOutput 'results.json') -Encoding UTF8
         Write-Host "Private receipt $($i + 1)/$($files.Count): $state"
     }
 }
@@ -118,7 +120,7 @@ $summary = [pscustomobject]@{
     ClientErrors = @($results | Where-Object ProcessingState -eq 'CLIENT_ERROR').Count
     ProviderErrors = @($results | Where-Object { -not [string]::IsNullOrWhiteSpace($_.ProviderErrorCode) }).Count
     AccuracyAssessed = $false
-    Note = 'Previously used real images; no blinded ground-truth labels were supplied.'
+    Note = 'Previously used real images; this runner does not assess locked labels or blind accuracy.'
 }
 $results | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $resolvedOutput 'results.json') -Encoding UTF8
 $summary | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $resolvedOutput 'summary.json') -Encoding UTF8

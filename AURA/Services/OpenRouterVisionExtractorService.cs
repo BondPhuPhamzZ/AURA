@@ -38,7 +38,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         var responseSchema = ReceiptExtractionContract.BuildResponseSchema();
 
         var firstFacts = await RequestFactsWithMalformedRetryAsync(
-            BuildPayload(input, responseSchema, null), cancellationToken);
+            instruction => BuildPayload(input, responseSchema, instruction), null, cancellationToken);
         var firstIssues = ReceiptSemanticValidator.Validate(firstFacts);
         if (firstIssues.Count == 0) return firstFacts;
 
@@ -50,7 +50,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         {
             var repairInstruction = ReceiptSemanticValidator.BuildRepairInstruction(firstIssues);
             var repairedFacts = await RequestFactsWithMalformedRetryAsync(
-                BuildPayload(input, responseSchema, repairInstruction), cancellationToken);
+                instruction => BuildPayload(input, responseSchema, instruction), repairInstruction, cancellationToken);
             ReceiptSemanticValidator.MarkRepairAttempt(repairedFacts, firstIssues);
             var remainingIssues = ReceiptSemanticValidator.Validate(repairedFacts);
             return remainingIssues.Count == 0
@@ -118,15 +118,17 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
         return payload;
     }
 
-    private async Task<ReceiptExtractionDto> RequestFactsWithMalformedRetryAsync(object payload,
-        CancellationToken cancellationToken)
+    private async Task<ReceiptExtractionDto> RequestFactsWithMalformedRetryAsync(
+        Func<string?, object> buildPayload, string? instruction, CancellationToken cancellationToken)
     {
         const int maxMalformedResponseAttempts = 2;
         for (var attempt = 1; attempt <= maxMalformedResponseAttempts; attempt++)
         {
             try
             {
-                return await RequestFactsOnceAsync(payload, cancellationToken);
+                var attemptInstruction = attempt == 1 ? instruction :
+                    $"{instruction} Previous response failed the required JSON schema. Return one complete JSON object with every required field and evidenceContractVersion={ReceiptExtractionContract.CurrentEvidenceContractVersion}; use null or empty arrays when evidence is absent. No prose.";
+                return await RequestFactsOnceAsync(buildPayload(attemptInstruction), cancellationToken);
             }
             catch (VisionExtractionException exception) when (
                 attempt < maxMalformedResponseAttempts && IsMalformedResponse(exception.Code))

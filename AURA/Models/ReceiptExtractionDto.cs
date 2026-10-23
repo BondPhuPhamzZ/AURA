@@ -20,6 +20,9 @@ namespace AURA.Models
         // the default value 0 and remain readable, while every new model response must
         // explicitly return the current version.
         public int EvidenceContractVersion { get; set; }
+        // Backend provenance: only set when every other required field was present
+        // and the provider omitted the schema version envelope.
+        public bool EvidenceContractVersionInferred { get; set; }
         public string? DocumentType { get; set; }
         public string? DocumentStatus { get; set; }
         public string? MerchantName { get; set; }

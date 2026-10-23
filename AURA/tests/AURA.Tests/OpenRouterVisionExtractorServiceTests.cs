@@ -386,6 +386,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
         try
         {
             var attempts = 0;
+            string? secondRequest = null;
             const string validFacts = """
                 {"evidenceContractVersion":2,"documentType":"RETAIL_RECEIPT","documentStatus":"ISSUED","merchantName":"Cửa hàng thử nghiệm",
                 "taxId":null,"merchantId":null,"terminalId":null,"platformName":null,"orderId":null,
@@ -396,9 +397,11 @@ public sealed class OpenRouterVisionExtractorServiceTests
                 "unitPrice":100000,"amount":100000}],"missingFields":[],"warnings":[],
                 "suspiciousSignals":[],"confidence":0.95}
                 """;
-            var handler = new StubHandler(_ =>
+            var handler = new StubHandler(request =>
             {
                 attempts++;
+                if (attempts == 2)
+                    secondRequest = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
                 var content = attempts == 1
                     ? "{\"documentType\":\"RETAIL_RECEIPT\",\"lineItems\":[{"
                     : validFacts;
@@ -422,8 +425,52 @@ public sealed class OpenRouterVisionExtractorServiceTests
             var result = await service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg"));
 
             Assert.Equal(2, attempts);
+            Assert.Contains("Previous response failed the required JSON schema", secondRequest);
+            Assert.Contains("evidenceContractVersion=2", secondRequest);
             Assert.Equal("HD-003", result.InvoiceNumber);
             Assert.Equal(100000m, result.TotalAmount);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Rejects_missing_contract_version_before_semantic_repair()
+    {
+        var root = CreateFixtureRoot();
+        try
+        {
+            var attempts = 0;
+            var handler = new StubHandler(_ =>
+            {
+                attempts++;
+                var body = JsonSerializer.Serialize(new
+                {
+                    choices = new[] { new { finish_reason = "stop", message = new
+                    {
+                        content = "{\"documentType\":\"RETAIL_RECEIPT\",\"totalAmount\":100000}"
+                    } } }
+                });
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(body, Encoding.UTF8, "application/json")
+                });
+            });
+            var options = Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions
+            {
+                ApiKey = "test-key", PolicyPath = "BUSINESS_RULES.md"
+            });
+            var service = new OpenRouterVisionExtractorService(
+                new HttpClient(handler) { BaseAddress = new Uri(options.Value.BaseUrl) }, options,
+                new TestEnvironment(root), NullLogger<OpenRouterVisionExtractorService>.Instance);
+
+            var failure = await Assert.ThrowsAsync<VisionExtractionException>(() =>
+                service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg")));
+
+            Assert.Equal("AI_SCHEMA_MISMATCH", failure.Code);
+            Assert.Equal(2, attempts); // schema retry only; semantic repair needs a parsed DTO.
         }
         finally
         {

@@ -14,4 +14,7 @@ public sealed class ReceiptProcessingOptions
 
     [Range(5, 300)]
     public int FailureBackoffMaxSeconds { get; set; } = 60;
+
+    [Range(1, 10)]
+    public int MaxRateLimitAttempts { get; set; } = 3;
 }
