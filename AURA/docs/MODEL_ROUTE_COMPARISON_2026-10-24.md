@@ -64,8 +64,9 @@ policy escalation while explicit beer context (`bia chai`) still does. The
 three-run model figures above are the **pre-fix** benchmark and were not
 rewritten as post-fix model results. Debug and Release suites each passed
 302/302 tests with `AURA_RUN_LOCALDB_INTEGRATION=1`, including the opt-in SQL
-integration cases. The sandboxed attempt could not access the LocalDB instance
-registry; rerunning in a LocalDB-capable environment completed cleanly.
+integration cases. After the later SQL intake-capacity work, the complete suites
+were rerun at 305/305 in Debug and 305/305 in Release with LocalDB integration
+enabled; the new shared-capacity race case passed as well.
 
 ## Decision
 

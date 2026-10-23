@@ -94,6 +94,32 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
+    public async Task Shared_intake_capacity_is_enforced_across_independent_SQL_repositories()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, _) =>
+        {
+            await using var firstDb = new AppDbContext(options);
+            await using var secondDb = new AppDbContext(options);
+            var firstRepository = new ReimbursementRepository(firstDb);
+            var secondRepository = new ReimbursementRepository(secondDb);
+
+            var results = await Task.WhenAll(
+                firstRepository.TryAddRequestWithAuditAsync(CreateCapacityRequest("capacity-a"),
+                    "AI_QUEUED", "synthetic", 1, CancellationToken.None),
+                secondRepository.TryAddRequestWithAuditAsync(CreateCapacityRequest("capacity-b"),
+                    "AI_QUEUED", "synthetic", 1, CancellationToken.None));
+
+            Assert.Single(results, result => result == ReceiptIntakePersistenceResult.Added);
+            Assert.Single(results, result => result == ReceiptIntakePersistenceResult.CapacityReached);
+            await using var verifyDb = new AppDbContext(options);
+            Assert.Equal(1, await verifyDb.ReimbursementRequests.CountAsync(request =>
+                request.ProcessingState == ProcessingStates.Pending));
+            Assert.Single(await verifyDb.AuditLogs.ToListAsync());
+        });
+    }
+
+    [Fact]
     public async Task Second_host_can_process_receipt_from_absolute_private_shared_directory()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
@@ -138,6 +164,7 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
                         MaxFileSizeMb = 1
                     }),
                     Microsoft.Extensions.Options.Options.Create(new DecisionPolicyOptions()),
+                    Microsoft.Extensions.Options.Options.Create(new ReceiptProcessingOptions()),
                     new ReceiptProcessingQueue());
 
                 accepted = await intake.AcceptAsync(new ReceiptIntakeInput(png, "synthetic.png",
@@ -638,6 +665,21 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
         await db.SaveChangesAsync();
         return item.Id;
     }
+
+    private static ReimbursementRequest CreateCapacityRequest(string id) => new()
+    {
+        Id = id,
+        OriginalFileName = id + ".jpg",
+        StoredFileName = id + ".jpg",
+        ImageUrl = "private",
+        ContentType = "image/jpeg",
+        FileSha256 = Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(id))),
+        FileSizeBytes = 1,
+        Status = ProcessingStates.Pending,
+        ProcessingState = ProcessingStates.Pending,
+        QueuedAt = DateTime.UtcNow,
+        CreatedAt = DateTime.UtcNow
+    };
 
     private static async Task ProcessOnceAsync(DbContextOptions<AppDbContext> options,
         string root, IVisionExtractor extractor, string storageDirectory = "receipts",

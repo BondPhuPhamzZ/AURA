@@ -17,4 +17,7 @@ public sealed class ReceiptProcessingOptions
 
     [Range(1, 10)]
     public int MaxRateLimitAttempts { get; set; } = 3;
+
+    [Range(1, 10000)]
+    public int MaxOutstandingReceipts { get; set; } = 1000;
 }

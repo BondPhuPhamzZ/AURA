@@ -158,6 +158,11 @@ public sealed class ApplicantController : Controller
                 claimedAmount.GetValueOrDefault(), submitterCode, submitterDisplayName, submitterDepartment),
                 cancellationToken);
         }
+        catch (ReceiptQueueCapacityException exception)
+        {
+            Response.Headers.RetryAfter = "30";
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { error = exception.Message });
+        }
         catch (ReceiptIntakeException exception)
         {
             return BadRequest(new { error = exception.Message });

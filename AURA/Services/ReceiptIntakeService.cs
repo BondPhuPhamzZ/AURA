@@ -13,6 +13,11 @@ public sealed record ReceiptIntakeInput(byte[] Bytes, string FileName, string Co
     string? SubmitterDepartment, string? SourceKey = null);
 
 public sealed class ReceiptIntakeException(string message) : Exception(message);
+public sealed class ReceiptQueueCapacityException : Exception
+{
+    public ReceiptQueueCapacityException(string message) : base(message) { }
+    public ReceiptQueueCapacityException(string message, Exception innerException) : base(message, innerException) { }
+}
 
 public sealed class ReceiptIntakeService
 {
@@ -20,16 +25,18 @@ public sealed class ReceiptIntakeService
     private readonly IReimbursementRepository _repository;
     private readonly ReceiptStorageOptions _storageOptions;
     private readonly DecisionPolicyOptions _policyOptions;
+    private readonly ReceiptProcessingOptions _processingOptions;
     private readonly ReceiptProcessingQueue _queue;
 
     public ReceiptIntakeService(IReceiptFileStore fileStore, IReimbursementRepository repository,
         IOptions<ReceiptStorageOptions> storageOptions, IOptions<DecisionPolicyOptions> policyOptions,
-        ReceiptProcessingQueue queue)
+        IOptions<ReceiptProcessingOptions> processingOptions, ReceiptProcessingQueue queue)
     {
         _fileStore = fileStore;
         _repository = repository;
         _storageOptions = storageOptions.Value;
         _policyOptions = policyOptions.Value;
+        _processingOptions = processingOptions.Value;
         _queue = queue;
     }
 
@@ -100,11 +107,41 @@ public sealed class ReceiptIntakeService
             persistAttempted = true;
             try
             {
-                await _repository.AddRequestWithAuditAsync(request, "AI_QUEUED",
-                    $"Source={(input.SourceKey is null ? "MANUAL" : "DRIVE_SANDBOX")}; " +
-                    $"AmountSource={(input.ClaimedAmount > 0 ? AmountSources.UserProvided : "AI_PENDING")}; " +
-                    $"DuplicateDetected={duplicate}; " +
-                    $"DuplicatePolicyEnabled={request.DuplicatePolicyEnabled}");
+                ReceiptIntakePersistenceResult persistenceResult;
+                try
+                {
+                    persistenceResult = await _repository.TryAddRequestWithAuditAsync(request, "AI_QUEUED",
+                        $"Source={(input.SourceKey is null ? "MANUAL" : "DRIVE_SANDBOX")}; " +
+                        $"AmountSource={(input.ClaimedAmount > 0 ? AmountSources.UserProvided : "AI_PENDING")}; " +
+                        $"DuplicateDetected={duplicate}; " +
+                        $"DuplicatePolicyEnabled={request.DuplicatePolicyEnabled}",
+                        _processingOptions.MaxOutstandingReceipts, cancellationToken);
+                }
+                catch (TimeoutException exception)
+                {
+                    persistAttempted = false;
+                    throw new ReceiptQueueCapacityException(
+                        "Hệ thống đang bận khi kiểm tra hàng đợi. Vui lòng thử lại sau.", exception);
+                }
+
+                if (persistenceResult == ReceiptIntakePersistenceResult.CapacityReached)
+                {
+                    persistAttempted = false;
+                    throw new ReceiptQueueCapacityException(
+                        "Hàng đợi đã đạt giới hạn tiếp nhận tạm thời. Vui lòng thử lại sau.");
+                }
+
+                if (persistenceResult == ReceiptIntakePersistenceResult.AlreadyExists)
+                {
+                    var concurrent = await _repository.GetPersistedRequestByIdAsync(id);
+                    if (concurrent is null ||
+                        !string.Equals(concurrent.FileSha256, sha256, StringComparison.OrdinalIgnoreCase))
+                        throw new ReceiptIntakeException(
+                            "Định danh nguồn đã được dùng cho nội dung ảnh khác.");
+
+                    _queue.Signal(id);
+                    return concurrent;
+                }
             }
             catch (DbUpdateException) when (input.SourceKey is not null)
             {

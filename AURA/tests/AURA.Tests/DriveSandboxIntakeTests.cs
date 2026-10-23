@@ -64,6 +64,61 @@ public sealed class DriveSandboxIntakeTests
     }
 
     [Fact]
+    public async Task Full_durable_queue_rejects_new_manual_upload_and_removes_its_staged_object()
+    {
+        var root = NewTestRoot();
+        try
+        {
+            var repository = new FakeRepository();
+            repository.Requests.Add(new ReimbursementRequest
+            {
+                Id = "already-pending",
+                ProcessingState = ProcessingStates.Pending
+            });
+            var service = CreateIntake(root, repository, maxOutstandingReceipts: 1);
+
+            await Assert.ThrowsAsync<ReceiptQueueCapacityException>(() => service.AcceptAsync(
+                new ReceiptIntakeInput(Png, "new.png", "image/png", 0, "TEST", "Test", "Test")));
+
+            Assert.Single(repository.Requests);
+            Assert.Empty(Directory.GetFiles(Path.Combine(root, "receipts"), "*.png"));
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Fact]
+    public async Task Full_queue_preserves_source_key_object_for_retry_after_capacity_recovers()
+    {
+        var root = NewTestRoot();
+        try
+        {
+            var repository = new FakeRepository();
+            repository.Requests.Add(new ReimbursementRequest
+            {
+                Id = "already-processing",
+                ProcessingState = ProcessingStates.Processing
+            });
+            var service = CreateIntake(root, repository, maxOutstandingReceipts: 1);
+            var input = new ReceiptIntakeInput(Png, "source.png", "image/png", 0,
+                "DRIVE-SANDBOX", "Synthetic", "Test", "drive:test-folder:test-file:hash");
+
+            await Assert.ThrowsAsync<ReceiptQueueCapacityException>(() => service.AcceptAsync(input));
+            var path = Path.Combine(root, "receipts", ReceiptIntakeService.SourceRequestId(input.SourceKey!) + ".png");
+            Assert.True(File.Exists(path));
+            Assert.Equal(Png, await File.ReadAllBytesAsync(path));
+            Assert.Single(repository.Requests);
+
+            repository.Requests[0].ProcessingState = ProcessingStates.Completed;
+            var accepted = await service.AcceptAsync(input);
+
+            Assert.Equal(ReceiptIntakeService.SourceRequestId(input.SourceKey!), accepted.Id);
+            Assert.Equal(2, repository.Requests.Count);
+            Assert.Equal(Png, await File.ReadAllBytesAsync(path));
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Fact]
     public async Task Retry_reuses_complete_file_after_ambiguous_SQL_failure()
     {
         var root = NewTestRoot();
@@ -628,11 +683,13 @@ public sealed class DriveSandboxIntakeTests
             { ["urls"] = "http://127.0.0.1:5097" }).Build();
 
     private static ReceiptIntakeService CreateIntake(string root, IReimbursementRepository repository,
-        ReceiptProcessingQueue? queue = null) =>
+        ReceiptProcessingQueue? queue = null, int maxOutstandingReceipts = 1000) =>
         new(new LocalReceiptFileStore(new TestEnvironment(root),
                 OptionsFactory.Create(new ReceiptStorageOptions { Directory = "receipts", MaxFileSizeMb = 5 })), repository,
             OptionsFactory.Create(new ReceiptStorageOptions { Directory = "receipts", MaxFileSizeMb = 5 }),
-            OptionsFactory.Create(new DecisionPolicyOptions()), queue ?? new ReceiptProcessingQueue());
+            OptionsFactory.Create(new DecisionPolicyOptions()),
+            OptionsFactory.Create(new ReceiptProcessingOptions { MaxOutstandingReceipts = maxOutstandingReceipts }),
+            queue ?? new ReceiptProcessingQueue());
 
     private static string NewTestRoot()
     {
@@ -826,6 +883,21 @@ public sealed class DriveSandboxIntakeTests
             }
             return Task.CompletedTask;
         }
+        public async Task<ReceiptIntakePersistenceResult> TryAddRequestWithAuditAsync(
+            ReimbursementRequest request, string action, string details, int maxOutstandingReceipts,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var existing = Requests.SingleOrDefault(item => item.Id == request.Id);
+            if (existing is not null)
+                return ReceiptIntakePersistenceResult.AlreadyExists;
+            var outstanding = Requests.Count(item => item.ProcessingState is
+                ProcessingStates.Pending or ProcessingStates.Processing);
+            if (outstanding >= maxOutstandingReceipts)
+                return ReceiptIntakePersistenceResult.CapacityReached;
+            await AddRequestWithAuditAsync(request, action, details);
+            return ReceiptIntakePersistenceResult.Added;
+        }
         public Task<List<ReimbursementRequest>> GetAllRequestsAsync() => throw new NotSupportedException();
         public Task UpdateRequestAsync(ReimbursementRequest request) => throw new NotSupportedException();
         public Task UpdateRequestWithAuditAsync(ReimbursementRequest request, string action, string details) =>
@@ -858,6 +930,9 @@ public sealed class DriveSandboxIntakeTests
         public Task<List<ReimbursementRequest>> GetAllRequestsAsync() => inner.GetAllRequestsAsync();
         public Task AddRequestWithAuditAsync(ReimbursementRequest request, string action, string details) =>
             inner.AddRequestWithAuditAsync(request, action, details);
+        public Task<ReceiptIntakePersistenceResult> TryAddRequestWithAuditAsync(ReimbursementRequest request,
+            string action, string details, int maxOutstandingReceipts, CancellationToken cancellationToken) =>
+            inner.TryAddRequestWithAuditAsync(request, action, details, maxOutstandingReceipts, cancellationToken);
         public Task UpdateRequestAsync(ReimbursementRequest request) => inner.UpdateRequestAsync(request);
         public Task UpdateRequestWithAuditAsync(ReimbursementRequest request, string action, string details) =>
             inner.UpdateRequestWithAuditAsync(request, action, details);
