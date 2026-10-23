@@ -1,5 +1,17 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
+> **Latest verification 24/10:** Debug and Release default suites both pass
+> **292/292**; Release build has 0 warnings/errors; EF reports no pending model
+> changes; `git diff --check` is clean. A new opt-in LocalDB integration case
+> now connects real intake + SQL persistence to a worker with a second storage
+> adapter over one shared fake GCS client. The default suite compiles/counts
+> this case but does not execute its body unless `AURA_RUN_LOCALDB_INTEGRATION=1`.
+> That opt-in run could not start here: `sqllocaldb info MSSQLLocalDB` failed
+> reading LocalDB registry configuration and SQL returned error 50 / Win32
+> `0x89c50118` (“Cannot create an automatic instance”). Therefore this newest
+> intake-to-worker integration case is **not runtime-verified**. The previously
+> recorded 15/15 LocalDB evidence predates this added case and remains historical.
+
 > **Shared receipt storage adapter 24/10 (candidate, not live):** Receipt intake,
 > worker inference and receipt serving now depend on `IReceiptFileStore`, with
 > local-file default and opt-in private GCS adapter. Cloud creation uses a
@@ -15,8 +27,8 @@
 > GCS tests cover create-only writes, matching/conflicting retries, generation-
 > pinned reads, pre-download size rejection and a download exceeding its own
 > advertised size. Verification after this code change: Debug and Release
-> **291/291**, opt-in LocalDB integration
-> **15/15** (15 SQL-backed cases active), Release build **0 warnings/errors**,
+> **292/292**, opt-in LocalDB integration
+> previous run **15/15** (before the newest integration case), Release build **0 warnings/errors**,
 > EF reports no pending model changes, and NuGet online audit reports no
 > vulnerable packages in app or tests. These are local/unit + LocalDB results,
 > not authenticated real-GCS or multi-host evidence. See

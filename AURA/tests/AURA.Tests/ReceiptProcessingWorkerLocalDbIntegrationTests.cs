@@ -5,6 +5,7 @@ using AURA.Interfaces;
 using AURA.Models;
 using AURA.Options;
 using AURA.Services;
+using AURA.Tests.Fakes;
 using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -110,6 +111,49 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
                 new PathAssertingExtractor(sharedFile), sharedDirectory);
 
             await AssertStateAsync(options, id, ProcessingStates.Completed, 1, null);
+        });
+    }
+
+    [Fact]
+    public async Task Intake_on_one_host_is_processed_by_another_host_using_shared_object_storage()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            byte[] png = [137, 80, 78, 71, 13, 10, 26, 10, 0, 0];
+            var sharedStorageClient = new FakeGoogleStorageClient();
+            var hostAStore = new GoogleCloudReceiptFileStore(sharedStorageClient,
+                "integration-test-bucket", "private/receipts", 1024);
+            var hostBStore = new GoogleCloudReceiptFileStore(sharedStorageClient,
+                "integration-test-bucket", "private/receipts", 1024);
+            const string sourceKey = "gcs-integration:folder:file:version-1";
+            ReimbursementRequest accepted;
+
+            await using (var database = new AppDbContext(options))
+            {
+                var intake = new ReceiptIntakeService(hostAStore, new ReimbursementRepository(database),
+                    Microsoft.Extensions.Options.Options.Create(new ReceiptStorageOptions
+                    {
+                        Provider = "GoogleCloudStorage",
+                        MaxFileSizeMb = 1
+                    }),
+                    Microsoft.Extensions.Options.Options.Create(new DecisionPolicyOptions()),
+                    new ReceiptProcessingQueue());
+
+                accepted = await intake.AcceptAsync(new ReceiptIntakeInput(png, "synthetic.png",
+                    "image/png", 0, "SYNTHETIC", "Synthetic test", "Test", sourceKey));
+            }
+
+            Assert.Equal(Convert.ToHexString(SHA256.HashData(png)), accepted.FileSha256);
+            Assert.Equal((long)png.Length, accepted.FileSizeBytes);
+            Assert.Equal("private/receipts/" + accepted.StoredFileName, sharedStorageClient.LastObjectName);
+
+            await ProcessOnceAsync(options, Path.Combine(root, "host-b"),
+                new StubExtractor(() => new ReceiptExtractionDto()), fileStore: hostBStore);
+
+            await AssertStateAsync(options, accepted.Id, ProcessingStates.Completed, 1, null);
+            Assert.True(sharedStorageClient.DownloadCalled);
+            Assert.True(sharedStorageClient.LastDownloadWasGenerationPinned);
         });
     }
 
@@ -597,13 +641,13 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
 
     private static async Task ProcessOnceAsync(DbContextOptions<AppDbContext> options,
         string root, IVisionExtractor extractor, string storageDirectory = "receipts",
-        int leaseSeconds = 600)
+        int leaseSeconds = 600, IReceiptFileStore? fileStore = null)
     {
         using var services = new ServiceCollection()
             .AddScoped(_ => new AppDbContext(options))
             .AddScoped(_ => new VisionExecutionContext())
             .AddScoped(_ => extractor)
-            .AddSingleton<AURA.Interfaces.IReceiptFileStore>(_ => new LocalReceiptFileStore(
+            .AddSingleton<IReceiptFileStore>(_ => fileStore ?? new LocalReceiptFileStore(
                 new TestEnvironment(root), Microsoft.Extensions.Options.Options.Create(
                     new ReceiptStorageOptions { Directory = storageDirectory })))
             .BuildServiceProvider();
