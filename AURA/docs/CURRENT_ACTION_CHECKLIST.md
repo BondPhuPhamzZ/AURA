@@ -12,6 +12,7 @@ Việc cần làm trước khi mở lại gate publish/pilot:
 - [ ] Tạo tập synthetic mới có nhãn độc lập, tách riêng tổng bị mờ với mô tả mặt hàng chung chung; đo missed escalation, critical fields, lỗi provider và latency qua nhiều lượt.
 - [ ] Chỉ gửi 15 ảnh thật qua model thay thế sau khi chủ dữ liệu chấp thuận rõ route mới; giữ ảnh và kết quả chi tiết ngoài Git.
 - [ ] Xác minh route ZDR, kiểm soát truy cập, lưu trữ riêng dùng chung, AI lease/fencing phân tán, malware/quarantine, retention, restore drill và tải nhiều instance trước pilot/scale.
+- [ ] Trước worker thứ hai: chặn stale write sau khi lease bị reclaim; commit kết quả và audit có fencing trong cùng transaction, rồi chạy test LocalDB hai worker với AI call bị giữ qua thời điểm hết lease.
 
 ## Checklist publish lịch sử (không áp dụng cho candidate hiện tại)
 
