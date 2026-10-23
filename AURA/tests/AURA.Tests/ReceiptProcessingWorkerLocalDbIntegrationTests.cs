@@ -5,6 +5,7 @@ using AURA.Interfaces;
 using AURA.Models;
 using AURA.Options;
 using AURA.Services;
+using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -93,6 +94,104 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             Assert.Equal("ESCALATE_SYSTEM_ERROR", request.Status);
             Assert.Equal("RECEIPT_FILE_INTEGRITY", request.ProviderErrorCode);
             Assert.Equal(1, await db.AuditLogs.CountAsync(a => a.RequestId == id));
+        });
+    }
+
+    [Fact]
+    public async Task Synthetic_database_backup_restores_pending_job_at_backup_point()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var id = await SeedAsync(options, root);
+            await using var source = new AppDbContext(options);
+            source.AuditLogs.Add(new AuditLog
+            {
+                RequestId = id,
+                Action = "SYNTHETIC_BACKUP_MARKER"
+            });
+            await source.SaveChangesAsync();
+            var sourceName = source.Database.GetDbConnection().Database;
+            Assert.Matches("^[A-Za-z0-9_]+$", sourceName);
+            var restoredName = sourceName + "_Restored";
+            var backupPath = Path.Combine(root, "synthetic-only.bak");
+            var dataPath = Path.Combine(root, "restored.mdf");
+            var logPath = Path.Combine(root, "restored_log.ldf");
+            var masterConnection = new SqlConnectionStringBuilder(source.Database.GetConnectionString())
+            {
+                InitialCatalog = "master"
+            }.ConnectionString;
+
+            await using var master = new SqlConnection(masterConnection);
+            await master.OpenAsync();
+            try
+            {
+                await using (var backup = master.CreateCommand())
+                {
+                    backup.CommandText = $"BACKUP DATABASE [{sourceName}] TO DISK = @path " +
+                        "WITH COPY_ONLY, INIT, CHECKSUM;";
+                    backup.CommandTimeout = 60;
+                    backup.Parameters.AddWithValue("@path", backupPath);
+                    await backup.ExecuteNonQueryAsync();
+                }
+
+                string? dataLogical = null;
+                string? logLogical = null;
+                await using (var files = master.CreateCommand())
+                {
+                    files.CommandText = "RESTORE FILELISTONLY FROM DISK = @path;";
+                    files.Parameters.AddWithValue("@path", backupPath);
+                    await using var reader = await files.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        var logical = reader.GetString(reader.GetOrdinal("LogicalName"));
+                        var type = reader.GetString(reader.GetOrdinal("Type"));
+                        if (type == "D") dataLogical = logical;
+                        if (type == "L") logLogical = logical;
+                    }
+                }
+                Assert.NotNull(dataLogical);
+                Assert.NotNull(logLogical);
+
+                await source.ReimbursementRequests.Where(x => x.Id == id)
+                    .ExecuteUpdateAsync(update => update.SetProperty(x => x.ProcessingState,
+                        ProcessingStates.Completed));
+
+                await using (var restore = master.CreateCommand())
+                {
+                    restore.CommandText = $"RESTORE DATABASE [{restoredName}] FROM DISK = @backup " +
+                        "WITH MOVE @dataLogical TO @dataPath, MOVE @logLogical TO @logPath, RECOVERY;";
+                    restore.CommandTimeout = 60;
+                    restore.Parameters.AddWithValue("@backup", backupPath);
+                    restore.Parameters.AddWithValue("@dataLogical", dataLogical);
+                    restore.Parameters.AddWithValue("@logLogical", logLogical);
+                    restore.Parameters.AddWithValue("@dataPath", dataPath);
+                    restore.Parameters.AddWithValue("@logPath", logPath);
+                    await restore.ExecuteNonQueryAsync();
+                }
+
+                var restoredConnection = new SqlConnectionStringBuilder(masterConnection)
+                {
+                    InitialCatalog = restoredName
+                }.ConnectionString;
+                await using var restored = new AppDbContext(
+                    new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(restoredConnection).Options);
+                var restoredJob = await restored.ReimbursementRequests.SingleAsync(x => x.Id == id);
+                Assert.Equal(ProcessingStates.Pending, restoredJob.ProcessingState);
+                Assert.Equal(3, restoredJob.FileSizeBytes);
+                Assert.Equal(1, await restored.ReimbursementRequests.CountAsync());
+                Assert.Equal(1, await restored.AuditLogs.CountAsync(x =>
+                    x.RequestId == id && x.Action == "SYNTHETIC_BACKUP_MARKER"));
+            }
+            finally
+            {
+                await using var cleanup = master.CreateCommand();
+                cleanup.CommandText = $"IF DB_ID(@name) IS NOT NULL BEGIN " +
+                    $"ALTER DATABASE [{restoredName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; " +
+                    $"DROP DATABASE [{restoredName}]; END";
+                cleanup.Parameters.AddWithValue("@name", restoredName);
+                await cleanup.ExecuteNonQueryAsync();
+            }
         });
     }
 
