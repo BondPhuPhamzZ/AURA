@@ -15,6 +15,7 @@ Việc cần làm trước khi mở lại gate publish/pilot:
 - [x] Xác minh `rowversion` chặn stale write: LocalDB hai worker, A bị giữ qua thời điểm lease hết hạn, B reclaim và hoàn tất; A nhận concurrency exception, chỉ còn một kết quả/audit. Đây chưa phải bằng chứng an toàn để bật nhiều worker vì giới hạn AI/cooldown và ảnh vẫn theo process/host.
 - [x] Thêm SQL application lock opt-in cho một permit xuyên process; LocalDB kiểm tra hai coordinator và cancellation. Giữ `Vision__UseSqlDistributedGate=false` trên hosting cho tới khi có shared private storage, cooldown chung và chaos/load test cho trường hợp mất SQL session giữa AI call.
 - [x] Worker đối chiếu size/SHA-256 ảnh đã lưu với SQL trước khi gọi AI; ca file bị sửa dừng fail-safe. Chưa có bằng chứng private share hoạt động xuyên host, ACL/backup/restore hoặc tính bất biến trên mọi loại storage.
+- [x] Smoke Development localhost sau khi xác minh 0 job đang chờ và tắt Drive: `/healthz` OK, DB/schema/storage và key presence sẵn sàng; không gọi model, không publish.
 
 ## Checklist publish lịch sử (không áp dụng cho candidate hiện tại)
 

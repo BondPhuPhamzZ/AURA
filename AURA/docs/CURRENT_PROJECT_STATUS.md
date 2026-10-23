@@ -1,4 +1,12 @@
-# Trạng thái hiện hành AURA ngày 23/10/2026
+# Trạng thái hiện hành AURA ngày 24/10/2026
+
+> **Smoke localhost 24/10:** Truy vấn chỉ đếm trên `AuraDb` cho thấy không có
+> job `PENDING/PROCESSING` trước khi khởi chạy; `DriveSandbox__Enabled=false`.
+> `/healthz` trong Development trả `status=ok`, `aiConfigured=true`,
+> `databaseUpToDate=true`, `pendingMigrationCount=0`, `storageAvailable=true`,
+> `sqlDistributedAiGateEnabled=false` và `strictZeroDataRetention=false`.
+> Process thử đã dừng. Đây chỉ xác nhận startup/cấu hình, **không** gọi AI,
+> không chứng minh accuracy, route ZDR hay readiness của nhiều host.
 
 > **Đối chứng model local mới nhất (23/10): vẫn NO-GO publish/scale.** Trên cùng
 > 15 ca synthetic đã biết và code quyết định mới, Qwen3.6 Flash đạt 15/15
