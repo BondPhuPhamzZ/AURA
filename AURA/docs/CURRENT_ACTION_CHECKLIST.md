@@ -1,4 +1,19 @@
-# Checklist hiện tại: publish hardening và smoke baseline
+# Checklist hiện hành và mốc publish lịch sử
+
+> **23/10 — NO-GO publish bản source mới và đổi model hosting.** Checklist
+> publish phía dưới là mốc lịch sử 17–21/10, không còn là lệnh triển khai
+> candidate hiện tại. Xem [trạng thái hiện hành](CURRENT_PROJECT_STATUS.md)
+> và [đối chứng model](MODEL_ROUTE_COMPARISON_2026-10-23.md).
+
+Việc cần làm trước khi mở lại gate publish/pilot:
+
+- [x] Khóa schema đầu vào, field backend-only, metadata/log lỗi provider và tín hiệu Semantic có thể chứa dữ liệu cá nhân; chạy Debug/Release 262/262, LocalDB 2/2, build/EF sạch.
+- [x] Đối chứng cùng 15 synthetic: Qwen3.6 Flash 15/15 quyết định, Qwen3.8 Flash 13/15; đây là bộ đã biết, không phải holdout mù.
+- [ ] Tạo tập synthetic mới có nhãn độc lập, tách riêng tổng bị mờ với mô tả mặt hàng chung chung; đo missed escalation, critical fields, lỗi provider và latency qua nhiều lượt.
+- [ ] Chỉ gửi 15 ảnh thật qua model thay thế sau khi chủ dữ liệu chấp thuận rõ route mới; giữ ảnh và kết quả chi tiết ngoài Git.
+- [ ] Xác minh route ZDR, kiểm soát truy cập, lưu trữ riêng dùng chung, AI lease/fencing phân tán, malware/quarantine, retention, restore drill và tải nhiều instance trước pilot/scale.
+
+## Checklist publish lịch sử (không áp dụng cho candidate hiện tại)
 
 > Cập nhật 21/10: source mới có Verify chỉ dành cho Development, mặc định tắt, và giới hạn HTTP upload/Verify trong từng process. Gate offline **196/196 tests**, build 0 warning, EF model không đổi. Chưa publish/smoke live bản này. Chi tiết và NO-GO pilot thật: [POST_CONTEST_HARDENING_2026-10-21.md](POST_CONTEST_HARDENING_2026-10-21.md).
 

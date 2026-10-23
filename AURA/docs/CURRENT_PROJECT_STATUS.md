@@ -1,6 +1,17 @@
 # Trạng thái hiện hành AURA ngày 23/10/2026
 
-> **Gate mới nhất (23/10): NO-GO publish/scale.** Parser v2 đã bắt buộc đủ
+> **Đối chứng model local mới nhất (23/10): vẫn NO-GO publish/scale.** Trên cùng
+> 15 ca synthetic đã biết và code quyết định mới, Qwen3.6 Flash đạt 15/15
+> quyết định, 0 system error; Qwen3.8 Flash đạt 13/15, một schema mismatch
+> và một over-escalation. Trước khi bổ sung gate mô tả hàng hóa chung chung,
+> Qwen3.6 đã bỏ lọt một ca FACT do dòng tổng bị mờ nhưng model dựng evidence
+> hợp lý từ số dòng hàng. Gate mới chuyển ca đó cho người kiểm tra, **không**
+> giải quyết tổng quát việc model tưởng tượng pixel. Debug/Release 262/262,
+> LocalDB opt-in 2/2, build sạch, EF không đổi. Không đổi default model hay
+> SmartASP; chưa có holdout mù/ảnh thật được phép dùng với model thay thế.
+> Xem [đối chứng route và giới hạn](MODEL_ROUTE_COMPARISON_2026-10-23.md).
+
+> **Gate strict-schema trước đối chứng model (23/10): NO-GO publish/scale.** Parser v2 đã bắt buộc đủ
 > shape; log/audit Semantic không còn ghi nguyên văn issue có thể chứa dữ
 > liệu hóa đơn. Release và Debug 253/253 test pass; LocalDB opt-in 2/2 pass
 > trên DB tạm; Release build 0 warning/error, EF không có pending model change.
