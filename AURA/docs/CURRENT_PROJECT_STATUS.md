@@ -5,6 +5,23 @@ và điều phối nhiều máy chủ nằm tại
 [readiness and scale assessment](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
 Các artifact cuộc thi được giữ nguyên; xem [addendum hậu cuộc thi](../submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md).
 
+> **Gate mới nhất sau chỉnh prompt, 23/10:** 234/234 Release tests pass;
+> smoke local 5 synthetic chỉ 3/5 completed và khớp nhãn, hai ca
+> `AI_SCHEMA_MISMATCH`. Lặp lại 15 ảnh thật đã dùng trước: 14/15 completed,
+> một `AI_RATE_LIMIT`; 10/15 khớp nhãn khóa và 11/15 quyết định trùng lần
+> trước nếu tính ca fail là không khớp. Đây là **NO-GO cho benchmark mới và
+> mở rộng worker**. Xem [evidence và giới hạn](EVALUATION_EVIDENCE.md).
+
+> **Candidate mới nhất:** runner ghi checkpoint; retry nhắc schema/v2; 429
+> quay về queue tối đa ba lượt. Parser chỉ gắn version v2 khi provider bỏ sót
+> đúng trường protocol đó và mọi trường evidence còn lại hiện diện, có cờ
+> audit `EvidenceContractVersionInferred`. Suite báo 244/244; hai ca LocalDB
+> opt-in chạy riêng 2/2 pass, DB tạm đã dọn. Hai lượt synthetic liên tiếp
+> 5/5, nhưng lặp 15 ảnh thật đã dùng vẫn chỉ 14/15 completed (một
+> `AI_SCHEMA_MISMATCH`), 10/15 khớp nhãn và 11/15 lặp quyết định cũ.
+> Audit: 4/15 Semantic Repair, 0/15 inferred version. **Chưa publish hoặc
+> tăng worker**; đây chưa phải bằng chứng production accuracy.
+
 > **Source hiện hành:** **231/231** Release tests pass, Release build 0
 > warning/error với `--no-restore`, EF không có pending model changes. Drive
 > synthetic sandbox vẫn chỉ chạy Development/loopback và tắt mặc định. Batch
