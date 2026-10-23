@@ -52,7 +52,8 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
                 _logger.LogWarning(
                     "Skipping primary vision provider {PrimaryProvider} for {CooldownSeconds:F0}s; using {FallbackProvider}.",
                     primary, remainingCooldown.Value.TotalSeconds, fallback);
-                return await ExtractWithFallbackAsync(fallback, physicalImagePath, invocationToken);
+                return await ExtractWithFallbackAsync(fallback, physicalImagePath, invocationToken,
+                    capacityLease);
             }
 
             throw new VisionExtractionException("AI_PROVIDER_COOLDOWN",
@@ -63,12 +64,14 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
         if (canFallback && _circuitBreaker.ShouldSkipPrimary(DateTime.UtcNow))
         {
             _execution.MarkPrimaryFailure("CIRCUIT_OPEN");
-            return await ExtractWithFallbackAsync(fallback, physicalImagePath, invocationToken);
+            return await ExtractWithFallbackAsync(fallback, physicalImagePath, invocationToken,
+                capacityLease);
         }
 
         try
         {
             var result = await ExtractWithProviderAsync(primary, physicalImagePath, invocationToken);
+            await capacityLease.AssertOwnershipAsync(invocationToken);
             _circuitBreaker.RecordSuccess();
             await _coordinator.ClearCooldownAsync(primary, invocationToken);
             _execution.MarkSuccess(primary);
@@ -107,7 +110,8 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
                 _logger.LogWarning(primaryFailure,
                     "Primary vision provider {PrimaryProvider} failed with {ErrorCode}; trying {FallbackProvider} once.",
                     primary, primaryFailure.Code, fallback);
-                return await ExtractWithFallbackAsync(fallback, physicalImagePath, invocationToken);
+                return await ExtractWithFallbackAsync(fallback, physicalImagePath, invocationToken,
+                    capacityLease);
             }
 
             throw;
@@ -115,7 +119,8 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
     }
 
     private async Task<ReceiptExtractionDto> ExtractWithFallbackAsync(string fallback, string imagePath,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        VisionInvocationCoordinator.VisionInvocationLease capacityLease)
     {
         var remainingCooldown = await _coordinator.GetRemainingCooldownAsync(fallback,
             DateTime.UtcNow, cancellationToken);
@@ -129,6 +134,7 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
         try
         {
             var result = await ExtractWithProviderAsync(fallback, imagePath, cancellationToken);
+            await capacityLease.AssertOwnershipAsync(cancellationToken);
             await _coordinator.ClearCooldownAsync(fallback, cancellationToken);
             _execution.MarkSuccess(fallback, fallbackUsed: true);
             return result;

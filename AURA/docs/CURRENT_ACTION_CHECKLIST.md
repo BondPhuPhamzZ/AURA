@@ -1,6 +1,6 @@
 # Checklist hiện hành và mốc publish lịch sử
 
-> **23/10 — NO-GO publish bản source mới và đổi model hosting.** Checklist
+> **24/10 — NO-GO publish/scale bản source mới.** Checklist
 > publish phía dưới là mốc lịch sử 17–21/10, không còn là lệnh triển khai
 > candidate hiện tại. Xem [trạng thái hiện hành](CURRENT_PROJECT_STATUS.md)
 > và [đối chứng model](MODEL_ROUTE_COMPARISON_2026-10-23.md).
@@ -13,7 +13,7 @@ Việc cần làm trước khi mở lại gate publish/pilot:
 - [ ] Chỉ gửi 15 ảnh thật qua model thay thế sau khi chủ dữ liệu chấp thuận rõ route mới; giữ ảnh và kết quả chi tiết ngoài Git.
 - [ ] Xác minh route ZDR, kiểm soát truy cập, lưu trữ riêng dùng chung, AI lease/fencing phân tán, malware/quarantine, retention, restore drill và tải nhiều instance trước pilot/scale.
 - [x] Xác minh `rowversion` chặn stale write: LocalDB hai worker, A bị giữ qua thời điểm lease hết hạn, B reclaim và hoàn tất; A nhận concurrency exception, chỉ còn một kết quả/audit. Đây chưa phải bằng chứng an toàn để bật nhiều worker vì giới hạn AI/cooldown và ảnh vẫn theo process/host.
-- [x] Thêm SQL application lock opt-in và cooldown provider dùng chung trong SQL; cooldown phân tán tính theo `SYSUTCDATETIME()` để tránh lệch giờ giữa host, được kiểm chứng bằng LocalDB khi caller truyền thời gian lệch ±nhiều năm. LocalDB còn kiểm tra hai coordinator, cancellation, session bị kết thúc, và cooldown read/extend/clear. Watchdog phát `AI_GATE_LOST` để hủy provider call/giữ job retryable. Migration `20261023181204_AddSharedVisionProviderCooldown` cần được backup/áp dụng có kiểm soát trước khi bật gate; chưa áp dụng hosting. Giữ `Vision__UseSqlDistributedGate=false` tới khi có shared private storage và chaos/load test trên hai máy chủ thật; phát hiện mất session theo chu kỳ 5 giây không đảm bảo provider dừng tức thời.
+- [x] Thêm SQL application lock opt-in, shared cooldown dùng `SYSUTCDATETIME()` và fencing token tăng theo permit. Extractor xác minh lock/token sau khi provider trả lời; LocalDB mô phỏng đồng hồ host lệch ±nhiều năm, hai coordinator, session bị `KILL`, token successor cao hơn và owner cũ bị từ chối. Migration `20261023181204_AddSharedVisionProviderCooldown` và `20261023182852_AddVisionInvocationFence` cần được backup/áp dụng có kiểm soát trước khi bật gate; chưa áp dụng hosting. Provider đang xử lý có thể không dừng ngay khi SQL session mất. Giữ `Vision__UseSqlDistributedGate=false` tới khi có shared private storage và chaos/load test trên hai máy chủ thật.
 - [x] Worker đối chiếu size/SHA-256 ảnh đã lưu với SQL trước khi gọi AI; ca file bị sửa dừng fail-safe. Chưa có bằng chứng private share hoạt động xuyên host, ACL/backup/restore hoặc tính bất biến trên mọi loại storage.
 - [x] Smoke Development localhost sau khi xác minh 0 job đang chờ và tắt Drive: `/healthz` OK, DB/schema/storage và key presence sẵn sàng; không gọi model, không publish.
 - [x] Diễn tập BACKUP/RESTORE trên DB LocalDB tạm chỉ chứa job và audit synthetic; DB phục hồi giữ trạng thái đúng lúc backup, DB/file tạm được dọn. Chưa có diễn tập restore DB hosting **cùng** kho ảnh và kiểm tra RPO/RTO.

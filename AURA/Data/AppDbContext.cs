@@ -12,6 +12,7 @@ namespace AURA.Data
         public DbSet<ReimbursementRequest> ReimbursementRequests { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<VisionProviderCooldown> VisionProviderCooldowns { get; set; }
+        public DbSet<VisionInvocationFence> VisionInvocationFences { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,6 +40,11 @@ namespace AURA.Data
             modelBuilder.Entity<VisionProviderCooldown>()
                 .Property(cooldown => cooldown.Provider)
                 .HasMaxLength(50);
+
+            modelBuilder.Entity<VisionInvocationFence>()
+                .HasKey(fence => fence.Id);
+            modelBuilder.Entity<VisionInvocationFence>()
+                .HasData(new VisionInvocationFence { Id = 1, Token = 0 });
         }
     }
 }

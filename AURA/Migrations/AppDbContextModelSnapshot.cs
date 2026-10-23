@@ -193,6 +193,29 @@ namespace AURA.Migrations
                     b.ToTable("ReimbursementRequests");
                 });
 
+            modelBuilder.Entity("AURA.Models.VisionInvocationFence", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<long>("Token")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("VisionInvocationFences");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Token = 0L
+                        });
+                });
+
             modelBuilder.Entity("AURA.Models.VisionProviderCooldown", b =>
                 {
                     b.Property<string>("Provider")

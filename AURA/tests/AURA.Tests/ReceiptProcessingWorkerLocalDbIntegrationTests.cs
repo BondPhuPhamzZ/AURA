@@ -140,12 +140,14 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
                 {
                     ["ConnectionStrings:DefaultConnection"] = db.Database.GetConnectionString()
                 }).Build();
-            var coordinator = new VisionInvocationCoordinator(
-                Microsoft.Extensions.Options.Options.Create(new VisionOptions
-                {
-                    MaxConcurrentRequests = 1, UseSqlDistributedGate = true
-                }), configuration);
+            var settings = Microsoft.Extensions.Options.Options.Create(new VisionOptions
+            {
+                MaxConcurrentRequests = 1, UseSqlDistributedGate = true
+            });
+            var coordinator = new VisionInvocationCoordinator(settings, configuration);
+            var successorCoordinator = new VisionInvocationCoordinator(settings, configuration);
             var lease = await coordinator.EnterAsync(CancellationToken.None);
+            Assert.True(lease.FencingToken > 0);
             var sessionId = lease.SqlSessionId;
             Assert.NotNull(sessionId);
 
@@ -162,6 +164,18 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
                 var lost = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
                 using var registration = lease.LostToken.Register(() => lost.TrySetResult());
                 await lost.Task.WaitAsync(TimeSpan.FromSeconds(12));
+                var successor = await successorCoordinator.EnterAsync(CancellationToken.None);
+                try
+                {
+                    Assert.True(successor.FencingToken > lease.FencingToken);
+                    await successor.AssertOwnershipAsync(CancellationToken.None);
+                    await Assert.ThrowsAsync<VisionExtractionException>(() =>
+                        lease.AssertOwnershipAsync(CancellationToken.None));
+                }
+                finally
+                {
+                    await successor.DisposeAsync();
+                }
             }
             finally
             {
@@ -227,6 +241,9 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             Assert.Empty(await database.Database.GetPendingMigrationsAsync());
             Assert.Contains("20261023181204_AddSharedVisionProviderCooldown",
                 await database.Database.GetAppliedMigrationsAsync());
+            Assert.Contains("20261023182852_AddVisionInvocationFence",
+                await database.Database.GetAppliedMigrationsAsync());
+            Assert.Equal(0L, (await database.VisionInvocationFences.SingleAsync(x => x.Id == 1)).Token);
             database.VisionProviderCooldowns.Add(new VisionProviderCooldown
             {
                 Provider = "OpenRouter", CooldownUntilUtc = DateTime.UtcNow.AddMinutes(2)

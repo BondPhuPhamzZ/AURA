@@ -58,7 +58,21 @@ public sealed class VisionInvocationCoordinator
                     "@LockOwner = 'Session', @LockTimeout = 0; SELECT @result;";
                 command.CommandTimeout = 5;
                 var result = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
-                if (result >= 0) return new VisionInvocationLease(_capacity, connection);
+                if (result >= 0)
+                {
+                    await using var fenceCommand = connection.CreateCommand();
+                    fenceCommand.CommandText = """
+                        UPDATE dbo.VisionInvocationFences
+                        SET Token = Token + 1
+                        OUTPUT INSERTED.Token
+                        WHERE Id = 1;
+                        """;
+                    fenceCommand.CommandTimeout = 5;
+                    var token = await fenceCommand.ExecuteScalarAsync(cancellationToken);
+                    if (token is null or DBNull)
+                        throw new InvalidOperationException("SQL AI gate fencing row is missing.");
+                    return new VisionInvocationLease(_capacity, connection, Convert.ToInt64(token));
+                }
                 if (result != -1)
                     throw new InvalidOperationException($"SQL distributed AI gate failed with code {result}.");
                 await Task.Delay(200, cancellationToken);
@@ -184,18 +198,67 @@ public sealed class VisionInvocationCoordinator
         private SqlConnection? _connection;
         private readonly CancellationTokenSource _monitorStop = new();
         private readonly CancellationTokenSource _lost = new();
+        private readonly SemaphoreSlim _sqlCommandGate = new(1, 1);
         private readonly Task _monitorTask;
+        private readonly long _fencingToken;
 
-        internal VisionInvocationLease(SemaphoreSlim capacity, SqlConnection? connection)
+        internal VisionInvocationLease(SemaphoreSlim capacity, SqlConnection? connection,
+            long fencingToken = 0)
         {
             _capacity = capacity;
             _connection = connection;
+            _fencingToken = fencingToken;
             _monitorTask = connection is null ? Task.CompletedTask : MonitorLockAsync(connection);
         }
 
         public CancellationToken LostToken => _lost.Token;
 
+        internal long FencingToken => _fencingToken;
+
         internal int? SqlSessionId => _connection?.ServerProcessId;
+
+        public async Task AssertOwnershipAsync(CancellationToken cancellationToken)
+        {
+            var connection = _connection;
+            if (connection is null) return;
+            if (_lost.IsCancellationRequested) throw CreateLostException();
+
+            await _sqlCommandGate.WaitAsync(cancellationToken);
+            try
+            {
+                await using var command = connection.CreateCommand();
+                command.CommandText = """
+                    SELECT CASE
+                        WHEN APPLOCK_MODE('public', N'AURA_VISION_GLOBAL_PERMIT', 'Session') = 'Exclusive'
+                         AND EXISTS (SELECT 1 FROM dbo.VisionInvocationFences
+                                     WHERE Id = 1 AND Token = @token)
+                        THEN CAST(1 AS bit) ELSE CAST(0 AS bit) END;
+                    """;
+                command.CommandTimeout = 5;
+                command.Parameters.AddWithValue("@token", _fencingToken);
+                var value = await command.ExecuteScalarAsync(cancellationToken);
+                if (value is bool isOwner && isOwner) return;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+                _lost.Cancel();
+                throw CreateLostException();
+            }
+            finally
+            {
+                _sqlCommandGate.Release();
+            }
+
+            _lost.Cancel();
+            throw CreateLostException();
+        }
+
+        private static VisionExtractionException CreateLostException() => new("AI_GATE_LOST",
+            "Quyền gọi AI dùng chung đã mất hoặc token fencing đã cũ; kết quả không được chấp nhận và hồ sơ sẽ được xử lý lại.");
 
         public async ValueTask DisposeAsync()
         {
@@ -206,8 +269,7 @@ public sealed class VisionInvocationCoordinator
             {
                 await _monitorTask;
                 if (_lost.IsCancellationRequested)
-                    throw new VisionExtractionException("AI_GATE_LOST",
-                        "Quyền gọi AI dùng chung đã mất; hồ sơ sẽ được xử lý lại sau khi lease hết hạn.");
+                    throw CreateLostException();
             }
             finally
             {
@@ -222,6 +284,7 @@ public sealed class VisionInvocationCoordinator
                     heldCapacity.Release();
                     _monitorStop.Dispose();
                     _lost.Dispose();
+                    _sqlCommandGate.Dispose();
                 }
             }
         }
@@ -234,15 +297,30 @@ public sealed class VisionInvocationCoordinator
                 while (await timer.WaitForNextTickAsync(_monitorStop.Token))
                 {
                     if (_monitorStop.IsCancellationRequested) break;
-                    await using var command = connection.CreateCommand();
-                    command.CommandText =
-                        $"SELECT APPLOCK_MODE('public', N'{LockResource}', 'Session');";
-                    command.CommandTimeout = 5;
-                    var mode = await command.ExecuteScalarAsync(CancellationToken.None);
-                    if (!string.Equals(mode as string, "Exclusive", StringComparison.Ordinal))
+                    await _sqlCommandGate.WaitAsync(_monitorStop.Token);
+                    try
                     {
-                        _lost.Cancel();
-                        break;
+                        await using var command = connection.CreateCommand();
+                        command.CommandText = """
+                            SELECT CASE
+                                WHEN APPLOCK_MODE('public', @resource, 'Session') = 'Exclusive'
+                                 AND EXISTS (SELECT 1 FROM dbo.VisionInvocationFences
+                                             WHERE Id = 1 AND Token = @token)
+                                THEN CAST(1 AS bit) ELSE CAST(0 AS bit) END;
+                            """;
+                        command.CommandTimeout = 5;
+                        command.Parameters.AddWithValue("@resource", LockResource);
+                        command.Parameters.AddWithValue("@token", _fencingToken);
+                        var ownsPermit = await command.ExecuteScalarAsync(CancellationToken.None);
+                        if (ownsPermit is not bool isOwner || !isOwner)
+                        {
+                            _lost.Cancel();
+                            break;
+                        }
+                    }
+                    finally
+                    {
+                        _sqlCommandGate.Release();
                     }
                 }
             }

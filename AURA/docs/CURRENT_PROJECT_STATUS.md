@@ -1,5 +1,16 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
+> **SQL AI permit có fencing 24/10:** Mỗi lần process nhận SQL application
+> lock, SQL tăng token fencing đơn điệu. Trước khi trả facts từ provider,
+> extractor kiểm tra lại session lock và token trên chính session đó; watchdog
+> cũng giám sát cả hai. Integration LocalDB mô phỏng session bị `KILL`, xác
+> nhận permit ở coordinator thứ hai nhận token mới lớn hơn và owner cũ không
+> thể xác nhận quyền. Migration `20261023182852_AddVisionInvocationFence`
+> tạo dòng singleton ban đầu. Đây bảo vệ việc chấp nhận kết quả đã cũ, nhưng
+> không thể buộc provider bên ngoài dừng request/billing ngay khi session mất;
+> gate mặc định vẫn false cho tới khi có shared private storage và chaos/load
+> test trên hai host thật.
+
 > **Cooldown provider dùng chung qua SQL 24/10:** Khi
 > `Vision__UseSqlDistributedGate=true`, cooldown sau rate-limit được ghi/đọc
 > trong bảng `VisionProviderCooldowns`; thời hạn mới chỉ được kéo dài, không
@@ -7,10 +18,12 @@
 > host vừa nhận 429. SQL `SYSUTCDATETIME()` là nguồn thời gian chuẩn cho
 > cooldown phân tán khi ghi lẫn đọc; test LocalDB truyền giờ host lệch ±nhiều
 > năm xác nhận không bỏ qua hoặc kéo dài cooldown sai. Test hai coordinator
-> cũng xác nhận read/extend/clear. Thêm migration `20261023181204_AddSharedVisionProviderCooldown`;
-> phải backup, áp migration có kiểm soát trước khi bật SQL gate. Không tự bật
-> startup migration và chưa chạy migration trên hosting. Migration chain đã
-> được áp trên database LocalDB mới, bảng ghi/đọc được, không còn pending
+> cũng xác nhận read/extend/clear. Hai migration `20261023181204_AddSharedVisionProviderCooldown`
+> và `20261023182852_AddVisionInvocationFence` phải được backup, áp có kiểm
+> soát trước khi bật SQL gate. Không tự bật
+> startup migration và chưa chạy migration trên hosting. Cả hai migration đã
+> được áp trên LocalDB mới; cooldown ghi/đọc được, fencing row được seed và
+> không còn pending
 > migration, database tạm đã xóa. Debug/Release **284/284**, LocalDB
 > integration **14/14**, Release build 0 warning/error, EF không pending model
 > change. Đây là kiểm thử LocalDB cục bộ, không thay thế xác nhận clock/HA của
