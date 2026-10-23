@@ -39,6 +39,8 @@ The smallest safe scale path is to keep one **logical** provider capacity budget
 
 An opt-in `Vision__UseSqlDistributedGate=true` now serializes AI calls from separate app processes that use the **same SQL database**. It requires `Vision__MaxConcurrentRequests=1`, acquires a session-owned SQL application lock before inference, and fails closed if SQL cannot be reached. LocalDB integration tests cover two independent coordinators, release and cancellation. The default is still `false` to preserve the contest deployment. This is **not yet approval to scale**: provider cooldown remains process-local, receipt storage remains host-local unless explicitly shared, and a SQL session lost during an in-flight external request could release the lock before that request actually ends. Staging chaos/load evidence and a strategy for that failure mode are still required before enabling this option on multiple servers.
 
+The storage path accepts an absolute private directory outside `wwwroot`, so a restricted shared file mount could be configured without changing receipt IDs. The worker now checks stored size and SHA-256 against the intake record before calling AI and keeps a read-only handle during extraction; a same-size tamper test stops before the model call. This **does not** provision a shared store, verify cross-host ACLs/SMB semantics, or replace a private object-storage design. Rows predating persisted file metadata may contain the migration defaults (`0`/empty hash) and will now fail safe for manual recovery rather than sending unverifiable bytes.
+
 ## Change gates before any broader pilot
 
 1. Replace the expired provider key in private configuration and smoke one synthetic image. Keep Drive disabled and Verify disabled on public hosting.
