@@ -11,6 +11,7 @@ namespace AURA.Data
 
         public DbSet<ReimbursementRequest> ReimbursementRequests { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<VisionProviderCooldown> VisionProviderCooldowns { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -32,6 +33,12 @@ namespace AURA.Data
             modelBuilder.Entity<ReimbursementRequest>()
                 .Property(r => r.ClaimedAmount)
                 .HasPrecision(18, 2);
+
+            modelBuilder.Entity<VisionProviderCooldown>()
+                .HasKey(cooldown => cooldown.Provider);
+            modelBuilder.Entity<VisionProviderCooldown>()
+                .Property(cooldown => cooldown.Provider)
+                .HasMaxLength(50);
         }
     }
 }

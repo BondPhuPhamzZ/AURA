@@ -171,6 +171,45 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
+    public async Task Sql_ai_gate_shares_provider_cooldown_between_coordinators()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, _) =>
+        {
+            await using var db = new AppDbContext(options);
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:DefaultConnection"] = db.Database.GetConnectionString()
+                }).Build();
+            var settings = Microsoft.Extensions.Options.Options.Create(new VisionOptions
+            {
+                MaxConcurrentRequests = 1, UseSqlDistributedGate = true
+            });
+            var first = new VisionInvocationCoordinator(settings, configuration);
+            var second = new VisionInvocationCoordinator(settings, configuration);
+            var now = DateTime.UtcNow;
+
+            await first.RecordCooldownAsync("OpenRouter", now, TimeSpan.FromSeconds(120),
+                CancellationToken.None);
+
+            var remaining = await second.GetRemainingCooldownAsync("OpenRouter",
+                now.AddSeconds(30), CancellationToken.None);
+            Assert.InRange(remaining!.Value.TotalSeconds, 89, 91);
+
+            await second.RecordCooldownAsync("OpenRouter", now.AddSeconds(10),
+                TimeSpan.FromSeconds(20), CancellationToken.None);
+            var extended = await first.GetRemainingCooldownAsync(
+                "OpenRouter", now.AddSeconds(40), CancellationToken.None);
+            Assert.InRange(extended!.Value.TotalSeconds, 79, 81);
+
+            await first.ClearCooldownAsync("OpenRouter", CancellationToken.None);
+            Assert.Null(await second.GetRemainingCooldownAsync("OpenRouter", now,
+                CancellationToken.None));
+        });
+    }
+
+    [Fact]
     public async Task Tampered_stored_bytes_fail_before_AI_is_called()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;

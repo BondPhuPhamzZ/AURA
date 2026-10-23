@@ -93,6 +93,20 @@ public sealed class VisionInvocationCoordinator
         }
     }
 
+    public async Task<TimeSpan?> GetRemainingCooldownAsync(string provider, DateTime utcNow,
+        CancellationToken cancellationToken)
+    {
+        if (!_useSqlDistributedGate) return GetRemainingCooldown(provider, utcNow);
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT CooldownUntilUtc FROM dbo.VisionProviderCooldowns WHERE Provider = @provider;";
+        command.Parameters.AddWithValue("@provider", provider);
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        if (value is not DateTime untilUtc || untilUtc <= utcNow) return null;
+        return untilUtc - utcNow;
+    }
+
     public void RecordCooldown(string provider, DateTime utcNow, TimeSpan duration)
     {
         if (duration <= TimeSpan.Zero) return;
@@ -104,9 +118,51 @@ public sealed class VisionInvocationCoordinator
         }
     }
 
+    public async Task RecordCooldownAsync(string provider, DateTime utcNow, TimeSpan duration,
+        CancellationToken cancellationToken)
+    {
+        if (!_useSqlDistributedGate)
+        {
+            RecordCooldown(provider, utcNow, duration);
+            return;
+        }
+        if (duration <= TimeSpan.Zero) return;
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SET XACT_ABORT ON;
+            BEGIN TRANSACTION;
+            UPDATE dbo.VisionProviderCooldowns WITH (UPDLOCK, HOLDLOCK)
+                SET CooldownUntilUtc = CASE WHEN CooldownUntilUtc < @untilUtc THEN @untilUtc ELSE CooldownUntilUtc END
+                WHERE Provider = @provider;
+            IF @@ROWCOUNT = 0
+                INSERT dbo.VisionProviderCooldowns (Provider, CooldownUntilUtc) VALUES (@provider, @untilUtc);
+            COMMIT TRANSACTION;
+            """;
+        command.Parameters.AddWithValue("@provider", provider);
+        command.Parameters.AddWithValue("@untilUtc", utcNow.Add(duration));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
     public void ClearCooldown(string provider)
     {
         lock (_sync) _cooldownUntilUtc.Remove(provider);
+    }
+
+    public async Task ClearCooldownAsync(string provider, CancellationToken cancellationToken)
+    {
+        if (!_useSqlDistributedGate)
+        {
+            ClearCooldown(provider);
+            return;
+        }
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "DELETE dbo.VisionProviderCooldowns WHERE Provider = @provider;";
+        command.Parameters.AddWithValue("@provider", provider);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     public sealed class VisionInvocationLease : IAsyncDisposable

@@ -17,7 +17,7 @@ namespace AURA.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "8.0.31")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -191,6 +191,20 @@ namespace AURA.Migrations
                     b.HasIndex("ProcessingState", "QueuedAt");
 
                     b.ToTable("ReimbursementRequests");
+                });
+
+            modelBuilder.Entity("AURA.Models.VisionProviderCooldown", b =>
+                {
+                    b.Property<string>("Provider")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CooldownUntilUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Provider");
+
+                    b.ToTable("VisionProviderCooldowns");
                 });
 #pragma warning restore 612, 618
         }

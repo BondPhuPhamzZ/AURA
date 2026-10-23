@@ -42,7 +42,8 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
         _execution.Begin(primary);
 
         var canFallback = _options.FallbackEnabled && !string.Equals(primary, fallback, StringComparison.OrdinalIgnoreCase);
-        var remainingCooldown = _coordinator.GetRemainingCooldown(primary, DateTime.UtcNow);
+        var remainingCooldown = await _coordinator.GetRemainingCooldownAsync(primary,
+            DateTime.UtcNow, invocationToken);
         if (remainingCooldown is not null)
         {
             _execution.MarkPrimaryFailure("AI_PROVIDER_COOLDOWN");
@@ -69,7 +70,7 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
         {
             var result = await ExtractWithProviderAsync(primary, physicalImagePath, invocationToken);
             _circuitBreaker.RecordSuccess();
-            _coordinator.ClearCooldown(primary);
+            await _coordinator.ClearCooldownAsync(primary, invocationToken);
             _execution.MarkSuccess(primary);
             return result;
         }
@@ -91,7 +92,8 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
             if (primaryFailure.Code == "AI_RATE_LIMIT")
             {
                 var cooldown = primaryFailure.RetryAfter ?? TimeSpan.FromSeconds(_options.ProviderCooldownSeconds);
-                _coordinator.RecordCooldown(primary, DateTime.UtcNow, cooldown);
+                await _coordinator.RecordCooldownAsync(primary, DateTime.UtcNow, cooldown,
+                    invocationToken);
                 if (!canFallback && primaryFailure.RetryAfter is null)
                 {
                     throw new VisionExtractionException(primaryFailure.Code, primaryFailure.UserMessage,
@@ -115,7 +117,8 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
     private async Task<ReceiptExtractionDto> ExtractWithFallbackAsync(string fallback, string imagePath,
         CancellationToken cancellationToken)
     {
-        var remainingCooldown = _coordinator.GetRemainingCooldown(fallback, DateTime.UtcNow);
+        var remainingCooldown = await _coordinator.GetRemainingCooldownAsync(fallback,
+            DateTime.UtcNow, cancellationToken);
         if (remainingCooldown is not null)
         {
             throw new VisionExtractionException("AI_ALL_PROVIDERS_UNAVAILABLE",
@@ -126,7 +129,7 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
         try
         {
             var result = await ExtractWithProviderAsync(fallback, imagePath, cancellationToken);
-            _coordinator.ClearCooldown(fallback);
+            await _coordinator.ClearCooldownAsync(fallback, cancellationToken);
             _execution.MarkSuccess(fallback, fallbackUsed: true);
             return result;
         }
@@ -136,7 +139,8 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
             {
                 var cooldown = fallbackFailure.RetryAfter ??
                     TimeSpan.FromSeconds(_options.ProviderCooldownSeconds);
-                _coordinator.RecordCooldown(fallback, DateTime.UtcNow, cooldown);
+                await _coordinator.RecordCooldownAsync(fallback, DateTime.UtcNow, cooldown,
+                    cancellationToken);
             }
 
             throw new VisionExtractionException("AI_ALL_PROVIDERS_UNAVAILABLE",
