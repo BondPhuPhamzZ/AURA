@@ -3,7 +3,9 @@
 > **Manual upload idempotency 24/10 — commit `daab7d4`:** Endpoint nhận
 > `Idempotency-Key` tùy chọn theo UUID chuẩn; UI giữ tạm một khóa theo SHA-256
 > trong `sessionStorage` đến khi server xác nhận, tái sử dụng qua reload cùng
-> tab và tối đa ba lần thử khi mất kết nối, HTTP 429 hoặc 5xx.
+> tab và tối đa ba lần thử khi mất kết nối, HTTP 429 hoặc 5xx. LocalDB
+> integration chạy hai intake instance/DbContext với cùng khóa manual và xác
+> nhận đúng một row, audit và file.
 > Cùng khóa/cùng SHA-256 trả lại hồ sơ đã lưu; cùng khóa/ảnh khác bị từ chối.
 > Thêm test kiểm khóa, retry, xung đột nội dung, SQL unique-conflict, và hợp
 > đồng UI. Full Debug/Release pass **311/311** mỗi cấu hình với

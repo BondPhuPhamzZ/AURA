@@ -392,7 +392,7 @@ public sealed class DriveSandboxIntakeTests
     }
 
     [Fact]
-    public async Task Two_sql_intake_instances_accept_the_same_source_once()
+    public async Task Two_sql_intake_instances_accept_the_same_manual_idempotency_key_once()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
         var root = NewTestRoot();
@@ -415,14 +415,16 @@ public sealed class DriveSandboxIntakeTests
                 new ReimbursementRepository(secondDatabase));
             var firstIntake = CreateIntake(root, preflight);
             var secondIntake = CreateIntake(root, secondPreflight);
+            var sourceKey = ReceiptIntakeService.CreateManualIdempotencySourceKey(
+                "6f51ee41-f670-4591-9c80-d855e4f114c7");
             var input = new ReceiptIntakeInput(Png, "receipt.png", "image/png", 0,
-                "DRIVE-SANDBOX", "Synthetic", "Test", "drive:folder:file:concurrent-sql");
+                "TEST", "Synthetic", "Test", sourceKey);
 
             var accepted = await Task.WhenAll(firstIntake.AcceptAsync(input),
                 secondIntake.AcceptAsync(input)).WaitAsync(TimeSpan.FromSeconds(20));
 
             Assert.Equal(accepted[0].Id, accepted[1].Id);
-            Assert.Equal(ReceiptIntakeService.SourceRequestId(input.SourceKey!), accepted[0].Id);
+            Assert.Equal(ReceiptIntakeService.SourceRequestId(sourceKey!), accepted[0].Id);
             Assert.Single(await firstDatabase.ReimbursementRequests.AsNoTracking().ToListAsync());
             Assert.Single(await firstDatabase.AuditLogs.AsNoTracking().ToListAsync());
             Assert.Single(Directory.GetFiles(Path.Combine(root, "receipts")));
