@@ -243,6 +243,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
         request.ProcessingLatencyMs = stopwatch.ElapsedMilliseconds;
         request.ProcessingCompletedAt = request.ProcessingState == ProcessingStates.Pending
             ? null : terminalTimestamp ?? await DatabaseUtcClock.ReadAsync(db, cancellationToken);
+        request.RetentionExpiresAt = ReceiptRetentionPolicy.ForAutomatedDecision(request);
         request.ProcessingLeaseUntil = null;
         request.PrimaryProvider = execution.PrimaryProvider;
         request.ServedProvider = execution.ServedProvider;

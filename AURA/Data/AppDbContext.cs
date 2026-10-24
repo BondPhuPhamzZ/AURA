@@ -28,6 +28,9 @@ namespace AURA.Data
             modelBuilder.Entity<ReimbursementRequest>()
                 .HasIndex(r => new { r.ProcessingState, r.QueuedAt });
 
+            modelBuilder.Entity<ReimbursementRequest>()
+                .HasIndex(r => r.RetentionExpiresAt);
+
             modelBuilder.Entity<AuditLog>()
                 .HasIndex(log => new { log.RequestId, log.Timestamp });
 

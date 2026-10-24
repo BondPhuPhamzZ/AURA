@@ -148,6 +148,9 @@ namespace AURA.Migrations
                     b.Property<DateTime>("QueuedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("RetentionExpiresAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -185,6 +188,8 @@ namespace AURA.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FileSha256");
+
+                    b.HasIndex("RetentionExpiresAt");
 
                     b.HasIndex("Status");
 

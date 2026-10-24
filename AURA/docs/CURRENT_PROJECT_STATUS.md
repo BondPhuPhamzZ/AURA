@@ -10,11 +10,15 @@
 > cuối lượt rỗng. Đây là một lần rerun regression synthetic, không phải accuracy
 > thực tế hay SLA. Evidence chi tiết: [model route comparison](MODEL_ROUTE_COMPARISON_2026-10-24.md).
 
-> **Retention đã chốt chính sách, chưa triển khai:** giới hạn tối đa 7 ngày tính
-> từ lúc xử lý/ra quyết định cuối cho ảnh, facts, audit và mọi backup. Backup phải
-> hết hạn theo tuổi dữ liệu, không chỉ theo ngày tạo. Code hiện vẫn cho Undo và
-> chưa có trạng thái đóng bất biến, catalog backup theo deadline dữ liệu hay tác
-> vụ xóa; không tuyên bố retention đã hoạt động.
+> **Retention 7 ngày — candidate đã qua local test, chưa kích hoạt:** deadline
+> theo quyết định cuối, startup catch-up + sweep mỗi 5 phút cho ảnh/facts/audit,
+> và khóa Undo sau hạn. Script backup local ghi manifest/hash, remover mặc định
+> chỉ báo cáo. Full Debug/Release 339/339, migration LocalDB cô lập, startup
+> health với retention bật trên DB rỗng và script backup synthetic đều pass.
+> `DataRetention:Enabled` vẫn false trên môi trường dùng thật; Task Scheduler,
+> restore drill của backup set và phê duyệt retention còn mở. Cleanup best-effort:
+> khi máy tắt, dọn trễ tới lần app/Task Scheduler chạy tiếp theo. Chi tiết:
+> [retention validation](RETENTION_VALIDATION_2026-10-24.md).
 
 > **Thay đổi code tại commit `0568b5a` — privacy role triage + semantic marker preservation:**
 > Prompt nay phân biệt rõ dữ liệu khách hàng/người nhận với thông tin thương mại
@@ -37,9 +41,11 @@
 > Retention policy đã được người dùng chọn; pháp lý/operational approval và triển khai
 > vẫn mở. Quyết định quản lý còn Undo nên thời điểm xóa phải được khóa theo deadline.
 
-> **Gate tiếp theo:** giữ local single-host, giữ ảnh synthetic, hoàn thiện diễn tập
-> backup/restore theo đúng host và triển khai retention 7 ngày theo trạng thái kết thúc an toàn. Chưa triển khai
-> tự xóa ảnh, Firestore, GCS hoặc shared cloud storage. Privacy triage vẫn chạy sau
+> **Gate tiếp theo:** giữ local single-host và ảnh synthetic; diễn tập
+> backup/restore theo đúng host, cấu hình lịch dọn backup, chốt phê duyệt dữ liệu,
+> rồi mới bật retention có chủ ý. Chưa bật
+> tự xóa trên DB đang dùng; Firestore, GCS hoặc shared cloud storage vẫn chưa phải
+> storage mặc định. Privacy triage vẫn chạy sau
 > khi ảnh gốc đã được gửi qua inference; chưa cho phép dữ liệu người dùng/pilot.
 
 > **Rerun local single-host 24/10:** sau khi khởi động LocalDB instance đang có,
@@ -214,10 +220,11 @@
 > key or hosting setting has been provisioned/changed; GCS integration has not
 > been exercised against a real bucket. Keep `LocalFileSystem` until isolated
 > authenticated integration, two-host, backup/restore and failure tests pass.
-> Retention cleanup is deliberately not implemented. The selected policy is an
-> absolute seven-day limit from final processing/decision for every data copy;
-> never purge jobs that are pending, processing, retryable or awaiting a human
-> decision. Local fake-client
+> Retention implementation is in the current locally tested candidate and remains
+> disabled by default. The selected policy is a seven-day maximum from final
+> processing/decision for receipt images, SQL facts/audit and managed local
+> backups; never purge jobs that are pending, processing, retryable or awaiting a
+> human decision. Local fake-client
 > GCS tests cover create-only writes, matching/conflicting retries, generation-
 > pinned reads, pre-download size rejection and a download exceeding its own
 > advertised size. Verification after this code change: Debug and Release

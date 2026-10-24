@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using AURA.Interfaces;
+using AURA.Options;
 using AURA.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace AURA.Controllers
 {
@@ -10,11 +12,14 @@ namespace AURA.Controllers
     {
         private readonly IReimbursementRepository _repo;
         private readonly IAuditLogger _audit;
+        private readonly bool _retentionEnabled;
 
-        public ReviewerController(IReimbursementRepository repo, IAuditLogger audit)
+        public ReviewerController(IReimbursementRepository repo, IAuditLogger audit,
+            IOptions<ReceiptRetentionOptions>? retentionOptions = null)
         {
             _repo = repo;
             _audit = audit;
+            _retentionEnabled = retentionOptions?.Value.Enabled == true;
         }
 
         [HttpPost]
@@ -40,6 +45,10 @@ namespace AURA.Controllers
 
             if (decision == "UNDO")
             {
+                if (_retentionEnabled &&
+                    ReceiptRetentionPolicy.IsExpired(req.RetentionExpiresAt, DateTime.UtcNow))
+                    return Conflict("Đã hết thời hạn lưu; không thể hoàn tác quyết định này.");
+
                 var logs = await _audit.GetByRequestIdAsync(req.Id);
                 if (!EscalationWorkflow.CanUndo(req.Status) || req.ManagerAnswer is null)
                 {
@@ -56,6 +65,7 @@ namespace AURA.Controllers
                 req.Status = priorAiAction.Action[(priorAiAction.Action.IndexOf("ESCALATE_", StringComparison.Ordinal))..];
                 req.ManagerAnswer = null;
                 req.ManagerDecisionAt = null;
+                req.RetentionExpiresAt = null;
                 try
                 {
                     await _repo.UpdateRequestWithAuditAsync(req, "MANAGER_UNDO",
@@ -81,6 +91,7 @@ namespace AURA.Controllers
             req.Status = outcome.Status;
             req.ManagerAnswer = answer;
             req.ManagerDecisionAt = DateTime.UtcNow;
+            req.RetentionExpiresAt = ReceiptRetentionPolicy.ForManagerDecision(req);
             try
             {
                 await _repo.UpdateRequestWithAuditAsync(req, outcome.AuditAction,

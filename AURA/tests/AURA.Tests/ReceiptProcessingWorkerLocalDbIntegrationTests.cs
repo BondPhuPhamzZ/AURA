@@ -103,6 +103,187 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
+    public async Task Retention_purge_deletes_only_expired_finalized_requests_and_their_audit_and_image()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var store = new LocalReceiptFileStore(new TestEnvironment(root),
+                Microsoft.Extensions.Options.Options.Create(new ReceiptStorageOptions
+                {
+                    Directory = "receipts"
+                }));
+            var ids = new[] { "expired-auto", "expired-manager", "pending", "unresolved", "recent" };
+            var requests = new[]
+            {
+                CreateRetentionRequest(ids[0], "AUTO_APPROVE", ProcessingStates.Completed,
+                    managerAnswer: null, finalizedAt: DateTime.UtcNow.AddDays(-8), expired: true),
+                CreateRetentionRequest(ids[1], "RETURNED_BY_MANAGER", ProcessingStates.Failed,
+                    managerAnswer: false, finalizedAt: DateTime.UtcNow.AddDays(-8), expired: true),
+                CreateRetentionRequest(ids[2], "PENDING", ProcessingStates.Pending,
+                    managerAnswer: null, finalizedAt: null, expired: true),
+                CreateRetentionRequest(ids[3], "ESCALATE_FACT", ProcessingStates.Completed,
+                    managerAnswer: null, finalizedAt: null, expired: true),
+                CreateRetentionRequest(ids[4], "AUTO_APPROVE", ProcessingStates.Completed,
+                    managerAnswer: null, finalizedAt: DateTime.UtcNow, expired: false)
+            };
+
+            foreach (var request in requests)
+            {
+                byte[] bytes = [1, 2, 3, 4];
+                request.FileSizeBytes = bytes.Length;
+                request.FileSha256 = Convert.ToHexString(SHA256.HashData(bytes));
+                await store.PutIfAbsentAsync(request.StoredFileName, bytes, "image/jpeg",
+                    request.FileSha256, CancellationToken.None);
+            }
+
+            await using (var db = new AppDbContext(options))
+            {
+                db.ReimbursementRequests.AddRange(requests);
+                db.AuditLogs.AddRange(requests.Select(request => new AuditLog
+                {
+                    RequestId = request.Id,
+                    Action = "SYNTHETIC_TEST",
+                    Details = "synthetic",
+                    Timestamp = DateTime.UtcNow
+                }));
+                await db.SaveChangesAsync();
+            }
+
+            await using (var db = new AppDbContext(options))
+            {
+                var purger = new ReceiptRetentionPurger(db, store,
+                    NullLogger<ReceiptRetentionPurger>.Instance);
+                Assert.Equal(2, await purger.PurgeExpiredBatchAsync(25, CancellationToken.None));
+                Assert.Equal(0, await purger.PurgeExpiredBatchAsync(25, CancellationToken.None));
+            }
+
+            await using var verify = new AppDbContext(options);
+            Assert.Equal(new[] { ids[2], ids[4], ids[3] }, await verify.ReimbursementRequests
+                .OrderBy(request => request.Id).Select(request => request.Id).ToArrayAsync());
+            Assert.Equal(3, await verify.AuditLogs.CountAsync());
+            foreach (var request in requests)
+            {
+                await using var image = await store.OpenReadAsync(request.StoredFileName,
+                    CancellationToken.None);
+                Assert.Equal(request.Id is "pending" or "unresolved" or "recent", image is not null);
+            }
+        });
+    }
+
+    [Fact]
+    public async Task Retention_purge_retries_idempotently_if_process_stops_after_image_delete()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var localStore = new LocalReceiptFileStore(new TestEnvironment(root),
+                Microsoft.Extensions.Options.Options.Create(new ReceiptStorageOptions
+                {
+                    Directory = "receipts"
+                }));
+            var request = CreateRetentionRequest("expired-retry", "AUTO_APPROVE",
+                ProcessingStates.Completed, managerAnswer: null,
+                finalizedAt: DateTime.UtcNow.AddDays(-9), expired: true);
+            byte[] bytes = [5, 6, 7];
+            request.FileSizeBytes = bytes.Length;
+            request.FileSha256 = Convert.ToHexString(SHA256.HashData(bytes));
+            await localStore.PutIfAbsentAsync(request.StoredFileName, bytes, "image/jpeg",
+                request.FileSha256, CancellationToken.None);
+            await using (var seed = new AppDbContext(options))
+            {
+                seed.ReimbursementRequests.Add(request);
+                seed.AuditLogs.Add(new AuditLog
+                {
+                    RequestId = request.Id,
+                    Action = "SYNTHETIC_TEST",
+                    Details = "synthetic",
+                    Timestamp = DateTime.UtcNow
+                });
+                await seed.SaveChangesAsync();
+            }
+
+            var flakyStore = new DeleteThenFailOnceReceiptFileStore(localStore);
+            await using (var firstAttempt = new AppDbContext(options))
+            {
+                var purger = new ReceiptRetentionPurger(firstAttempt, flakyStore,
+                    NullLogger<ReceiptRetentionPurger>.Instance);
+                await Assert.ThrowsAsync<IOException>(() =>
+                    purger.PurgeExpiredBatchAsync(25, CancellationToken.None));
+            }
+
+            await using (var afterRollback = new AppDbContext(options))
+            {
+                Assert.True(await afterRollback.ReimbursementRequests.AnyAsync(item => item.Id == request.Id));
+                Assert.True(await afterRollback.AuditLogs.AnyAsync(item => item.RequestId == request.Id));
+                Assert.Null(await localStore.OpenReadAsync(request.StoredFileName, CancellationToken.None));
+            }
+
+            await using (var retry = new AppDbContext(options))
+            {
+                var purger = new ReceiptRetentionPurger(retry, flakyStore,
+                    NullLogger<ReceiptRetentionPurger>.Instance);
+                Assert.Equal(1, await purger.PurgeExpiredBatchAsync(25, CancellationToken.None));
+                Assert.False(await retry.ReimbursementRequests.AnyAsync(item => item.Id == request.Id));
+                Assert.False(await retry.AuditLogs.AnyAsync(item => item.RequestId == request.Id));
+            }
+        });
+    }
+
+    [Fact]
+    public async Task Enabled_retention_rejects_manager_undo_after_the_record_deadline()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, _) =>
+        {
+            var request = new ReimbursementRequest
+            {
+                Id = "retention-undo-expired",
+                OriginalFileName = "synthetic.jpg",
+                StoredFileName = "retention-undo-expired.jpg",
+                ImageUrl = "private",
+                ContentType = "image/jpeg",
+                FileSha256 = new string('0', 64),
+                FileSizeBytes = 1,
+                Status = "APPROVED_POLICY_EXCEPTION",
+                ProcessingState = ProcessingStates.Completed,
+                IsForwardedToManager = true,
+                ManagerAnswer = true,
+                ManagerDecisionAt = DateTime.UtcNow.AddDays(-8),
+                RetentionExpiresAt = DateTime.UtcNow.AddDays(-1)
+            };
+
+            await using var db = new AppDbContext(options);
+            db.ReimbursementRequests.Add(request);
+            db.AuditLogs.AddRange(
+                new AuditLog
+                {
+                    RequestId = request.Id,
+                    Action = "AI_PROCESSED_ESCALATE_POLICY",
+                    Details = "synthetic",
+                    Timestamp = DateTime.UtcNow.AddDays(-9)
+                },
+                new AuditLog
+                {
+                    RequestId = request.Id,
+                    Action = "MANAGER_YES",
+                    Details = "synthetic",
+                    Timestamp = DateTime.UtcNow.AddDays(-8)
+                });
+            await db.SaveChangesAsync();
+
+            var result = await CreateReviewerController(db, retentionEnabled: true)
+                .EscalateAction(request.Id, "UNDO");
+
+            Assert.IsType<ConflictObjectResult>(result);
+            Assert.Contains("hết thời hạn lưu", ((ConflictObjectResult)result).Value?.ToString(),
+                StringComparison.OrdinalIgnoreCase);
+            Assert.Equal("APPROVED_POLICY_EXCEPTION",
+                (await db.ReimbursementRequests.AsNoTracking().SingleAsync(item => item.Id == request.Id)).Status);
+        });
+    }
+
+    [Fact]
     public async Task Shared_intake_capacity_is_enforced_across_independent_SQL_repositories()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
@@ -954,6 +1135,52 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
         return item.Id;
     }
 
+    private static ReimbursementRequest CreateRetentionRequest(string id, string status,
+        string processingState, bool? managerAnswer, DateTime? finalizedAt, bool expired)
+    {
+        var now = DateTime.UtcNow;
+        return new ReimbursementRequest
+        {
+            Id = id,
+            OriginalFileName = id + ".jpg",
+            StoredFileName = id + ".jpg",
+            ImageUrl = "private",
+            ContentType = "image/jpeg",
+            FileSha256 = new string('0', 64),
+            FileSizeBytes = 0,
+            Status = status,
+            ProcessingState = processingState,
+            ProcessingCompletedAt = processingState is ProcessingStates.Completed or ProcessingStates.Failed
+                ? finalizedAt : null,
+            ManagerAnswer = managerAnswer,
+            ManagerDecisionAt = managerAnswer is null ? null : finalizedAt,
+            RetentionExpiresAt = expired ? now.AddDays(-1) : now.AddDays(1)
+        };
+    }
+
+    private sealed class DeleteThenFailOnceReceiptFileStore(IReceiptFileStore inner) : IReceiptFileStore
+    {
+        private bool _shouldFail = true;
+
+        public Task<bool> PutIfAbsentAsync(string storedFileName, ReadOnlyMemory<byte> bytes,
+            string contentType, string sha256, CancellationToken cancellationToken) =>
+            inner.PutIfAbsentAsync(storedFileName, bytes, contentType, sha256, cancellationToken);
+
+        public Task<Stream?> OpenReadAsync(string storedFileName, CancellationToken cancellationToken) =>
+            inner.OpenReadAsync(storedFileName, cancellationToken);
+
+        public async Task DeleteAsync(string storedFileName, CancellationToken cancellationToken)
+        {
+            await inner.DeleteAsync(storedFileName, cancellationToken);
+            if (!_shouldFail) return;
+            _shouldFail = false;
+            throw new IOException("Synthetic failure after idempotent image deletion.");
+        }
+
+        public Task<bool> IsAvailableAsync(CancellationToken cancellationToken) =>
+            inner.IsAvailableAsync(cancellationToken);
+    }
+
     private static ReimbursementRequest CreateCapacityRequest(string id) => new()
     {
         Id = id,
@@ -1010,12 +1237,17 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
         Assert.Equal(state != ProcessingStates.Pending, item.ProcessingCompletedAt.HasValue);
     }
 
-    private static ReviewerController CreateReviewerController(AppDbContext database)
+    private static ReviewerController CreateReviewerController(AppDbContext database,
+        bool retentionEnabled = false)
     {
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Headers["X-Requested-With"] = "XMLHttpRequest";
         var actionContext = new ActionContext(httpContext, new RouteData(), new ControllerActionDescriptor());
-        return new ReviewerController(new ReimbursementRepository(database), new AuditLogger(database))
+        return new ReviewerController(new ReimbursementRepository(database), new AuditLogger(database),
+            Microsoft.Extensions.Options.Options.Create(new ReceiptRetentionOptions
+            {
+                Enabled = retentionEnabled
+            }))
         {
             ControllerContext = new ControllerContext(actionContext),
             Url = new TestUrlHelper(actionContext),

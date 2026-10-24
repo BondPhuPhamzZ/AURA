@@ -79,6 +79,9 @@ namespace AURA.Models
         public bool? ManagerAnswer { get; set; }
 
         public DateTime? ManagerDecisionAt { get; set; }
+
+        /// <summary>UTC deadline for deleting this finalized request and its audit/image data.</summary>
+        public DateTime? RetentionExpiresAt { get; set; }
         
         public long ProcessingLatencyMs { get; set; }
 

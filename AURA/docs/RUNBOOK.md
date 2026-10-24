@@ -129,6 +129,44 @@ Integration test `Synthetic_database_and_receipt_backup_restore_consistent_pendi
    Hai biến môi trường chỉ tồn tại trong cửa sổ PowerShell hiện tại; sau khi dừng AURA, đóng cửa sổ này để trở về cấu hình thường. Không ghi đè User Secrets hay connection string đang dùng.
 5. Chỉ xác nhận drill đạt khi `/healthz` trả `ok`, migration bằng 0, queue/status/audit khớp, và ảnh đọc qua route chứng từ khớp kích thước/hash SQL. Ghi thời gian backup/restore và kết quả kiểm tra. Nếu khôi phục thật, đóng app, sao lưu trạng thái hiện tại trước, rồi mới đổi cấu hình trở lại; không xóa bản nguồn cho tới khi xác minh xong.
 
+### Retention local 7 ngày (opt-in, chưa bật mặc định)
+
+Retention chỉ purge hồ sơ đã có quyết định cuối: `AUTO_APPROVE` hoặc trạng thái quản lý đã chốt. Hồ sơ đang chờ, đang xử lý, retryable và chờ người duyệt không bị xóa. Khi bật `DataRetention:Enabled=true`, app dọn lúc khởi động rồi theo chu kỳ `DataRetention:SweepIntervalMinutes` (mặc định 5 phút); thời hạn ảnh, facts và audit tính từ quyết định cuối. Đến hạn thì Undo bị từ chối. Nếu sweep lúc khởi động lỗi, app không khởi động để tránh phục vụ dữ liệu quá hạn; lỗi sweep định kỳ được log và thử lại ở chu kỳ sau. Đây là best-effort local: nếu máy tắt/quá trình dừng, dữ liệu được dọn khi app chạy lại; không thể bảo đảm xóa đúng giây khi host offline.
+
+1. Trước khi bật trên máy đang dùng, kiểm tra migration `20261024130944_AddReceiptRetentionDeadline` đã áp dụng, chạy test integration và diễn tập trên DB/thư mục synthetic riêng. Tạo backup đầy đủ và restore thử trước khi đổi `DataRetention:Enabled`; tuyệt đối không dùng script backup để xóa bản backup chưa đăng ký.
+2. Tạo một backup set bên ngoài repo, ví dụ:
+
+   ```powershell
+   $backupRoot = Join-Path $env:USERPROFILE (Join-Path 'AURA-Backups' ('AURA_BACKUP_' + (Get-Date -Format 'yyyyMMdd_HHmmss') + '_01'))
+   New-Item -ItemType Directory -Path $backupRoot | Out-Null
+   $databaseBackupPath = Join-Path $backupRoot 'AURA.bak'
+   $receiptBackup = Join-Path $backupRoot 'receipts'
+   New-Item -ItemType Directory -Path $receiptBackup | Out-Null
+   ```
+
+   Tạo Full `.bak` bằng SSMS như phần trên; copy receipt vào `$receiptBackup` và xác minh hash. Dừng AURA cùng mọi writer. Trong cùng PowerShell, đăng ký catalog (lệnh chỉ đọc SQL, so sánh file với SQL; không tạo backup):
+
+   ```powershell
+   .\tools\Register-AuraLocalBackupRetention.ps1 `
+     -BackupSetDirectory $backupRoot `
+     -DatabaseBackupFile $databaseBackupPath `
+     -ReceiptSourceDirectory (Resolve-Path '.\App_Data\receipts').Path `
+     -ReceiptBackupDirectory $receiptBackup `
+     -ConfirmApplicationStopped
+   ```
+
+   Script lấy connection string từ User Secrets hoặc `AURA_BACKUP_CONNECTION_STRING` nhưng không in giá trị; không truyền secret trên dòng lệnh. Manifest ghi size/SHA-256 và hạn purge. Hạn là sớm hơn giữa ngày tạo backup + 7 ngày và deadline sớm nhất của dữ liệu đã xử lý có trong snapshot. Vì vậy backup được tạo sau thời điểm hạn sẽ bị từ chối nếu SQL còn giữ hồ sơ quá hạn. Chỉ backup set theo mẫu `AURA_BACKUP_*` có manifest hợp lệ mới được remover quản lý; bản backup cũ/vô danh được giữ nguyên để tránh xóa nhầm.
+3. Remover chạy report-only nếu thiếu `-Apply`; nó chỉ xóa backup set đã hết hạn sau khi kiểm tra tên, manifest, danh sách file, size và hash:
+
+   ```powershell
+   .\tools\Remove-ExpiredAuraLocalBackups.ps1 -BackupRoot (Join-Path $env:USERPROFILE 'AURA-Backups')
+   .\tools\Remove-ExpiredAuraLocalBackups.ps1 -BackupRoot (Join-Path $env:USERPROFILE 'AURA-Backups') -Apply
+   ```
+
+   Lệnh thứ hai là xóa thực tế, chỉ chạy sau khi đọc kết quả report-only. Để tự động, cấu hình Windows Task Scheduler chạy hằng ngày và thêm trigger **At startup**, bằng cùng tài khoản hoạt động với quyền xóa thư mục backup; đối số script phải gồm `-BackupRoot "<đường dẫn backup root>" -Apply`. Kiểm tra lịch sử task, output và thư mục sau mỗi lần chạy. Task Scheduler không chạy khi máy tắt, nên thiết lập chạy ngay khi bỏ lỡ lịch; lần app khởi động cũng chỉ catch-up dữ liệu trong DB/ảnh, không tự chạy script backup.
+
+Script đăng ký backup giả định app và mọi writer đã dừng, `.bak` là snapshot mới nhất của đúng DB hiện tại, và source/backup receipt khớp mọi hồ sơ SQL. Nó kiểm hash receipt nhưng không thể chứng minh nội dung `.bak` là backup SQL hợp lệ; bật **Verify backup when finished** và **Perform checksum** trong SSMS, rồi restore drill riêng. SQL + file system không tạo snapshot nguyên tử; đây vẫn là rủi ro cần chấp nhận/đóng bằng quiesce và restore test trên đúng máy.
+
 SQL và filesystem không có một transaction/snapshot nguyên tử chung. Dừng tất cả writer trước khi copy ảnh và backup DB để giảm cửa sổ lệch; nếu cần RPO/RTO được cam kết hoặc snapshot nhất quán khi app đang chạy, phải thiết kế backup quiesce/coordination riêng và kiểm thử đúng host. Đừng xem một lần LocalDB test là bằng chứng hosting backup, retention, hay recovery time.
 
 Mở URL được in trong terminal. Không truy cập `/Verify` để tìm trang riêng; nút Verify nằm ngay trên trang chủ. `/Applicant` và `/Verify` chủ động chuyển về `/`.

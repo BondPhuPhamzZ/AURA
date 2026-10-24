@@ -112,6 +112,10 @@ builder.Services.AddOptions<ReceiptProcessingOptions>()
     .Bind(builder.Configuration.GetSection(ReceiptProcessingOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
+builder.Services.AddOptions<ReceiptRetentionOptions>()
+    .Bind(builder.Configuration.GetSection(ReceiptRetentionOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 builder.Services.AddOptions<VerifyOptions>()
     .Bind(builder.Configuration.GetSection(VerifyOptions.SectionName))
     .ValidateDataAnnotations()
@@ -154,11 +158,13 @@ else
     builder.Services.AddSingleton<IReceiptFileStore, LocalReceiptFileStore>();
 builder.Services.AddScoped<ReceiptIntakeService>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
+builder.Services.AddScoped<ReceiptRetentionPurger>();
 builder.Services.AddSingleton<WorkflowOperationGate>();
 builder.Services.AddSingleton<ReceiptProcessingQueue>();
 builder.Services.AddSingleton<VisionCircuitBreaker>();
 builder.Services.AddSingleton<VisionInvocationCoordinator>();
 builder.Services.AddScoped<VisionExecutionContext>();
+builder.Services.AddHostedService<ReceiptRetentionCleanupWorker>();
 builder.Services.AddHostedService<ReceiptProcessingWorker>();
 builder.Services.AddHostedService<ReceiptQueueMonitor>();
 builder.Services.AddHostedService<ReceiptTemporaryFileCleanupWorker>();
@@ -214,6 +220,7 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
     IOptions<OllamaOptions> configuredOllama,
     IOptions<VerifyOptions> configuredVerify,
     IOptions<DriveSandboxOptions> configuredDriveSandbox,
+    IOptions<ReceiptRetentionOptions> configuredRetention,
     IOptions<ReceiptStorageOptions> configuredReceiptStorage,
     IWebHostEnvironment environment,
     IReceiptFileStore receiptFileStore,
@@ -273,6 +280,8 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
         providerDataCollectionDenied = useOllama ? (bool?)null : openRouter.DeniesProviderDataCollection,
         strictZeroDataRetention = useOllama ? (bool?)null : openRouter.RequireZeroDataRetention,
         receiptStorageProvider = configuredReceiptStorage.Value.Provider,
+        retentionCleanupEnabled = configuredRetention.Value.Enabled,
+        retentionDays = ReceiptRetentionPolicy.RetentionDays,
         processingMode = "durable-background-queue",
         maxConcurrentAiRequests = vision.MaxConcurrentRequests,
         sqlDistributedAiGateEnabled = vision.UseSqlDistributedGate,
