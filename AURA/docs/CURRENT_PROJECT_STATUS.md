@@ -23,7 +23,8 @@
 > cost vẫn chỉ ghi theo response, chưa có budget/cumulative alert. Sau bổ sung
 > các tín hiệu này, full Debug/Release pass **318/318** mỗi cấu hình với
 > LocalDB integration bật; Release build 0 warning/error, EF không pending
-> model changes.
+> model changes. Restore drill LocalDB cũng khôi phục cặp DB + ảnh synthetic
+> và xác minh row pending, audit, size/SHA-256; chưa mô phỏng GCS hoặc RPO/RTO.
 
 > **Cập nhật tiếp nối 24/10 — source intake write xác nhận bền vững:** Khi
 > xử lý `DbUpdateException` sau khi tạo receipt nguồn, `ReceiptIntakeService`

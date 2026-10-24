@@ -367,12 +367,17 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
-    public async Task Synthetic_database_backup_restores_pending_job_at_backup_point()
+    public async Task Synthetic_database_and_receipt_backup_restore_consistent_pending_job_and_image()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
         await WithIsolatedDatabase(async (options, root) =>
         {
             var id = await SeedAsync(options, root);
+            var liveReceiptPath = Path.Combine(root, "receipts", "synthetic.jpg");
+            var receiptBackupDirectory = Path.Combine(root, "receipt-object-backup");
+            Directory.CreateDirectory(receiptBackupDirectory);
+            var receiptBackupPath = Path.Combine(receiptBackupDirectory, "synthetic.jpg");
+            File.Copy(liveReceiptPath, receiptBackupPath);
             await using var source = new AppDbContext(options);
             source.AuditLogs.Add(new AuditLog
             {
@@ -422,6 +427,7 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
                 Assert.NotNull(dataLogical);
                 Assert.NotNull(logLogical);
 
+                await File.WriteAllBytesAsync(liveReceiptPath, [1, 2, 4]);
                 await source.ReimbursementRequests.Where(x => x.Id == id)
                     .ExecuteUpdateAsync(update => update.SetProperty(x => x.ProcessingState,
                         ProcessingStates.Completed));
@@ -448,6 +454,13 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
                 var restoredJob = await restored.ReimbursementRequests.SingleAsync(x => x.Id == id);
                 Assert.Equal(ProcessingStates.Pending, restoredJob.ProcessingState);
                 Assert.Equal(3, restoredJob.FileSizeBytes);
+                var restoredReceiptPath = Path.Combine(root, "restored-receipts", restoredJob.StoredFileName);
+                Directory.CreateDirectory(Path.GetDirectoryName(restoredReceiptPath)!);
+                File.Copy(receiptBackupPath, restoredReceiptPath);
+                var restoredReceiptBytes = await File.ReadAllBytesAsync(restoredReceiptPath);
+                Assert.Equal(restoredJob.FileSizeBytes, restoredReceiptBytes.LongLength);
+                Assert.Equal(restoredJob.FileSha256,
+                    Convert.ToHexString(SHA256.HashData(restoredReceiptBytes)));
                 Assert.Equal(1, await restored.ReimbursementRequests.CountAsync());
                 Assert.Equal(1, await restored.AuditLogs.CountAsync(x =>
                     x.RequestId == id && x.Action == "SYNTHETIC_BACKUP_MARKER"));
