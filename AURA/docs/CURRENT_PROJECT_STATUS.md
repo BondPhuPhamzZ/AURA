@@ -20,7 +20,10 @@
 > ngưỡng capacity/age; LocalDB test xác nhận projection và recorded bytes.
 > Đây là structured application logging, chưa phải alert pipeline. Byte sum
 > không bao gồm orphan/temp objects và không thay cho số liệu bucket thực;
-> cost vẫn chỉ ghi theo response, chưa có budget/cumulative alert.
+> cost vẫn chỉ ghi theo response, chưa có budget/cumulative alert. Sau bổ sung
+> các tín hiệu này, full Debug/Release pass **318/318** mỗi cấu hình với
+> LocalDB integration bật; Release build 0 warning/error, EF không pending
+> model changes.
 
 > **Cập nhật tiếp nối 24/10 — source intake write xác nhận bền vững:** Khi
 > xử lý `DbUpdateException` sau khi tạo receipt nguồn, `ReceiptIntakeService`
