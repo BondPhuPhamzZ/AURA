@@ -2,15 +2,64 @@
 
 ## Scope and reproducibility
 
-This is a repeated regression on the locked **synthetic** Test Kit v3.1, not a
-blind benchmark or real-world accuracy estimate. Fifteen cases were run three
-times (45 requests total) through the normal manual-intake endpoint, SQL-backed
-queue, worker, semantic validator and policy engine. Each run used a fresh
-isolated LocalDB; the app used one local process on loopback. Drive and Verify
-Harness were disabled. All app-generated receipt images and the temporary DB
-were deleted after the runs. Detailed raw synthetic results remain in the
-git-ignored local `TestResults/Qwen3_8_27B_ZDR_20261024_0[1-3]/` directories;
-they are intentionally not committed.
+This report preserves the **pre-fix** result and appends the live rerun after
+the narrow R3-04 policy correction. Both are repeated regressions on the locked
+**synthetic** Test Kit v3.1, not blind benchmarks or real-world accuracy
+estimates. Fifteen cases per run went through manual intake, the SQL-backed
+queue, worker, semantic validator, and policy engine. Each run used a fresh
+isolated LocalDB and one local app process. Drive and Verify Harness were
+disabled. App-generated receipt files and temporary databases were removed
+after the runs. Raw results remain in git-ignored local `TestResults/` and
+`test_kit/results/` folders and are intentionally not committed.
+
+## Post-fix live rerun
+
+After adding the narrowly scoped OCR variant `bia hò sơ` to the stationery
+allowlist (while retaining escalation for explicit beer context), the same
+locked 15-case manifest was run three more times against the live OpenRouter
+route. All three runs used source commit
+`2e10e534d082314269341af1114a13b7e19f6922`, the same manifest SHA-256 shown
+below, model `qwen/qwen3.8-27b`, Strict ZDR enabled, and provider data
+collection denied. The local runtime reported LocalFileSystem, SQL schema
+current, one AI request at a time, fallback off, and Drive off.
+
+| Run | Decision matches | Missed escalations | Over-escalations | System errors | Exact expected facts | E2E P50 / P95 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 15/15 | 0 | 0 | 0 | 144/146 (98.63%) | 3.656 / 7.707 s |
+| 2 | 15/15 | 0 | 0 | 0 | 144/146 (98.63%) | 3.600 / 7.161 s |
+| 3 | 15/15 | 0 | 0 | 0 | 144/146 (98.63%) | 4.098 / 8.178 s |
+| Combined | 45/45 (100%) | 0/30 expected escalations missed | 0/15 routine over-escalated | 0/45 | 432/438 (98.63%) | Per-run values shown |
+
+The manifest SHA-256 was
+`5781E37F3E6C42EA0C8154B01F83FA2613AD097AC6D1B1851DCFA12663872462` for all
+three runs; the source manifest SHA-256 was
+`796F1E2E78F830A84E21D010DAD273F94229168D0CFEB32393F96A8EDE0F447A`.
+Each run had zero provider errors and zero fallback attempts. Case R3-04
+returned its expected `AUTO_APPROVE` in all three runs, so the identified OCR
+policy false positive did not recur on this fixture.
+
+The two fact mismatches in every run were only the `invoiceDateEvidence`
+string for R3-03 and R3-07: the extracted string included the printed label
+`Ngày hóa đơn:` before the correct date. The normalized date remained
+`2026-10-05`, and both decisions matched their expected outcomes. This is a
+strict evidence-string comparison difference, not a date normalization or
+decision mismatch.
+
+The benchmark's R3-06 intentionally hides the printed final total. Semantic
+repair was attempted in all three runs but did not resolve
+`totalAmount:FINAL_TOTAL_EVIDENCE_INVALID`; all three correctly remained
+`ESCALATE_FACT` with no inferred total. This confirms the fail-safe repair
+boundary, not successful repair. The 6-case post-run instrumentation check
+also observed one repair attempt, zero resolved repairs, one unresolved case,
+and zero privacy-review classifications. The privacy count is only what this
+small fixture produced; it does not validate privacy-detector coverage.
+
+The repeatability result is a meaningful improvement over the pre-fix R3-04
+false escalation, but the sample is still only 15 locked synthetic cases. It
+does not establish production accuracy, robust privacy detection, legal
+compliance, provider contract terms, latency SLOs, or multi-host capacity.
+
+## Historical pre-fix run
 
 | Run | Decision matches | Missed escalations | Over-escalations | System errors | Exact expected facts | E2E P50 / P95 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -61,21 +110,21 @@ as `Bia hồ sơ` and `Bia ho so`, but did not include the erroneous grave accen
 on `hò`. The stationery phrase allowlist now includes exactly `bia hò sơ`;
 regression tests verify that this OCR reading no longer triggers an alcohol
 policy escalation while explicit beer context (`bia chai`) still does. The
-three-run model figures above are the **pre-fix** benchmark and were not
-rewritten as post-fix model results. The latest complete Debug and Release
-suites passed 307/307 each with `AURA_RUN_LOCALDB_INTEGRATION=1`, including the
-opt-in SQL integration cases, shared-capacity race and storage hash assertions.
+three-run figures in the historical section below are the **pre-fix**
+benchmark. The new post-fix runs above measure the corrected source. The full
+Debug and Release suites passed 332/332 each with
+`AURA_RUN_LOCALDB_INTEGRATION=1`, including the opt-in SQL integration cases.
 
 ## Decision
 
 `qwen/qwen3.8-27b` is a technically working Strict-ZDR candidate and a possible
 supervised-MVP evaluation route. Keep it **out of the default configuration**
-for now: the small locked synthetic set showed one variable false escalation,
-date-evidence formatting differences, and merchant-name OCR variance. The
-false-escalation policy cause has a narrow code fix with regression coverage,
-but no full provider benchmark has been rerun after that fix. This set does not
-establish generalization, legal compliance, provider contract terms, real-user
-accuracy, latency SLOs or multi-host capacity. In particular, the SQL
+for now: the post-fix repeat is still only 15 synthetic cases, the date evidence
+string has two stable formatting mismatches, and the Semantic repair correctly
+leaves an obscured total unresolved. The 45/45 repeated decision matches show
+this locked fixture is stable after the narrow policy fix, not broad accuracy.
+This set does not establish generalization, legal compliance, provider contract
+terms, real-user accuracy, latency SLOs or multi-host capacity. In particular, the SQL
 distributed AI gate was off and no real receipt, bucket, or production host was
 used.
 

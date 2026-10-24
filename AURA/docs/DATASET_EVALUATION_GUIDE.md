@@ -63,6 +63,16 @@ Mỗi lượt tạo một thư mục bị Git ignore trong `test_kit/results/<ti
 - `results.json`: dữ liệu đầy đủ, expected/actual facts;
 - `summary.json`: decision accuracy, field exact match, missed escalation, over escalation, system error, fallback và P50/P95.
 
+Runner cũng ghi riêng các số đo Semantic và privacy review trong mỗi dòng
+`results.json`/`results.csv` và `summary.json`: số lần Semantic repair được áp
+dụng, số issue repair, số validation issue còn lại, repair được giải quyết hay
+chưa, số ca còn issue và số ca có marker cần rà soát riêng tư. `SemanticRepairResolved`
+chỉ có nghĩa là repair đã chạy và không còn `validationIssues` trong facts sau
+repair; nó không chứng minh dữ kiện đúng với hóa đơn. Tương tự, privacy count
+bằng 0 chỉ có nghĩa bộ test không phát ra marker, không chứng minh bộ phát hiện
+đã bao phủ mọi dữ liệu cá nhân. Luôn đối chiếu raw case, expected facts và
+evidence ảnh tổng hợp trước khi kết luận.
+
 Không xóa ca lỗi khỏi kết quả. Lỗi provider phải giữ `ESCALATE_SYSTEM_ERROR`; không chạy lại chỉ để thay kết quả fail.
 
 ## 6. Holdout thực tế

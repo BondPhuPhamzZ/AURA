@@ -277,6 +277,30 @@ try {
             }
         }
 
+        $actualFacts = $(if ($null -ne $status) { $status.facts } else { $null })
+        $semanticRepairAppliedProperty = if ($null -ne $actualFacts) {
+            $actualFacts.PSObject.Properties['semanticRepairApplied']
+        } else { $null }
+        $semanticRepairApplied = $null -ne $semanticRepairAppliedProperty -and
+            $semanticRepairAppliedProperty.Value -eq $true
+        $semanticRepairIssuesProperty = if ($null -ne $actualFacts) {
+            $actualFacts.PSObject.Properties['semanticRepairIssues']
+        } else { $null }
+        $semanticRepairIssueCount = if ($null -ne $semanticRepairIssuesProperty) {
+            @($semanticRepairIssuesProperty.Value).Count
+        } else { 0 }
+        $semanticValidationIssuesProperty = if ($null -ne $actualFacts) {
+            $actualFacts.PSObject.Properties['validationIssues']
+        } else { $null }
+        $semanticValidationIssueCount = if ($null -ne $semanticValidationIssuesProperty) {
+            @($semanticValidationIssuesProperty.Value).Count
+        } else { 0 }
+        $privacyReviewProperty = if ($null -ne $actualFacts) {
+            $actualFacts.PSObject.Properties['requiresPrivacyReview']
+        } else { $null }
+        $privacyReviewRequired = $actualStatus -eq 'ESCALATE_PRIVACY' -or
+            ($null -ne $privacyReviewProperty -and $privacyReviewProperty.Value -eq $true)
+
         $results.Add([pscustomobject]@{
             Sequence = $index + 1
             DatasetCaseId = $caseId
@@ -294,6 +318,11 @@ try {
             ServedProvider = $(if ($null -ne $status) { $status.servedProvider } else { $null })
             FallbackUsed = $(if ($null -ne $status) { $status.fallbackUsed } else { $false })
             ProviderErrorCode = $(if ($null -ne $status) { $status.providerErrorCode } else { $null })
+            SemanticRepairApplied = $semanticRepairApplied
+            SemanticRepairIssueCount = $semanticRepairIssueCount
+            SemanticValidationIssueCount = $semanticValidationIssueCount
+            SemanticRepairResolved = $semanticRepairApplied -and $semanticValidationIssueCount -eq 0
+            PrivacyReviewRequired = $privacyReviewRequired
             FieldCorrect = $fieldCorrect
             FieldTotal = $fieldTotal
             Reason = $(if ($null -ne $status) { $status.reason } else { $clientError })
@@ -333,6 +362,13 @@ try {
         EndToEndP95Ms = Get-Percentile @($results.EndToEndMs) 0.95
         FallbackAttempts = $fallbackAttempts
         FallbackSuccesses = $fallbackSuccesses
+        SemanticRepairAttempts = @($results | Where-Object SemanticRepairApplied).Count
+        SemanticRepairResolved = @($results | Where-Object SemanticRepairResolved).Count
+        SemanticRepairUnresolved = @($results | Where-Object {
+            $_.SemanticRepairApplied -and $_.SemanticValidationIssueCount -gt 0
+        }).Count
+        SemanticUnresolvedCases = @($results | Where-Object { $_.SemanticValidationIssueCount -gt 0 }).Count
+        PrivacyReviewCases = @($results | Where-Object PrivacyReviewRequired).Count
     }
 
     $commit = $null

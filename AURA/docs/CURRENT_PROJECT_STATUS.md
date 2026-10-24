@@ -1,5 +1,28 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
+> **Post-fix synthetic repeat 24/10:** Sau khi sửa policy OCR hẹp cho cụm
+> `Bia hò sơ`, Test Kit v3.1 khóa 15 ca được chạy lại đủ ba lượt trên một
+> LocalDB cô lập mỗi lượt, source `2e10e534d082314269341af1114a13b7e19f6922`,
+> model `qwen/qwen3.8-27b`, Strict ZDR bật và `data_collection=deny`. Kết quả:
+> 15/15 quyết định đúng ở cả ba lượt, 0 missed escalation, 0 over-escalation,
+> 0 lỗi hệ thống/fallback; facts gộp 432/438 (98,63%). Hai mismatch lặp lại chỉ
+> là `invoiceDateEvidence` có thêm nhãn “Ngày hóa đơn:” trong khi ngày chuẩn
+> hóa và quyết định đúng. R3-06 được Semantic repair thử cả ba lần nhưng không
+> thể khôi phục tổng cuối bị che, nên vẫn `ESCALATE_FACT` an toàn. Đây là bằng
+> chứng repeatability trên 15 synthetic fixture, không phải độ chính xác
+> production. Chi tiết, latency và hash: [báo cáo benchmark](MODEL_ROUTE_COMPARISON_2026-10-24.md).
+>
+> **Cấu hình và giới hạn:** `/healthz` ở runtime đánh giá local trả `ok`,
+> `LocalFileSystem`, database/schema sẵn sàng, concurrency 1, Strict ZDR và
+> provider data-collection deny bật; Drive, Verify, fallback và SQL distributed
+> AI gate tắt. Bộ kiểm tra instrumentation riêng 6 ca ghi nhận 1 Semantic
+> repair attempt, 0 repair được giải quyết, 1 unresolved (`R3-06`) và 0 privacy
+> review marker. 0 marker không chứng minh detector bao phủ đủ dữ liệu cá nhân;
+> privacy review/pre-inference protection, retention được duyệt, auth/RBAC,
+> malware quarantine và diễn tập restore trên hosting vẫn là gate mở. NO-GO cho
+> dữ liệu người dùng/pilot/production và multi-host; tiếp tục dùng synthetic
+> cùng một host local.
+
 > **Manual upload idempotency 24/10 — commit `daab7d4`:** Endpoint nhận
 > `Idempotency-Key` tùy chọn theo UUID chuẩn; UI giữ tạm một khóa theo SHA-256
 > trong `sessionStorage` đến khi server xác nhận, tái sử dụng qua reload cùng
@@ -59,13 +82,13 @@
 
 > **Strict-ZDR route check 24/10:** OpenRouter model endpoint API hiện liệt kê 2 endpoint Alibaba cho `qwen/qwen3.8-flash` nhưng không endpoint nào trong danh sách ZDR. Cùng một synthetic smoke với `qwen/qwen3.8-27b`, `RequireZeroDataRetention=true` và cờ deny riêng false chạy 2 lần, cả hai HTTP 200, health `deny=true`/`strictZDR=true`, `AUTO_APPROVE` đúng nhãn (7.685 và 7.631 ms), không fallback/lỗi. Sau khi telemetry an toàn được bổ sung, response metadata ghi host thực tế DekaLLM (không phải Alibaba). Đây chỉ là hai kết quả cùng một fixture, không benchmark accuracy hay đổi model mặc định. Kiểm tra endpoint/model Alibaba cho các model Qwen đa phương thức có ZDR không tìm thấy Alibaba-hosted ZDR endpoint; xem [metadata ZDR hiện hành](OPENROUTER_ZDR_ROUTE_CHECK_2026-10-24.md) và [evidence smoke](MODEL_SMOKE_2026-10-24.md).
 
-> **Qwen Strict-ZDR candidate v3.1 regression 24/10:** `qwen/qwen3.8-27b` chạy ba lần đủ 15 ca synthetic, cùng manifest hash, trên LocalDB tạm mới mỗi lượt: decision **15/15, 14/15, 15/15**; tổng 44/45; 0 missed escalation, 1/15 routine over-escalated ở một lượt, 0 lỗi hệ thống; facts exact pooled 405/438 (92,47%). R3-04 dao động do OCR “Bìa hồ sơ” thành “Bia hò sơ”; policy đã được cập nhật ngoại lệ hẹp cho đúng biến thể sai dấu và có regression test, trong khi `bia chai` vẫn escalation. Benchmark 44/45 là trước sửa và chưa chạy lại model live. R3-06 cố ý che tổng cuối; Semantic không thể khôi phục chứng cứ in và giữ `ESCALATE_FACT` cả ba lượt (fail-safe). P50/P95 E2E theo lượt lần lượt 7.224/16.951s, 5.177/31.465s, 5.670/14.396s. ZDR và data-collection deny bật; SQL distributed gate tắt; chỉ endpoint synthetic, không scale/host/ảnh thật. Giữ candidate khỏi model mặc định; chi tiết [comparison](MODEL_ROUTE_COMPARISON_2026-10-24.md). Raw cases ở local ignored `TestResults`, không commit.
+> **Qwen Strict-ZDR candidate v3.1 pre-fix regression 24/10 (historical):** `qwen/qwen3.8-27b` had one R3-04 false escalation in three runs, 44/45 decisions and 405/438 exact facts before the policy fix. The post-fix repeat above supersedes these figures for the locked fixture; see [benchmark report](MODEL_ROUTE_COMPARISON_2026-10-24.md).
 
 > **Storage hash admission check:** LocalFileSystem và GCS adapter nay tự xác minh SHA-256 của bytes trước khi persist/upload; sai hoặc malformed hash bị từ chối trước I/O. Unit tests xác nhận không tạo file local hay gọi GCS client khi hash không khớp. Debug/Release full suite hiện pass **307/307** mỗi bản với LocalDB integration bật.
 
 > **GCS staging smoke guard:** `/healthz` báo provider lưu trữ đã cấu hình; `Invoke-PrivateReceiptSmoke.ps1` có thể bắt buộc Google Cloud Storage và Strict ZDR, đồng thời luôn kiểm tra local loopback, health/schema, deny hiệu lực, fallback off và concurrency=1 trước khi upload. Đây là guard cấu hình cho smoke synthetic, chưa có bucket thật nên chưa xác nhận GCS/IAM.
 
-> **Policy OCR regression correction:** Thêm biến thể stationery chính xác `bia hò sơ` sau phân tích R3-04; unit tests xác nhận sai dấu không tạo policy false positive nhưng cụm `bia chai` vẫn bị escalation. Debug/Release đều pass **307/307** với `AURA_RUN_LOCALDB_INTEGRATION=1` trong môi trường hỗ trợ LocalDB; SQL integration không skip. Benchmark model trước sửa vẫn 44/45 và chưa được chạy lại live sau thay đổi policy. Chi tiết và giới hạn: [candidate regression report](MODEL_ROUTE_COMPARISON_2026-10-24.md).
+> **Policy OCR regression correction (history, superseded by live repeat above):** Added the narrow `bia hò sơ` stationery variant; regression coverage still verifies that explicit `bia chai` escalates. The post-fix 15-case synthetic set was subsequently repeated three times live and matched all decisions; see the current benchmark report for results and limits.
 
 > **SQL intake backpressure:** Thêm trần chung cấu hình được cho số receipt `PENDING` + `PROCESSING`, mặc định 1.000 và giới hạn cấu hình 1–10.000. SQL application lock transaction-owned đặt quanh phép đếm và ghi job/audit để các instance cùng dùng một SQL database không vượt trần; HTTP upload nhận 503/`Retry-After` khi đầy. Manual upload bị từ chối sẽ dọn object mới tạo; Drive source-key object được giữ để lần poll sau retry. Test race hai repository độc lập chứng minh ceiling=1 không bị vượt. Đây chỉ giới hạn hàng đợi chưa terminal, không giới hạn tổng ảnh đã lưu, chi phí, tốc độ giữa nhiều instance, hay chống abuse/thiếu đăng nhập.
 
