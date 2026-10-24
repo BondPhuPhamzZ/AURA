@@ -5,8 +5,16 @@ using Microsoft.EntityFrameworkCore;
 namespace AURA.Services;
 
 public sealed record ReceiptQueueSnapshot(long PendingCount, long ProcessingCount,
-    long FailedCount, long? OldestPendingAgeSeconds)
+    long FailedCount, long? OldestPendingAgeSeconds, long RecordedReceiptBytes)
 {
+    public long OutstandingCount => PendingCount + ProcessingCount;
+
+    public bool IsNearCapacity(int maxOutstandingReceipts) =>
+        OutstandingCount >= Math.Max(1, (long)Math.Ceiling(maxOutstandingReceipts * 0.8));
+
+    public bool HasStalePending(int warningAgeSeconds) =>
+        OldestPendingAgeSeconds is long age && age >= warningAgeSeconds;
+
     public static async Task<ReceiptQueueSnapshot> ReadAsync(AppDbContext database,
         DateTime utcNow, CancellationToken cancellationToken)
     {
@@ -16,6 +24,8 @@ public sealed record ReceiptQueueSnapshot(long PendingCount, long ProcessingCoun
             request => request.ProcessingState == ProcessingStates.Processing, cancellationToken);
         var failed = await database.ReimbursementRequests.LongCountAsync(
             request => request.ProcessingState == ProcessingStates.Failed, cancellationToken);
+        var recordedReceiptBytes = await database.ReimbursementRequests
+            .SumAsync(request => (long?)request.FileSizeBytes, cancellationToken) ?? 0;
         var oldestPendingAt = await database.ReimbursementRequests
             .Where(request => request.ProcessingState == ProcessingStates.Pending)
             .Select(request => (DateTime?)request.QueuedAt)
@@ -23,6 +33,6 @@ public sealed record ReceiptQueueSnapshot(long PendingCount, long ProcessingCoun
         var age = oldestPendingAt is null
             ? null
             : (long?)Math.Max(0, (long)(utcNow - oldestPendingAt.Value).TotalSeconds);
-        return new ReceiptQueueSnapshot(pending, processing, failed, age);
+        return new ReceiptQueueSnapshot(pending, processing, failed, age, recordedReceiptBytes);
     }
 }

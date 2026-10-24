@@ -65,7 +65,7 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
-    public async Task Queue_snapshot_reports_only_aggregate_counts_and_age()
+    public async Task Queue_snapshot_reports_aggregate_counts_age_and_recorded_bytes()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
         await WithIsolatedDatabase(async (options, root) =>
@@ -90,6 +90,7 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             Assert.Equal(1, snapshot.ProcessingCount);
             Assert.Equal(1, snapshot.FailedCount);
             Assert.InRange(snapshot.OldestPendingAgeSeconds!.Value, 419, 421);
+            Assert.Equal(9, snapshot.RecordedReceiptBytes);
         });
     }
 

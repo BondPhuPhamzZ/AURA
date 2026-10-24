@@ -20,4 +20,7 @@ public sealed class ReceiptProcessingOptions
 
     [Range(1, 10000)]
     public int MaxOutstandingReceipts { get; set; } = 1000;
+
+    [Range(30, 86400)]
+    public int QueueWarningAgeSeconds { get; set; } = 300;
 }

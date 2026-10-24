@@ -13,6 +13,15 @@
 > sạch. Thay đổi đã push lên `codex/drive-pipeline-hardening`; khóa chưa xác nhận
 > sẽ mất khi browser session kết thúc.
 
+> **Queue monitoring 24/10:** Snapshot mỗi phút ghi aggregate queue counts,
+> tuổi pending lâu nhất và tổng byte được SQL ghi nhận; log Warning theo trạng
+> thái khi queue đạt 80% configured capacity, pending age vượt ngưỡng (mặc định
+> 300 giây) hoặc có failed mới kể từ khi monitor khởi động. Unit tests xác nhận
+> ngưỡng capacity/age; LocalDB test xác nhận projection và recorded bytes.
+> Đây là structured application logging, chưa phải alert pipeline. Byte sum
+> không bao gồm orphan/temp objects và không thay cho số liệu bucket thực;
+> cost vẫn chỉ ghi theo response, chưa có budget/cumulative alert.
+
 > **Cập nhật tiếp nối 24/10 — source intake write xác nhận bền vững:** Khi
 > xử lý `DbUpdateException` sau khi tạo receipt nguồn, `ReceiptIntakeService`
 > nay dùng `GetPersistedRequestByIdAsync` (`AsNoTracking`) để xác nhận job đã
