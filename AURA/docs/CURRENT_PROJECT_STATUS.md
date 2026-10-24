@@ -19,8 +19,10 @@
 > repair attempt, 0 repair được giải quyết, 1 unresolved (`R3-06`) và 0 privacy
 > review marker. 0 marker không chứng minh detector bao phủ đủ dữ liệu cá nhân;
 > privacy review/pre-inference protection, retention được duyệt, auth/RBAC,
-> malware quarantine và diễn tập restore trên hosting vẫn là gate mở. NO-GO cho
-> dữ liệu người dùng/pilot/production và multi-host; tiếp tục dùng synthetic
+> malware quarantine và diễn tập restore trên hosting vẫn là gate mở. Các
+> trạng thái sau quyết định quản lý còn Undo được, nên `ManagerDecisionAt`
+> chưa thể làm mốc xóa; cần trạng thái đóng hồ sơ không thể hoàn tác được duyệt.
+> **NO-GO** cho dữ liệu người dùng/pilot/production và multi-host; tiếp tục dùng synthetic
 > cùng một host local.
 
 > **Manual upload idempotency 24/10 — commit `daab7d4`:** Endpoint nhận
