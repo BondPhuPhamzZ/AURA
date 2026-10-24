@@ -18,7 +18,11 @@
 > AI gate tắt. Bộ kiểm tra instrumentation riêng 6 ca ghi nhận 1 Semantic
 > repair attempt, 0 repair được giải quyết, 1 unresolved (`R3-06`) và 0 privacy
 > review marker. 0 marker không chứng minh detector bao phủ đủ dữ liệu cá nhân;
-> privacy review/pre-inference protection, retention được duyệt, auth/RBAC,
+> kiểm tra code xác nhận worker gửi ảnh đã lưu tới extractor trước khi gọi
+> `ReceiptPrivacyClassifier.Apply`; OpenRouter đóng gói bytes ảnh gốc thành
+> data URL. Smoke 24/10 cũng có tracking identifier nhưng không có marker.
+> Cấu hình deny/ZDR không che ảnh trước inference. Pre-inference protection,
+> retention được duyệt, auth/RBAC,
 > malware quarantine và diễn tập restore trên hosting vẫn là gate mở. Các
 > trạng thái sau quyết định quản lý còn Undo được, nên `ManagerDecisionAt`
 > chưa thể làm mốc xóa; cần trạng thái đóng hồ sơ không thể hoàn tác được duyệt.
