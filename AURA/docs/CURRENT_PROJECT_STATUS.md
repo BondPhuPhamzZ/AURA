@@ -36,6 +36,9 @@
 > test tổng hợp cô lập được giữ lại để kiểm tra, không chứa hóa đơn người dùng.
 > Lần test ban đầu trong sandbox bị LocalDB error 50 trước khi kết nối; sau khi
 > khởi động instance cùng Windows user ngoài sandbox, hai suite chạy thành công.
+> Đoạn Robocopy + manifest SHA-256 trong runbook cũng được chạy riêng trên hai
+> file synthetic lồng thư mục: copy exit 1 (thành công có file mới), số file và
+> manifest hash khớp. Không truy cập dữ liệu hoặc thư mục receipt thật.
 
 > **Local inference screen:** Ollama `qwen3-vl:4b-instruct` được thử riêng với
 > một ảnh synthetic trên DB/thư mục local mới, fallback tắt, không dùng provider
