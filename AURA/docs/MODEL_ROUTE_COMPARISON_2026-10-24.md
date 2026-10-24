@@ -127,6 +127,9 @@ were sent through manual intake, durable SQL queue, OpenRouter, Semantic and
 policy. Before upload, `/healthz` was `ok`, SQL was current, local storage was
 available, `qwen/qwen3.8-27b` was selected, provider data collection was denied,
 Strict ZDR was requested, concurrency was 1, and fallback/Drive/Verify were off.
+Provider response telemetry observed `Modal` as the upstream for sampled calls;
+this run therefore does not establish Alibaba-hosted inference or contractual
+retention guarantees, even though the request settings were enforced by AURA.
 
 | Measure | Result |
 | --- | ---: |
