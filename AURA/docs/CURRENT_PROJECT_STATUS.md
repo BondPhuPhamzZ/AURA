@@ -1,6 +1,22 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
-> **Cập nhật trên commit `0568b5a` — privacy role triage + semantic marker preservation:**
+> **Benchmark cập nhật trên source `06346de`:** 15 ảnh v3.1 synthetic chạy qua
+> intake → SQL queue → OpenRouter → Semantic → policy: 15/15 quyết định đúng,
+> 0 missed escalation, 0 over-escalation, 0 lỗi provider/system, 0 fallback;
+> facts 143/146 (97,95%), P50/P95 end-to-end
+> 3,620/7,802 ms. Ba lệch chuỗi `invoiceDateEvidence` ở R3-03/R3-05/R3-07 chỉ
+> khác vì có thêm nhãn in. Semantic repair R3-06 thử một lần, không giải quyết
+> được tổng bị che và giữ `ESCALATE_FACT`. Health trước/sau chạy `ok`, queue
+> cuối lượt rỗng. Đây là một lần rerun regression synthetic, không phải accuracy
+> thực tế hay SLA. Evidence chi tiết: [model route comparison](MODEL_ROUTE_COMPARISON_2026-10-24.md).
+
+> **Retention đã chốt chính sách, chưa triển khai:** giới hạn tối đa 7 ngày tính
+> từ lúc xử lý/ra quyết định cuối cho ảnh, facts, audit và mọi backup. Backup phải
+> hết hạn theo tuổi dữ liệu, không chỉ theo ngày tạo. Code hiện vẫn cho Undo và
+> chưa có trạng thái đóng bất biến, catalog backup theo deadline dữ liệu hay tác
+> vụ xóa; không tuyên bố retention đã hoạt động.
+
+> **Thay đổi code tại commit `0568b5a` — privacy role triage + semantic marker preservation:**
 > Prompt nay phân biệt rõ dữ liệu khách hàng/người nhận với thông tin thương mại
 > của người bán/hộ kinh doanh. Bộ 4 ảnh privacy synthetic chạy 3 lượt sau commit:
 > 12/12 quyết định khớp; 21/21 category có nhãn được nhận diện; 0 false negative,
@@ -18,10 +34,11 @@
 > database up to date, concurrency 1, Strict ZDR request + data-collection deny bật,
 > Drive/Verify/fallback tắt. Đây không phải bằng chứng pre-inference redaction,
 > không-retention theo hợp đồng, hosting restore, production accuracy hay multi-host.
-> Retention vẫn chưa được chủ dữ liệu/pháp chế chốt; quyết định quản lý còn Undo.
+> Retention policy đã được người dùng chọn; pháp lý/operational approval và triển khai
+> vẫn mở. Quyết định quản lý còn Undo nên thời điểm xóa phải được khóa theo deadline.
 
 > **Gate tiếp theo:** giữ local single-host, giữ ảnh synthetic, hoàn thiện diễn tập
-> backup/restore theo đúng host và chốt mốc đóng hồ sơ/retention. Chưa triển khai
+> backup/restore theo đúng host và triển khai retention 7 ngày theo trạng thái kết thúc an toàn. Chưa triển khai
 > tự xóa ảnh, Firestore, GCS hoặc shared cloud storage. Privacy triage vẫn chạy sau
 > khi ảnh gốc đã được gửi qua inference; chưa cho phép dữ liệu người dùng/pilot.
 
@@ -197,8 +214,10 @@
 > key or hosting setting has been provisioned/changed; GCS integration has not
 > been exercised against a real bucket. Keep `LocalFileSystem` until isolated
 > authenticated integration, two-host, backup/restore and failure tests pass.
-> Retention cleanup is deliberately not implemented: never apply one-day
-> lifecycle deletion while jobs may be pending or retryable. Local fake-client
+> Retention cleanup is deliberately not implemented. The selected policy is an
+> absolute seven-day limit from final processing/decision for every data copy;
+> never purge jobs that are pending, processing, retryable or awaiting a human
+> decision. Local fake-client
 > GCS tests cover create-only writes, matching/conflicting retries, generation-
 > pinned reads, pre-download size rejection and a download exceeding its own
 > advertised size. Verification after this code change: Debug and Release

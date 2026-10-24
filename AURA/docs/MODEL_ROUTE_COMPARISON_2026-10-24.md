@@ -118,6 +118,37 @@ false escalation, but the sample is still only 15 locked synthetic cases. It
 does not establish production accuracy, robust privacy detection, legal
 compliance, provider contract terms, latency SLOs, or multi-host capacity.
 
+## Current-source rerun — 24/10, commit `06346de`
+
+After the semantic privacy-marker preservation change, the same locked v3.1
+manifest was run once more against source commit `06346dec9cf508d34e69df6c5c7a1866baeb54d7`
+on a fresh LocalDB and private local receipt directory. The 15 synthetic images
+were sent through manual intake, durable SQL queue, OpenRouter, Semantic and
+policy. Before upload, `/healthz` was `ok`, SQL was current, local storage was
+available, `qwen/qwen3.8-27b` was selected, provider data collection was denied,
+Strict ZDR was requested, concurrency was 1, and fallback/Drive/Verify were off.
+
+| Measure | Result |
+| --- | ---: |
+| Expected decisions | 15/15 |
+| Missed / over-escalations | 0 / 0 |
+| Provider/system errors; fallback | 0; 0 |
+| Exact expected facts | 143/146 (97.95%) |
+| End-to-end P50 / P95 | 3.620 / 7.802 s |
+| Semantic repair | 1 attempted; 0 resolved; R3-06 remained `ESCALATE_FACT` |
+
+The three fact differences were only `invoiceDateEvidence` strings: R3-03,
+R3-05 and R3-07 included the printed `Ngày hóa đơn:` label before the correct
+date. This differs from earlier runs where the affected case IDs varied, so
+exact evidence-string extraction is not fully repeatable even though decisions
+matched. The final health check remained `ok`; queue monitoring observed zero
+pending, processing and failed jobs. The isolated DB and receipt folder are
+under Git-ignored `test_kit/results/current-06346de-20261024/`; raw runner output
+is under Git-ignored `test_kit/results/20261024-195745/`. These results confirm
+the current-source regression only; they do not establish general accuracy,
+privacy-detector coverage, contractual retention, production readiness or
+multi-host behavior.
+
 ## Historical pre-fix run
 
 | Run | Decision matches | Missed escalations | Over-escalations | System errors | Exact expected facts | E2E P50 / P95 |
