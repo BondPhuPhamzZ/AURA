@@ -3,6 +3,8 @@ param(
     [Parameter(Mandatory)] [string]$ImagesDirectory,
     [Parameter()] [string]$BaseUrl = 'http://127.0.0.1:5110',
     [Parameter(Mandatory)] [switch]$ConfirmExternalProviderSend,
+    [Parameter()] [switch]$RequireGoogleCloudStorage,
+    [Parameter()] [switch]$RequireStrictZeroDataRetention,
     [Parameter()] [ValidateRange(1, 30)] [int]$MaxCases = 15,
     [Parameter()] [ValidateRange(1, 30)] [int]$StartSequence = 1,
     [Parameter()] [ValidateRange(1, 30)] [int]$CaseTimeoutMinutes = 10,
@@ -46,6 +48,16 @@ try {
     $health = ($client.GetStringAsync("$root/healthz").GetAwaiter().GetResult() | ConvertFrom-Json)
     if ($health.status -ne 'ok' -or -not $health.databaseUpToDate -or -not $health.storageAvailable) {
         throw 'Local health gate is not ready.'
+    }
+    if ($health.providerDataCollectionDenied -ne $true -or $health.fallbackEnabled -ne $false -or
+        $health.maxConcurrentAiRequests -ne 1) {
+        throw 'Smoke requires provider data-collection denial, fallback disabled, and one AI permit.'
+    }
+    if ($RequireGoogleCloudStorage -and $health.receiptStorageProvider -ne 'GoogleCloudStorage') {
+        throw 'Smoke requires ReceiptStorage:Provider=GoogleCloudStorage.'
+    }
+    if ($RequireStrictZeroDataRetention -and $health.strictZeroDataRetention -ne $true) {
+        throw 'Smoke requires Strict Zero Data Retention to be enabled by the configured model route.'
     }
     $html = $client.GetStringAsync("$root/").GetAwaiter().GetResult()
     $tokenMatch = [regex]::Match($html, 'name="__RequestVerificationToken"[^>]*value="([^"]+)"')
@@ -116,6 +128,9 @@ $summary = [pscustomobject]@{
     StartedUtc = $runStart.ToString('o')
     FinishedUtc = [DateTimeOffset]::UtcNow.ToString('o')
     Count = $results.Count
+    StorageProvider = [string]$health.receiptStorageProvider
+    StrictZeroDataRetention = [bool]$health.strictZeroDataRetention
+    ProviderDataCollectionDenied = [bool]$health.providerDataCollectionDenied
     Completed = @($results | Where-Object ProcessingState -eq 'COMPLETED').Count
     Failed = @($results | Where-Object ProcessingState -eq 'FAILED').Count
     ClientErrors = @($results | Where-Object ProcessingState -eq 'CLIENT_ERROR').Count

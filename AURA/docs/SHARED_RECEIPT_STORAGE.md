@@ -48,6 +48,26 @@ ReceiptStorage__GoogleCloudStorage__CredentialMode=ApplicationDefault
 ReceiptStorage__MaxFileSizeMb=5
 ```
 
+For a **synthetic, one-case local smoke** after starting AURA with the GCS settings,
+use the existing loopback-only runner and require both GCS and Strict ZDR:
+
+```powershell
+.\tools\Invoke-PrivateReceiptSmoke.ps1 `
+  -ImagesDirectory .\test_kit\v3_1\images `
+  -BaseUrl http://127.0.0.1:5110 `
+  -MaxCases 1 `
+  -ConfirmExternalProviderSend `
+  -RequireGoogleCloudStorage `
+  -RequireStrictZeroDataRetention
+```
+
+The script checks health, SQL/schema readiness, storage provider, effective
+provider data-collection denial, fallback disabled, and one AI permit before the
+first upload. Results are local-only under the git-ignored `test_kit/results/`;
+the runner does not assess accuracy or prove multi-host access. The required
+confirmation is still necessary because the configured vision provider can
+receive the synthetic image.
+
 For a legacy/external key instead, set
 `ReceiptStorage__GoogleCloudStorage__CredentialMode=ServiceAccountJson` and
 `ReceiptStorage__GoogleCloudStorage__ServiceAccountJsonPath=<absolute path outside the app/repository>`.
