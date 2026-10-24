@@ -25,10 +25,12 @@
 > LocalDB integration bật; Release build 0 warning/error, EF không pending
 > model changes. Restore drill LocalDB cũng khôi phục cặp DB + ảnh synthetic
 > và xác minh row pending, audit, size/SHA-256; chưa mô phỏng GCS hoặc RPO/RTO.
-> Test concurrency bổ sung xác nhận hai manager approval giống nhau từ hai
-> DbContext chỉ tạo một state transition và một audit; stale write nhận
-> `DbUpdateConcurrencyException` (controller trả HTTP 409), không replay thành
-> công cũ. Full suite mới nhất sau test đó pass **320/320** Debug và Release.
+> Test concurrency bổ sung xác nhận hai thao tác duyệt trùng và hai thao tác
+> Undo trùng từ các DbContext riêng chỉ tạo một state transition/audit cho
+> mỗi cuộc đua; stale write nhận `DbUpdateConcurrencyException` (controller
+> trả HTTP 409). Khi phản hồi thành công bị mất, client cần tải lại; API không
+> replay phản hồi thành công cũ. Full suite mới nhất pass **321/321** Debug và
+> Release.
 
 > **Cập nhật tiếp nối 24/10 — source intake write xác nhận bền vững:** Khi
 > xử lý `DbUpdateException` sau khi tạo receipt nguồn, `ReceiptIntakeService`
