@@ -5,6 +5,7 @@ param(
     [Parameter(Mandatory)] [switch]$ConfirmExternalProviderSend,
     [Parameter()] [switch]$RequireGoogleCloudStorage,
     [Parameter()] [switch]$RequireStrictZeroDataRetention,
+    [Parameter()] [switch]$RequireSqlDistributedAiGate,
     [Parameter()] [ValidateRange(1, 30)] [int]$MaxCases = 15,
     [Parameter()] [ValidateRange(1, 30)] [int]$StartSequence = 1,
     [Parameter()] [ValidateRange(1, 30)] [int]$CaseTimeoutMinutes = 10,
@@ -58,6 +59,9 @@ try {
     }
     if ($RequireStrictZeroDataRetention -and $health.strictZeroDataRetention -ne $true) {
         throw 'Smoke requires Strict Zero Data Retention to be enabled by the configured model route.'
+    }
+    if ($RequireSqlDistributedAiGate -and $health.sqlDistributedAiGateEnabled -ne $true) {
+        throw 'Smoke requires Vision:UseSqlDistributedGate=true and an available shared SQL gate.'
     }
     $html = $client.GetStringAsync("$root/").GetAwaiter().GetResult()
     $tokenMatch = [regex]::Match($html, 'name="__RequestVerificationToken"[^>]*value="([^"]+)"')
@@ -130,6 +134,7 @@ $summary = [pscustomobject]@{
     Count = $results.Count
     StorageProvider = [string]$health.receiptStorageProvider
     StrictZeroDataRetention = [bool]$health.strictZeroDataRetention
+    SqlDistributedAiGateEnabled = [bool]$health.sqlDistributedAiGateEnabled
     ProviderDataCollectionDenied = [bool]$health.providerDataCollectionDenied
     Completed = @($results | Where-Object ProcessingState -eq 'COMPLETED').Count
     Failed = @($results | Where-Object ProcessingState -eq 'FAILED').Count

@@ -252,6 +252,18 @@ public sealed class TestKitIntegrityTests
         Assert.Contains("FinalStatusAfterUndo", runner, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Private_receipt_smoke_can_require_the_shared_sql_ai_gate()
+    {
+        var runner = File.ReadAllText(Path.Combine(
+            ProjectRoot, "tools", "Invoke-PrivateReceiptSmoke.ps1"));
+
+        Assert.Contains("[switch]$RequireSqlDistributedAiGate", runner, StringComparison.Ordinal);
+        Assert.Contains("$health.sqlDistributedAiGateEnabled -ne $true", runner, StringComparison.Ordinal);
+        Assert.Contains("SqlDistributedAiGateEnabled = [bool]$health.sqlDistributedAiGateEnabled",
+            runner, StringComparison.Ordinal);
+    }
+
     private static string FindProjectRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

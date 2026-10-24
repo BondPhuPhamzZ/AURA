@@ -68,6 +68,12 @@ the runner does not assess accuracy or prove multi-host access. The required
 confirmation is still necessary because the configured vision provider can
 receive the synthetic image.
 
+When probing a staging instance through a local loopback port-forward and validating a deployment
+intended to run more than one worker, add
+`-RequireSqlDistributedAiGate`. This makes the smoke stop before upload unless `/healthz`
+confirms `sqlDistributedAiGateEnabled=true`; it does not prove two hosts contend for the same
+permit, so a separate multi-host race/lost-session test is still required.
+
 For a legacy/external key instead, set
 `ReceiptStorage__GoogleCloudStorage__CredentialMode=ServiceAccountJson` and
 `ReceiptStorage__GoogleCloudStorage__ServiceAccountJsonPath=<absolute path outside the app/repository>`.
