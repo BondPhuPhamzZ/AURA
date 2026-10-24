@@ -1,5 +1,30 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
+> **Cập nhật trên commit `0568b5a` — privacy role triage + semantic marker preservation:**
+> Prompt nay phân biệt rõ dữ liệu khách hàng/người nhận với thông tin thương mại
+> của người bán/hộ kinh doanh. Bộ 4 ảnh privacy synthetic chạy 3 lượt sau commit:
+> 12/12 quyết định khớp; 21/21 category có nhãn được nhận diện; 0 false negative,
+> 0 false positive và 0 lỗi hệ thống/fallback. Bộ này rất nhỏ, được dựng theo đúng
+> các vai trò cần kiểm tra, nên không chứng minh detector tổng quát.
+> Semantic repair của OpenRouter/Ollama nay hợp nhất marker `personal_data:<CATEGORY>`
+> hợp lệ từ lượt trích xuất đầu vào kết quả repair để lần đọc lại không thể vô tình
+> xóa tín hiệu privacy. Regression v3.1 chạy một lượt trên đúng commit: 15/15 quyết
+> định khớp, facts 143/146 (97,95%), 0 missed/over/system/provider errors và 0
+> fallback. Ba sai khác là `invoiceDateEvidence` ở R3-03, R3-07, R3-11 chỉ khác do
+> model giữ thêm nhãn in. Semantic repair R3-06 chạy một lần nhưng không khôi phục
+> được tổng bị che; `ESCALATE_FACT` được giữ fail-safe. Debug/Release full suite
+> pass 333/333 mỗi cấu hình với LocalDB integration bật; Release build 0 warning,
+> EF không pending model changes. Runtime synthetic báo `status=ok`, LocalFileSystem,
+> database up to date, concurrency 1, Strict ZDR request + data-collection deny bật,
+> Drive/Verify/fallback tắt. Đây không phải bằng chứng pre-inference redaction,
+> không-retention theo hợp đồng, hosting restore, production accuracy hay multi-host.
+> Retention vẫn chưa được chủ dữ liệu/pháp chế chốt; quyết định quản lý còn Undo.
+
+> **Gate tiếp theo:** giữ local single-host, giữ ảnh synthetic, hoàn thiện diễn tập
+> backup/restore theo đúng host và chốt mốc đóng hồ sơ/retention. Chưa triển khai
+> tự xóa ảnh, Firestore, GCS hoặc shared cloud storage. Privacy triage vẫn chạy sau
+> khi ảnh gốc đã được gửi qua inference; chưa cho phép dữ liệu người dùng/pilot.
+
 > **Post-fix synthetic repeat 24/10:** Sau khi sửa policy OCR hẹp cho cụm
 > `Bia hò sơ`, Test Kit v3.1 khóa 15 ca được chạy lại đủ ba lượt trên một
 > LocalDB cô lập mỗi lượt, source `2e10e534d082314269341af1114a13b7e19f6922`,

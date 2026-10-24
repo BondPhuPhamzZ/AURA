@@ -12,6 +12,44 @@ disabled. App-generated receipt files and temporary databases were removed
 after the runs. Raw results remain in git-ignored local `TestResults/` and
 `test_kit/results/` folders and are intentionally not committed.
 
+## Committed privacy-role and policy regression — 24/10
+
+Commit `0568b5a` adds role-specific privacy instructions, a synthetic-only
+four-image privacy evaluation kit, per-case privacy-category scoring, and a
+Semantic-repair invariant: valid `personal_data:<CATEGORY>` markers from the
+first extraction are merged into the repaired DTO so a second model response
+cannot silently clear the signal. The test specifically simulates an initial
+privacy marker followed by a repair response with no marker.
+
+After the commit, the privacy kit was run three times sequentially on one fresh
+isolated local runtime and LocalDB using `qwen/qwen3.8-27b`, LocalFileSystem,
+`strictZeroDataRetention=true`, provider data-collection denied, one AI request
+at a time, and fallback/Drive/Verify disabled. Each 4-case run matched 4/4
+expected decisions and 7/7 expected categories, with 0 false negatives, 0 false
+positives, 0 system/provider errors and 0 fallbacks. Across the three runs this
+is 12/12 decisions and 21/21 category matches. One request had a 15.975-second
+end-to-end latency; this is a small, non-SLO sample. The set contains only four
+purpose-built synthetic role cases and is not a general privacy-detector recall
+benchmark or proof that a real receipt was redacted before inference.
+
+The final prompt revision was then checked once against the locked v3.1 set on
+the same committed source and a fresh LocalDB. It matched 15/15 decisions, 0
+missed escalations, 0 over-escalations, 0 system/provider errors/fallbacks, and
+143/146 expected facts (97.95%). The three fact differences were only
+`invoiceDateEvidence` strings with an added printed label in R3-03, R3-07 and
+R3-11. Semantic repair was attempted once for R3-06, remained unresolved because
+the printed total is intentionally obscured, and safely stayed `ESCALATE_FACT`.
+This one post-commit run is not a three-run repeatability claim; the separate
+45/45 repeat table below belongs to the earlier source/prompt checkpoint.
+
+The post-commit `/healthz` reported `status=ok`, local storage, current SQL
+schema, Strict-ZDR request and data-collection denial enabled, concurrency 1,
+and fallback/Drive/Verify disabled. Full Debug and Release suites passed
+333/333 each with LocalDB integration enabled; Release build had 0 warnings and
+errors; EF reported no pending model changes. Route settings and health output
+prove app configuration only, not a provider contract, legal compliance, or
+pre-inference protection. Results live only in Git-ignored `test_kit/results/`.
+
 ## Post-fix live rerun
 
 After adding the narrowly scoped OCR variant `bia hò sơ` to the stationery

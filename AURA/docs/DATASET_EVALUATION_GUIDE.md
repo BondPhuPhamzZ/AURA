@@ -22,6 +22,10 @@ Không clone nguyên logo, mã số thuế, số hóa đơn hoặc dữ liệu c
 - `test_kit/judge-manifest.json`: 15 ca tuyển chọn, gồm 5 routine, 4 FACT, 3 POLICY và 3 AUTHORITY.
 - `test_kit/images/`: ảnh được sinh bằng `tools/generate_verify_receipts.py`.
 - `test_kit/local_real/`: holdout thực tế cục bộ; ảnh bị Git ignore.
+- `test_kit/privacy_v1/`: bốn hóa đơn/biên nhận hoàn toàn synthetic để kiểm tra
+  model có phân biệt dữ liệu khách hàng/người nhận với thông tin thương mại của
+  bên bán hay không. `tools/generate_privacy_test_kit.py` tái tạo ảnh và manifest
+  deterministic; không dùng ảnh thật hoặc dữ liệu cá nhân thật.
 
 Ba mươi ca hiện tại bao phủ nhiều bố cục như mobile commerce, POS, giấy in nhiệt, VAT, nhà hàng và ride receipt; đồng thời có blur, crop, thiếu identifier, lệch số tiền, ngày cũ/tương lai/cuối tuần, draft/refund, hàng hóa bị cấm và vượt thẩm quyền.
 
@@ -38,6 +42,24 @@ Khi manifest tuyển chọn có `sourceManifest`, runner tự đối chiếu cas
 Khởi động AURA trước, giữ fallback tắt khi đo riêng một provider. Sau đó chạy từng lệnh trên một dòng:
 
 Nếu source vừa thay đổi, phải chạy `dotnet build` rồi mới dùng `dotnet run --no-build`. Không dùng một assembly cũ để benchmark source mới; kiểm tra `/healthz` phải có `databaseAvailable=true` và `storageAvailable=true` trước khi bắt đầu.
+
+### Chạy privacy-role synthetic kit
+
+Chỉ chạy trên local/staging cô lập, với LocalFileSystem private, database test
+mới, AI concurrency 1, fallback/Drive/Verify tắt. Nếu chọn bật Strict ZDR,
+kiểm `/healthz` thấy `strictZeroDataRetention=true` và
+`providerDataCollectionDenied=true` trước khi gửi ảnh; đó là kiểm tra cấu hình
+route, không chứng minh contractual no-retention hoặc redaction trước inference.
+
+```powershell
+.\tools\Invoke-ExtendedDatasetEvaluation.ps1 -BaseUrl "http://127.0.0.1:5000" -ManifestPath ".\test_kit\privacy_v1\manifest.json" -ImagesDirectory ".\test_kit\privacy_v1\images" -MaxCases 4 -InterCaseDelaySeconds 4
+```
+
+Kết quả lưu dưới `test_kit/results/` và bị Git ignore. Runner báo expected/actual
+decision cùng TP/FN/FP theo category. Bộ này chỉ có bốn ca tạo có chủ đích; 0
+false negative trong bộ nhỏ không chứng minh coverage trên hóa đơn thật. Đối
+chiếu role labels trong manifest và giữ lại cả over-escalation lẫn missed
+category; không chỉnh nhãn sau khi xem output để làm tỷ lệ đẹp hơn.
 
 ```powershell
 $repoRoot = (git rev-parse --show-toplevel).Trim()

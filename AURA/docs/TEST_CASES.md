@@ -1,5 +1,16 @@
 # AURA Test Matrix
 
+**Candidate verification 24/10/2026:** commit `0568b5a` passes full Debug and
+Release suites **333/333 each** with opt-in SQL LocalDB integration enabled.
+New regression coverage ensures Semantic repair cannot silently remove a valid
+privacy marker from the initial extraction. The 4-case privacy-role synthetic
+kit separately passed 3 sequential runs (12/12 decisions, 21/21 labeled
+categories); it is a small prompt check, not a general privacy detector test.
+The final committed v3.1 model run passed 15/15 decisions and 143/146 facts;
+R3-06 remained an unresolved semantic repair and correctly escalated. Full
+evidence and constraints are in `CURRENT_PROJECT_STATUS.md` and
+`MODEL_ROUTE_COMPARISON_2026-10-24.md`.
+
 Candidate sau feedback ngày 17/10/2026 có 190 automated test offline. Phần bổ sung bao phủ: UI không còn nhập/gửi claimed amount, AI amount provenance, privacy category/route/manager outcome, OpenRouter `data_collection=deny`, dashboard SQL theo kỳ được chọn, multi-file UI contract, bảo toàn pending job trong một lượt nhiều ảnh, CSV report scope/formula hardening/UTF-8 BOM và multilingual fail-safe. Mailbox sandbox thử nghiệm không thuộc candidate hiện hành. Live Verify sau publish đạt 5/5; đây là stability evidence trên fixture synthetic đã biết, không phải accuracy holdout mới.
 
 Mốc cập nhật: 06/10/2026. Ký hiệu: `A` đã tự động hóa bằng xUnit; `V` nằm trong Verify Vision; `R` chạy bằng evaluator ngoài UI; `P` backlog mở rộng, chưa tuyên bố đã đạt.

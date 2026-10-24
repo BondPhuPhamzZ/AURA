@@ -2,7 +2,7 @@
 
 **Mốc baseline nộp bài:** 14/10/2026. **Cập nhật trạng thái source:** 23/10/2026.
 
-**Mục đích:** tạo một chỉ mục công khai duy nhất cho các phép đo được dùng trong proposal, slide, Build Log, README và gói Demo Day.
+**Mục đích:** tạo một chỉ mục công khai duy nhất cho các phép đo được dùng trong proposal, slide, Build Log, README và gói Demo Day. Source snapshot mới nhất được đối chiếu 24/10/2026.
 
 ## Evidence hậu cuộc thi, không thay thế baseline nộp bài
 
@@ -13,6 +13,7 @@
 | 15 ảnh thật có consent | 15/15 hoàn tất qua manual localhost; 15 hash khác nhau | Accuracy, blind holdout hay Drive nhận ảnh thật |
 | Storage/dataset gate 23/10 | Chặn receipt storage dưới `wwwroot`; bộ 100 bị chặn khi yêu cầu 100 hash độc lập | RBAC, scanner hoặc bảo đảm privacy toàn diện |
 | Post-feedback local smoke 23/10 | 5 synthetic: 3/5 completed và khớp nhãn; 2 `AI_SCHEMA_MISMATCH`. Lặp 15 ảnh thật đã dùng: 14/15 completed, 1 `AI_RATE_LIMIT`; 10/15 khớp nhãn khóa, 11/15 quyết định trùng lần chạy trước (tính ca fail là không khớp) | Cải thiện accuracy, blind holdout mới, provider ổn định hoặc sẵn sàng scale |
+| Committed local candidate `0568b5a` (24/10) | Debug/Release 333/333 mỗi bản, LocalDB integration bật; privacy kit 4 ca × 3 lượt: 12/12 decisions, 21/21 category; v3.1 một lượt 15/15 decisions, 143/146 facts | Không chứng minh privacy detector tổng quát, pre-inference redaction, độ chính xác trên dữ liệu thật, hosting restore hoặc production readiness |
 
 Chi tiết và các giới hạn nằm ở [MVP validation](DRIVE_MVP_VALIDATION_2026-10-22.md), [storage/dataset gate](STORAGE_AND_DATASET_GATE_2026-10-23.md) và [readiness assessment](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md). Source mới chưa được xác minh là đã publish lên host công khai. Test no-restore có cảnh báo `NU1900` do advisory feed không truy cập được trong invocation đó; không được diễn giải invocation này là một fresh dependency audit.
 
