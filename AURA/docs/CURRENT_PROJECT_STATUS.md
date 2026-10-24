@@ -18,7 +18,9 @@
 > `DataRetention:Enabled` vẫn false trên môi trường dùng thật; Task Scheduler,
 > restore drill của backup set và phê duyệt retention còn mở. Cleanup best-effort:
 > khi máy tắt, dọn trễ tới lần app/Task Scheduler chạy tiếp theo. Chi tiết:
-> [retention validation](RETENTION_VALIDATION_2026-10-24.md).
+> Release build 0 warning/error; EF không có pending model changes; retention
+> startup smoke trên DB LocalDB rỗng trả `/healthz=ok`; backup registration/remover
+> được thử bằng file synthetic, không có hóa đơn thật. Thao tác: [runbook](RUNBOOK.md).
 
 > **Thay đổi code tại commit `0568b5a` — privacy role triage + semantic marker preservation:**
 > Prompt nay phân biệt rõ dữ liệu khách hàng/người nhận với thông tin thương mại
@@ -38,8 +40,10 @@
 > database up to date, concurrency 1, Strict ZDR request + data-collection deny bật,
 > Drive/Verify/fallback tắt. Đây không phải bằng chứng pre-inference redaction,
 > không-retention theo hợp đồng, hosting restore, production accuracy hay multi-host.
-> Retention policy đã được người dùng chọn; pháp lý/operational approval và triển khai
-> vẫn mở. Quyết định quản lý còn Undo nên thời điểm xóa phải được khóa theo deadline.
+> Retention policy đã được người dùng chọn và code local đã qua test; chưa bật trên
+> DB người dùng, chưa hoàn tất backup/restore đúng host hoặc Task Scheduler. Quyết
+> định quản lý có thể Undo trước deadline; sau deadline app từ chối Undo khi
+> retention bật. Phê duyệt pháp lý/operational vẫn là gate trước dữ liệu thật.
 
 > **Gate tiếp theo:** giữ local single-host và ảnh synthetic; diễn tập
 > backup/restore theo đúng host, cấu hình lịch dọn backup, chốt phê duyệt dữ liệu,
