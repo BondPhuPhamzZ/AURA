@@ -160,6 +160,7 @@ Nếu một ca dừng gần đúng thời gian `OpenRouter:TimeoutSeconds`, đó
 1. Chỉ một người được bấm **Verify Harness**. `WorkflowOperationGate` trả HTTP 409 cho Verify thứ hai trên cùng instance.
 2. Candidate từ 12/10 dùng chung AI capacity gate cho Verify và worker nên không còn gọi provider song song trong cùng process. Vẫn không chạy Verify khi đo upload vì Verify giữ gate lâu và làm tăng latency FIFO.
 3. Hai đến năm upload hợp lệ có thể được nhận 202 và giữ trong SQL; worker xử lý FIFO một hồ sơ tại một thời điểm. Nói rõ đây là durability/queue evidence, không phải AI concurrency SLA.
+   `tools/Invoke-ConcurrentUploadSmoke.ps1` chỉ cho phép loopback mặc định, giới hạn 1–10 upload, dừng poll sau tối đa 900 giây (có thể cấu hình) và không ghi đường dẫn ảnh local vào report. Chỉ thêm `-AllowNonLoopback` khi đã duyệt rõ một mục tiêu staging synthetic; không dùng ảnh cá nhân hoặc coi smoke tải nhỏ là load test production.
 4. Nếu một hồ sơ trả `AI_RATE_LIMIT`, dừng các lượt AI còn lại. Không recycle, retry dồn hoặc bật fallback chưa benchmark để che lỗi.
 5. Trước demo kiểm OpenRouter Activity/Credits/Key limit và chạy đúng một ảnh smoke. Với 429, dùng video/raw evidence và trình bày fail-safe/human review.
 6. App pool demo phải đặt **Maximum Worker Processes = 1**; gate hiện tại không phân tán giữa nhiều IIS process.

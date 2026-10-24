@@ -9,6 +9,13 @@ param(
     [int]$Copies = 5,
 
     [Parameter()]
+    [ValidateRange(1, 3600)]
+    [int]$ProcessingTimeoutSeconds = 900,
+
+    [Parameter()]
+    [switch]$AllowNonLoopback,
+
+    [Parameter()]
     [string]$ImagePath,
 
     [Parameter()]
@@ -33,9 +40,13 @@ if (-not (Test-Path -LiteralPath $ImagePath -PathType Leaf)) {
 $resolvedImage = (Resolve-Path -LiteralPath $ImagePath).Path
 $imageSha256 = (Get-FileHash -LiteralPath $resolvedImage -Algorithm SHA256).Hash.ToLowerInvariant()
 $normalizedBaseUrl = $BaseUrl.TrimEnd('/')
+$baseUri = [Uri]$normalizedBaseUrl
+if (-not $baseUri.IsLoopback -and -not $AllowNonLoopback) {
+    throw 'Refusing to send concurrent uploads to a non-loopback host. Pass -AllowNonLoopback only for an explicitly approved synthetic test target.'
+}
 $jobs = 1..$Copies | ForEach-Object {
-    Start-Job -ArgumentList $_, $normalizedBaseUrl, $resolvedImage, $ClaimedAmount -ScriptBlock {
-        param($Sequence, $RootUrl, $ReceiptPath, $Amount)
+    Start-Job -ArgumentList $_, $normalizedBaseUrl, $resolvedImage, $ClaimedAmount, $ProcessingTimeoutSeconds -ScriptBlock {
+        param($Sequence, $RootUrl, $ReceiptPath, $Amount, $ProcessingTimeout)
 
         Add-Type -AssemblyName System.Net.Http
         $handler = [System.Net.Http.HttpClientHandler]::new()
@@ -68,9 +79,52 @@ $jobs = 1..$Copies | ForEach-Object {
             if (-not $response.IsSuccessStatusCode) { throw "HTTP $([int]$response.StatusCode): $body" }
             $accepted = $body | ConvertFrom-Json
 
+            $processingClock = [System.Diagnostics.Stopwatch]::StartNew()
             do {
+                if ($processingClock.Elapsed.TotalSeconds -ge $ProcessingTimeout) {
+                    $status = [pscustomobject]@{
+                        caseId = $accepted.caseId
+                        processingState = 'PROCESSING_TIMEOUT'
+                        actual = $null
+                        servedProvider = $null
+                        fallbackUsed = $false
+                        providerErrorCode = 'PROCESSING_TIMEOUT'
+                    }
+                    break
+                }
                 Start-Sleep -Milliseconds 500
-                $statusJson = $client.GetStringAsync("$RootUrl$($accepted.statusUrl)").GetAwaiter().GetResult()
+                $remainingSeconds = $ProcessingTimeout - $processingClock.Elapsed.TotalSeconds
+                if ($remainingSeconds -le 0) {
+                    $status = [pscustomobject]@{
+                        caseId = $accepted.caseId
+                        processingState = 'PROCESSING_TIMEOUT'
+                        actual = $null
+                        servedProvider = $null
+                        fallbackUsed = $false
+                        providerErrorCode = 'PROCESSING_TIMEOUT'
+                    }
+                    break
+                }
+                $pollCancellation = [System.Threading.CancellationTokenSource]::new(
+                    [TimeSpan]::FromSeconds($remainingSeconds))
+                try {
+                    $statusJson = $client.GetStringAsync(
+                        "$RootUrl$($accepted.statusUrl)", $pollCancellation.Token).GetAwaiter().GetResult()
+                }
+                catch [System.Threading.Tasks.TaskCanceledException] {
+                    $status = [pscustomobject]@{
+                        caseId = $accepted.caseId
+                        processingState = 'PROCESSING_TIMEOUT'
+                        actual = $null
+                        servedProvider = $null
+                        fallbackUsed = $false
+                        providerErrorCode = 'PROCESSING_TIMEOUT'
+                    }
+                    break
+                }
+                finally {
+                    $pollCancellation.Dispose()
+                }
                 $status = $statusJson | ConvertFrom-Json
             } while ($status.processingState -in @('PENDING', 'PROCESSING'))
 
@@ -140,7 +194,6 @@ try {
         generatedAtUtc = [DateTimeOffset]::UtcNow.ToString('O')
         baseUrl = $normalizedBaseUrl
         copies = $Copies
-        imagePath = $resolvedImage
         imageSha256 = $imageSha256
         claimedAmount = $ClaimedAmount
         passed = ($nonCompletedCount -eq 0)
