@@ -25,6 +25,18 @@
 > tự xóa ảnh, Firestore, GCS hoặc shared cloud storage. Privacy triage vẫn chạy sau
 > khi ảnh gốc đã được gửi qua inference; chưa cho phép dữ liệu người dùng/pilot.
 
+> **Rerun local single-host 24/10:** sau khi khởi động LocalDB instance đang có,
+> Debug và Release pass 333/333, không skip; bài backup/restore synthetic chạy riêng
+> pass 1/1, Release build 0 warning/error, EF không có pending model changes. Một
+> smoke inference chạy trên DB mới có tất cả migration và thư mục receipt riêng:
+> `/healthz=status:ok`, `LocalFileSystem`, Strict ZDR request + data-collection deny,
+> fallback off, một permit, durable queue; R3-01 synthetic hoàn tất `AUTO_APPROVE`
+> trong 5.928 ms, không provider error. Evidence JSON nằm trong Git-ignored
+> `test_kit/results/local-singlehost-20261024_193823_680018fd/`; DB và thư mục
+> test tổng hợp cô lập được giữ lại để kiểm tra, không chứa hóa đơn người dùng.
+> Lần test ban đầu trong sandbox bị LocalDB error 50 trước khi kết nối; sau khi
+> khởi động instance cùng Windows user ngoài sandbox, hai suite chạy thành công.
+
 > **Post-fix synthetic repeat 24/10:** Sau khi sửa policy OCR hẹp cho cụm
 > `Bia hò sơ`, Test Kit v3.1 khóa 15 ca được chạy lại đủ ba lượt trên một
 > LocalDB cô lập mỗi lượt, source `2e10e534d082314269341af1114a13b7e19f6922`,
