@@ -37,6 +37,15 @@
 > Lần test ban đầu trong sandbox bị LocalDB error 50 trước khi kết nối; sau khi
 > khởi động instance cùng Windows user ngoài sandbox, hai suite chạy thành công.
 
+> **Local inference screen:** Ollama `qwen3-vl:4b-instruct` được thử riêng với
+> một ảnh synthetic trên DB/thư mục local mới, fallback tắt, không dùng provider
+> bên ngoài. Health/schema/queue đều đạt; ca R3-01 hoàn tất sau 278.164 ms nhưng
+> ra `ESCALATE_FACT` thay vì nhãn `AUTO_APPROVE`. Lượt đầu 168.338 ms; Semantic
+> bắt lỗi gán `bookingId` và gọi repair một lần, thêm 109.169 ms; kết quả vẫn được
+> chuyển người rà soát an toàn. Đây chỉ là feasibility screen một ca: local route
+> giữ ảnh trên máy nhưng chất lượng/tốc độ model hiện chưa đủ cơ sở thay route API.
+> Xem [route evidence](MODEL_ROUTE_COMPARISON_2026-10-24.md).
+
 > **Post-fix synthetic repeat 24/10:** Sau khi sửa policy OCR hẹp cho cụm
 > `Bia hò sơ`, Test Kit v3.1 khóa 15 ca được chạy lại đủ ba lượt trên một
 > LocalDB cô lập mỗi lượt, source `2e10e534d082314269341af1114a13b7e19f6922`,

@@ -50,6 +50,27 @@ errors; EF reported no pending model changes. Route settings and health output
 prove app configuration only, not a provider contract, legal compliance, or
 pre-inference protection. Results live only in Git-ignored `test_kit/results/`.
 
+## Local Ollama route feasibility screen — 24/10
+
+To assess the privacy/locality option without sending a receipt to an external
+provider, one synthetic R3-01 image was run through a fresh isolated LocalDB,
+private local receipt directory, and `Ollama` at `127.0.0.1:11434` using
+`qwen3-vl:4b-instruct`. `/healthz` was `ok`, schema current, LocalFileSystem
+available, fallback off, one AI permit, and durable queue enabled. The case
+completed in **278,164 ms** as `ESCALATE_FACT`; the locked expected decision is
+`AUTO_APPROVE`. Initial inference took 168,338 ms and Semantic flagged
+`bookingId:IDENTIFIER_ASSIGNMENT_INVALID`; the single correction attempt took
+109,169 ms, after which the workflow safely escalated. There was no provider
+error and no external provider was used.
+
+This single-case screen shows that local inference can keep the image on this
+machine, but the current 4B route on this host is too slow for interactive
+multi-receipt use and did not match this case's expected decision. It is not an
+accuracy estimate or a representative latency benchmark. Any local route needs
+a labeled multi-case benchmark on target hardware before it can replace the
+OpenRouter route; keeping the image at rest locally does not itself prevent
+OpenRouter from receiving it when that provider is selected.
+
 ## Post-fix live rerun
 
 After adding the narrowly scoped OCR variant `bia hò sơ` to the stationery
