@@ -68,6 +68,69 @@ Nếu `/healthz` treo hoặc `databaseAvailable=false` và log ứng dụng đ�
 
 Nếu warning chỉ xuất hiện trong execution context bị giới hạn nhưng full preflight vẫn có `0 failures` và health xác nhận database, lưu cả warning lẫn health làm bằng chứng minh bạch; không cố sửa registry sát giờ demo. Xem ma trận test tại `docs/TEST_CASES.md` và lịch freeze tại `docs/SUBMISSION_CHECKLIST.md`.
 
+### Sao lưu và diễn tập khôi phục local (SQL + ảnh)
+
+Integration test `Synthetic_database_and_receipt_backup_restore_consistent_pending_job_and_image` đã xác nhận restore DB LocalDB và ảnh synthetic khớp trạng thái `PENDING`, audit marker, kích thước và SHA-256. Đây là kiểm tra cơ chế trên dữ liệu synthetic; chưa phải backup/restore tập dữ liệu thật của máy hay của hosting.
+
+1. Chỉ chạy trên một host local; dừng AURA và mọi worker/instance sau khi chờ queue rỗng hoặc ghi lại job còn chờ. Đọc tên database từ `ConnectionStrings:DefaultConnection` và đường dẫn ảnh từ `ReceiptStorage:Directory`. Không đặt backup bên trong repo, `publish`, `wwwroot` hay thư mục ứng dụng được deploy; ưu tiên ổ ngoài đã mã hóa bằng BitLocker (hoặc tương đương) và giới hạn quyền đọc.
+2. Trong PowerShell, tạo thư mục backup riêng; dùng cùng `$backupRoot` cho cả `.bak` và ảnh:
+
+   ```powershell
+   $backupRoot = Join-Path $env:USERPROFILE (Join-Path 'AURA-Backups' (Get-Date -Format 'yyyyMMdd_HHmmss'))
+   New-Item -ItemType Directory -Force -Path $backupRoot | Out-Null
+   $databaseBackupPath = Join-Path $backupRoot 'AURA.bak'
+   $databaseBackupPath
+   ```
+
+   Mở SSMS và kết nối `(localdb)\MSSQLLocalDB` bằng Windows Authentication. Chọn đúng database ở connection string → **Tasks → Back Up…** → **Backup type: Full** → dán giá trị vừa in của `$databaseBackupPath`. Trong **Options**, bật **Verify backup when finished** và **Perform checksum before writing to media**; đợi kết quả thành công.
+3. Sao chép toàn bộ thư mục receipt đã cấu hình sang thư mục backup cùng đợt. Với đường dẫn mặc định:
+
+   ```powershell
+   $receiptSource = (Resolve-Path '.\App_Data\receipts').Path
+   $receiptBackup = Join-Path $backupRoot 'receipts'
+   if (-not (Test-Path -LiteralPath $receiptSource -PathType Container)) { throw 'Configured receipt directory not found; verify ReceiptStorage:Directory first.' }
+   New-Item -ItemType Directory -Force -Path $receiptBackup | Out-Null
+   robocopy $receiptSource $receiptBackup /E /COPY:DAT /DCOPY:DAT /R:2 /W:1 /XJ
+   if ($LASTEXITCODE -ge 8) { throw "Copy failed: robocopy exit $LASTEXITCODE" }
+   function Get-ReceiptTreeManifest([string]$Root) {
+       $base = [IO.Path]::GetFullPath($Root).TrimEnd('\') + '\'
+       @(Get-ChildItem -LiteralPath $Root -File -Recurse | Sort-Object FullName | ForEach-Object {
+           '{0}|{1}|{2}' -f $_.FullName.Substring($base.Length), $_.Length,
+               (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+       })
+   }
+   $sourceManifest = Get-ReceiptTreeManifest $receiptSource
+   $backupManifest = Get-ReceiptTreeManifest $receiptBackup
+   if (Compare-Object $sourceManifest $backupManifest) { throw 'Receipt copy size/hash check failed.' }
+   'Receipt copy size/hash check passed.'
+   ```
+
+   Nếu cấu hình `ReceiptStorage:Directory` khác mặc định, dùng đúng đường dẫn đó. Giữ cả `.bak` và ảnh trong cùng thư mục backup, giới hạn quyền đọc, và áp dụng chính sách lưu/xóa đã được đơn vị sở hữu dữ liệu duyệt; backup cũng chứa dữ liệu nhạy cảm.
+4. Tạo restore drill vào **database tên mới** và thư mục ảnh test mới; không overwrite database hiện hành:
+
+   ```powershell
+   $restoreName = 'AuraRestoreCheck_' + (Get-Date -Format 'yyyyMMdd_HHmmss')
+   $restoreReceiptDirectory = Join-Path $env:TEMP $restoreName
+   New-Item -ItemType Directory -Force -Path $restoreReceiptDirectory | Out-Null
+   ```
+
+   Trong SSMS dùng **Tasks → Restore → Database…**, chọn backup, đặt **Destination → Database** thành `$restoreName`, rồi ở **Files** đặt file data/log vào đường dẫn mới. Chép ảnh backup sang thư mục restore và đối chiếu hash:
+
+   ```powershell
+   robocopy $receiptBackup $restoreReceiptDirectory /E /COPY:DAT /DCOPY:DAT /R:2 /W:1 /XJ
+   if ($LASTEXITCODE -ge 8) { throw "Restore copy failed: robocopy exit $LASTEXITCODE" }
+   $restoredManifest = Get-ReceiptTreeManifest $restoreReceiptDirectory
+   if (Compare-Object $backupManifest $restoredManifest) { throw 'Restored receipt hash check failed.' }
+   $env:ConnectionStrings__DefaultConnection = "Server=(localdb)\MSSQLLocalDB;Database=$restoreName;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0"
+   $env:ReceiptStorage__Directory = $restoreReceiptDirectory
+   dotnet run
+   ```
+
+   Hai biến môi trường chỉ tồn tại trong cửa sổ PowerShell hiện tại; sau khi dừng AURA, đóng cửa sổ này để trở về cấu hình thường. Không ghi đè User Secrets hay connection string đang dùng.
+5. Chỉ xác nhận drill đạt khi `/healthz` trả `ok`, migration bằng 0, queue/status/audit khớp, và ảnh đọc qua route chứng từ khớp kích thước/hash SQL. Ghi thời gian backup/restore và kết quả kiểm tra. Nếu khôi phục thật, đóng app, sao lưu trạng thái hiện tại trước, rồi mới đổi cấu hình trở lại; không xóa bản nguồn cho tới khi xác minh xong.
+
+SQL và filesystem không có một transaction/snapshot nguyên tử chung. Dừng tất cả writer trước khi copy ảnh và backup DB để giảm cửa sổ lệch; nếu cần RPO/RTO được cam kết hoặc snapshot nhất quán khi app đang chạy, phải thiết kế backup quiesce/coordination riêng và kiểm thử đúng host. Đừng xem một lần LocalDB test là bằng chứng hosting backup, retention, hay recovery time.
+
 Mở URL được in trong terminal. Không truy cập `/Verify` để tìm trang riêng; nút Verify nằm ngay trên trang chủ. `/Applicant` và `/Verify` chủ động chuyển về `/`.
 
 ## 4. Tái lập Verify
