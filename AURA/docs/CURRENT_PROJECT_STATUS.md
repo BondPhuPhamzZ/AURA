@@ -29,7 +29,7 @@
 > Undo trùng từ các DbContext riêng chỉ tạo một state transition/audit cho
 > mỗi cuộc đua; stale write nhận `DbUpdateConcurrencyException` (controller
 > trả HTTP 409). Khi phản hồi thành công bị mất, client cần tải lại; API không
-> replay phản hồi thành công cũ. Full suite mới nhất pass **321/321** Debug và
+> replay phản hồi thành công cũ. Full suite mới nhất pass **322/322** Debug và
 > Release.
 
 > **Cập nhật tiếp nối 24/10 — source intake write xác nhận bền vững:** Khi

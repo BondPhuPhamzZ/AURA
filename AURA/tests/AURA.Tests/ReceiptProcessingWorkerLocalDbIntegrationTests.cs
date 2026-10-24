@@ -603,6 +603,63 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
+    public async Task Concurrent_bulk_forward_writes_one_handoff_audit_per_request()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var id = await SeedAsync(options, root);
+            await using (var seed = new AppDbContext(options))
+            {
+                var request = await seed.ReimbursementRequests.SingleAsync(item => item.Id == id);
+                request.Status = "ESCALATE_POLICY";
+                request.ManagerQuestion = "Synthetic bulk handoff question";
+                await seed.SaveChangesAsync();
+            }
+
+            await using var firstDatabase = new AppDbContext(options);
+            await using var secondDatabase = new AppDbContext(options);
+            var firstCopy = (await new ReimbursementRepository(firstDatabase).GetAllRequestsAsync())
+                .Single(item => item.Id == id);
+            var secondCopy = (await new ReimbursementRepository(secondDatabase).GetAllRequestsAsync())
+                .Single(item => item.Id == id);
+            firstCopy.IsForwardedToManager = true;
+            firstCopy.ForwardedAt = DateTime.UtcNow;
+            secondCopy.IsForwardedToManager = true;
+            secondCopy.ForwardedAt = DateTime.UtcNow;
+
+            static async Task<string> PersistBulkForwardAsync(AppDbContext database,
+                ReimbursementRequest request)
+            {
+                try
+                {
+                    await new ReimbursementRepository(database).UpdateRequestsWithAuditAsync(
+                        [(request, $"Mode=BULK; Question={request.ManagerQuestion}; Status={request.Status}")],
+                        "EMPLOYEE_FORWARDED_TO_MANAGER");
+                    return "SAVED";
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return "CONFLICT";
+                }
+            }
+
+            var results = await Task.WhenAll(
+                PersistBulkForwardAsync(firstDatabase, firstCopy),
+                PersistBulkForwardAsync(secondDatabase, secondCopy));
+
+            Assert.Equal(1, results.Count(result => result == "SAVED"));
+            Assert.Equal(1, results.Count(result => result == "CONFLICT"));
+            await using var verify = new AppDbContext(options);
+            var persisted = await verify.ReimbursementRequests.SingleAsync(item => item.Id == id);
+            Assert.True(persisted.IsForwardedToManager);
+            Assert.NotNull(persisted.ForwardedAt);
+            Assert.Equal(1, await verify.AuditLogs.CountAsync(item => item.RequestId == id &&
+                item.Action == "EMPLOYEE_FORWARDED_TO_MANAGER"));
+        });
+    }
+
+    [Fact]
     public async Task Rate_limited_job_survives_worker_restart_and_completes_once()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
