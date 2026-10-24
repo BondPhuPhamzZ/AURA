@@ -64,6 +64,85 @@ public sealed class DriveSandboxIntakeTests
     }
 
     [Fact]
+    public async Task Same_manual_idempotency_key_returns_existing_job_and_file()
+    {
+        var root = NewTestRoot();
+        try
+        {
+            var repository = new FakeRepository();
+            var service = CreateIntake(root, repository);
+            var sourceKey = ReceiptIntakeService.CreateManualIdempotencySourceKey(
+                "2b4d3b55-32d8-486c-a214-c7bf077bf981");
+            var input = new ReceiptIntakeInput(Png, "receipt.png", "image/png", 0,
+                "TEST", "Synthetic", "Finance", sourceKey);
+
+            var first = await service.AcceptAsync(input);
+            var retried = await service.AcceptAsync(input);
+
+            Assert.Equal(first.Id, retried.Id);
+            Assert.Single(repository.Requests);
+            Assert.Single(Directory.GetFiles(Path.Combine(root, "receipts")));
+            Assert.Contains("Source=MANUAL_IDEMPOTENCY", repository.LastAudit);
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Fact]
+    public async Task Manual_idempotency_key_cannot_be_reused_for_different_image_bytes()
+    {
+        var root = NewTestRoot();
+        try
+        {
+            var repository = new FakeRepository();
+            var service = CreateIntake(root, repository);
+            var sourceKey = ReceiptIntakeService.CreateManualIdempotencySourceKey(
+                "2b4d3b55-32d8-486c-a214-c7bf077bf981");
+            var input = new ReceiptIntakeInput(Png, "receipt.png", "image/png", 0,
+                "TEST", "Synthetic", "Finance", sourceKey);
+            await service.AcceptAsync(input);
+
+            await Assert.ThrowsAsync<ReceiptIntakeException>(() => service.AcceptAsync(input with
+                { Bytes = [137, 80, 78, 71, 13, 10, 26, 10, 1, 2] }));
+
+            Assert.Single(repository.Requests);
+            Assert.Single(Directory.GetFiles(Path.Combine(root, "receipts")));
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Fact]
+    public async Task Concurrent_manual_retry_resolves_to_one_durable_job()
+    {
+        var root = NewTestRoot();
+        try
+        {
+            var repository = new FakeRepository { CommitThenReportUniqueConflict = true };
+            var service = CreateIntake(root, repository);
+            var sourceKey = ReceiptIntakeService.CreateManualIdempotencySourceKey(
+                "2b4d3b55-32d8-486c-a214-c7bf077bf981");
+            var input = new ReceiptIntakeInput(Png, "receipt.png", "image/png", 0,
+                "TEST", "Synthetic", "Finance", sourceKey);
+
+            var accepted = await service.AcceptAsync(input);
+
+            Assert.Equal(ReceiptIntakeService.SourceRequestId(sourceKey!), accepted.Id);
+            Assert.Single(repository.Requests);
+            Assert.Single(Directory.GetFiles(Path.Combine(root, "receipts")));
+        }
+        finally { DeleteTestRoot(root); }
+    }
+
+    [Fact]
+    public void Manual_idempotency_key_requires_a_canonical_uuid()
+    {
+        Assert.Null(ReceiptIntakeService.CreateManualIdempotencySourceKey(null));
+        Assert.Equal("manual:2b4d3b5532d8486ca214c7bf077bf981",
+            ReceiptIntakeService.CreateManualIdempotencySourceKey("2b4d3b55-32d8-486c-a214-c7bf077bf981"));
+        Assert.Throws<ReceiptIntakeException>(() =>
+            ReceiptIntakeService.CreateManualIdempotencySourceKey("not-a-uuid"));
+    }
+
+    [Fact]
     public async Task Full_durable_queue_rejects_new_manual_upload_and_removes_its_staged_object()
     {
         var root = NewTestRoot();

@@ -111,7 +111,7 @@ public sealed class ReceiptIntakeService
                 try
                 {
                     persistenceResult = await _repository.TryAddRequestWithAuditAsync(request, "AI_QUEUED",
-                        $"Source={(input.SourceKey is null ? "MANUAL" : "DRIVE_SANDBOX")}; " +
+                        $"Source={GetAuditSource(input.SourceKey)}; " +
                         $"AmountSource={(input.ClaimedAmount > 0 ? AmountSources.UserProvided : "AI_PENDING")}; " +
                         $"DuplicateDetected={duplicate}; " +
                         $"DuplicatePolicyEnabled={request.DuplicatePolicyEnabled}",
@@ -173,6 +173,21 @@ public sealed class ReceiptIntakeService
 
     public static string SourceRequestId(string sourceKey) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(sourceKey)))[..32].ToLowerInvariant();
+
+    public static string? CreateManualIdempotencySourceKey(string? idempotencyKey)
+    {
+        if (string.IsNullOrWhiteSpace(idempotencyKey)) return null;
+        if (!Guid.TryParseExact(idempotencyKey, "D", out var parsed))
+            throw new ReceiptIntakeException("Idempotency-Key phải là UUID dạng chuẩn.");
+        return "manual:" + parsed.ToString("N");
+    }
+
+    private static string GetAuditSource(string? sourceKey) => sourceKey switch
+    {
+        null => "MANUAL",
+        _ when sourceKey.StartsWith("manual:", StringComparison.Ordinal) => "MANUAL_IDEMPOTENCY",
+        _ => "DRIVE_SANDBOX"
+    };
 
     private static string NormalizeIdentity(string? value, string fallback, int maxLength)
     {

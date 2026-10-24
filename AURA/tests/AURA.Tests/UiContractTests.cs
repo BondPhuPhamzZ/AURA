@@ -55,6 +55,9 @@ public sealed class UiContractTests
         var verifyFunction = dashboard[verifyStart..workflowFormsStart];
         Assert.Contains("processingPlaceholderRows = files.length;", uploadFunction, StringComparison.Ordinal);
         Assert.Contains("formData.append('receiptFile', file, file.name)", uploadFunction, StringComparison.Ordinal);
+        Assert.Contains("const idempotencyKey = crypto.randomUUID()", uploadFunction, StringComparison.Ordinal);
+        Assert.Contains("'Idempotency-Key': idempotencyKey", uploadFunction, StringComparison.Ordinal);
+        Assert.Contains("attempt < 3", uploadFunction, StringComparison.Ordinal);
         Assert.Contains("aura.pendingReceipts", uploadFunction, StringComparison.Ordinal);
         var uploadRender = uploadFunction.IndexOf("renderResultsTable();", StringComparison.Ordinal);
         var uploadScroll = uploadFunction.IndexOf("scrollToResults();", StringComparison.Ordinal);

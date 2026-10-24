@@ -138,6 +138,7 @@ public sealed class ApplicantController : Controller
     [EnableRateLimiting("receipt-intake")]
     public async Task<IActionResult> UploadReceipt(IFormFile? receiptFile, decimal? claimedAmount,
         string? submitterCode, string? submitterDisplayName, string? submitterDepartment,
+        [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,
         CancellationToken cancellationToken)
     {
         var preliminaryError = ReceiptAttachmentPolicy.ValidateMetadata(receiptFile?.FileName,
@@ -154,8 +155,10 @@ public sealed class ApplicantController : Controller
         ReimbursementRequest request;
         try
         {
+            var sourceKey = ReceiptIntakeService.CreateManualIdempotencySourceKey(idempotencyKey);
             request = await _intake.AcceptAsync(new ReceiptIntakeInput(bytes, file.FileName, file.ContentType,
-                claimedAmount.GetValueOrDefault(), submitterCode, submitterDisplayName, submitterDepartment),
+                claimedAmount.GetValueOrDefault(), submitterCode, submitterDisplayName, submitterDepartment,
+                sourceKey),
                 cancellationToken);
         }
         catch (ReceiptQueueCapacityException exception)

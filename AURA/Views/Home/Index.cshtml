@@ -791,14 +791,31 @@
 
         try {
             for (const file of files) {
-                const formData = new FormData(form);
-                formData.delete('receiptFile');
-                formData.append('receiptFile', file, file.name);
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    body: formData
-                });
+                const idempotencyKey = crypto.randomUUID();
+                let response;
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    const formData = new FormData(form);
+                    formData.delete('receiptFile');
+                    formData.append('receiptFile', file, file.name);
+                    try {
+                        response = await fetch(form.action, {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Idempotency-Key': idempotencyKey },
+                            body: formData
+                        });
+                    } catch (networkError) {
+                        if (attempt === 2) throw networkError;
+                        await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+                        continue;
+                    }
+                    if (response.ok || (response.status < 500 && response.status !== 429)) break;
+                    if (attempt === 2) break;
+                    const retryAfter = Number(response.headers.get('Retry-After'));
+                    const delayMs = Number.isFinite(retryAfter) && retryAfter > 0
+                        ? Math.min(retryAfter, 30) * 1000
+                        : 500 * (attempt + 1);
+                    await new Promise(resolve => setTimeout(resolve, delayMs));
+                }
                 const data = await readJsonResponse(response, `Tải lên ${file.name}`);
                 queued.push(data);
                 sessionStorage.setItem('aura.pendingReceipts', JSON.stringify(
