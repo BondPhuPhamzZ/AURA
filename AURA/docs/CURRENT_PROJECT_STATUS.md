@@ -1,14 +1,15 @@
 # Trạng thái hiện hành AURA ngày 24/10/2026
 
 > **Manual upload idempotency 24/10 — commit `daab7d4`:** Endpoint nhận
-> `Idempotency-Key` tùy chọn theo UUID chuẩn; UI cấp một khóa cho mỗi file và
-> giữ nguyên khóa trong tối đa ba lần thử khi mất kết nối, HTTP 429 hoặc 5xx.
+> `Idempotency-Key` tùy chọn theo UUID chuẩn; UI giữ tạm một khóa theo SHA-256
+> trong `sessionStorage` đến khi server xác nhận, tái sử dụng qua reload cùng
+> tab và tối đa ba lần thử khi mất kết nối, HTTP 429 hoặc 5xx.
 > Cùng khóa/cùng SHA-256 trả lại hồ sơ đã lưu; cùng khóa/ảnh khác bị từ chối.
 > Thêm test kiểm khóa, retry, xung đột nội dung, SQL unique-conflict, và hợp
 > đồng UI. Full Debug/Release pass **311/311** mỗi cấu hình với
 > `AURA_RUN_LOCALDB_INTEGRATION=1`; migration không đổi; `git diff --check`
-> sạch. Thay đổi đã push lên `codex/drive-pipeline-hardening`; retry sau khi
-> reload trình duyệt chưa khôi phục key cuối cùng.
+> sạch. Thay đổi đã push lên `codex/drive-pipeline-hardening`; khóa chưa xác nhận
+> sẽ mất khi browser session kết thúc.
 
 > **Cập nhật tiếp nối 24/10 — source intake write xác nhận bền vững:** Khi
 > xử lý `DbUpdateException` sau khi tạo receipt nguồn, `ReceiptIntakeService`

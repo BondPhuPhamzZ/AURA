@@ -761,8 +761,48 @@
         });
     }
 
-    // A multi-file selection reuses the same validated HTTP 202 endpoint for each file. This
-    // keeps storage, hash checks, SQL queueing and worker behavior on one code path.
+    // Keep the idempotency key briefly across a same-tab reload if the server committed a
+    // request but every HTTP response was lost. Only the local digest and opaque UUID are kept.
+    async function getPendingUploadIdentity(file) {
+        const idempotencyKey = () => crypto.randomUUID();
+        if (!crypto.subtle)
+            return { idempotencyKey: idempotencyKey(), fingerprint: null };
+
+        const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+        const fingerprint = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+        const storageKey = 'aura.pendingUploadKeys';
+        let pending = {};
+        try {
+            const parsed = JSON.parse(sessionStorage.getItem(storageKey) || '{}');
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) pending = parsed;
+        } catch { pending = {}; }
+
+        const existing = pending[fingerprint];
+        if (existing && typeof existing.key === 'string')
+            return { idempotencyKey: existing.key, fingerprint };
+
+        const key = idempotencyKey();
+        pending[fingerprint] = { key, createdAt: Date.now() };
+        const entries = Object.entries(pending).sort((left, right) =>
+            (Number(left[1]?.createdAt) || 0) - (Number(right[1]?.createdAt) || 0));
+        while (entries.length > 10) delete pending[entries.shift()[0]];
+        try { sessionStorage.setItem(storageKey, JSON.stringify(pending)); }
+        catch { /* Same-page automatic retries still reuse the in-memory key. */ }
+        return { idempotencyKey: key, fingerprint };
+    }
+
+    function clearPendingUploadIdentity(fingerprint, idempotencyKey) {
+        if (!fingerprint) return;
+        const storageKey = 'aura.pendingUploadKeys';
+        try {
+            const pending = JSON.parse(sessionStorage.getItem(storageKey) || '{}');
+            if (pending[fingerprint]?.key === idempotencyKey) delete pending[fingerprint];
+            sessionStorage.setItem(storageKey, JSON.stringify(pending));
+        } catch { /* A stale tab entry expires with the browser session. */ }
+    }
+
+    // A multi-file selection reuses the same validated HTTP 202 endpoint. This keeps storage,
+    // hash checks, SQL queueing and worker behavior on one code path.
     async function submitUpload() {
         if (!fileInput.files || fileInput.files.length === 0) {
             showToast('Vui lòng chọn ít nhất một ảnh hóa đơn.', 'danger');
@@ -791,7 +831,7 @@
 
         try {
             for (const file of files) {
-                const idempotencyKey = crypto.randomUUID();
+                const { idempotencyKey, fingerprint } = await getPendingUploadIdentity(file);
                 let response;
                 for (let attempt = 0; attempt < 3; attempt++) {
                     const formData = new FormData(form);
@@ -816,7 +856,10 @@
                         : 500 * (attempt + 1);
                     await new Promise(resolve => setTimeout(resolve, delayMs));
                 }
+                if (response.status >= 400 && response.status < 500)
+                    clearPendingUploadIdentity(fingerprint, idempotencyKey);
                 const data = await readJsonResponse(response, `Tải lên ${file.name}`);
+                clearPendingUploadIdentity(fingerprint, idempotencyKey);
                 queued.push(data);
                 sessionStorage.setItem('aura.pendingReceipts', JSON.stringify(
                     queued.map(item => ({ caseId: item.caseId, statusUrl: item.statusUrl }))));
