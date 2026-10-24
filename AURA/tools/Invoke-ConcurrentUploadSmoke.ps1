@@ -41,6 +41,11 @@ $resolvedImage = (Resolve-Path -LiteralPath $ImagePath).Path
 $imageSha256 = (Get-FileHash -LiteralPath $resolvedImage -Algorithm SHA256).Hash.ToLowerInvariant()
 $normalizedBaseUrl = $BaseUrl.TrimEnd('/')
 $baseUri = [Uri]$normalizedBaseUrl
+if (-not [string]::IsNullOrWhiteSpace($baseUri.UserInfo) -or
+    -not [string]::IsNullOrWhiteSpace($baseUri.Query) -or
+    -not [string]::IsNullOrWhiteSpace($baseUri.Fragment)) {
+    throw 'BaseUrl must not contain credentials, a query string, or a fragment.'
+}
 if (-not $baseUri.IsLoopback -and -not $AllowNonLoopback) {
     throw 'Refusing to send concurrent uploads to a non-loopback host. Pass -AllowNonLoopback only for an explicitly approved synthetic test target.'
 }
@@ -76,7 +81,9 @@ $jobs = 1..$Copies | ForEach-Object {
             $response = $client.PostAsync("$RootUrl/Applicant/UploadReceipt", $multipart).GetAwaiter().GetResult()
             $acceptedMs = $clock.ElapsedMilliseconds
             $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-            if (-not $response.IsSuccessStatusCode) { throw "HTTP $([int]$response.StatusCode): $body" }
+            if (-not $response.IsSuccessStatusCode) {
+                throw "HTTP_STATUS_$([int]$response.StatusCode)"
+            }
             $accepted = $body | ConvertFrom-Json
 
             $processingClock = [System.Diagnostics.Stopwatch]::StartNew()
@@ -143,8 +150,11 @@ $jobs = 1..$Copies | ForEach-Object {
             }
         }
         catch {
-            $message = $_.Exception.Message
-            if ($message.Length -gt 500) { $message = $message.Substring(0, 500) }
+            $clientError = if ($_.Exception.Message -match '^HTTP_STATUS_(\d{3})$') {
+                "HTTP_$($Matches[1])"
+            } else {
+                $_.Exception.GetType().Name
+            }
             [pscustomobject]@{
                 Sequence = $Sequence
                 CaseId = $null
@@ -155,7 +165,7 @@ $jobs = 1..$Copies | ForEach-Object {
                 Provider = $null
                 FallbackUsed = $false
                 ErrorCode = 'CLIENT_ERROR'
-                ClientError = $message
+                ClientError = $clientError
             }
         }
         finally {
