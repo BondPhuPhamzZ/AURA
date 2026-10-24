@@ -478,6 +478,64 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
+    public async Task Concurrent_duplicate_manager_approval_writes_one_state_change_and_audit()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var id = await SeedAsync(options, root);
+            await using (var seed = new AppDbContext(options))
+            {
+                var request = await seed.ReimbursementRequests.SingleAsync(item => item.Id == id);
+                request.Status = "ESCALATE_POLICY";
+                request.IsForwardedToManager = true;
+                request.ManagerQuestion = "Synthetic manager question";
+                await seed.SaveChangesAsync();
+            }
+
+            await using var firstDatabase = new AppDbContext(options);
+            await using var secondDatabase = new AppDbContext(options);
+            var firstCopy = await firstDatabase.ReimbursementRequests.SingleAsync(item => item.Id == id);
+            var secondCopy = await secondDatabase.ReimbursementRequests.SingleAsync(item => item.Id == id);
+            var approval = EscalationWorkflow.Answer("ESCALATE_POLICY", true);
+            firstCopy.Status = approval.Status;
+            firstCopy.ManagerAnswer = true;
+            firstCopy.ManagerDecisionAt = DateTime.UtcNow;
+            secondCopy.Status = approval.Status;
+            secondCopy.ManagerAnswer = true;
+            secondCopy.ManagerDecisionAt = DateTime.UtcNow;
+
+            static async Task<string> PersistApprovalAsync(AppDbContext database,
+                ReimbursementRequest request)
+            {
+                try
+                {
+                    await new ReimbursementRepository(database).UpdateRequestWithAuditAsync(
+                        request, "MANAGER_YES", "synthetic duplicate approval");
+                    return "SAVED";
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return "CONFLICT";
+                }
+            }
+
+            var results = await Task.WhenAll(
+                PersistApprovalAsync(firstDatabase, firstCopy),
+                PersistApprovalAsync(secondDatabase, secondCopy));
+
+            Assert.Equal(1, results.Count(result => result == "SAVED"));
+            Assert.Equal(1, results.Count(result => result == "CONFLICT"));
+            await using var verify = new AppDbContext(options);
+            var persisted = await verify.ReimbursementRequests.SingleAsync(item => item.Id == id);
+            Assert.Equal(approval.Status, persisted.Status);
+            Assert.True(persisted.ManagerAnswer);
+            Assert.Equal(1, await verify.AuditLogs.CountAsync(item => item.RequestId == id &&
+                item.Action == "MANAGER_YES"));
+        });
+    }
+
+    [Fact]
     public async Task Rate_limited_job_survives_worker_restart_and_completes_once()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
