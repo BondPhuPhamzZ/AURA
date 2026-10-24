@@ -54,6 +54,7 @@ public sealed class OllamaVisionExtractorService : IVisionExtractor
             var repairInstruction = ReceiptSemanticValidator.BuildRepairInstruction(firstIssues);
             var repairedFacts = await RequestFactsOnceAsync(
                 BuildPayload(input, schema, schemaJson, repairInstruction), cancellationToken);
+            ReceiptPrivacyClassifier.PreserveModelMarkers(firstFacts, repairedFacts);
             ReceiptSemanticValidator.MarkRepairAttempt(repairedFacts, firstIssues);
             var remainingIssues = ReceiptSemanticValidator.Validate(repairedFacts);
             return remainingIssues.Count == 0

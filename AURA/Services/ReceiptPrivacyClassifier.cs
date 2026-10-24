@@ -64,6 +64,24 @@ public static partial class ReceiptPrivacyClassifier
         return facts;
     }
 
+    /// <summary>
+    /// A semantic repair re-reads the same image. Preserve valid privacy markers
+    /// from the first extraction because a repair response must not silently clear
+    /// a previously detected privacy signal.
+    /// </summary>
+    public static void PreserveModelMarkers(ReceiptExtractionDto original, ReceiptExtractionDto repaired)
+    {
+        foreach (var signal in original.SuspiciousSignals)
+        {
+            const string prefix = "personal_data:";
+            if (!signal.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
+
+            var category = NormalizeCategory(signal[prefix.Length..]);
+            if (AllowedCategories.Contains(category))
+                AddDistinct(repaired.SuspiciousSignals, $"{prefix}{category}");
+        }
+    }
+
     private static IEnumerable<string> EnumerateExistingText(ReceiptExtractionDto facts)
     {
         var values = new[]

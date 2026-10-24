@@ -23,6 +23,26 @@ public sealed class ReceiptPrivacyClassifierTests
     }
 
     [Fact]
+    public void Preserves_valid_privacy_markers_when_semantic_repair_omits_them()
+    {
+        var original = new ReceiptExtractionDto
+        {
+            SuspiciousSignals = ["personal_data:phone", "personal_data:NOT_A_CATEGORY"]
+        };
+        var repaired = new ReceiptExtractionDto
+        {
+            SuspiciousSignals = ["personal_data:EMAIL", "PROMPT_INJECTION"]
+        };
+
+        ReceiptPrivacyClassifier.PreserveModelMarkers(original, repaired);
+        ReceiptPrivacyClassifier.Apply(repaired);
+
+        Assert.Equal(["EMAIL", "PHONE"], repaired.PersonalDataCategories);
+        Assert.Contains("PROMPT_INJECTION", repaired.SuspiciousSignals);
+        Assert.DoesNotContain(repaired.SuspiciousSignals, signal => signal.Contains("NOT_A_CATEGORY", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Treats_identity_and_financial_categories_as_high_risk()
     {
         var facts = new ReceiptExtractionDto

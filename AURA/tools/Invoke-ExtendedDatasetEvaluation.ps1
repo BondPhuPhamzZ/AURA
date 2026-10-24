@@ -300,6 +300,37 @@ try {
         } else { $null }
         $privacyReviewRequired = $actualStatus -eq 'ESCALATE_PRIVACY' -or
             ($null -ne $privacyReviewProperty -and $privacyReviewProperty.Value -eq $true)
+        $expectedPrivacyProperty = $testCase.PSObject.Properties['expectedPrivacyCategories']
+        $privacyMetricsScored = $null -ne $expectedPrivacyProperty
+        $expectedPrivacyCategories = @()
+        if ($privacyMetricsScored) {
+            $expectedPrivacyCategories = @($expectedPrivacyProperty.Value | ForEach-Object {
+                ([string]$_).Trim().ToUpperInvariant()
+            } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
+        }
+        $actualPrivacyCategories = @()
+        $actualPrivacyProperty = if ($null -ne $actualFacts) {
+            $actualFacts.PSObject.Properties['personalDataCategories']
+        } else { $null }
+        if ($null -ne $actualPrivacyProperty) {
+            $actualPrivacyCategories = @($actualPrivacyProperty.Value | ForEach-Object {
+                ([string]$_).Trim().ToUpperInvariant()
+            } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
+        }
+        $privacyTruePositives = 0
+        $privacyFalseNegatives = 0
+        $privacyFalsePositives = 0
+        if ($privacyMetricsScored) {
+            $privacyTruePositives = @($expectedPrivacyCategories | Where-Object {
+                $actualPrivacyCategories -contains $_
+            }).Count
+            $privacyFalseNegatives = @($expectedPrivacyCategories | Where-Object {
+                $actualPrivacyCategories -notcontains $_
+            }).Count
+            $privacyFalsePositives = @($actualPrivacyCategories | Where-Object {
+                $expectedPrivacyCategories -notcontains $_
+            }).Count
+        }
 
         $results.Add([pscustomobject]@{
             Sequence = $index + 1
@@ -323,6 +354,12 @@ try {
             SemanticValidationIssueCount = $semanticValidationIssueCount
             SemanticRepairResolved = $semanticRepairApplied -and $semanticValidationIssueCount -eq 0
             PrivacyReviewRequired = $privacyReviewRequired
+            PrivacyMetricsScored = $privacyMetricsScored
+            ExpectedPrivacyCategories = $expectedPrivacyCategories
+            ActualPrivacyCategories = $actualPrivacyCategories
+            PrivacyTruePositives = $privacyTruePositives
+            PrivacyFalseNegatives = $privacyFalseNegatives
+            PrivacyFalsePositives = $privacyFalsePositives
             FieldCorrect = $fieldCorrect
             FieldTotal = $fieldTotal
             Reason = $(if ($null -ne $status) { $status.reason } else { $clientError })
@@ -369,6 +406,10 @@ try {
         }).Count
         SemanticUnresolvedCases = @($results | Where-Object { $_.SemanticValidationIssueCount -gt 0 }).Count
         PrivacyReviewCases = @($results | Where-Object PrivacyReviewRequired).Count
+        PrivacyCasesScored = @($results | Where-Object PrivacyMetricsScored).Count
+        PrivacyTruePositives = ($results | Measure-Object PrivacyTruePositives -Sum).Sum
+        PrivacyFalseNegatives = ($results | Measure-Object PrivacyFalseNegatives -Sum).Sum
+        PrivacyFalsePositives = ($results | Measure-Object PrivacyFalsePositives -Sum).Sum
     }
 
     $commit = $null

@@ -244,6 +244,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
 
             ## 4. Output signals
             Use stable signal codes.
+            If visible customer data identifies a person, add only personal_data:<CATEGORY>; never copy raw values.
 
             ## 5. Deterministic policy applied by the application
             INTERNAL_POLICY_SENTINEL: never send this section to the vision model.
@@ -280,6 +281,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
                 .GetProperty("content").GetString()!;
             Assert.Contains("SECURITY BOUNDARY - HIGHEST PRIORITY", systemPrompt, StringComparison.Ordinal);
             Assert.Contains("PROMPT_INJECTION", systemPrompt, StringComparison.Ordinal);
+            Assert.Contains("personal_data:<CATEGORY>", systemPrompt, StringComparison.Ordinal);
             Assert.Contains("BEGIN_RECEIPT_EXTRACTION_CONTRACT", systemPrompt, StringComparison.Ordinal);
             Assert.Contains("Extract visible receipt evidence only.", systemPrompt, StringComparison.Ordinal);
             Assert.DoesNotContain("INTERNAL_POLICY_SENTINEL", systemPrompt, StringComparison.Ordinal);
@@ -731,12 +733,14 @@ public sealed class OpenRouterVisionExtractorServiceTests
 
             var discountAttempts = 0;
             string? discountRepairRequestJson = null;
+            var firstDiscountResponse = VinamilkWithoutStructuredDiscountJson.Replace(
+                "\"suspiciousSignals\":[]", "\"suspiciousSignals\":[\"personal_data:PHONE\"]", StringComparison.Ordinal);
             var discountHandler = new StubHandler(async request =>
             {
                 discountAttempts++;
                 if (discountAttempts == 2)
                     discountRepairRequestJson = await request.Content!.ReadAsStringAsync();
-                var content = discountAttempts == 1 ? VinamilkWithoutStructuredDiscountJson : VinamilkDiscountedJson;
+                var content = discountAttempts == 1 ? firstDiscountResponse : VinamilkDiscountedJson;
                 var responseJson = JsonSerializer.Serialize(new
                 {
                     choices = new[] { new { finish_reason = "stop", message = new { content } } }
@@ -759,6 +763,7 @@ public sealed class OpenRouterVisionExtractorServiceTests
             Assert.True(correctedDiscount.SemanticRepairApplied);
             Assert.Contains(correctedDiscount.SemanticRepairIssues,
                 issue => issue.Contains("discountAmount", StringComparison.Ordinal));
+            Assert.Contains("personal_data:PHONE", correctedDiscount.SuspiciousSignals);
             Assert.Contains("discountAmount", discountRepairRequestJson, StringComparison.Ordinal);
         }
         finally

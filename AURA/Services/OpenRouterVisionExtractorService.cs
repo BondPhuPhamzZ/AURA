@@ -62,6 +62,7 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             var repairInstruction = ReceiptSemanticValidator.BuildRepairInstruction(firstIssues);
             var repairedFacts = await RequestFactsWithMalformedRetryAsync(
                 instruction => BuildPayload(input, responseSchema, instruction), repairInstruction, cancellationToken);
+            ReceiptPrivacyClassifier.PreserveModelMarkers(firstFacts, repairedFacts);
             ReceiptSemanticValidator.MarkRepairAttempt(repairedFacts, firstIssues);
             var remainingIssues = ReceiptSemanticValidator.Validate(repairedFacts);
             return remainingIssues.Count == 0

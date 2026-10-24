@@ -1,0 +1,90 @@
+{
+  "version": "privacy-v1-synthetic",
+  "description": "Fabricated privacy-role evaluation; not a real receipt accuracy benchmark.",
+  "imageDirectory": "images",
+  "cases": [
+    {
+      "id": "PRV-01",
+      "fileName": "PRV-01-customer-contact.png",
+      "expectedStatus": "ESCALATE_PRIVACY",
+      "claimedAmount": 120000,
+      "expectedPrivacyCategories": [
+        "ADDRESS",
+        "EMAIL",
+        "PERSON_NAME",
+        "PHONE"
+      ],
+      "expectedFacts": {
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "CỬA HÀNG MẪU AN TÂM",
+        "currency": "VND",
+        "invoiceDate": "2026-10-20",
+        "invoiceDateEvidence": "20/10/2026",
+        "totalAmount": 120000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "receiptNumber": "PRV-01-20261020"
+      },
+      "sha256": "D8B7F053364960FA4BB680B694F35459378853A3E029559688E02402099E6FC2"
+    },
+    {
+      "id": "PRV-02",
+      "fileName": "PRV-02-sole-proprietor-control.png",
+      "expectedStatus": "AUTO_APPROVE",
+      "claimedAmount": 120000,
+      "expectedPrivacyCategories": [],
+      "expectedFacts": {
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "HỘ KINH DOANH NGUYỄN VĂN A",
+        "currency": "VND",
+        "invoiceDate": "2026-10-20",
+        "invoiceDateEvidence": "20/10/2026",
+        "totalAmount": 120000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "receiptNumber": "PRV-02-20261020"
+      },
+      "sha256": "693D7EE7BC681CF93F7FAD8C963C4BA80D1109A0E4EB3E49513D848402689FB3"
+    },
+    {
+      "id": "PRV-03",
+      "fileName": "PRV-03-ecommerce-recipient.png",
+      "expectedStatus": "ESCALATE_PRIVACY",
+      "claimedAmount": 250000,
+      "expectedPrivacyCategories": [
+        "ADDRESS",
+        "PERSON_NAME",
+        "PHONE"
+      ],
+      "expectedFacts": {
+        "documentType": "ECOMMERCE",
+        "merchantName": "NỀN TẢNG MUA SẮM MẪU",
+        "currency": "VND",
+        "transactionDate": "2026-10-20",
+        "transactionDateEvidence": "20/10/2026",
+        "totalAmount": 250000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "totalAmountEvidence": "TỔNG THANH TOÁN 250.000 VND",
+        "orderId": "ORD-PRV-03-20261020",
+        "orderStatus": "COMPLETED"
+      },
+      "sha256": "9906D733C4E09A7AAB016B12C814C4CBC9B7273D1771FBF8FB1141836F5E6510"
+    },
+    {
+      "id": "PRV-04",
+      "fileName": "PRV-04-business-contact-control.png",
+      "expectedStatus": "AUTO_APPROVE",
+      "claimedAmount": 180000,
+      "expectedPrivacyCategories": [],
+      "expectedFacts": {
+        "documentType": "RETAIL_RECEIPT",
+        "merchantName": "CÔNG TY TNHH DỊCH VỤ HƯ CẤU",
+        "currency": "VND",
+        "invoiceDate": "2026-10-20",
+        "invoiceDateEvidence": "20/10/2026",
+        "totalAmount": 180000,
+        "totalAmountSource": "PRINTED_FINAL_TOTAL",
+        "receiptNumber": "PRV-04-20261020"
+      },
+      "sha256": "7654C50C80960A01E07B85095173C683EDE4D51FECC2346B248E5C3664DB47A9"
+    }
+  ]
+}
