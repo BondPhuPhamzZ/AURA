@@ -30,7 +30,7 @@ Test Kit v3/v3.1 là namespace riêng tại `test_kit/v3*`, không thay gói tr�
 | OP-04 | Primary timeout/429, fallback bật | Gọi fallback một lần; audit đúng primary/served provider |
 | OP-05 | Schema/semantic invalid, fallback bật | Không đổi provider; fail-safe theo contract/policy |
 | OP-06 | Nhiều lỗi hạ tầng đến ngưỡng | Circuit mở; hết cooldown có primary probe |
-| OP-07 | Hai manager action, Undo hoặc handoff đơn/lô cùng hồ sơ | Một thao tác ghi trạng thái/audit; thao tác stale nhận conflict |
+| OP-07 | Hai manager action, Undo hoặc handoff đơn/lô cùng hồ sơ | Một thao tác ghi trạng thái/audit; stale đồng thời nhận conflict; retry sau khi tải lại replay `alreadyApplied` cho quyết định/Undo đã commit |
 
 Quan sát UI bắt buộc: sau một lượt phân tích phải có tổng số `AUTO_APPROVE`/`ESCALATE_*`; facts trích xuất hiển thị cạnh upload; mỗi dòng Verify có nút `Xem dữ kiện` và panel phải ghi đúng `TC-xx · tên ảnh`; auto approve xuất hiện ngay trong Audit; escalation còn trong bảng kết quả cho tới khi chuyển quản lý. Upload/Verify cập nhật trong workspace; mutation workflow điều hướng toàn trang sau commit để tránh trạng thái cũ hoặc trùng lặp.
 

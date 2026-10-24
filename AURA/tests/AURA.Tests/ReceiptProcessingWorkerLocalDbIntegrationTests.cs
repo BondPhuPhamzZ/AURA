@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Security.Cryptography;
+using AURA.Controllers;
 using AURA.Data;
 using AURA.Interfaces;
 using AURA.Models;
@@ -8,6 +9,13 @@ using AURA.Services;
 using AURA.Tests.Fakes;
 using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -660,6 +668,90 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
+    public async Task Manager_decision_retry_after_committed_response_loss_is_replayed_without_duplicate_audit()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var id = await SeedAsync(options, root);
+            await using (var seed = new AppDbContext(options))
+            {
+                var request = await seed.ReimbursementRequests.SingleAsync(item => item.Id == id);
+                request.Status = "ESCALATE_POLICY";
+                request.IsForwardedToManager = true;
+                request.ManagerQuestion = "Synthetic manager question";
+                await seed.SaveChangesAsync();
+            }
+
+            await using (var firstDatabase = new AppDbContext(options))
+            {
+                var firstResult = await CreateReviewerController(firstDatabase)
+                    .EscalateAction(id, "YES");
+                Assert.IsType<JsonResult>(firstResult);
+            }
+
+            await using (var retryDatabase = new AppDbContext(options))
+            {
+                var retryResult = await CreateReviewerController(retryDatabase)
+                    .EscalateAction(id, "YES");
+                var payload = ReadJsonResult(retryResult);
+                Assert.True(payload.GetProperty("alreadyApplied").GetBoolean());
+                Assert.Equal("APPROVED_POLICY_EXCEPTION", payload.GetProperty("status").GetString());
+            }
+
+            await using var verify = new AppDbContext(options);
+            Assert.Equal(1, await verify.AuditLogs.CountAsync(item => item.RequestId == id &&
+                item.Action == "MANAGER_YES"));
+        });
+    }
+
+    [Fact]
+    public async Task Manager_undo_retry_after_committed_response_loss_is_replayed_without_duplicate_audit()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var id = await SeedAsync(options, root);
+            await using (var seed = new AppDbContext(options))
+            {
+                var request = await seed.ReimbursementRequests.SingleAsync(item => item.Id == id);
+                request.Status = "APPROVED_POLICY_EXCEPTION";
+                request.IsForwardedToManager = true;
+                request.ManagerQuestion = "Synthetic manager question";
+                request.ManagerAnswer = true;
+                request.ManagerDecisionAt = DateTime.UtcNow;
+                await seed.SaveChangesAsync();
+                seed.AuditLogs.AddRange(
+                    new AuditLog { RequestId = id, Action = "AI_PROCESSED_ESCALATE_POLICY",
+                        Details = "Synthetic original escalation", Timestamp = DateTime.UtcNow.AddMinutes(-2) },
+                    new AuditLog { RequestId = id, Action = "MANAGER_YES",
+                        Details = "Synthetic manager decision", Timestamp = DateTime.UtcNow.AddMinutes(-1) });
+                await seed.SaveChangesAsync();
+            }
+
+            await using (var firstDatabase = new AppDbContext(options))
+            {
+                var firstResult = await CreateReviewerController(firstDatabase)
+                    .EscalateAction(id, "UNDO");
+                Assert.IsType<JsonResult>(firstResult);
+            }
+
+            await using (var retryDatabase = new AppDbContext(options))
+            {
+                var retryResult = await CreateReviewerController(retryDatabase)
+                    .EscalateAction(id, "UNDO");
+                var payload = ReadJsonResult(retryResult);
+                Assert.True(payload.GetProperty("alreadyApplied").GetBoolean());
+                Assert.Equal("ESCALATE_POLICY", payload.GetProperty("status").GetString());
+            }
+
+            await using var verify = new AppDbContext(options);
+            Assert.Equal(1, await verify.AuditLogs.CountAsync(item => item.RequestId == id &&
+                item.Action == "MANAGER_UNDO"));
+        });
+    }
+
+    [Fact]
     public async Task Rate_limited_job_survives_worker_restart_and_completes_once()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
@@ -916,6 +1008,41 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
         if (status is not null) Assert.Equal(status, item.Status);
         Assert.Null(item.ProcessingLeaseUntil);
         Assert.Equal(state != ProcessingStates.Pending, item.ProcessingCompletedAt.HasValue);
+    }
+
+    private static ReviewerController CreateReviewerController(AppDbContext database)
+    {
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers["X-Requested-With"] = "XMLHttpRequest";
+        var actionContext = new ActionContext(httpContext, new RouteData(), new ControllerActionDescriptor());
+        return new ReviewerController(new ReimbursementRepository(database), new AuditLogger(database))
+        {
+            ControllerContext = new ControllerContext(actionContext),
+            Url = new TestUrlHelper(actionContext),
+            TempData = new TempDataDictionary(httpContext, new TestTempDataProvider())
+        };
+    }
+
+    private static System.Text.Json.JsonElement ReadJsonResult(IActionResult result)
+    {
+        var json = Assert.IsType<JsonResult>(result);
+        return System.Text.Json.JsonSerializer.SerializeToElement(json.Value);
+    }
+
+    private sealed class TestTempDataProvider : ITempDataProvider
+    {
+        public IDictionary<string, object> LoadTempData(HttpContext context) => new Dictionary<string, object>();
+        public void SaveTempData(HttpContext context, IDictionary<string, object> values) { }
+    }
+
+    private sealed class TestUrlHelper(ActionContext actionContext) : IUrlHelper
+    {
+        public ActionContext ActionContext { get; } = actionContext;
+        public string? Action(UrlActionContext actionContext) => null;
+        public string? Content(string? contentPath) => contentPath;
+        public bool IsLocalUrl(string? url) => url?.StartsWith('/') == true;
+        public string? Link(string? routeName, object? values) => null;
+        public string? RouteUrl(UrlRouteContext routeContext) => null;
     }
 
     private sealed class StubExtractor(Func<ReceiptExtractionDto> response) : IVisionExtractor

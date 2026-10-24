@@ -16,6 +16,21 @@ public static class EscalationWorkflow
         "RETURNED_FOR_RETRY"
     ];
 
+    private static readonly HashSet<string> ApprovedStatuses =
+    [
+        "MANUAL_REVIEW_ACCEPTED",
+        "APPROVED_POLICY_EXCEPTION",
+        "FORWARDED_TO_AUTHORITY"
+    ];
+
+    private static readonly HashSet<string> RejectedStatuses =
+    [
+        "RETURNED_FOR_MORE_EVIDENCE",
+        "REJECTED_POLICY_EXCEPTION",
+        "RETURNED_BY_MANAGER",
+        "RETURNED_FOR_RETRY"
+    ];
+
     public static (string Status, string AuditAction, string Message) Answer(string escalationStatus, bool answer)
     {
         if (!PolicyDecisionEngine.IsEscalation(escalationStatus))
@@ -51,6 +66,31 @@ public static class EscalationWorkflow
 
     public static bool CanUndo(string? status) =>
         !string.IsNullOrWhiteSpace(status) && ResolvedStatuses.Contains(status);
+
+    public static bool IsSameCompletedDecision(string? status, bool? managerAnswer,
+        DateTime? managerDecisionAt, bool requestedAnswer) =>
+        managerAnswer == requestedAnswer && managerDecisionAt is not null &&
+        !string.IsNullOrWhiteSpace(status) &&
+        (requestedAnswer ? ApprovedStatuses : RejectedStatuses).Contains(status);
+
+    public static bool IsAlreadyUndone(string? status, bool? managerAnswer,
+        DateTime? managerDecisionAt, IEnumerable<AURA.Models.AuditLog> auditLogs)
+    {
+        if (managerAnswer is not null || managerDecisionAt is not null || string.IsNullOrWhiteSpace(status))
+            return false;
+
+        var orderedLogs = auditLogs.OrderByDescending(log => log.Timestamp).ThenByDescending(log => log.Id).ToList();
+        if (orderedLogs.FirstOrDefault()?.Action != "MANAGER_UNDO") return false;
+
+        var originalEscalation = orderedLogs.FirstOrDefault(log =>
+            log.Action.StartsWith("AI_PROCESSED_ESCALATE_", StringComparison.Ordinal) ||
+            log.Action.StartsWith("VERIFY_ESCALATE_", StringComparison.Ordinal));
+        if (originalEscalation is null) return false;
+
+        var escalationIndex = originalEscalation.Action.IndexOf("ESCALATE_", StringComparison.Ordinal);
+        return escalationIndex >= 0 &&
+            string.Equals(status, originalEscalation.Action[escalationIndex..], StringComparison.Ordinal);
+    }
 
     public static (string Yes, string No) ExplainChoices(string? escalationStatus) => escalationStatus switch
     {

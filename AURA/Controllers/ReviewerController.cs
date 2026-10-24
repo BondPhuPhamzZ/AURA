@@ -26,15 +26,29 @@ namespace AURA.Controllers
             var req = await _repo.GetRequestByIdAsync(id);
             if (req == null) return NotFound();
 
-            if (decision != "UNDO" && (!PolicyDecisionEngine.IsEscalation(req.Status) || !req.IsForwardedToManager))
-                return Conflict("Hồ sơ này không còn ở trạng thái chờ quyết định của quản lý.");
+            var answer = decision == "YES";
+            if (decision != "UNDO")
+            {
+                if (EscalationWorkflow.IsSameCompletedDecision(req.Status, req.ManagerAnswer,
+                    req.ManagerDecisionAt, answer))
+                    return ManagerDecisionAlreadyApplied(req, answer);
+
+                if (!PolicyDecisionEngine.IsEscalation(req.Status) || !req.IsForwardedToManager ||
+                    req.ManagerAnswer is not null || req.ManagerDecisionAt is not null)
+                    return Conflict("Hồ sơ này không còn ở trạng thái chờ quyết định của quản lý.");
+            }
 
             if (decision == "UNDO")
             {
-                if (!EscalationWorkflow.CanUndo(req.Status) || req.ManagerAnswer is null)
-                    return Conflict("Chỉ có thể hoàn tác quyết định gần nhất của quản lý.");
-
                 var logs = await _audit.GetByRequestIdAsync(req.Id);
+                if (!EscalationWorkflow.CanUndo(req.Status) || req.ManagerAnswer is null)
+                {
+                    if (EscalationWorkflow.IsAlreadyUndone(req.Status, req.ManagerAnswer,
+                        req.ManagerDecisionAt, logs))
+                        return UndoAlreadyApplied(req);
+                    return Conflict("Chỉ có thể hoàn tác quyết định gần nhất của quản lý.");
+                }
+
                 var priorAiAction = logs.FirstOrDefault(x => x.Action.StartsWith("AI_PROCESSED_ESCALATE_", StringComparison.Ordinal)
                     || x.Action.StartsWith("VERIFY_ESCALATE_", StringComparison.Ordinal));
                 if (priorAiAction is null) return Conflict("Không tìm thấy trạng thái chuyển tiếp ban đầu để hoàn tác.");
@@ -62,7 +76,6 @@ namespace AURA.Controllers
                 return RedirectToAction("Index", "Home", new { tab = "audit" });
             }
 
-            var answer = decision == "YES";
             var originalStatus = req.Status;
             var outcome = EscalationWorkflow.Answer(originalStatus, answer);
             req.Status = outcome.Status;
@@ -91,6 +104,26 @@ namespace AURA.Controllers
 
         private bool IsAjaxRequest() =>
             string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
+
+        private IActionResult ManagerDecisionAlreadyApplied(AURA.Models.ReimbursementRequest request, bool answer)
+        {
+            var message = answer
+                ? "Quyết định đồng ý của quản lý đã được ghi nhận trước đó."
+                : "Quyết định từ chối của quản lý đã được ghi nhận trước đó.";
+            TempData["Success"] = message;
+            var redirectUrl = Url.Action("Index", "Home", new { tab = "reviewer" }) ?? "/?tab=reviewer";
+            if (!IsAjaxRequest()) return Redirect(redirectUrl);
+            return Json(new { message, status = request.Status, alreadyApplied = true, redirectUrl });
+        }
+
+        private IActionResult UndoAlreadyApplied(AURA.Models.ReimbursementRequest request)
+        {
+            const string message = "Lượt hoàn tác này đã được ghi nhận trước đó.";
+            TempData["Success"] = message;
+            var redirectUrl = Url.Action("Index", "Home", new { tab = "audit" }) ?? "/?tab=audit";
+            if (!IsAjaxRequest()) return Redirect(redirectUrl);
+            return Json(new { message, status = request.Status, alreadyApplied = true, redirectUrl });
+        }
 
     }
 }

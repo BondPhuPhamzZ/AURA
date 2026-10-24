@@ -410,6 +410,39 @@ public sealed class PolicyDecisionEngineTests
         Assert.Equal(expected, EscalationWorkflow.Answer(status, answer).Status);
     }
 
+    [Theory]
+    [InlineData("MANUAL_REVIEW_ACCEPTED", true)]
+    [InlineData("APPROVED_POLICY_EXCEPTION", true)]
+    [InlineData("FORWARDED_TO_AUTHORITY", true)]
+    [InlineData("RETURNED_FOR_MORE_EVIDENCE", false)]
+    [InlineData("REJECTED_POLICY_EXCEPTION", false)]
+    [InlineData("RETURNED_BY_MANAGER", false)]
+    [InlineData("RETURNED_FOR_RETRY", false)]
+    public void Matching_completed_manager_decision_can_be_replayed_without_a_write(
+        string status, bool answer)
+    {
+        Assert.True(EscalationWorkflow.IsSameCompletedDecision(status, answer, Now, answer));
+        Assert.False(EscalationWorkflow.IsSameCompletedDecision(status, !answer, Now, answer));
+        Assert.False(EscalationWorkflow.IsSameCompletedDecision(status, answer, null, answer));
+        Assert.False(EscalationWorkflow.IsSameCompletedDecision("ESCALATE_POLICY", answer, Now, answer));
+    }
+
+    [Fact]
+    public void Undo_replay_requires_latest_audit_to_be_undo_and_restored_status_to_match()
+    {
+        var logs = new[]
+        {
+            new AuditLog { Id = 2, Action = "MANAGER_UNDO", Timestamp = Now.AddSeconds(2) },
+            new AuditLog { Id = 1, Action = "AI_PROCESSED_ESCALATE_POLICY", Timestamp = Now }
+        };
+
+        Assert.True(EscalationWorkflow.IsAlreadyUndone("ESCALATE_POLICY", null, null, logs));
+        Assert.False(EscalationWorkflow.IsAlreadyUndone("ESCALATE_FACT", null, null, logs));
+        Assert.False(EscalationWorkflow.IsAlreadyUndone("ESCALATE_POLICY", true, Now, logs));
+        Assert.False(EscalationWorkflow.IsAlreadyUndone("ESCALATE_POLICY", null, null,
+            [.. logs, new AuditLog { Id = 3, Action = "MANAGER_YES", Timestamp = Now.AddSeconds(3) }]));
+    }
+
     [Fact]
     public void Employee_handoff_only_confirms_transfer_not_the_manager_decision()
     {
