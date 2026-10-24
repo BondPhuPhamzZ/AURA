@@ -1,55 +1,64 @@
-# Shared private receipt storage
+# Lưu ảnh hóa đơn dùng chung, riêng tư
 
-## Status
+## Tình trạng hiện tại
 
-AURA now has a storage boundary for local files and an opt-in Google Cloud Storage (GCS) adapter.
-The default remains `LocalFileSystem`; no cloud bucket, credentials, hosting settings, or receipt
-data are changed by this code. The GCS adapter is not production-validated until a private bucket
-is provisioned and an authenticated integration test is run in the target environment.
+AURA mặc định lưu ảnh cục bộ (`LocalFileSystem`); Google Cloud Storage (GCS) là tùy chọn để nhiều máy chủ cùng đọc ảnh. GCS **chưa được kiểm thử với bucket và quyền truy cập thật**. Khi chưa bật GCS, ảnh vẫn nằm trên máy chủ hiện tại.
 
-Images are stored with generated request IDs and extensions, not user-supplied object names. The
-GCS adapter uses create-only generation preconditions; an existing key is reused only when its
-size and SHA-256 match. On reads, AURA checks object size, downloads a pinned generation, then
-checks the stored size and SHA-256 against SQL before sending bytes to the existing extraction,
-semantic validation, privacy triage, and deterministic policy pipeline. The application serves
-image bytes through its controller; it does not expose bucket URLs or generate signed URLs.
-Both LocalFileSystem and GCS adapters also verify that newly supplied bytes match the caller's
-declared SHA-256 before writing; malformed or mismatched hashes are rejected before storage I/O.
+Ảnh được đặt tên bằng mã hồ sơ do AURA sinh. GCS chỉ tạo đối tượng lưu trữ mới, không ghi đè ảnh khác; nếu đã có ảnh cùng tên, AURA chỉ dùng lại khi kích thước và SHA-256 khớp. Khi đọc, AURA cố định phiên bản ảnh rồi đối chiếu kích thước/hash với SQL trước khi xử lý. Ứng dụng không công khai địa chỉ bucket hoặc tạo liên kết truy cập tạm thời (signed URL).
 
-For the local filesystem provider, a background sweeper removes only AURA-generated staging
-`.tmp` files older than the configured `ReceiptStorage__StaleTempFileAgeHours` (default 24 hours),
-and only when it can open them exclusively. It does not delete completed receipt files. This cleanup
-is disabled for GCS and is unrelated to receipt retention; no receipt-object lifecycle deletion is
-implemented by the application.
+Với `LocalFileSystem`, bộ dọn nền chỉ xóa file tạm `.tmp` do AURA tạo, mặc định quá 24 giờ và không bị tiến trình khác sử dụng. Nó **không xóa hóa đơn đã nhận**. Chức năng dọn hóa đơn theo thời hạn chưa được triển khai.
 
-## GCS configuration (opt-in only)
+## 1. Tạo bucket và quyền truy cập
 
-Create a dedicated private bucket, enable [uniform bucket-level access](https://cloud.google.com/storage/docs/uniform-bucket-level-access) and [public access prevention](https://cloud.google.com/storage/docs/public-access-prevention),
-and give a dedicated runtime service account only the bucket-scoped `Storage Object User`
-([`roles/storage.objectUser`](https://cloud.google.com/storage/docs/access-control/iam-roles)) role. Do not reuse the Drive read-only service account. Keep its JSON
-credential outside the repository and deployment package if a key is necessary. The adapter now
-supports both explicit JSON credentials and Application Default Credentials (ADC). On Google Cloud
-compute, prefer ADC with an attached workload service account so no private key is distributed. The
-.NET Storage client supports ADC through its normal credential discovery flow; see [Google's ADC
-overview](https://cloud.google.com/docs/authentication/application-default-credentials).
+1. Tạo vùng lưu trữ (bucket) GCS riêng cho AURA; thư mục Drive không thay thế được bucket.
+2. Bật [Uniform bucket-level access](https://cloud.google.com/storage/docs/uniform-bucket-level-access) và [Public access prevention](https://cloud.google.com/storage/docs/public-access-prevention). Không đặt quyền `Anyone` hoặc tạo public URL.
+3. Tạo tài khoản dịch vụ (service account) riêng cho AURA và cấp quyền [`Storage Object User`](https://cloud.google.com/storage/docs/access-control/iam-roles) **chỉ trên bucket này**. Không dùng tài khoản chỉ đọc Drive.
 
-For local testing, prefer service-account impersonation rather than a downloaded key or a broad
-personal user credential. Google documents this C#-supported setup as
-`gcloud auth application-default login --impersonate-service-account=<service-account-email>`; it
-requires `roles/iam.serviceAccountTokenCreator` on the target service account. See [local ADC setup](https://cloud.google.com/docs/authentication/set-up-adc-local-dev-environment).
+**Vì sao:** bucket riêng, không công khai và quyền giới hạn ở đúng bucket làm giảm khả năng người lạ hoặc ứng dụng khác đọc, sửa hay xóa ảnh.
 
-Configure the following app settings only after the bucket and IAM policy are ready:
+## 2. Chọn cách xác thực
+
+**Ưu tiên ADC (Application Default Credentials):**
+
+- Trên Google Cloud, gắn tài khoản dịch vụ AURA vào workload (tiến trình ứng dụng). Không cần phát tán khóa riêng.
+- Khi kiểm thử trên máy cá nhân, ưu tiên impersonation (mượn danh tính tài khoản dịch vụ trong thời gian ngắn):
+
+```powershell
+gcloud auth application-default login --impersonate-service-account=<email-service-account>
+```
+
+Tài khoản lập trình viên cần quyền `roles/iam.serviceAccountTokenCreator` trên tài khoản dịch vụ đích. Xem [tổng quan ADC](https://cloud.google.com/docs/authentication/application-default-credentials) và [thiết lập ADC trên máy cá nhân](https://cloud.google.com/docs/authentication/set-up-adc-local-dev-environment).
+
+**Chỉ dùng JSON key khi máy chủ không hỗ trợ ADC:** giữ key ngoài repo, gói publish và thư mục ứng dụng; giới hạn quyền đọc file. Nếu máy chủ không bảo vệ được key, không bật GCS trên máy đó — hãy chạy worker ở hạ tầng hỗ trợ workload identity (danh tính gắn trực tiếp với máy chạy ứng dụng).
+
+**Vì sao:** ADC/impersonation tránh lưu private key dài hạn. JSON key bị lộ có thể bị dùng để truy cập bucket cho tới khi bị thu hồi.
+
+## 3. Cấu hình ứng dụng
+
+Chỉ cấu hình sau khi bucket và quyền IAM đã sẵn sàng. Đặt bằng biến môi trường hoặc .NET User Secrets; **không ghi bí mật vào repo**.
 
 ```text
 ReceiptStorage__Provider=GoogleCloudStorage
-ReceiptStorage__GoogleCloudStorage__Bucket=<private bucket name>
+ReceiptStorage__GoogleCloudStorage__Bucket=<ten-bucket-rieng>
 ReceiptStorage__GoogleCloudStorage__Prefix=aura/receipts
 ReceiptStorage__GoogleCloudStorage__CredentialMode=ApplicationDefault
 ReceiptStorage__MaxFileSizeMb=5
 ```
 
-For a **synthetic, one-case local smoke** after starting AURA with the GCS settings,
-use the existing loopback-only runner and require both GCS and Strict ZDR:
+Nếu bắt buộc dùng JSON key, thay chế độ xác thực và thêm đường dẫn tuyệt đối nằm ngoài repo/thư mục ứng dụng:
+
+```text
+ReceiptStorage__GoogleCloudStorage__CredentialMode=ServiceAccountJson
+ReceiptStorage__GoogleCloudStorage__ServiceAccountJsonPath=<duong-dan-tuyet-doi-den-file-json-ben-ngoai-app>
+```
+
+Hai chế độ xác thực loại trừ nhau. ADC có thể đọc `GOOGLE_APPLICATION_CREDENTIALS`; nếu biến này được đặt, AURA yêu cầu file xác thực nằm ngoài thư mục ứng dụng. Với SmartASP hoặc máy chủ không thuộc Google Cloud, **đừng mặc định là đã có danh tính ADC**: chỉ bật GCS nếu máy chủ hỗ trợ danh tính an toàn hoặc bảo vệ được key bên ngoài thư mục website.
+
+**Vì sao:** cấu hình tách riêng provider, bucket và identity; giới hạn kích thước giảm tải và tránh nhận ảnh vượt chính sách.
+
+## 4. Kiểm thử một ảnh tổng hợp
+
+Chạy AURA trên môi trường phát triển/kiểm thử với GCS đã cấu hình, rồi gửi đúng một ảnh tổng hợp qua địa chỉ máy cục bộ `127.0.0.1`:
 
 ```powershell
 .\tools\Invoke-PrivateReceiptSmoke.ps1 `
@@ -61,55 +70,25 @@ use the existing loopback-only runner and require both GCS and Strict ZDR:
   -RequireStrictZeroDataRetention
 ```
 
-The script checks health, SQL/schema readiness, storage provider, effective
-provider data-collection denial, fallback disabled, and one AI permit before the
-first upload. Results are local-only under the git-ignored `test_kit/results/`;
-the runner does not assess accuracy or prove multi-host access. The required
-confirmation is still necessary because the configured vision provider can
-receive the synthetic image.
+Script kiểm tra tình trạng ứng dụng, SQL/migration, nơi lưu ảnh, chế độ từ chối thu thập dữ liệu, dự phòng đã tắt và chỉ một lượt gọi AI **trước khi tải ảnh lên**. Chỉ dùng `-RequireStrictZeroDataRetention` khi `/healthz` xác nhận Strict ZDR đang hiệu lực. Ảnh tổng hợp vẫn được gửi tới dịch vụ AI đã cấu hình; kết quả lưu cục bộ trong `test_kit/results/` (thư mục này đã loại khỏi Git). Bài smoke này không đo độ chính xác hay chứng minh khả năng nhiều máy chủ cùng đọc ảnh.
 
-When probing a staging instance through a local loopback port-forward and validating a deployment
-intended to run more than one worker, add
-`-RequireSqlDistributedAiGate`. This makes the smoke stop before upload unless `/healthz`
-confirms `sqlDistributedAiGateEnabled=true`; it does not prove two hosts contend for the same
-permit, so a separate multi-host race/lost-session test is still required.
+**Vì sao:** một ảnh tổng hợp giúp xác nhận cấu hình và đường đi dữ liệu trước khi thử nhiều ảnh. Chạy trên máy cục bộ và kiểm tra trước khi tải lên giúp tránh gửi nhầm ảnh hoặc gọi AI ngoài dự kiến.
 
-For a legacy/external key instead, set
-`ReceiptStorage__GoogleCloudStorage__CredentialMode=ServiceAccountJson` and
-`ReceiptStorage__GoogleCloudStorage__ServiceAccountJsonPath=<absolute path outside the app/repository>`.
-The two modes are mutually exclusive at the AURA setting level; ADC mode rejects an explicit JSON
-key path. ADC itself follows Google's standard discovery order, which can include
-`GOOGLE_APPLICATION_CREDENTIALS` or a local user ADC file. If the environment variable is set, AURA
-requires its credential file to exist outside the app content root. On a server, explicitly attach
-the intended runtime service account and verify its identity/permissions; for local testing, prefer
-the impersonation command above. Never point the JSON mode at the Drive connector's read-only key.
+Khi kiểm tra máy chủ thử nghiệm qua đường hầm tới `127.0.0.1`, có thể thêm `-RequireSqlDistributedAiGate`. Cờ này chỉ xác nhận giới hạn AI dùng chung qua SQL đã bật; nó **không chứng minh hai máy chủ thực sự tranh cùng một lượt gọi đúng cách**.
 
-If hosting remains on SmartASP or another non-Google host, do not assume a Google workload identity
-is attached. Use ADC only if the host can securely provide a supported federated/impersonated ADC
-identity; otherwise use a separate GCS-only service-account key outside the deployed site and set
-`CredentialMode=ServiceAccountJson`. If the host cannot keep that key outside the site root with
-restricted access, leave GCS disabled and run the worker on infrastructure with workload identity.
+## 5. Trình tự mở rộng an toàn
 
-Do not add the JSON contents, private key, bucket URLs, or local credential path to source control.
-The currently configured Drive folder is a separate source; Drive originals are not deleted by this
-storage adapter.
+1. Giữ `LocalFileSystem` cho tới khi xác nhận bucket là riêng tư và quyền đã cấp đúng.
+2. Trên cơ sở dữ liệu phát triển/kiểm thử riêng, kiểm tra tình trạng ứng dụng, tải ảnh lên/đọc lại, kích thước/hash, worker và thử lại. Nếu thiếu ảnh hoặc hash sai, xử lý phải dừng an toàn, không được duyệt.
+3. Không bật quy tắc tự xóa ảnh khi hồ sơ còn `PENDING`, `PROCESSING` hoặc có thể cần thử lại. Chưa áp dụng xóa sau một ngày; ảnh phải được giữ cho tới khi xử lý xong và hết thời hạn lưu đã được duyệt.
+4. Chạy hai máy chủ ứng dụng cùng dùng SQL và bucket: xác nhận máy thứ hai đọc được ảnh; thử mất lease, dịch vụ AI giới hạn tốc độ, và khởi động lại/thử lại.
+5. Sao lưu và khôi phục cả SQL lẫn ảnh; kiểm tra phiên bản ảnh/hash và ghi nhận RPO/RTO (mức mất dữ liệu và thời gian khôi phục tối đa chấp nhận được).
+6. Chỉ bật GCS trên máy chủ thật sau các bước trên. Giữ giới hạn AI dùng chung qua SQL tắt cho tới khi kiểm thử tranh chấp, lỗi và tải nhiều máy chủ đạt.
 
-## Safe rollout and recovery gates
+**Vì sao:** phải giữ ảnh cho hồ sơ đang xử lý hoặc cần thử lại. Kiểm thử hai máy chủ và diễn tập khôi phục giúp xác nhận dữ liệu không phụ thuộc một máy. Chỉ tăng số worker sau khi đã kiểm tra lỗi và tải.
 
-1. Keep `LocalFileSystem` until a test bucket is private and restricted to the application identity.
-2. In an isolated Development/staging DB, verify health check, upload, readback, SHA-256, worker
-   extraction, and a repeated source scan. Confirm a missing object fails closed and is not approved.
-3. Verify object deletion is not enabled by a lifecycle rule before pending SQL jobs have completed.
-   No application retention cleanup is implemented here. In particular, do not set a one-day bucket
-   lifecycle rule: pending/retry jobs must keep their source bytes until terminal processing and any
-   approved retention period.
-4. Test two app instances against the same private bucket and shared SQL, including object readback
-   from the second instance, a lost SQL lease, provider throttling, and retry after restart.
-5. Back up and restore the SQL database and object data together; record RPO/RTO and demonstrate that
-   restored rows still resolve to the correct object generation and hash.
-6. Only after those checks may the storage provider be enabled in a hosting environment. Keep the
-   SQL distributed AI gate disabled until multi-host chaos/load tests and backup/restore gates pass.
+## Còn thiếu trước pilot/production
 
-This adapter does not by itself make the system production-ready: business identity/authorization,
-retention/legal approval, malware scanning, monitoring/alerting, provider privacy assurances, and
-multi-host operational evidence remain separate release gates.
+Các điều kiện còn thiếu gồm: GCS/IAM thật; kiểm thử hai máy chủ; diễn tập khôi phục cloud và RPO/RTO; xác thực/phân quyền người dùng; cách ly file nghi nhiễm mã độc; thời hạn lưu trữ được duyệt; giám sát/cảnh báo; cam kết quyền riêng tư của dịch vụ AI; và kiểm thử tải. Chỉ có bộ kết nối GCS **không làm AURA sẵn sàng cho production**.
+
+GCS là nơi lưu ảnh riêng tư, không phải nguồn Drive. Bộ kết nối này không xóa ảnh gốc trên Drive và hiện cũng không tự dọn ảnh GCS theo thời hạn lưu trữ.
