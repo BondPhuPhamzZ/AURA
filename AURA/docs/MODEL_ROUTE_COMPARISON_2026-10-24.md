@@ -1,4 +1,4 @@
-# Strict-ZDR Qwen candidate regression — 2026-10-24
+# Strict-ZDR Qwen candidate regression — 2026-10-24–25
 
 ## Scope and reproducibility
 
@@ -11,6 +11,53 @@ isolated LocalDB and one local app process. Drive and Verify Harness were
 disabled. App-generated receipt files and temporary databases were removed
 after the runs. Raw results remain in git-ignored local `TestResults/` and
 `test_kit/results/` folders and are intentionally not committed.
+
+## Synthetic retention sandbox rerun — 25/10, commit `24b7b33`
+
+The locked v3.1 manifest ran once on source
+`24b7b33ee3ee3dea7d27a9772c8f0a575cf1fb43` in a separate synthetic LocalDB and
+private local receipt directory. Retention was enabled, concurrency was one,
+and Drive/Verify/fallback were off. The process used `qwen/qwen3.8-27b`, Strict
+ZDR routing requested and provider data collection denied; User Secrets and the
+legacy database were not changed. Runtime telemetry observed Modal and DekaLLM
+upstreams. This is evidence of the requests/results observed, not an Alibaba
+hosting or contractual retention guarantee.
+
+| Measure | 24/10, `06346de` | 25/10, `24b7b33` |
+| --- | ---: | ---: |
+| Decision matches | 15/15 | 15/15 |
+| Exact expected facts | 143/146 (97.95%) | 143/146 (97.95%) |
+| Missed / over-escalations | 0 / 0 | 0 / 0 |
+| System errors / fallback | 0 / 0 | 0 / 0 |
+| End-to-end P50 / P95 | 3,620 / 7,802 ms | 5,678 / 15,416 ms |
+| Semantic repair attempted / resolved / unresolved | 1 / 0 / 1 | 1 / 0 / 1 |
+
+All three new fact differences were `invoiceDateEvidence` strings with an added
+printed label, in R3-03, R3-07 and R3-15. Normalized dates and decisions matched.
+R3-06 triggered one repair for invalid printed-final-total evidence; the repair
+remained unresolved and the case safely stayed `ESCALATE_FACT`. There was no
+provider error. The observed P95 increased; this run does not establish a latency
+improvement, a cause for the increase, or an SLA. These are known synthetic
+regressions, not independent holdout or real-user accuracy. No privacy categories
+were scored in this v3.1 set; zero privacy-review cases is not privacy recall.
+
+Health before/after was `ok`; the final queue was empty. Five auto approvals had
+seven-day deadlines; unresolved escalations were retained. After stopping the
+app, the complete 15-case sandbox was backed up with SQL checksum/VERIFYONLY,
+restored into a disposable database and image directory, and compared: request,
+facts, audit and deadlines matched exactly, and 15/15 image sizes/hashes matched.
+The restore artifacts were removed; the managed synthetic backup was retained
+with expiry based on the earliest included data deadline. A local scheduled task
+with five-minute/logon triggers passed an expired-synthetic-probe deletion and
+retained the unexpired backup. This validates the local synthetic exercise;
+real-data restore, unattended production operation and privacy approval remain
+outside its evidence scope.
+
+Raw runner data, TRX, health, inventory, scheduler and recovery summaries stay
+Git-ignored under `test_kit/results/retention-audit-20261025/`. Full Debug and
+Release tests at the checkpoint passed 349/349 each with both LocalDB and
+PowerShell integration enabled. See [runbook](RUNBOOK.md) for the separate
+sandbox launcher and [current state](CURRENT_PROJECT_STATUS.md) for open gates.
 
 ## Committed privacy-role and policy regression — 24/10
 

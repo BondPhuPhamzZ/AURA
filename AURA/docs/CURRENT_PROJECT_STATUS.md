@@ -1,14 +1,28 @@
 # Trạng thái hiện hành AURA ngày 25/10/2026
 
 > **Phạm vi đã chốt 25/10:** giữ DB cũ nguyên trạng; thử retention trên DB synthetic
-> riêng trước. Thư mục backup người dùng chọn đã được kiểm tra read-only và hiện
-> rỗng. Không migrate, purge, sửa facts/audit hoặc sao chép ảnh thật trong phiên
+> riêng trước. Root backup ban đầu rỗng; hiện có một managed backup của 15 ca
+> synthetic sandbox đã qua restore drill. Không migrate, purge, sửa facts/audit
+> hoặc sao chép ảnh thật trong phiên
 > kiểm tra này. Inventory chi tiết chỉ lưu local trong Git-ignored
 > `test_kit/results/retention-audit-20261025/`. Dùng
 > `tools/Start-AuraRetentionSandbox.ps1` để chuẩn bị/chạy LocalDB sandbox ngày hiện
 > tại và receipt root riêng; launcher không sửa User Secrets và khôi phục biến môi
-> trường của phiên gọi. `-PrepareOnly` đã được chạy thành công; không phải bằng
-> chứng inference hoặc xác nhận privacy cho dữ liệu thật.
+> trường của phiên gọi. Chuẩn bị DB, startup/health và inference synthetic đều đã
+> được kiểm tra; không suy ra privacy được bảo đảm cho dữ liệu thật.
+>
+> **Rerun synthetic trên `24b7b33` 25/10:** 15/15 quyết định, facts 143/146 (97,95%),
+> 0 missed/over escalation, 0 lỗi provider/system và fallback; P50/P95 end-to-end
+> 5.678/15.416 ms. R3-03/R3-07/R3-15 chỉ lệch nhãn trong `invoiceDateEvidence`.
+> Semantic R3-06 repair một lần, chưa giải quyết tổng bị che và giữ FACT. Health
+> trước/sau `ok`, queue rỗng; 5 AUTO có deadline 7 ngày. Backup SQL checksum +
+> VERIFYONLY và restore sandbox 15 ca khớp toàn bộ SQL/facts/audit/deadline và
+> 15/15 ảnh. Task local `AURA-SyntheticBackupRetention` đã đăng ký: mỗi 5 phút,
+> logon catch-up, quyền Limited/Interactive; LastTaskResult=0, probe quá hạn được
+> xóa và backup chưa hết hạn được giữ. Task chỉ chạy khi user đang đăng nhập;
+> khi tắt máy/đăng xuất phải chờ lần chạy sau. Model test là Qwen3.8-27B với
+> Strict ZDR request, concurrency 1, fallback/Drive/Verify off. P95 cao hơn lượt
+> trước nên không có tuyên bố cải thiện latency. [Đối chứng chi tiết](MODEL_ROUTE_COMPARISON_2026-10-24.md).
 >
 > **Metadata/UTC hardening 25/10:** purger xử lý được record không sở hữu file
 > riêng (`StoredFileName` rỗng), kết quả Verify AUTO mới có deadline, và backup
@@ -42,11 +56,11 @@
 > **16/16**; full Debug và Release sau fix **344/344 mỗi bản**, LocalDB integration
 > bật, không skip. Release build 0 warning/error, EF không pending model changes.
 > Hai script backup cũng từ chối đúng Git root ở thư mục cha ứng dụng, tránh
-> lưu backup nhạy cảm vào repo. Retention trên DB người dùng vẫn tắt; chưa đăng
-> ký Task Scheduler. Runbook dùng lịch 5 phút + catch-up sau đăng nhập, không dùng
+> lưu backup nhạy cảm vào repo. Retention trên DB cũ vẫn tắt; task local synthetic
+> đã được kiểm tra ở checkpoint phía trên. Runbook dùng lịch 5 phút + catch-up sau đăng nhập, không dùng
 > lịch chỉ một lần/ngày. Privacy vẫn là gate mở vì triage chạy sau inference.
 
-> **Benchmark cập nhật trên source `06346de`:** 15 ảnh v3.1 synthetic chạy qua
+> **Benchmark lịch sử 24/10 trên source `06346de`:** 15 ảnh v3.1 synthetic chạy qua
 > intake → SQL queue → OpenRouter → Semantic → policy: 15/15 quyết định đúng,
 > 0 missed escalation, 0 over-escalation, 0 lỗi provider/system, 0 fallback;
 > facts 143/146 (97,95%), P50/P95 end-to-end
@@ -61,8 +75,8 @@
 > và khóa Undo sau hạn. Script backup local ghi manifest/hash, remover mặc định
 > chỉ báo cáo. Full Debug/Release 339/339, migration LocalDB cô lập, startup
 > health với retention bật trên DB rỗng và script backup synthetic đều pass.
-> `DataRetention:Enabled` vẫn false trên môi trường dùng thật; Task Scheduler,
-> restore drill của backup set và phê duyệt retention còn mở. Cleanup best-effort:
+> `DataRetention:Enabled` vẫn false trên DB cũ theo lựa chọn giữ lịch sử. Task và
+> restore drill synthetic đã đạt; chuyển đổi dữ liệu thật vẫn chưa được bật. Cleanup best-effort:
 > khi máy tắt, dọn trễ tới lần app/Task Scheduler chạy tiếp theo. Chi tiết:
 > Release build 0 warning/error; EF không có pending model changes; retention
 > startup smoke trên DB LocalDB rỗng trả `/healthz=ok`; backup registration/remover
@@ -87,13 +101,13 @@
 > Drive/Verify/fallback tắt. Đây không phải bằng chứng pre-inference redaction,
 > không-retention theo hợp đồng, hosting restore, production accuracy hay multi-host.
 > Retention policy đã được người dùng chọn và code local đã qua test; chưa bật trên
-> DB người dùng, chưa hoàn tất backup/restore đúng host hoặc Task Scheduler. Quyết
+> DB người dùng; backup/restore + Task Scheduler mới được kiểm chứng với synthetic. Quyết
 > định quản lý có thể Undo trước deadline; sau deadline app từ chối Undo khi
 > retention bật. Phê duyệt pháp lý/operational vẫn là gate trước dữ liệu thật.
 
-> **Gate tiếp theo:** giữ local single-host và ảnh synthetic; diễn tập
-> backup/restore theo đúng host, cấu hình lịch dọn backup, chốt phê duyệt dữ liệu,
-> rồi mới bật retention có chủ ý. Chưa bật
+> **Gate tiếp theo:** giữ local single-host và synthetic sandbox. Startup, benchmark,
+> backup/restore và lịch dọn synthetic đã đạt; cần chốt phạm vi/route/minimization
+> cho dữ liệu người dùng trước pilot. Chưa bật
 > tự xóa trên DB đang dùng; Firestore, GCS hoặc shared cloud storage vẫn chưa phải
 > storage mặc định. Privacy triage vẫn chạy sau
 > khi ảnh gốc đã được gửi qua inference; chưa cho phép dữ liệu người dùng/pilot.

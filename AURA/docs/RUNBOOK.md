@@ -203,6 +203,31 @@ hai phiên bản PowerShell; không stringify `DateTime` rồi parse lại theo 
 
 Script đăng ký backup giả định app và mọi writer đã dừng, `.bak` là snapshot mới nhất của đúng DB hiện tại, và source/backup receipt khớp mọi hồ sơ SQL. Nó kiểm hash receipt nhưng không thể chứng minh nội dung `.bak` là backup SQL hợp lệ; bật **Verify backup when finished** và **Perform checksum** trong SSMS, rồi restore drill riêng. SQL + file system không tạo snapshot nguyên tử; đây vẫn là rủi ro cần chấp nhận/đóng bằng quiesce và restore test trên đúng máy.
 
+Checkpoint local 25/10 đã đăng ký task `AURA-SyntheticBackupRetention` cho root
+backup được người dùng chọn, trigger mỗi 5 phút và lúc logon, quyền
+Limited/Interactive. Task chạy thành công (`LastTaskResult=0`), xóa probe
+synthetic hết hạn và giữ backup 15 ca chưa hết hạn. Task chỉ hoạt động khi user
+đang đăng nhập; missed start được catch-up khi có thể. Đây không phải dịch vụ
+chạy khi máy tắt hoặc trước đăng nhập. AURA không tự đăng ký task khi clone app.
+Xem task hiện tại trước khi tạo thêm, và cập nhật action nếu chuyển vị trí repo:
+
+```powershell
+Get-ScheduledTask -TaskName 'AURA-SyntheticBackupRetention'
+Get-ScheduledTaskInfo -TaskName 'AURA-SyntheticBackupRetention'
+```
+
+Để tái lập đúng route của regression 25/10 trong một cửa sổ PowerShell riêng:
+
+```powershell
+$env:OpenRouter__Model = 'qwen/qwen3.8-27b'
+$env:OpenRouter__RequireZeroDataRetention = 'true'
+.\tools\Start-AuraRetentionSandbox.ps1
+```
+
+Các biến trên chỉ áp dụng cửa sổ này, không ghi User Secrets. Chỉ gửi synthetic;
+Strict ZDR request không che ảnh hoặc chứng nhận điều khoản provider. Dừng app
+trước khi copy/backup DB + ảnh; đóng cửa sổ để bỏ các override route.
+
 SQL và filesystem không có một transaction/snapshot nguyên tử chung. Dừng tất cả writer trước khi copy ảnh và backup DB để giảm cửa sổ lệch; nếu cần RPO/RTO được cam kết hoặc snapshot nhất quán khi app đang chạy, phải thiết kế backup quiesce/coordination riêng và kiểm thử đúng host. Đừng xem một lần LocalDB test là bằng chứng hosting backup, retention, hay recovery time.
 
 Mở URL được in trong terminal. Không truy cập `/Verify` để tìm trang riêng; nút Verify nằm ngay trên trang chủ. `/Applicant` và `/Verify` chủ động chuyển về `/`.
