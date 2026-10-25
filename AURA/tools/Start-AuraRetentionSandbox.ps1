@@ -15,6 +15,7 @@ $approvalPath = Join-Path (Split-Path -Parent $receiptRoot) 'approved-synthetic-
 $url = 'http://127.0.0.1:' + $Port
 $overrides = @{
     ASPNETCORE_ENVIRONMENT = 'Development'
+    AllowedHosts = '127.0.0.1;localhost'
     ConnectionStrings__DefaultConnection = ('Server=(localdb)\MSSQLLocalDB;Database=' + $DatabaseName +
         ';Trusted_Connection=True;MultipleActiveResultSets=True;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0')
     Database__ApplyMigrationsOnStartup = 'false'
