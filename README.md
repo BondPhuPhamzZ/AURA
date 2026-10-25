@@ -4,7 +4,7 @@ AURA helps review employee expense receipts. It extracts candidate facts from an
 
 ## Processing flow
 
-`JPG/PNG upload → private receipt storage → durable SQL queue → vision extraction → schema/Semantic validation → policy routing → human review when required → audit trail`
+`JPG/PNG upload → private receipt storage → durable SQL queue → optional egress approval → vision extraction → schema/Semantic validation → policy routing → human review when required → audit trail`
 
 The current source supports manual image intake, a durable background queue, privacy-risk triage, reviewer actions, and dashboard/CSV reporting. The optional Google Drive connector is a **Development-only synthetic sandbox**, disabled by default; it is not a production mail or Drive integration.
 
@@ -16,7 +16,7 @@ Prerequisites: Git, .NET 8 SDK, and SQL Server LocalDB. From the directory where
 
 ```powershell
 git clone https://github.com/BondPhuPhamzZ/AURA.git
-cd .\AURA
+cd .\AURA\AURA
 dotnet tool restore
 dotnet restore
 ```
@@ -28,7 +28,15 @@ dotnet user-secrets set "OpenRouter:ApiKey" "<YOUR_OPENROUTER_API_KEY>"
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\MSSQLLocalDB;Database=AuraDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0"
 ```
 
-Create or update the local schema, then build, test, and run:
+To keep an existing database unchanged, use the isolated synthetic profile first:
+
+```powershell
+.\tools\Start-AuraRetentionSandbox.ps1
+```
+
+It prepares a separate dated LocalDB and receipt directory, enables retention and exact-image approval, and serves `http://127.0.0.1:5098`. It does not change User Secrets. Only verified synthetic fixtures are approved; the model/key still come from your current configuration. See the [runbook](AURA/docs/RUNBOOK.md) to reproduce the tested Qwen/Strict-ZDR request route.
+
+For a new empty demo database, create the schema, then build, test, and run:
 
 ```powershell
 dotnet ef database update
@@ -47,13 +55,19 @@ Remove-Item Env:\AURA_RUN_LOCALDB_INTEGRATION
 
 These integration tests create uniquely named temporary databases and remove them when complete. Use a LocalDB instance owned by the current Windows account.
 
+The optional backup-script integration cases need both Windows PowerShell 5.1 and PowerShell 7. Enable `AURA_RUN_POWERSHELL_INTEGRATION=1` to execute them; the recorded full verification enabled both integration flags.
+
 ## Privacy and readiness
 
-The default storage provider is local filesystem storage; private GCS support is opt-in and has not been validated against a real bucket in this repository's current evidence. The committed local synthetic evaluation used OpenRouter `qwen/qwen3.8-27b` with `/healthz` reporting Strict-ZDR request and provider-data-collection denial enabled. This verifies the tested configuration, not a contractual no-retention guarantee. The original image is sent for inference before privacy triage, so the app does not redact sensitive content before provider processing.
+The default receipt store is local filesystem storage. Private GCS support remains opt-in and has not been validated against a real bucket in this evidence.
 
-On commit `0568b5a`, the locked 15-case synthetic set matched 15/15 decisions and 143/146 expected facts in one run; a separate four-image privacy-role kit matched 12/12 decisions and 21/21 labeled categories across three runs. These are small, purpose-built synthetic checks, not general accuracy or detector-coverage estimates. See [detailed model and privacy evidence](AURA/docs/MODEL_ROUTE_COMPARISON_2026-10-24.md) and [current status](AURA/docs/CURRENT_PROJECT_STATUS.md).
+The synthetic launcher enables `ExternalImagePrivacy:Mode=ApprovedImagesOnly`: adapters check the exact image SHA-256 before external HTTP, and unapproved images become human-review cases. An invalid approval file blocks startup. `BlockExternal` blocks remote inference while allowing loopback Ollama; `LegacyConfigured` preserves the contest configuration. These controls do not detect or redact personal data. Approved pixels still reach the configured provider before post-inference privacy triage. Strict-ZDR routing and data-collection denial are request settings, not contractual no-retention guarantees.
 
-This is a supervised MVP / contest project, **not production-ready software**. Authentication/RBAC, malware scanning and quarantine for manual uploads, approved retention and restore, real private-cloud storage validation, provider-specific privacy verification, and multi-host load/chaos testing remain open gates. See the [current status and checklist](AURA/docs/CURRENT_PROJECT_STATUS.md) and [readiness/scale assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md) before any pilot.
+Seven-day local retention is opt-in for finalized decisions. Pending and unresolved human-review work is retained. SQL/image backup, restore and scheduled managed-backup expiry were exercised with synthetic data; real-data activation remains a separate gate. Cleanup waits until the app/task runs when the machine is off or the interactive user is logged out.
+
+The latest full 15-case synthetic regression on `24b7b33` matched 15/15 decisions and 143/146 expected facts; a separate four-image privacy-role kit matched 12/12 decisions and 21/21 labeled categories across three runs. After adding the egress guard, a modified synthetic image was blocked and one approved smoke passed; that smoke is not a new accuracy benchmark. These are small, purpose-built synthetic checks, not general accuracy or detector-coverage estimates. See [detailed model and privacy evidence](AURA/docs/MODEL_ROUTE_COMPARISON_2026-10-24.md) and [current status](AURA/docs/CURRENT_PROJECT_STATUS.md).
+
+This is a supervised MVP / contest project, **not production-ready software**. Authentication/RBAC, malware scanning and quarantine for manual uploads, real-data retention/restore approval, real private-cloud storage validation, provider-specific privacy verification, and multi-host load/chaos testing remain open gates. See the [current status and checklist](AURA/docs/CURRENT_PROJECT_STATUS.md) and [readiness/scale assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md) before any pilot.
 
 To change the queue ceiling for a controlled deployment, set `ReceiptProcessing__MaxOutstandingReceipts` (valid range `1`–`10000`). Do not raise it until storage capacity, provider budget, and queue-age behavior have been load-tested.
 
@@ -69,4 +83,4 @@ To change the queue ceiling for a controlled deployment, set `ReceiptProcessing_
 - [Build log — submitted snapshot](AURA/submission/AURA_BUILD_LOG.pdf)
 - [Post-contest status addendum](AURA/submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md)
 
-The proposal, slides, and build log are preserved submission snapshots; consult the current status report for later source changes. Do not commit API keys, connection strings, User Secrets, receipt images, database files, raw provider responses, or private evidence.
+The proposal, slides, and build log are preserved submission snapshots; consult the current status report for later source changes. Do not commit API keys, connection strings, User Secrets, real receipt images, database files, raw provider responses, or private evidence.
