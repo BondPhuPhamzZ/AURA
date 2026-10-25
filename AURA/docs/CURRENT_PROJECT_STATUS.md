@@ -1,5 +1,29 @@
 # Trạng thái hiện hành AURA ngày 25/10/2026
 
+> **Phạm vi đã chốt 25/10:** giữ DB cũ nguyên trạng; thử retention trên DB synthetic
+> riêng trước. Thư mục backup người dùng chọn đã được kiểm tra read-only và hiện
+> rỗng. Không migrate, purge, sửa facts/audit hoặc sao chép ảnh thật trong phiên
+> kiểm tra này. Inventory chi tiết chỉ lưu local trong Git-ignored
+> `test_kit/results/retention-audit-20261025/`. Dùng
+> `tools/Start-AuraRetentionSandbox.ps1` để chuẩn bị/chạy LocalDB sandbox ngày hiện
+> tại và receipt root riêng; launcher không sửa User Secrets và khôi phục biến môi
+> trường của phiên gọi. `-PrepareOnly` đã được chạy thành công; không phải bằng
+> chứng inference hoặc xác nhận privacy cho dữ liệu thật.
+>
+> **Metadata/UTC hardening 25/10:** purger xử lý được record không sở hữu file
+> riêng (`StoredFileName` rỗng), kết quả Verify AUTO mới có deadline, và backup
+> tính cả expiry của metadata-only records. Test SQL backup tổng hợp có checksum,
+> registration với một record có ảnh + một record metadata-only, report-only và
+> purge bằng đồng hồ test đều pass. Test phát hiện JSON date round-trip qua
+> PowerShell có thể làm mất UTC/giây lẻ và kéo hạn backup sớm 7 giờ; đã sửa bằng
+> cách giữ kiểu/offset thay vì stringify `DateTime`. Bốn ca integration tự động
+> trên PowerShell 5.1/7 xác nhận manifest V1 cũ và metadata-only, offset +07,
+> giữ backup đến đúng hạn, report-only không xóa và purge đúng biên inclusive.
+> Full Debug/Release cuối **349/349 mỗi bản**, với cả
+> `AURA_RUN_LOCALDB_INTEGRATION=1` và `AURA_RUN_POWERSHELL_INTEGRATION=1`, không
+> skip. TRX local: `final-debug.trx`/`final-release.trx` trong thư mục evidence
+> nói trên. Release build 0 warning/error; EF không pending model changes.
+
 > **Local retention/restore hardening 25/10:** startup và sweep định kỳ nay dọn
 > hết backlog qua nhiều batch thay vì dừng sau một batch. Purger giữ SQL update
 > lock đến khi xóa ảnh và commit SQL; tranh chấp cleanup lock là lỗi cần retry,

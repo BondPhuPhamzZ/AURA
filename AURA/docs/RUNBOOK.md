@@ -131,7 +131,43 @@ Integration test `Synthetic_database_and_receipt_backup_restore_preserves_pendin
 
 ### Retention local 7 ngày (opt-in, chưa bật mặc định)
 
+Để giữ nguyên DB đi thi, chạy sandbox riêng bằng script dưới đây. Mặc định script
+dùng LocalDB tên `AURA_RetentionSandbox_yyyyMMdd` và ảnh riêng trong
+`.tmp/retention-sandbox/<database>/receipts`; `.tmp` được Git/publish exclude.
+Nó override connection string/retention chỉ trong process đang chạy, khôi phục
+environment khi dừng và không sửa User Secrets. Chỉ dùng ảnh synthetic: model/API
+key vẫn lấy từ cấu hình hiện có, script không tự kiểm chứng hay thay đổi route ZDR.
+
+```powershell
+.\tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly
+.\tools\Start-AuraRetentionSandbox.ps1
+```
+
+Lệnh đầu build Release và áp dụng migration vào DB sandbox. Lệnh thứ hai mở app
+ở `http://127.0.0.1:5098`; nhấn Ctrl+C để dừng. Kiểm `/healthz`: `status=ok`,
+`pendingMigrationCount=0`, `retentionCleanupEnabled=true`, `retentionDays=7`,
+`receiptStorageProvider=LocalFileSystem`, fallback/Drive/Verify tắt và concurrency
+1. DB cũ vẫn cần migration riêng nếu chạy qua lệnh `dotnet run` thường; không dùng
+lệnh đó để thử retention trước khi chốt chuyển đổi dữ liệu lịch sử.
+
+Regression script UTC được chạy riêng với cả Windows PowerShell 5.1 và PowerShell
+7, bao gồm manifest V1 cũ, metadata không có ảnh, offset +07:00, phần giây lẻ,
+report-only và biên hết hạn. Trên máy có cả hai shell và LocalDB, bật integration:
+
+```powershell
+$env:AURA_RUN_LOCALDB_INTEGRATION = '1'
+$env:AURA_RUN_POWERSHELL_INTEGRATION = '1'
+dotnet test tests/AURA.Tests/AURA.Tests.csproj -c Release --no-restore
+```
+
 Retention chỉ purge hồ sơ đã có quyết định cuối: `AUTO_APPROVE` hoặc trạng thái quản lý đã chốt. Hồ sơ đang chờ, đang xử lý, retryable và chờ người duyệt không bị xóa. Khi bật `DataRetention:Enabled=true`, app dọn toàn bộ backlog đủ điều kiện qua nhiều batch trước khi nhận request, rồi theo chu kỳ `DataRetention:SweepIntervalMinutes` (mặc định 5 phút). SQL giữ khóa update trên hồ sơ được chọn trong suốt bước xóa ảnh và commit, tránh thao tác cũ mở lại hồ sơ giữa chừng. Đến hạn thì Undo bị từ chối. Nếu startup cleanup lỗi hoặc không lấy được khóa cleanup, app không khởi động; lỗi định kỳ được log và thử lại ở chu kỳ sau. Đây là best-effort local: sweep có độ trễ theo chu kỳ, lỗi I/O/SQL có thể trì hoãn xóa, và khi máy tắt phải chờ app chạy lại; không bảo đảm xóa đúng giây.
+
+Kết quả Verify không sở hữu ảnh riêng trong receipt store: `StoredFileName` rỗng
+thì purger chỉ xóa facts/audit/record đã chốt, không gọi file store với key rỗng.
+Backup vẫn phải tính deadline của các record này. Manifest mới thêm
+`metadataOnlyRecordCount`/`metadataOnlyExpiriesUtc`; remover vẫn đọc manifest V1
+cũ. Timestamp được giữ nguyên UTC/offset và độ chính xác khi đọc JSON trên cả
+hai phiên bản PowerShell; không stringify `DateTime` rồi parse lại theo múi giờ máy.
 
 1. Trước khi bật trên máy đang dùng, kiểm tra migration `20261024130944_AddReceiptRetentionDeadline` đã áp dụng, chạy test integration và diễn tập trên DB/thư mục synthetic riêng. Tạo backup đầy đủ và restore thử trước khi đổi `DataRetention:Enabled`; tuyệt đối không dùng script backup để xóa bản backup chưa đăng ký.
 2. Tạo một backup set bên ngoài repo, ví dụ:
