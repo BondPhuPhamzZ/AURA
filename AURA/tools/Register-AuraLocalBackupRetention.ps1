@@ -17,6 +17,12 @@ if (-not $ConfirmApplicationStopped) {
 }
 
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+for ($directory = Get-Item -LiteralPath $PSScriptRoot; $null -ne $directory; $directory = $directory.Parent) {
+    if (Test-Path -LiteralPath (Join-Path $directory.FullName '.git')) {
+        $repoRoot = $directory.FullName
+        break
+    }
+}
 $setRoot = [IO.Path]::GetFullPath($BackupSetDirectory)
 $dbBackup = [IO.Path]::GetFullPath($DatabaseBackupFile)
 $receiptSource = [IO.Path]::GetFullPath($ReceiptSourceDirectory)

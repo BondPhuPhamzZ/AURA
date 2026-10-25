@@ -12,6 +12,12 @@ $root = [IO.Path]::GetFullPath($BackupRoot).TrimEnd('\', '/')
 $separator = [IO.Path]::DirectorySeparatorChar
 $rootPrefix = $root + $separator
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+for ($directory = Get-Item -LiteralPath $PSScriptRoot; $null -ne $directory; $directory = $directory.Parent) {
+    if (Test-Path -LiteralPath (Join-Path $directory.FullName '.git')) {
+        $repoRoot = $directory.FullName
+        break
+    }
+}
 $repoPrefix = $repoRoot.TrimEnd('\', '/') + $separator
 if (-not (Test-Path -LiteralPath $root -PathType Container) -or
     $root.StartsWith($repoPrefix, [StringComparison]::OrdinalIgnoreCase) -or

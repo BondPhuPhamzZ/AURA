@@ -1,4 +1,26 @@
-# Trạng thái hiện hành AURA ngày 24/10/2026
+# Trạng thái hiện hành AURA ngày 25/10/2026
+
+> **Local retention/restore hardening 25/10:** startup và sweep định kỳ nay dọn
+> hết backlog qua nhiều batch thay vì dừng sau một batch. Purger giữ SQL update
+> lock đến khi xóa ảnh và commit SQL; tranh chấp cleanup lock là lỗi cần retry,
+> không được coi là hàng đợi đã sạch. LocalDB test xác nhận 5 hồ sơ hết hạn với
+> batch size 2 đều bị dọn trước khi startup hoàn tất, hồ sơ chưa chốt được giữ,
+> và cập nhật cũ từ DbContext thứ hai bị chặn rồi nhận concurrency conflict.
+> Restore drill dùng SQL checksum + `RESTORE VERIFYONLY`, kiểm SHA-256 ảnh/job
+> pending và giữ nguyên deadline: hồ sơ quá hạn từ snapshot được dọn, job pending
+> vẫn còn. Đây là dữ liệu synthetic trên LocalDB; chưa phải restore dữ liệu người
+> dùng hoặc hosting, chưa có RPO/RTO được cam kết.
+>
+> Full Release lượt đầu: **340/341**, một ca intake idempotency trượt vì Windows
+> sharing violation khi hai intake cùng publish/kiểm cùng file. Local store nay
+> retry tối đa 5 lần, tổng delay 775 ms, chỉ cho Win32 sharing/lock violation;
+> vẫn kiểm size/SHA-256 và hỗ trợ cancellation. Focused storage/intake suite
+> **16/16**; full Debug và Release sau fix **344/344 mỗi bản**, LocalDB integration
+> bật, không skip. Release build 0 warning/error, EF không pending model changes.
+> Hai script backup cũng từ chối đúng Git root ở thư mục cha ứng dụng, tránh
+> lưu backup nhạy cảm vào repo. Retention trên DB người dùng vẫn tắt; chưa đăng
+> ký Task Scheduler. Runbook dùng lịch 5 phút + catch-up sau đăng nhập, không dùng
+> lịch chỉ một lần/ngày. Privacy vẫn là gate mở vì triage chạy sau inference.
 
 > **Benchmark cập nhật trên source `06346de`:** 15 ảnh v3.1 synthetic chạy qua
 > intake → SQL queue → OpenRouter → Semantic → policy: 15/15 quyết định đúng,
