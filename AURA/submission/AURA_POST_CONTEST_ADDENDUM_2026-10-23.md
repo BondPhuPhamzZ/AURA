@@ -2,6 +2,17 @@
 
 The proposal, one-page build log and five-slide deck in this folder document the **submitted contest candidate**. They are deliberately preserved, including their then-current 163-test and claimed-amount descriptions. They must not be read as specifications for the newer source or as evidence that the newer source has been published.
 
+**25 October update:** the separate local synthetic sandbox passed 367/367 tests
+in each of Debug and Release with LocalDB and PowerShell integration enabled.
+The latest full synthetic regression matched 15/15 decisions and 143/146 facts;
+one later approved-image smoke passed after adding an exact-hash egress guard.
+Unknown image bytes were blocked before inference and preserved for manual
+review. Seven-day retention, SQL/image restore and scheduled managed-backup
+expiry were exercised on synthetic data; the old contest database was kept
+unchanged. This does not establish PII detection/redaction, real-data retention,
+public-host readiness or multi-server safety. The paragraphs below preserve the
+23 October checkpoint; use the linked current status for later evidence.
+
 The current local source keeps the same Track A boundary: the vision model extracts receipt facts, schema/semantic validation checks them, C# policy selects `AUTO_APPROVE` or an `ESCALATE_*` route, and people decide exceptions with an audit trail. The intake UI now omits manual claimed amount; each selected JPG/PNG becomes its own durable SQL job. The UI accepts up to ten files per selection, not an unlimited server-side batch. Dashboard/CSV and privacy triage are post-feedback additions. A read-only Google Drive connector has been tested only with synthetic receipts on Development loopback and remains disabled by default on public hosting; there is no Gmail intake.
 
 As of this addendum, 231/231 Release offline tests pass. The local Drive run produced 100 jobs from 100 files, but only 30 distinct image contents; 98 completed and two stopped fail-safe. Fifteen consented real images completed through manual localhost upload, without independent matching labels, so no accuracy result is claimed for them. The older prospective ten-receipt contest mini-holdout remains 8/10 exact, zero missed and two over-escalations. The public URL has not been verified as running this newer branch. An expired provider key requires private rotation and a synthetic inference smoke before another live demo.

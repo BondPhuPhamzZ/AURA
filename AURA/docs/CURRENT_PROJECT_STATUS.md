@@ -1,5 +1,49 @@
 # Trạng thái hiện hành AURA ngày 25/10/2026
 
+> **Pre-inference approval gate — `6cee437` / `a54091a`:** synthetic launcher nay
+> bật `ExternalImagePrivacy:Mode=ApprovedImagesOnly`. Adapter kiểm SHA-256 của
+> snapshot bytes trước HTTP; ảnh chưa được duyệt đi `ESCALATE_PRIVACY` và giữ
+> cho người xử lý, không tạo facts AI hay cấp quyền gửi bằng thao tác manager.
+> Gate bao phủ OpenRouter và Ollama từ xa theo URL HTTP thực tế, giữ mã privacy
+> khi fallback; inference clients không theo redirect, Ollama không dùng proxy.
+> Allowlist được nạp một lần trước migration/worker startup; lỗi/mất file chặn
+> startup. `BlockExternal` cho phép loopback Ollama và chặn remote;
+> `LegacyConfigured` giữ profile thi cũ và không có duyệt ảnh trước egress.
+>
+> Full Debug/Release cuối **367/367 mỗi bản**, LocalDB + PowerShell integration bật;
+> 15 gate tests gồm exact-byte approval, UTF-8 BOM, policy lỗi/public, file/byte
+> APIs, effective remote URL và fallback. SQL/HITL test chứng minh 0 HTTP, lưu
+> privacy case không facts, manager tiếp nhận chỉ đóng thủ công + deadline 7
+> ngày. Invalid-policy host probe chặn startup trước khi tạo/migrate DB.
+> Launcher PS5.1/7 chuẩn bị 49 hash từ 30 ảnh lịch sử đã đối chiếu Git blob,
+> 15 v3.1 và 4 privacy; cả 100 file synthetic clone đều khớp các hash đã duyệt.
+> Đây chỉ là kiểm kê quyền gửi, không phải test throughput/accuracy 100 ảnh.
+>
+> HTTP E2E trên `a54091a`: ảnh R3-01 thêm một byte được xử lý thành
+> `COMPLETED / ESCALATE_PRIVACY`, code `PRIVACY_IMAGE_NOT_APPROVED`, không facts,
+> served provider hoặc fallback; audit `PreInferencePrivacyBlocked=True`,
+> `PrivacyRisk=NOT_EVALUATED`. Ảnh R3-01 đã duyệt chạy model thật, AUTO đúng,
+> facts 11/11, 7.234 ms, không lỗi/fallback. Đây là một smoke sau gate; benchmark
+> 15 ca bên dưới vẫn thuộc source `24b7b33`. Raw/TRX/health/audit summary giữ
+> Git-ignored tại `test_kit/results/privacy-gate-20261025/`. README đã sửa lệnh
+> `cd` sau clone để vào đúng thư mục app.
+>
+> Follow-up `9b549c7` giữ dấu privacy trong dashboard/CSV sau quyết định thủ công,
+> kể cả khi case không có facts. HTTP thật trên `3b2e89c`: chuyển đúng case bị
+> chặn cho quản lý, tiếp nhận thành `MANUAL_REVIEW_ACCEPTED`, facts vẫn rỗng,
+> deadline đúng 7 ngày, hash vẫn chưa được duyệt; dashboard đếm 1 và CSV vẫn
+> `Privacy review=YES`. Launcher giới hạn `AllowedHosts` về `127.0.0.1;localhost`:
+> Host lạ nhận 400, health bình thường `ok`. Full suite 367 gồm hai regression
+> bổ sung cho reporting; TRX cuối `post-review-debug.trx`/`post-review-release.trx`.
+> Đối chiếu read-only cuối: DB cũ vẫn 438 hồ sơ, 6 migration, không có cột retention,
+> không có job active; không migrate/purge dữ liệu lịch sử.
+>
+> **Quyết định gate:** sandbox synthetic có ranh giới egress được kiểm chứng;
+> dữ liệu thật vẫn NO-GO. Hash approval không phát hiện/che PII, ảnh đã duyệt vẫn
+> gửi nguyên pixels tới route được cấu hình. Chưa có pre-inference redaction hay
+> bằng chứng pháp lý/provider contract. Giữ DB cũ, quyền truy cập/pilot và cloud
+> scale theo các gate đã công bố; không đổi default model hoặc User Secrets.
+
 > **Phạm vi đã chốt 25/10:** giữ DB cũ nguyên trạng; thử retention trên DB synthetic
 > riêng trước. Root backup ban đầu rỗng; hiện có một managed backup của 15 ca
 > synthetic sandbox đã qua restore drill. Không migrate, purge, sửa facts/audit
@@ -105,8 +149,9 @@
 > định quản lý có thể Undo trước deadline; sau deadline app từ chối Undo khi
 > retention bật. Phê duyệt pháp lý/operational vẫn là gate trước dữ liệu thật.
 
-> **Gate tiếp theo:** giữ local single-host và synthetic sandbox. Startup, benchmark,
-> backup/restore và lịch dọn synthetic đã đạt; cần chốt phạm vi/route/minimization
+> **Gate tiếp theo:** giữ local single-host và synthetic sandbox có allowlist.
+> Startup, benchmark, backup/restore, lịch dọn và controlled egress synthetic đã
+> đạt; cần chốt phạm vi/route/minimization
 > cho dữ liệu người dùng trước pilot. Chưa bật
 > tự xóa trên DB đang dùng; Firestore, GCS hoặc shared cloud storage vẫn chưa phải
 > storage mặc định. Privacy triage vẫn chạy sau

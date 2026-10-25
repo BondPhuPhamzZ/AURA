@@ -147,8 +147,53 @@ Lệnh đầu build Release và áp dụng migration vào DB sandbox. Lệnh th�
 ở `http://127.0.0.1:5098`; nhấn Ctrl+C để dừng. Kiểm `/healthz`: `status=ok`,
 `pendingMigrationCount=0`, `retentionCleanupEnabled=true`, `retentionDays=7`,
 `receiptStorageProvider=LocalFileSystem`, fallback/Drive/Verify tắt và concurrency
-1. DB cũ vẫn cần migration riêng nếu chạy qua lệnh `dotnet run` thường; không dùng
+1; `externalImagePrivacyMode=ApprovedImagesOnly`, `externallyApprovedImageCount=49`.
+Launcher bind loopback và đặt `AllowedHosts=127.0.0.1;localhost`; HTTP Host khác
+bị trả 400. Đây không phải cơ chế đăng nhập hay quyền truy cập người dùng.
+DB cũ vẫn cần migration riêng nếu chạy qua lệnh `dotnet run` thường; không dùng
 lệnh đó để thử retention trước khi chốt chuyển đổi dữ liệu lịch sử.
+
+#### Duyệt ảnh trước khi gửi ra provider
+
+Synthetic launcher tự tạo allowlist trong `.tmp/retention-sandbox/<database>/`
+từ 15 hash v3.1, 4 hash privacy và 30 ảnh lịch sử được đối chiếu Git blob rồi tính
+SHA-256. Các bản sao byte trong `images/batch_100_synthetic` được chấp nhận vì
+hash giống bản gốc; đổi tên file không ảnh hưởng, thay đổi bytes cần duyệt lại.
+Ảnh upload mới không tự được thêm vào danh sách. Không thêm hash của ảnh thật
+vào file để bỏ qua gate; cần chốt consent/route/minimization riêng trước dữ liệu
+thật. Git checkout là điều kiện để launcher xác minh bộ lịch sử.
+
+| `ExternalImagePrivacy:Mode` | Hành vi |
+| --- | --- |
+| `LegacyConfigured` | Profile thi cũ mặc định; không duyệt hash trước external inference. |
+| `ApprovedImagesOnly` | Chỉ gửi đúng bytes có SHA-256 trong approval file; sandbox launcher dùng mode này. |
+| `BlockExternal` | Chặn remote inference, cho phép Ollama loopback. HTTPS endpoint Ollama từ xa vẫn là remote. |
+
+Với `ApprovedImagesOnly`, `ExternalImagePrivacy:ApprovedHashesFile` phải là đường
+dẫn tuyệt đối tới UTF-8 JSON array gồm các chuỗi SHA-256 64 ký tự hex, nằm ngoài
+`wwwroot`; UTF-8 BOM của PowerShell 5.1 được hỗ trợ. File được đọc một lần lúc
+startup, trước migration/worker. Missing/empty/malformed policy chặn startup.
+Thay đổi approval cần restart; không nhập hash/file riêng tư vào Git. Ảnh được
+copy thành snapshot trước kiểm hash và giữ nguyên bytes cho retry/repair.
+
+Ảnh bị chặn vẫn được lưu local theo intake hiện hành, chuyển `ESCALATE_PRIVACY`
+với code `PRIVACY_IMAGE_NOT_APPROVED` hoặc `PRIVACY_EXTERNAL_PROCESSING_BLOCKED`.
+Không có facts AI; audit ghi `PreInferencePrivacyBlocked=True` và
+`PrivacyRisk=NOT_EVALUATED`. Nhân viên chuyển tiếp và quản lý tiếp nhận thủ công
+như các escalation khác; thao tác manager không duyệt hash hoặc tự gọi model.
+Sau khi tiếp nhận thủ công, dashboard/CSV vẫn giữ dấu privacy và deadline được
+tính 7 ngày từ quyết định quản lý; case chưa chốt không có deadline để purge.
+Mã policy block không kích hoạt fallback; khi xuất hiện ở fallback vẫn được giữ
+để workflow nhận diện đúng privacy. Hai inference clients không tự theo HTTP
+redirect; Ollama không dùng system proxy. Loopback vẫn là endpoint do operator
+tin cậy, không phải bằng chứng rằng một dịch vụ local không tự forward dữ liệu.
+
+Hash approval là kiểm soát egress cho bộ ảnh đã biết, không phải PII detection,
+redaction hoặc chính sách production cho hàng loạt ảnh mới. Ảnh đã được duyệt
+vẫn gửi nguyên pixels tới provider rồi mới qua privacy triage. Strict ZDR/data
+deny không thay thế consent/điều khoản provider; gate dữ liệu thật tiếp tục mở.
+
+#### Kiểm thử và chính sách dọn retention
 
 Regression script UTC được chạy riêng với cả Windows PowerShell 5.1 và PowerShell
 7, bao gồm manifest V1 cũ, metadata không có ảnh, offset +07:00, phần giây lẻ,

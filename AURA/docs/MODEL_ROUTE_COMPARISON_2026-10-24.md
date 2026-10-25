@@ -12,6 +12,47 @@ disabled. App-generated receipt files and temporary databases were removed
 after the runs. Raw results remain in git-ignored local `TestResults/` and
 `test_kit/results/` folders and are intentionally not committed.
 
+## Egress approval boundary check — 25/10, commit `a54091a`
+
+The separate sandbox now opts into exact-byte approval before external HTTP.
+Forty-nine trusted synthetic hashes cover 30 historical committed images, 15
+v3.1 images and four privacy-role images. All 100 local transfer fixtures match
+approved hashes because they are copies of the historical originals; no
+100-image inference or capacity claim is made.
+
+A deliberately modified R3-01 image was accepted into the local queue and
+completed as `ESCALATE_PRIVACY` / `PRIVACY_IMAGE_NOT_APPROVED`. It had no facts,
+served provider or fallback; SQL audit recorded the pre-inference block with
+privacy risk not evaluated. A separate worker/SQL/HITL integration test observed
+zero HTTP calls and verified that manager acceptance closes the case manually
+without approving its hash or sending it externally. An approved R3-01 then
+completed through OpenRouter/Qwen3.8-27B with Strict-ZDR routing requested:
+`AUTO_APPROVE`, 11/11 expected facts, 7,234 ms, no system/provider error or
+fallback; Semantic repair was not needed. This is one compatibility smoke after
+the egress change, not another full regression or accuracy sample.
+
+Final Debug/Release passed 367/367 each with LocalDB and PowerShell integration
+enabled. Invalid approval policy blocked actual host startup before the probe
+database could be created/migrated. Unit tests cover both adapter entry points,
+remote Ollama effective target, fallback, exact hashes, UTF-8 BOM and sanitized
+configuration errors. The launcher was prepared successfully on PS5.1 and PS7.
+Raw evidence stays under Git-ignored `test_kit/results/privacy-gate-20261025/`.
+
+Reporting follow-up `9b549c7` keeps the pre-inference privacy marker visible
+after manual acceptance even when facts are absent. Actual HTTP verification on
+`3b2e89c` forwarded and accepted the blocked synthetic case: no facts, a deadline
+exactly seven days after the manager decision, hash still unapproved, dashboard
+privacy count one and CSV `Privacy review=YES`. The sandbox rejects an untrusted
+Host header with HTTP 400 while normal health stays `ok`. Two reporting
+regressions are included in the final 367-test suites. These checks made no new
+model calls and do not change the earlier inference measurements.
+
+Approval constrains egress to known bytes; it does not inspect/redact pixels or
+prove the image lacks personal data. Legacy configuration remains opt-in-free
+for compatibility, while the synthetic launcher enforces approval. Real-data
+privacy/pilot approval remains open. No prompt, schema, policy, locked fixture
+or previous benchmark output was changed for this check.
+
 ## Synthetic retention sandbox rerun — 25/10, commit `24b7b33`
 
 The locked v3.1 manifest ran once on source
