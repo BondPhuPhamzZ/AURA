@@ -61,7 +61,10 @@ public sealed class ReceiptRetentionPurger(
         {
             // Object deletion is idempotent. If the process stops before SQL commits,
             // the expired row remains and the next sweep safely retries this deletion.
-            await fileStore.DeleteAsync(request.StoredFileName, cancellationToken);
+            // Verify and older metadata-only records do not own an object in the
+            // receipt store. Never resolve their empty key to a filesystem path.
+            if (!string.IsNullOrWhiteSpace(request.StoredFileName))
+                await fileStore.DeleteAsync(request.StoredFileName, cancellationToken);
             await database.AuditLogs
                 .Where(log => log.RequestId == request.Id)
                 .ExecuteDeleteAsync(cancellationToken);

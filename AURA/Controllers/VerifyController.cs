@@ -193,6 +193,7 @@ public sealed class VerifyController : Controller
                 SubmitterDisplayName = "Verify Harness",
                 SubmitterDepartment = "Quality Assurance"
             };
+            request.RetentionExpiresAt = ReceiptRetentionPolicy.ForAutomatedDecision(request);
             await _repository.AddRequestWithAuditAsync(request, $"VERIFY_{actualStatus}",
                 $"Case={testCase.Id}; Expected={testCase.ExpectedStatus}; PrimaryProvider={primaryProvider}; " +
                 $"ServedProvider={servedProvider}; FallbackUsed={fallbackUsed}; ProviderErrorCode={providerErrorCode}; " +

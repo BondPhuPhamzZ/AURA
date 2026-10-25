@@ -8,6 +8,22 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+function ConvertTo-UtcTimestamp([object]$Value) {
+    # PowerShell 7 may deserialize ISO dates to DateTime; Windows PowerShell
+    # keeps strings. Do not implicitly stringify a DateTime and lose its Kind,
+    # offset or fractional seconds before parsing it again.
+    if ($Value -is [DateTimeOffset]) { return $Value.ToUniversalTime() }
+    if ($Value -is [DateTime]) {
+        if ($Value.Kind -eq [DateTimeKind]::Unspecified) { throw 'Ambiguous timestamp.' }
+        return ([DateTimeOffset]::new($Value)).ToUniversalTime()
+    }
+    $text = [string]$Value
+    if ($text -notmatch '(Z|[+-][0-9]{2}:[0-9]{2})$') { throw 'Timestamp must include its UTC offset.' }
+    return [DateTimeOffset]::Parse($text, [Globalization.CultureInfo]::InvariantCulture,
+        [Globalization.DateTimeStyles]::None).ToUniversalTime()
+}
+
 $root = [IO.Path]::GetFullPath($BackupRoot).TrimEnd('\', '/')
 $separator = [IO.Path]::DirectorySeparatorChar
 $rootPrefix = $root + $separator
@@ -71,26 +87,35 @@ foreach ($candidate in Get-ChildItem -LiteralPath $root -Directory -Force) {
         if ($unsafeReceiptPath) { $skippedCount++; continue }
         $receiptPathKeys = @($manifest.receipts | ForEach-Object { [string]$_.path } | Sort-Object -Unique)
         if ($receiptPathKeys.Count -ne @($manifest.receipts).Count) { $skippedCount++; continue }
-        $createdAt = [DateTimeOffset]::Parse($manifest.createdAtUtc).ToUniversalTime()
+        $createdAt = ConvertTo-UtcTimestamp $manifest.createdAtUtc
         $expectedPurgeAt = $createdAt.AddDays(7)
         $earliestExpiry = $null
         foreach ($receipt in @($manifest.receipts)) {
             if ($receipt.retentionExpiresAtUtc) {
-                $deadline = [DateTimeOffset]::Parse($receipt.retentionExpiresAtUtc).ToUniversalTime()
+                $deadline = ConvertTo-UtcTimestamp $receipt.retentionExpiresAtUtc
+                if ($null -eq $earliestExpiry -or $deadline -lt $earliestExpiry) { $earliestExpiry = $deadline }
+            }
+        }
+        if ($manifest.PSObject.Properties.Name -contains 'metadataOnlyExpiriesUtc') {
+            $metadataExpiries = @($manifest.metadataOnlyExpiriesUtc)
+            if ([int]$manifest.metadataOnlyRecordCount -lt $metadataExpiries.Count -or
+                [int]$manifest.metadataOnlyRecordCount -lt 0) { $skippedCount++; continue }
+            foreach ($expiry in $metadataExpiries) {
+                $deadline = ConvertTo-UtcTimestamp $expiry
                 if ($null -eq $earliestExpiry -or $deadline -lt $earliestExpiry) { $earliestExpiry = $deadline }
             }
         }
         if ($manifest.earliestIncludedDataExpiryUtc) {
-            $recordedEarliest = [DateTimeOffset]::Parse($manifest.earliestIncludedDataExpiryUtc).ToUniversalTime()
+            $recordedEarliest = ConvertTo-UtcTimestamp $manifest.earliestIncludedDataExpiryUtc
             if ($null -eq $earliestExpiry -or $recordedEarliest -ne $earliestExpiry) { $skippedCount++; continue }
             if ($recordedEarliest -lt $expectedPurgeAt) { $expectedPurgeAt = $recordedEarliest }
         }
         elseif ($null -ne $earliestExpiry) { $skippedCount++; continue }
-        if ([DateTimeOffset]::Parse($manifest.purgeAtUtc).ToUniversalTime() -ne $expectedPurgeAt) {
+        $purgeAt = ConvertTo-UtcTimestamp $manifest.purgeAtUtc
+        if ($purgeAt -ne $expectedPurgeAt) {
             $skippedCount++
             continue
         }
-        $purgeAt = [DateTimeOffset]::Parse($manifest.purgeAtUtc).ToUniversalTime()
         if ($purgeAt -gt $NowUtc.ToUniversalTime()) { continue }
 
         $expected = @($manifest.databaseBackup.path)

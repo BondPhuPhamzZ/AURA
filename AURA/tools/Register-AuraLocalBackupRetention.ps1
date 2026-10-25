@@ -119,6 +119,21 @@ catch {
 
 $createdUtc = (Get-Item -LiteralPath $dbBackup).LastWriteTimeUtc
 $minimumDeadline = $null
+$metadataOnlyRows = @($requestFiles | Where-Object { [string]::IsNullOrWhiteSpace($_.Name) })
+foreach ($entry in $requestFiles) {
+    if ($entry.RetentionExpiresAtUtc) {
+        $deadline = [DateTimeOffset]::Parse($entry.RetentionExpiresAtUtc).UtcDateTime
+        if ($deadline -le $createdUtc) {
+            throw 'The live database still contains data past its retention deadline; purge overdue requests before creating a backup.'
+        }
+        if ($null -eq $minimumDeadline -or $deadline -lt $minimumDeadline) {
+            $minimumDeadline = $deadline
+        }
+    }
+}
+# Verify and legacy metadata-only rows remain in the SQL backup. They have no
+# owned receipt object, but their expiry must still shorten the backup deadline.
+$requestFiles = @($requestFiles | Where-Object { -not [string]::IsNullOrWhiteSpace($_.Name) })
 foreach ($entry in $requestFiles) {
     if ([string]::IsNullOrWhiteSpace($entry.Name) -or
         $entry.Name.IndexOfAny([char[]]@('/', '\', ':')) -ge 0 -or
@@ -139,15 +154,6 @@ foreach ($entry in $requestFiles) {
             $file.Length -ne $entry.Size -or
             (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $entry.Sha256) {
             throw 'A receipt source/copy failed size or SHA-256 verification.'
-        }
-    }
-    if ($entry.RetentionExpiresAtUtc) {
-        $deadline = [DateTimeOffset]::Parse($entry.RetentionExpiresAtUtc).UtcDateTime
-        if ($deadline -le $createdUtc) {
-            throw 'The live database still contains data past its retention deadline; purge overdue requests before creating a backup.'
-        }
-        if ($null -eq $minimumDeadline -or $deadline -lt $minimumDeadline) {
-            $minimumDeadline = $deadline
         }
     }
 }
@@ -186,6 +192,9 @@ $manifest = [ordered]@{
     retentionDays = 7
     receiptCount = $receiptEntries.Count
     receipts = $receiptEntries
+    metadataOnlyRecordCount = $metadataOnlyRows.Count
+    metadataOnlyExpiriesUtc = @($metadataOnlyRows | Where-Object RetentionExpiresAtUtc |
+        ForEach-Object RetentionExpiresAtUtc)
 }
 
 $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -Encoding UTF8

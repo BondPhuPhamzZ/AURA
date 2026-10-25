@@ -113,7 +113,7 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
                 {
                     Directory = "receipts"
                 }));
-            var ids = new[] { "expired-auto", "expired-manager", "pending", "unresolved", "recent" };
+            var ids = new[] { "expired-auto", "expired-manager", "pending", "unresolved", "recent", "expired-metadata" };
             var requests = new[]
             {
                 CreateRetentionRequest(ids[0], "AUTO_APPROVE", ProcessingStates.Completed,
@@ -125,11 +125,16 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
                 CreateRetentionRequest(ids[3], "ESCALATE_FACT", ProcessingStates.Completed,
                     managerAnswer: null, finalizedAt: null, expired: true),
                 CreateRetentionRequest(ids[4], "AUTO_APPROVE", ProcessingStates.Completed,
-                    managerAnswer: null, finalizedAt: DateTime.UtcNow, expired: false)
+                    managerAnswer: null, finalizedAt: DateTime.UtcNow, expired: false),
+                CreateRetentionRequest(ids[5], "AUTO_APPROVE", ProcessingStates.Completed,
+                    managerAnswer: null, finalizedAt: DateTime.UtcNow.AddDays(-8), expired: true)
             };
+            requests[5].StoredFileName = string.Empty;
+            requests[5].ExtractedFactsJson = "{\"synthetic\":true}";
 
             foreach (var request in requests)
             {
+                if (string.IsNullOrWhiteSpace(request.StoredFileName)) continue;
                 byte[] bytes = [1, 2, 3, 4];
                 request.FileSizeBytes = bytes.Length;
                 request.FileSha256 = Convert.ToHexString(SHA256.HashData(bytes));
@@ -154,7 +159,7 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             {
                 var purger = new ReceiptRetentionPurger(db, store,
                     NullLogger<ReceiptRetentionPurger>.Instance);
-                Assert.Equal(2, await purger.PurgeExpiredBatchAsync(25, CancellationToken.None));
+                Assert.Equal(3, await purger.PurgeExpiredBatchAsync(25, CancellationToken.None));
                 Assert.Equal(0, await purger.PurgeExpiredBatchAsync(25, CancellationToken.None));
             }
 
@@ -164,6 +169,7 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             Assert.Equal(3, await verify.AuditLogs.CountAsync());
             foreach (var request in requests)
             {
+                if (string.IsNullOrWhiteSpace(request.StoredFileName)) continue;
                 await using var image = await store.OpenReadAsync(request.StoredFileName,
                     CancellationToken.None);
                 Assert.Equal(request.Id is "pending" or "unresolved" or "recent", image is not null);
@@ -354,6 +360,56 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             await using var verify = new AppDbContext(options);
             Assert.Empty(await verify.ReimbursementRequests.ToListAsync());
             Assert.Null(await store.OpenReadAsync(request.StoredFileName, timeout.Token));
+        });
+    }
+
+    [Fact]
+    public async Task Verify_records_get_retention_deadlines_only_for_final_auto_approvals_without_owned_images()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var environment = new TestEnvironment(root);
+            var imageRoot = Path.Combine(environment.WebRootPath, "test_data", "images");
+            Directory.CreateDirectory(imageRoot);
+            var fixtures = Enumerable.Range(0, 5).Select(index => new ExpectedResult
+            {
+                Id = $"SYNTHETIC-{index}", ImageName = $"synthetic-{index}.jpg",
+                ExpectedStatus = index < 3 ? "AUTO_APPROVE" : "ESCALATE_FACT", ClaimedAmount = 150_000
+            }).ToList();
+            foreach (var fixture in fixtures)
+                await File.WriteAllBytesAsync(Path.Combine(imageRoot, fixture.ImageName), [1, 2, 3]);
+            await File.WriteAllTextAsync(Path.Combine(environment.WebRootPath, "test_data", "expected-results.json"),
+                System.Text.Json.JsonSerializer.Serialize(fixtures));
+            var invoiceDate = DateTime.UtcNow.Date;
+            while (invoiceDate.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+                invoiceDate = invoiceDate.AddDays(-1);
+            var calls = 0;
+            var extractor = new StubExtractor(() => ++calls > 3 ? new ReceiptExtractionDto() : new()
+            {
+                EvidenceContractVersion = ReceiptExtractionDto.CurrentEvidenceContractVersion,
+                DocumentType = "VAT_INVOICE", MerchantName = "Synthetic Taxi", TaxId = "0312345678",
+                InvoiceNumber = "SYNTHETIC-ONLY", InvoiceDate = invoiceDate.ToString("yyyy-MM-dd"),
+                InvoiceDateEvidence = invoiceDate.ToString("dd/MM/yyyy"), InvoiceTime = "09:00",
+                Currency = "VND", TotalAmount = 150_000, TotalAmountSource = "PRINTED_FINAL_TOTAL",
+                TotalAmountEvidence = "TOTAL 150.000 VND", Confidence = 0.98,
+                LineItems = [new ReceiptLineItem { Description = "Business taxi trip", Amount = 150_000 }]
+            });
+            await using var database = new AppDbContext(options);
+            var controller = new VerifyController(extractor, environment, new ReimbursementRepository(database),
+                NullLogger<VerifyController>.Instance, new WorkflowOperationGate(), new VisionExecutionContext(),
+                Microsoft.Extensions.Options.Options.Create(new VerifyOptions { Enabled = true, InterCaseDelayMs = 0 }));
+            Assert.IsType<JsonResult>(await controller.RunHarness(CancellationToken.None));
+            var records = await database.ReimbursementRequests.AsNoTracking().ToListAsync();
+            Assert.Equal(5, records.Count);
+            Assert.Equal(3, records.Count(request => request.Status == "AUTO_APPROVE"));
+            Assert.Equal(2, records.Count(request => request.Status == "ESCALATE_FACT"));
+            foreach (var request in records)
+            {
+                Assert.Empty(request.StoredFileName);
+                Assert.Equal(request.Status == "AUTO_APPROVE" ? request.ProcessingCompletedAt!.Value.AddDays(7)
+                    : (DateTime?)null, request.RetentionExpiresAt);
+            }
         });
     }
 
