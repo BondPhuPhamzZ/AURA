@@ -55,6 +55,7 @@ public static class ManagerOperationsReportExporter
             var request = item.Request;
             var facts = item.Facts;
             var privacyReview = request.Status == "ESCALATE_PRIVACY" ||
+                                ExternalImagePrivacyGate.IsPrivacyBlock(request.ProviderErrorCode ?? string.Empty) ||
                                 facts.RequiresPrivacyReview ||
                                 facts.Categories.Count > 0;
             var managerDecision = request.ManagerAnswer switch

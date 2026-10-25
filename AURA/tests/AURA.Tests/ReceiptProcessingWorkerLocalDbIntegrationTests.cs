@@ -65,6 +65,7 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             await db.Entry(request).ReloadAsync();
             Assert.Equal("MANUAL_REVIEW_ACCEPTED", request.Status);
             Assert.Equal(request.ManagerDecisionAt!.Value.AddDays(7), request.RetentionExpiresAt);
+            Assert.Equal(1, DashboardSummaryProjector.Project([request], DateTime.UtcNow).PrivacyReview);
             Assert.Equal(0, handler.Count);
         });
     }

@@ -9,6 +9,20 @@ namespace AURA.Tests;
 public sealed class ManagerOperationsReportExporterTests
 {
     [Fact]
+    public void Preserves_pre_inference_privacy_review_in_CSV_after_manual_acceptance_without_facts()
+    {
+        var now = new DateTime(2026, 10, 17, 3, 0, 0, DateTimeKind.Utc);
+        var request = Request("blocked", now);
+        request.Status = "MANUAL_REVIEW_ACCEPTED";
+        request.ExtractedFactsJson = null;
+        request.ProviderErrorCode = ExternalImagePrivacyGate.ExternalBlockedCode;
+        request.ManagerAnswer = true;
+        var csv = Decode(ManagerOperationsReportExporter.ExportCurrentMonth([request], now).Content);
+        Assert.Contains("\"MANUAL_REVIEW_ACCEPTED\",\"YES\",\"\"", csv, StringComparison.Ordinal);
+        Assert.DoesNotContain("PHONE", csv, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Exports_only_current_vietnam_month_in_stable_order()
     {
         var requests = new[]

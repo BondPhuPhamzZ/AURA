@@ -102,7 +102,8 @@ public static class DashboardSummaryProjector
 
     private static bool HasPrivacyReview(ReimbursementRequest request)
     {
-        if (request.Status == "ESCALATE_PRIVACY") return true;
+        if (request.Status == "ESCALATE_PRIVACY" ||
+            ExternalImagePrivacyGate.IsPrivacyBlock(request.ProviderErrorCode ?? string.Empty)) return true;
         if (string.IsNullOrWhiteSpace(request.ExtractedFactsJson)) return false;
 
         try

@@ -8,6 +8,22 @@ namespace AURA.Tests;
 public sealed class DashboardSummaryProjectorTests
 {
     [Fact]
+    public void Preserves_pre_inference_privacy_signal_after_manual_resolution_without_AI_facts()
+    {
+        var now = new DateTime(2026, 10, 17, 3, 0, 0, DateTimeKind.Utc);
+        var request = Request("blocked", now, "MANUAL_REVIEW_ACCEPTED", ProcessingStates.Completed, 0, 1);
+        request.ExtractedFactsJson = null;
+        request.ProviderErrorCode = ExternalImagePrivacyGate.ImageNotApprovedCode;
+        request.ManagerAnswer = true;
+        request.ManagerDecisionAt = now;
+        var result = DashboardSummaryProjector.Project([request], now);
+        Assert.Equal(1, result.PrivacyReview);
+        Assert.Equal(1, Assert.Single(result.Days).PrivacyReview);
+        Assert.Equal(1, Assert.Single(result.Months).PrivacyReview);
+        Assert.Equal(0, result.Failed);
+    }
+
+    [Fact]
     public void Projects_current_vietnam_month_and_daily_breakdown()
     {
         var requests = new[]
