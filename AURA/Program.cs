@@ -116,6 +116,11 @@ builder.Services.AddOptions<ReceiptRetentionOptions>()
     .Bind(builder.Configuration.GetSection(ReceiptRetentionOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
+builder.Services.AddOptions<ExternalImagePrivacyOptions>()
+    .Bind(builder.Configuration.GetSection(ExternalImagePrivacyOptions.SectionName))
+    .Validate(options => ExternalImagePrivacyOptions.IsSupported(options.Mode),
+        "ExternalImagePrivacy:Mode phải là LegacyConfigured, BlockExternal hoặc ApprovedImagesOnly.")
+    .ValidateOnStart();
 builder.Services.AddOptions<VerifyOptions>()
     .Bind(builder.Configuration.GetSection(VerifyOptions.SectionName))
     .ValidateDataAnnotations()
@@ -159,6 +164,7 @@ else
 builder.Services.AddScoped<ReceiptIntakeService>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 builder.Services.AddScoped<ReceiptRetentionPurger>();
+builder.Services.AddSingleton<ExternalImagePrivacyGate>();
 builder.Services.AddSingleton<WorkflowOperationGate>();
 builder.Services.AddSingleton<ReceiptProcessingQueue>();
 builder.Services.AddSingleton<VisionCircuitBreaker>();
@@ -180,16 +186,19 @@ builder.Services.AddHttpClient<OpenRouterVisionExtractorService>((services, clie
     var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenRouterOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
     client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
-});
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 builder.Services.AddHttpClient<OllamaVisionExtractorService>((services, client) =>
 {
     var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<OllamaOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
     client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
-});
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false, UseProxy = false });
 builder.Services.AddScoped<IVisionExtractor, ConfiguredVisionExtractor>();
 
 var app = builder.Build();
+// Load/validate approval once before migration or worker startup. Invalid policy
+// must fail closed before any provider call can start.
+_ = app.Services.GetRequiredService<ExternalImagePrivacyGate>();
 
 if (builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
 {
@@ -221,6 +230,7 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
     IOptions<VerifyOptions> configuredVerify,
     IOptions<DriveSandboxOptions> configuredDriveSandbox,
     IOptions<ReceiptRetentionOptions> configuredRetention,
+    ExternalImagePrivacyGate externalImagePrivacy,
     IOptions<ReceiptStorageOptions> configuredReceiptStorage,
     IWebHostEnvironment environment,
     IReceiptFileStore receiptFileStore,
@@ -282,6 +292,8 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
         receiptStorageProvider = configuredReceiptStorage.Value.Provider,
         retentionCleanupEnabled = configuredRetention.Value.Enabled,
         retentionDays = ReceiptRetentionPolicy.RetentionDays,
+        externalImagePrivacyMode = externalImagePrivacy.Mode,
+        externallyApprovedImageCount = externalImagePrivacy.ApprovedImageCount,
         processingMode = "durable-background-queue",
         maxConcurrentAiRequests = vision.MaxConcurrentRequests,
         sqlDistributedAiGateEnabled = vision.UseSqlDistributedGate,

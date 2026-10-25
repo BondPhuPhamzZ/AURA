@@ -151,6 +151,7 @@ public sealed class ConfiguredVisionExtractor : IVisionExtractor
         }
         catch (VisionExtractionException fallbackFailure)
         {
+            if (ExternalImagePrivacyGate.IsPrivacyBlock(fallbackFailure.Code)) throw;
             if (fallbackFailure.Code == "AI_RATE_LIMIT")
             {
                 var cooldown = fallbackFailure.RetryAfter ??

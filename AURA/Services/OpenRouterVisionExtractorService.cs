@@ -18,14 +18,17 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
     private readonly OpenRouterOptions _options;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<OpenRouterVisionExtractorService> _logger;
+    private readonly ExternalImagePrivacyGate? _privacyGate;
 
     public OpenRouterVisionExtractorService(HttpClient httpClient, IOptions<OpenRouterOptions> options,
-        IWebHostEnvironment environment, ILogger<OpenRouterVisionExtractorService> logger)
+        IWebHostEnvironment environment, ILogger<OpenRouterVisionExtractorService> logger,
+        ExternalImagePrivacyGate? privacyGate = null)
     {
         _httpClient = httpClient;
         _options = options.Value;
         _environment = environment;
         _logger = logger;
+        _privacyGate = privacyGate;
     }
 
     public async Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
@@ -40,6 +43,10 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
     public async Task<ReceiptExtractionDto> ExtractFactsAsync(ReadOnlyMemory<byte> imageBytes,
         string imageFileName, CancellationToken cancellationToken = default)
     {
+        // Keep the approved bytes immutable from the caller's perspective across
+        // policy-file awaits and all malformed/semantic retry requests.
+        imageBytes = imageBytes.ToArray();
+        _privacyGate?.EnsureAllowed(imageBytes.Span);
         if (string.IsNullOrWhiteSpace(_options.ApiKey))
             throw new VisionExtractionException("AI_NOT_CONFIGURED",
                 "OpenRouter API chưa được cấu hình; hồ sơ cần được kiểm tra thủ công.");

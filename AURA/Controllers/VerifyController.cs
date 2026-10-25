@@ -96,6 +96,7 @@ public sealed class VerifyController : Controller
             string? servedProvider = null;
             string? providerErrorCode = null;
             var fallbackUsed = false;
+            var preInferencePrivacyBlocked = false;
 
             if (blockingProviderFailure is not null)
             {
@@ -123,6 +124,14 @@ public sealed class VerifyController : Controller
                     reason = decision.Reason;
                     question = decision.ManagerQuestion;
                 }
+                catch (VisionExtractionException exception) when (ExternalImagePrivacyGate.IsPrivacyBlock(exception.Code))
+                {
+                    preInferencePrivacyBlocked = true;
+                    actualStatus = "ESCALATE_PRIVACY";
+                    reason = exception.UserMessage;
+                    providerErrorCode = exception.Code;
+                    question = "Ảnh chưa được gửi tới AI bên ngoài. Quản lý có đồng ý tiếp nhận để xử lý thủ công không? [CÓ/KHÔNG]";
+                }
                 catch (VisionExtractionException exception)
                 {
                     _logger.LogWarning(exception, "Verify case {CaseId} stopped with {ErrorCode}.", testCase.Id, exception.Code);
@@ -149,7 +158,7 @@ public sealed class VerifyController : Controller
             {
                 primaryProvider = _execution.PrimaryProvider;
                 servedProvider = _execution.ServedProvider;
-                providerErrorCode = _execution.PrimaryErrorCode;
+                providerErrorCode ??= _execution.PrimaryErrorCode;
                 fallbackUsed = _execution.FallbackUsed;
             }
             else if (blockingProviderFailure is not null)
@@ -195,7 +204,7 @@ public sealed class VerifyController : Controller
             };
             request.RetentionExpiresAt = ReceiptRetentionPolicy.ForAutomatedDecision(request);
             await _repository.AddRequestWithAuditAsync(request, $"VERIFY_{actualStatus}",
-                $"Case={testCase.Id}; Expected={testCase.ExpectedStatus}; PrimaryProvider={primaryProvider}; " +
+                $"Case={testCase.Id}; Expected={testCase.ExpectedStatus}; PreInferencePrivacyBlocked={preInferencePrivacyBlocked}; PrimaryProvider={primaryProvider}; " +
                 $"ServedProvider={servedProvider}; FallbackUsed={fallbackUsed}; ProviderErrorCode={providerErrorCode}; " +
                 $"Reason={reason}; Latency={stopwatch.ElapsedMilliseconds}ms");
 

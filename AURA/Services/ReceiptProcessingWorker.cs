@@ -149,6 +149,7 @@ public sealed class ReceiptProcessingWorker : BackgroundService
         var stopwatch = Stopwatch.StartNew();
         ReceiptExtractionDto? extractedFacts = null;
         VisionExtractionException? providerFailure = null;
+        var preInferencePrivacyBlocked = false;
         string auditAction;
         DateTime? terminalTimestamp = null;
 
@@ -181,6 +182,17 @@ public sealed class ReceiptProcessingWorker : BackgroundService
             request.ManagerQuestion = decision.ManagerQuestion;
             request.ProcessingState = ProcessingStates.Completed;
             auditAction = $"AI_PROCESSED_{request.Status}";
+        }
+        catch (VisionExtractionException exception) when (ExternalImagePrivacyGate.IsPrivacyBlock(exception.Code))
+        {
+            preInferencePrivacyBlocked = true;
+            request.Status = "ESCALATE_PRIVACY";
+            request.AiReasoning = exception.UserMessage;
+            request.ManagerQuestion = "Ảnh chưa được gửi tới AI bên ngoài. Quản lý có đồng ý tiếp nhận để xử lý thủ công không? [CÓ/KHÔNG]";
+            request.ProviderErrorCode = exception.Code;
+            request.ProcessingState = ProcessingStates.Completed;
+            auditAction = "AI_PROCESSED_ESCALATE_PRIVACY";
+            _logger.LogInformation("Receipt processing blocked before external inference ({PrivacyCode}).", exception.Code);
         }
         catch (VisionExtractionException exception)
         {
@@ -261,7 +273,8 @@ public sealed class ReceiptProcessingWorker : BackgroundService
                 $"EvidenceContractVersionInferred={extractedFacts?.EvidenceContractVersionInferred ?? false}; " +
                 $"TotalAmountSource={extractedFacts?.TotalAmountSource ?? "<none>"}; " +
                 $"AmountSource={extractedFacts?.AmountSource ?? AmountSources.Unknown}; " +
-                $"PrivacyRisk={extractedFacts?.PrivacyRisk ?? PrivacyRiskLevels.None}; " +
+                $"PreInferencePrivacyBlocked={preInferencePrivacyBlocked}; " +
+                $"PrivacyRisk={extractedFacts?.PrivacyRisk ?? (preInferencePrivacyBlocked ? "NOT_EVALUATED" : PrivacyRiskLevels.None)}; " +
                 $"PersonalDataCategories={string.Join(",", extractedFacts?.PersonalDataCategories ?? [])}; " +
                 $"SemanticRepairApplied={extractedFacts?.SemanticRepairApplied ?? false}; " +
                 $"SemanticRepairIssueCount={extractedFacts?.SemanticRepairIssues.Count ?? 0}; " +

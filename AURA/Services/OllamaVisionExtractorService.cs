@@ -14,14 +14,17 @@ public sealed class OllamaVisionExtractorService : IVisionExtractor
     private readonly OllamaOptions _options;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<OllamaVisionExtractorService> _logger;
+    private readonly ExternalImagePrivacyGate? _privacyGate;
 
     public OllamaVisionExtractorService(HttpClient httpClient, IOptions<OllamaOptions> options,
-        IWebHostEnvironment environment, ILogger<OllamaVisionExtractorService> logger)
+        IWebHostEnvironment environment, ILogger<OllamaVisionExtractorService> logger,
+        ExternalImagePrivacyGate? privacyGate = null)
     {
         _httpClient = httpClient;
         _options = options.Value;
         _environment = environment;
         _logger = logger;
+        _privacyGate = privacyGate;
     }
 
     public async Task<ReceiptExtractionDto> ExtractFactsAsync(string physicalImagePath,
@@ -36,6 +39,9 @@ public sealed class OllamaVisionExtractorService : IVisionExtractor
     public async Task<ReceiptExtractionDto> ExtractFactsAsync(ReadOnlyMemory<byte> imageBytes,
         string imageFileName, CancellationToken cancellationToken = default)
     {
+        imageBytes = imageBytes.ToArray();
+        _privacyGate?.EnsureAllowed(imageBytes.Span,
+            Uri.TryCreate(_httpClient.BaseAddress, _options.ChatPath, out var target) && target.IsLoopback);
         var input = await ReceiptExtractionContract.LoadInputAsync(imageBytes, imageFileName,
             _options.PolicyPath, _environment.ContentRootPath, cancellationToken);
         var schema = ReceiptExtractionContract.BuildResponseSchema();

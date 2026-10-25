@@ -29,6 +29,47 @@ namespace AURA.Tests;
 public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
 {
     [Fact]
+    public async Task Pre_inference_privacy_block_is_a_durable_human_review_case_with_zero_provider_HTTP_calls()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var id = await SeedAsync(options, root);
+            using var handler = new RejectUnexpectedHttpHandler();
+            using var client = new HttpClient(handler) { BaseAddress = new Uri("https://remote.example.test/") };
+            var environment = new TestEnvironment(root);
+            var gate = new ExternalImagePrivacyGate(Microsoft.Extensions.Options.Options.Create(
+                new ExternalImagePrivacyOptions { Mode = ExternalImagePrivacyOptions.BlockExternal }), environment);
+            var extractor = new OpenRouterVisionExtractorService(client,
+                Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions { ApiKey = "synthetic-test-key" }),
+                environment, NullLogger<OpenRouterVisionExtractorService>.Instance, gate);
+            await ProcessOnceAsync(options, root, extractor);
+            await AssertStateAsync(options, id, ProcessingStates.Completed, 1, "ESCALATE_PRIVACY");
+            await ProcessOnceAsync(options, root, extractor);
+            Assert.Equal(0, handler.Count);
+            await using var db = new AppDbContext(options);
+            var request = await db.ReimbursementRequests.SingleAsync(item => item.Id == id);
+            Assert.Null(request.ExtractedFactsJson);
+            Assert.Null(request.RetentionExpiresAt);
+            Assert.Equal(ExternalImagePrivacyGate.ExternalBlockedCode, request.ProviderErrorCode);
+            var audit = await db.AuditLogs.SingleAsync(item => item.RequestId == id);
+            Assert.Equal("AI_PROCESSED_ESCALATE_PRIVACY", audit.Action);
+            Assert.Contains("PreInferencePrivacyBlocked=True", audit.Details, StringComparison.Ordinal);
+            Assert.Contains("PrivacyRisk=NOT_EVALUATED", audit.Details, StringComparison.Ordinal);
+            // Human acceptance closes the case locally; it does not approve a
+            // hash or automatically send the blocked image to a provider.
+            request.IsForwardedToManager = true;
+            await db.SaveChangesAsync();
+            Assert.IsType<JsonResult>(await CreateReviewerController(db, retentionEnabled: true)
+                .EscalateAction(id, "YES"));
+            await db.Entry(request).ReloadAsync();
+            Assert.Equal("MANUAL_REVIEW_ACCEPTED", request.Status);
+            Assert.Equal(request.ManagerDecisionAt!.Value.AddDays(7), request.RetentionExpiresAt);
+            Assert.Equal(0, handler.Count);
+        });
+    }
+
+    [Fact]
     public async Task Database_utc_clock_reads_authoritative_sql_server_time()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
@@ -375,7 +416,8 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             var fixtures = Enumerable.Range(0, 5).Select(index => new ExpectedResult
             {
                 Id = $"SYNTHETIC-{index}", ImageName = $"synthetic-{index}.jpg",
-                ExpectedStatus = index < 3 ? "AUTO_APPROVE" : "ESCALATE_FACT", ClaimedAmount = 150_000
+                ExpectedStatus = index < 3 ? "AUTO_APPROVE" : index == 3 ? "ESCALATE_FACT" : "ESCALATE_PRIVACY",
+                ClaimedAmount = 150_000
             }).ToList();
             foreach (var fixture in fixtures)
                 await File.WriteAllBytesAsync(Path.Combine(imageRoot, fixture.ImageName), [1, 2, 3]);
@@ -385,7 +427,9 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             while (invoiceDate.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
                 invoiceDate = invoiceDate.AddDays(-1);
             var calls = 0;
-            var extractor = new StubExtractor(() => ++calls > 3 ? new ReceiptExtractionDto() : new()
+            var extractor = new StubExtractor(() => ++calls == 5
+                ? throw new VisionExtractionException(ExternalImagePrivacyGate.ImageNotApprovedCode, "Synthetic privacy block.")
+                : calls > 3 ? new ReceiptExtractionDto() : new()
             {
                 EvidenceContractVersion = ReceiptExtractionDto.CurrentEvidenceContractVersion,
                 DocumentType = "VAT_INVOICE", MerchantName = "Synthetic Taxi", TaxId = "0312345678",
@@ -403,7 +447,10 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             var records = await database.ReimbursementRequests.AsNoTracking().ToListAsync();
             Assert.Equal(5, records.Count);
             Assert.Equal(3, records.Count(request => request.Status == "AUTO_APPROVE"));
-            Assert.Equal(2, records.Count(request => request.Status == "ESCALATE_FACT"));
+            Assert.Single(records, request => request.Status == "ESCALATE_FACT");
+            var blocked = Assert.Single(records, request => request.Status == "ESCALATE_PRIVACY");
+            Assert.Equal(ExternalImagePrivacyGate.ImageNotApprovedCode, blocked.ProviderErrorCode);
+            Assert.Null(blocked.ExtractedFactsJson);
             foreach (var request in records)
             {
                 Assert.Empty(request.StoredFileName);
@@ -1396,6 +1443,16 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
 
         public Task<bool> IsAvailableAsync(CancellationToken cancellationToken) =>
             inner.IsAvailableAsync(cancellationToken);
+    }
+
+    private sealed class RejectUnexpectedHttpHandler : HttpMessageHandler
+    {
+        public int Count { get; private set; }
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Count++;
+            throw new InvalidOperationException("A blocked synthetic image must not reach HTTP.");
+        }
     }
 
     private sealed class DeleteThenFailOnceReceiptFileStore(IReceiptFileStore inner) : IReceiptFileStore
