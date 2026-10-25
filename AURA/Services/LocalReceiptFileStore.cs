@@ -78,11 +78,31 @@ public sealed class LocalReceiptFileStore : IReceiptFileStore
     private static async Task VerifyExistingAsync(string path, int size, string sha256,
         CancellationToken cancellationToken)
     {
-        await using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
-            64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
+        await using var file = await OpenExistingForVerificationAsync(path, cancellationToken);
         if (file.Length != size || !string.Equals(
                 Convert.ToHexString(await SHA256.HashDataAsync(file, cancellationToken)), sha256,
                 StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Existing receipt object has conflicting content.");
+    }
+
+    private static async Task<FileStream> OpenExistingForVerificationAsync(string path,
+        CancellationToken cancellationToken)
+    {
+        // On Windows the winner's atomic move can briefly keep a non-shared handle
+        // open. Retry only sharing/lock violations; never relax the hash check or
+        // turn permission, missing-file or integrity failures into successful writes.
+        for (var attempt = 0; ; attempt++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                return new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
+                    64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
+            }
+            catch (IOException exception) when (attempt < 5 && (exception.HResult & 0xffff) is 32 or 33)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(25 * (1 << attempt)), cancellationToken);
+            }
+        }
     }
 }

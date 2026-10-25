@@ -40,6 +40,78 @@ public sealed class ReceiptFileStoreTests
     }
 
     [Fact]
+    public async Task Local_idempotent_write_waits_for_a_transient_Windows_file_lock_and_verifies_bytes()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var root = NewRoot();
+        try
+        {
+            var store = CreateStore(root);
+            byte[] bytes = [1, 2, 3];
+            var hash = Convert.ToHexString(SHA256.HashData(bytes));
+            await store.PutIfAbsentAsync("receipt.jpg", bytes, "image/jpeg", hash, CancellationToken.None);
+            Task<bool> retry;
+            await using (var held = new FileStream(Path.Combine(root, "private-receipts", "receipt.jpg"),
+                FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                retry = store.PutIfAbsentAsync("receipt.jpg", bytes, "image/jpeg", hash, CancellationToken.None);
+                await Task.Delay(100);
+                Assert.False(retry.IsCompleted);
+            }
+            Assert.False(await retry.WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.Equal(bytes, await File.ReadAllBytesAsync(Path.Combine(root, "private-receipts", "receipt.jpg")));
+            Assert.Single(Directory.GetFiles(Path.Combine(root, "private-receipts")));
+        }
+        finally { DeleteRoot(root); }
+    }
+
+    [Fact]
+    public async Task Local_idempotent_write_stops_retrying_when_cancelled_and_removes_staging_file()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var root = NewRoot();
+        try
+        {
+            var store = CreateStore(root);
+            byte[] bytes = [1, 2, 3];
+            var hash = Convert.ToHexString(SHA256.HashData(bytes));
+            await store.PutIfAbsentAsync("receipt.jpg", bytes, "image/jpeg", hash, CancellationToken.None);
+            await using (var held = new FileStream(Path.Combine(root, "private-receipts", "receipt.jpg"),
+                FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                using var cancellation = new CancellationTokenSource();
+                var retry = store.PutIfAbsentAsync("receipt.jpg", bytes, "image/jpeg", hash, cancellation.Token);
+                await Task.Delay(75);
+                cancellation.Cancel();
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => retry);
+                Assert.Single(Directory.GetFiles(Path.Combine(root, "private-receipts")));
+            }
+            Assert.Equal(bytes, await File.ReadAllBytesAsync(Path.Combine(root, "private-receipts", "receipt.jpg")));
+        }
+        finally { DeleteRoot(root); }
+    }
+
+    [Fact]
+    public async Task Local_idempotent_write_fails_after_bounded_retries_when_file_stays_locked()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var root = NewRoot();
+        try
+        {
+            var store = CreateStore(root);
+            byte[] bytes = [1, 2, 3];
+            var hash = Convert.ToHexString(SHA256.HashData(bytes));
+            await store.PutIfAbsentAsync("receipt.jpg", bytes, "image/jpeg", hash, CancellationToken.None);
+            await using var held = new FileStream(Path.Combine(root, "private-receipts", "receipt.jpg"),
+                FileMode.Open, FileAccess.Read, FileShare.None);
+            await Assert.ThrowsAsync<IOException>(() => store.PutIfAbsentAsync(
+                "receipt.jpg", bytes, "image/jpeg", hash, CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.Single(Directory.GetFiles(Path.Combine(root, "private-receipts")));
+        }
+        finally { DeleteRoot(root); }
+    }
+
+    [Fact]
     public async Task Local_store_rejects_declared_hash_mismatch_before_creating_a_file()
     {
         var root = NewRoot();
