@@ -35,25 +35,26 @@ public sealed class ReceiptRetentionPurger(
         if (lockResult < 0)
         {
             await transaction.RollbackAsync(cancellationToken);
-            return 0;
+            throw new InvalidOperationException("Could not acquire the receipt retention cleanup lock.");
         }
 
         var now = await DatabaseUtcClock.ReadAsync(database, cancellationToken);
-        var finalizedStatuses = new[]
-        {
-            "MANUAL_REVIEW_ACCEPTED", "RETURNED_FOR_MORE_EVIDENCE",
-            "APPROVED_POLICY_EXCEPTION", "REJECTED_POLICY_EXCEPTION",
-            "FORWARDED_TO_AUTHORITY", "RETURNED_BY_MANAGER", "RETURNED_FOR_RETRY"
-        };
+        // Keep update locks until commit: an Undo loaded before expiry must not
+        // reset a selected final decision while its image is being removed.
         var expired = await database.ReimbursementRequests
-            .Where(request => request.RetentionExpiresAt != null && request.RetentionExpiresAt <= now &&
-                (request.ProcessingState == ProcessingStates.Completed ||
-                 request.ProcessingState == ProcessingStates.Failed) &&
-                ((request.ProcessingState == ProcessingStates.Completed && request.Status == "AUTO_APPROVE") ||
-                 (request.ManagerAnswer != null && request.ManagerDecisionAt != null &&
-                  finalizedStatuses.Contains(request.Status))))
-            .OrderBy(request => request.RetentionExpiresAt)
-            .Take(batchSize)
+            .FromSqlInterpolated($"""
+                SELECT TOP ({batchSize}) *
+                FROM [dbo].[ReimbursementRequests] WITH (UPDLOCK, HOLDLOCK)
+                WHERE [RetentionExpiresAt] IS NOT NULL AND [RetentionExpiresAt] <= {now}
+                  AND [ProcessingState] IN ('COMPLETED', 'FAILED')
+                  AND (([ProcessingState] = 'COMPLETED' AND [Status] = 'AUTO_APPROVE')
+                       OR ([ManagerAnswer] IS NOT NULL AND [ManagerDecisionAt] IS NOT NULL
+                           AND [Status] IN (
+                               'MANUAL_REVIEW_ACCEPTED', 'RETURNED_FOR_MORE_EVIDENCE',
+                               'APPROVED_POLICY_EXCEPTION', 'REJECTED_POLICY_EXCEPTION',
+                               'FORWARDED_TO_AUTHORITY', 'RETURNED_BY_MANAGER', 'RETURNED_FOR_RETRY')))
+                ORDER BY [RetentionExpiresAt], [Id]
+                """)
             .ToListAsync(cancellationToken);
 
         foreach (var request in expired)
@@ -75,8 +76,8 @@ public sealed class ReceiptRetentionPurger(
         catch (DbUpdateConcurrencyException)
         {
             await transaction.RollbackAsync(cancellationToken);
-            logger.LogInformation("Retention sweep skipped a request changed concurrently.");
-            return 0;
+            logger.LogWarning("Retention sweep rolled back because a request changed concurrently.");
+            throw;
         }
 
         return expired.Count;

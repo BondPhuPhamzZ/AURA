@@ -231,6 +231,133 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
+    public async Task Retention_startup_drains_multiple_batches_before_returning_and_preserves_open_work()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var store = new LocalReceiptFileStore(new TestEnvironment(root),
+                Microsoft.Extensions.Options.Options.Create(new ReceiptStorageOptions { Directory = "receipts" }));
+            var requests = Enumerable.Range(0, 5).Select(index => CreateRetentionRequest(
+                $"expired-batch-{index}", "AUTO_APPROVE", ProcessingStates.Completed,
+                null, DateTime.UtcNow.AddDays(-8), expired: true)).ToList();
+            requests.Add(CreateRetentionRequest("open-batch", "ESCALATE_FACT", ProcessingStates.Completed,
+                null, null, expired: true));
+            foreach (var request in requests)
+            {
+                byte[] bytes = [1, 2, 3];
+                request.FileSizeBytes = bytes.Length;
+                request.FileSha256 = Convert.ToHexString(SHA256.HashData(bytes));
+                await store.PutIfAbsentAsync(request.StoredFileName, bytes, "image/jpeg",
+                    request.FileSha256, CancellationToken.None);
+            }
+            await using (var seed = new AppDbContext(options))
+            {
+                seed.ReimbursementRequests.AddRange(requests);
+                seed.AuditLogs.AddRange(requests.Select(request => new AuditLog
+                {
+                    RequestId = request.Id, Action = "SYNTHETIC_TEST", Timestamp = DateTime.UtcNow
+                }));
+                await seed.SaveChangesAsync();
+            }
+            await using var services = new ServiceCollection()
+                .AddScoped(_ => new AppDbContext(options))
+                .AddSingleton<IReceiptFileStore>(store)
+                .AddSingleton<Microsoft.Extensions.Logging.ILogger<ReceiptRetentionPurger>>(
+                    NullLogger<ReceiptRetentionPurger>.Instance)
+                .AddScoped<ReceiptRetentionPurger>()
+                .BuildServiceProvider();
+            using var worker = new ReceiptRetentionCleanupWorker(
+                services.GetRequiredService<IServiceScopeFactory>(),
+                Microsoft.Extensions.Options.Options.Create(new ReceiptRetentionOptions
+                {
+                    Enabled = true, BatchSize = 2
+                }), NullLogger<ReceiptRetentionCleanupWorker>.Instance);
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            try
+            {
+                await worker.StartAsync(timeout.Token);
+                await using var verify = new AppDbContext(options);
+                Assert.Equal("open-batch", (await verify.ReimbursementRequests.SingleAsync()).Id);
+                Assert.Equal("open-batch", (await verify.AuditLogs.SingleAsync()).RequestId);
+                foreach (var request in requests)
+                {
+                    await using var image = await store.OpenReadAsync(request.StoredFileName, timeout.Token);
+                    Assert.Equal(request.Id == "open-batch", image is not null);
+                }
+            }
+            finally
+            {
+                await worker.StopAsync(CancellationToken.None);
+            }
+        });
+    }
+
+    [Fact]
+    public async Task Retention_selection_locks_final_decision_until_image_and_SQL_deletion_commit()
+    {
+        if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
+        await WithIsolatedDatabase(async (options, root) =>
+        {
+            var store = new LocalReceiptFileStore(new TestEnvironment(root),
+                Microsoft.Extensions.Options.Options.Create(new ReceiptStorageOptions { Directory = "receipts" }));
+            var request = CreateRetentionRequest("expired-race", "MANUAL_REVIEW_ACCEPTED",
+                ProcessingStates.Completed, true, DateTime.UtcNow.AddDays(-8), expired: true);
+            byte[] bytes = [1, 2, 3];
+            request.FileSha256 = Convert.ToHexString(SHA256.HashData(bytes));
+            request.FileSizeBytes = bytes.Length;
+            await store.PutIfAbsentAsync(request.StoredFileName, bytes, "image/jpeg",
+                request.FileSha256, CancellationToken.None);
+            await using (var seed = new AppDbContext(options))
+            {
+                seed.ReimbursementRequests.Add(request);
+                await seed.SaveChangesAsync();
+            }
+            // Simulate an action loaded before expiry but reaching SQL during the purge.
+            await using var staleAction = new AppDbContext(options);
+            var stale = await staleAction.ReimbursementRequests.SingleAsync();
+            stale.Status = "ESCALATE_FACT";
+            stale.ManagerAnswer = null;
+            stale.ManagerDecisionAt = null;
+            stale.RetentionExpiresAt = null;
+            var entered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var blockingStore = new BlockingDeleteReceiptFileStore(store, entered, release);
+            await using var purgeDatabase = new AppDbContext(options);
+            var purger = new ReceiptRetentionPurger(purgeDatabase, blockingStore,
+                NullLogger<ReceiptRetentionPurger>.Instance);
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var purge = purger.PurgeExpiredBatchAsync(2, timeout.Token);
+            Task<int>? staleSave = null;
+            try
+            {
+                await entered.Task.WaitAsync(timeout.Token);
+                await using (var competingDatabase = new AppDbContext(options))
+                {
+                    var competingPurger = new ReceiptRetentionPurger(competingDatabase, store,
+                        NullLogger<ReceiptRetentionPurger>.Instance);
+                    var lockFailure = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                        competingPurger.PurgeExpiredBatchAsync(2, timeout.Token));
+                    Assert.Contains("cleanup lock", lockFailure.Message, StringComparison.Ordinal);
+                }
+                staleSave = staleAction.SaveChangesAsync(timeout.Token);
+                await Task.Delay(250, timeout.Token);
+                Assert.False(staleSave.IsCompleted);
+            }
+            finally
+            {
+                release.TrySetResult(true);
+                Assert.Equal(1, await purge);
+                if (staleSave is not null)
+                    await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => staleSave);
+            }
+            await using var verify = new AppDbContext(options);
+            Assert.Empty(await verify.ReimbursementRequests.ToListAsync());
+            Assert.Null(await store.OpenReadAsync(request.StoredFileName, timeout.Token));
+        });
+    }
+
+    [Fact]
     public async Task Enabled_retention_rejects_manager_undo_after_the_record_deadline()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
@@ -556,7 +683,7 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
     }
 
     [Fact]
-    public async Task Synthetic_database_and_receipt_backup_restore_consistent_pending_job_and_image()
+    public async Task Synthetic_database_and_receipt_backup_restore_preserves_pending_job_and_original_retention_deadline()
     {
         if (Environment.GetEnvironmentVariable("AURA_RUN_LOCALDB_INTEGRATION") != "1") return;
         await WithIsolatedDatabase(async (options, root) =>
@@ -568,6 +695,19 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             var receiptBackupPath = Path.Combine(receiptBackupDirectory, "synthetic.jpg");
             File.Copy(liveReceiptPath, receiptBackupPath);
             await using var source = new AppDbContext(options);
+            var expired = CreateRetentionRequest("expired-restore", "AUTO_APPROVE",
+                ProcessingStates.Completed, null, DateTime.UtcNow.AddDays(-8), expired: true);
+            byte[] expiredBytes = [4, 5, 6];
+            expired.FileSizeBytes = expiredBytes.Length;
+            expired.FileSha256 = Convert.ToHexString(SHA256.HashData(expiredBytes));
+            await File.WriteAllBytesAsync(Path.Combine(root, "receipts", expired.StoredFileName), expiredBytes);
+            File.Copy(Path.Combine(root, "receipts", expired.StoredFileName),
+                Path.Combine(receiptBackupDirectory, expired.StoredFileName));
+            source.ReimbursementRequests.Add(expired);
+            source.AuditLogs.Add(new AuditLog
+            {
+                RequestId = expired.Id, Action = "SYNTHETIC_EXPIRED_MARKER"
+            });
             source.AuditLogs.Add(new AuditLog
             {
                 RequestId = id,
@@ -596,6 +736,13 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
                     backup.CommandTimeout = 60;
                     backup.Parameters.AddWithValue("@path", backupPath);
                     await backup.ExecuteNonQueryAsync();
+                }
+
+                await using (var verifyBackup = master.CreateCommand())
+                {
+                    verifyBackup.CommandText = "RESTORE VERIFYONLY FROM DISK = @path WITH CHECKSUM;";
+                    verifyBackup.Parameters.AddWithValue("@path", backupPath);
+                    await verifyBackup.ExecuteNonQueryAsync();
                 }
 
                 string? dataLogical = null;
@@ -650,9 +797,25 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
                 Assert.Equal(restoredJob.FileSizeBytes, restoredReceiptBytes.LongLength);
                 Assert.Equal(restoredJob.FileSha256,
                     Convert.ToHexString(SHA256.HashData(restoredReceiptBytes)));
-                Assert.Equal(1, await restored.ReimbursementRequests.CountAsync());
+                Assert.Equal(2, await restored.ReimbursementRequests.CountAsync());
                 Assert.Equal(1, await restored.AuditLogs.CountAsync(x =>
                     x.RequestId == id && x.Action == "SYNTHETIC_BACKUP_MARKER"));
+                var restoredExpired = await restored.ReimbursementRequests.SingleAsync(x => x.Id == expired.Id);
+                Assert.Equal(expired.RetentionExpiresAt, restoredExpired.RetentionExpiresAt);
+                File.Copy(Path.Combine(receiptBackupDirectory, expired.StoredFileName),
+                    Path.Combine(root, "restored-receipts", expired.StoredFileName));
+                var restoredStore = new LocalReceiptFileStore(new TestEnvironment(root),
+                    Microsoft.Extensions.Options.Options.Create(new ReceiptStorageOptions
+                    {
+                        Directory = "restored-receipts"
+                    }));
+                var purger = new ReceiptRetentionPurger(restored, restoredStore,
+                    NullLogger<ReceiptRetentionPurger>.Instance);
+                Assert.Equal(1, await purger.PurgeExpiredBatchAsync(25, CancellationToken.None));
+                Assert.Equal(id, (await restored.ReimbursementRequests.AsNoTracking().SingleAsync()).Id);
+                Assert.False(await restored.AuditLogs.AnyAsync(x => x.RequestId == expired.Id));
+                Assert.False(File.Exists(Path.Combine(root, "restored-receipts", expired.StoredFileName)));
+                Assert.True(File.Exists(restoredReceiptPath));
             }
             finally
             {
@@ -1156,6 +1319,27 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
             ManagerDecisionAt = managerAnswer is null ? null : finalizedAt,
             RetentionExpiresAt = expired ? now.AddDays(-1) : now.AddDays(1)
         };
+    }
+
+    private sealed class BlockingDeleteReceiptFileStore(IReceiptFileStore inner,
+        TaskCompletionSource<bool> entered, TaskCompletionSource<bool> release) : IReceiptFileStore
+    {
+        public Task<bool> PutIfAbsentAsync(string storedFileName, ReadOnlyMemory<byte> bytes,
+            string contentType, string sha256, CancellationToken cancellationToken) =>
+            inner.PutIfAbsentAsync(storedFileName, bytes, contentType, sha256, cancellationToken);
+
+        public Task<Stream?> OpenReadAsync(string storedFileName, CancellationToken cancellationToken) =>
+            inner.OpenReadAsync(storedFileName, cancellationToken);
+
+        public async Task DeleteAsync(string storedFileName, CancellationToken cancellationToken)
+        {
+            entered.TrySetResult(true);
+            await release.Task.WaitAsync(cancellationToken);
+            await inner.DeleteAsync(storedFileName, cancellationToken);
+        }
+
+        public Task<bool> IsAvailableAsync(CancellationToken cancellationToken) =>
+            inner.IsAvailableAsync(cancellationToken);
     }
 
     private sealed class DeleteThenFailOnceReceiptFileStore(IReceiptFileStore inner) : IReceiptFileStore

@@ -12,8 +12,8 @@ public sealed class ReceiptRetentionCleanupWorker(
 
     public override async Task StartAsync(CancellationToken cancellationToken)
     {
-        // Host startup runs migrations before hosted services. Perform one sweep before
-        // the web host begins accepting requests, so overdue records are not served first.
+        // Drain every batch before accepting requests, including backlog accumulated
+        // while the local machine was off. Each batch gets a fresh DbContext.
         await RunSweepAsync(cancellationToken, failStartup: true);
         await base.StartAsync(cancellationToken);
     }
@@ -41,11 +41,16 @@ public sealed class ReceiptRetentionCleanupWorker(
 
         try
         {
-            await using var scope = scopeFactory.CreateAsyncScope();
-            var purger = scope.ServiceProvider.GetRequiredService<ReceiptRetentionPurger>();
-            var deleted = await purger.PurgeExpiredBatchAsync(_options.BatchSize, cancellationToken);
-            if (deleted > 0)
-                logger.LogInformation("Receipt retention sweep deleted {DeletedCount} expired request(s).", deleted);
+            int deleted;
+            do
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await using var scope = scopeFactory.CreateAsyncScope();
+                var purger = scope.ServiceProvider.GetRequiredService<ReceiptRetentionPurger>();
+                deleted = await purger.PurgeExpiredBatchAsync(_options.BatchSize, cancellationToken);
+                if (deleted > 0)
+                    logger.LogInformation("Receipt retention sweep deleted {DeletedCount} expired request(s).", deleted);
+            } while (deleted == _options.BatchSize);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
