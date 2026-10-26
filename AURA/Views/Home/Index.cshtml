@@ -74,6 +74,7 @@
                         </div>
                     </div>
                     <p class="intake-safety-note" role="note"><strong>Demo có giám sát:</strong> chỉ dùng chứng từ tổng hợp hoặc đã ẩn danh.</p>
+                    <p class="intake-safety-note" role="note">Có thể gửi ảnh tại đây. Muốn thử thư mục Drive Restricted, hãy gửi email xin quyền tới chủ dự án; luồng Drive hiện chỉ dành cho bộ ảnh synthetic local.</p>
                     <div class="upload-action-row">
                         <div class="ai-amount-note" role="note">
                             <strong>AURA tự đọc tổng tiền.</strong>
@@ -143,7 +144,7 @@
         </div>
         
         <p class="table-caption">
-            Ca tự động duyệt được ghi thẳng vào lịch sử. Ca cần xử lý được giữ tại đây cho tới khi nhân viên chuyển tiếp. <strong>Kỳ vọng/Đối chiếu</strong> chỉ dùng trong lượt Verify có nhãn sẵn.
+            Hồ sơ Drive test mới hiện trạng thái chờ, đang xử lý và kết quả tại đây; lịch sử giữ audit. Ca cần xử lý được giữ tới khi chuyển tiếp. <strong>Kỳ vọng/Đối chiếu</strong> chỉ dùng trong lượt Verify có nhãn sẵn.
         </p>
         <div class="table-responsive-aura table-scroll-area">
             <table class="table-aura results-table responsive-cards">
@@ -254,7 +255,7 @@
     const maxUploadMegabytes = @ReceiptStorage.Value.MaxFileSizeMb;
     const maxBatchFiles = 10;
     const resultsBody = document.getElementById('resultsBody');
-    const emptyResultsRow = '<tr><td colspan="8" class="text-center empty-state">Không có hồ sơ nào đang chờ chuyển tiếp. Ca tự động duyệt đã được ghi thẳng vào lịch sử.</td></tr>';
+    const emptyResultsRow = '<tr><td colspan="8" class="text-center empty-state">Chưa có hồ sơ mới hoặc hồ sơ chờ chuyển tiếp. Kết quả đã lưu ở lịch sử.</td></tr>';
     let currentAnalysisItems = [];
     let processingPlaceholderRows = 0;
     let selectedFactsCaseId = null;

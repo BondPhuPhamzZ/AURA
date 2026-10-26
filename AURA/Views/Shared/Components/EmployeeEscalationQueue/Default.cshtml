@@ -6,13 +6,23 @@
 }
 else if (!Model.Any())
 {
-    <tr><td colspan="8" class="text-center empty-state">Không có hồ sơ nào đang chờ chuyển tiếp. Ca tự động duyệt đã được ghi thẳng vào lịch sử.</td></tr>
+    <tr><td colspan="8" class="text-center empty-state">Chưa có hồ sơ mới hoặc hồ sơ chờ chuyển tiếp. Kết quả đã lưu ở lịch sử.</td></tr>
 }
 else
 {
     @foreach (var item in Model)
     {
-        <tr data-case-id="@item.Id" data-can-forward="true" data-row-source="persisted-escalation">
+        var isDrive = item.SubmitterCode == "DRIVE-SANDBOX";
+        var isWorking = item.ProcessingState is AURA.Models.ProcessingStates.Pending or AURA.Models.ProcessingStates.Processing;
+        var canForward = !isWorking && AURA.Services.PolicyDecisionEngine.IsEscalation(item.Status);
+        var badge = isWorking ? "bg-secondary" : item.ProcessingState == AURA.Models.ProcessingStates.Failed
+            ? "bg-danger" : item.Status == "AUTO_APPROVE" ? "bg-success" : "bg-warning text-dark";
+        var displayStatus = isWorking ? item.ProcessingState : item.Status;
+        var reason = isWorking ? (item.ProcessingState == AURA.Models.ProcessingStates.Pending
+            ? "Đã lưu SQL, đang chờ lượt AI." : "AI đang xử lý; kết quả sẽ tự cập nhật.") :
+            item.AiReasoning;
+        <tr data-case-id="@item.Id" data-can-forward="@(canForward ? "true" : "false")"
+            data-row-source="@(isDrive ? "persisted-drive" : "persisted-escalation")">
             <td data-label="Mã hồ sơ" class="cell-code">@item.Id[..Math.Min(8, item.Id.Length)]</td>
             <td data-label="Ảnh">
                 <a class="receipt-preview-link" href="@item.ImageUrl" target="_blank" rel="noopener">
@@ -20,17 +30,27 @@ else
                     <span>@item.OriginalFileName</span>
                 </a>
             </td>
-            <td data-label="Kỳ vọng"><span class="text-muted">Không áp dụng</span></td>
-            <td data-label="Kết quả"><span class="badge bg-warning text-dark">@item.Status</span></td>
+            <td data-label="Kỳ vọng"><span class="text-muted">@(isDrive ? "Drive test" : "Không áp dụng")</span></td>
+            <td data-label="Kết quả">
+                <span class="badge @badge">@displayStatus</span>
+                @if (item.DuplicateDetected)
+                {
+                    <small class="d-block text-warning">Trùng nội dung ảnh đã nhận</small>
+                }
+            </td>
             <td data-label="Đối chiếu"><span class="badge bg-secondary">KHÔNG ÁP DỤNG</span></td>
             <td data-label="Lý do và câu hỏi" class="cell-reason">
-                <strong>@item.AiReasoning</strong>
-                <small>@AURA.Services.EscalationWorkflow.EmployeeHandoffPrompt</small>
+                <strong>@reason</strong>
+                @if (canForward) { <small>@AURA.Services.EscalationWorkflow.EmployeeHandoffPrompt</small> }
             </td>
-            <td data-label="Độ trễ" class="cell-number">@item.ProcessingLatencyMs ms</td>
+            <td data-label="Độ trễ" class="cell-number">@(isWorking ? "—" : $"{item.ProcessingLatencyMs} ms")</td>
             <td data-label="Thao tác" class="cell-actions">
-                <button type="button" class="button-primary button-compact"
-                        onclick="forwardToManager('@item.Id', this)">Chuyển tiếp</button>
+                @if (canForward)
+                {
+                    <button type="button" class="button-primary button-compact"
+                            onclick="forwardToManager('@item.Id', this)">Chuyển tiếp</button>
+                }
+                else { <span class="text-muted">@(isWorking ? "Đang chạy" : "Đã lưu")</span> }
             </td>
         </tr>
     }
