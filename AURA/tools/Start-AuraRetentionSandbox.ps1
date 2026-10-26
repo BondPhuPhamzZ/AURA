@@ -1,7 +1,6 @@
 #requires -Version 5.1
 [CmdletBinding()]
 param(
-    [ValidateRange(1024, 65535)][int]$Port = 5098,
     [ValidatePattern('^AURA_RetentionSandbox_[0-9]{8}$')]
     [string]$DatabaseName = ('AURA_RetentionSandbox_' + (Get-Date -Format 'yyyyMMdd')),
     [switch]$PrepareOnly,
@@ -11,9 +10,23 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$activeProfilePath = Join-Path $projectRoot '.tmp\retention-sandbox\active.json'
+if (Test-Path -LiteralPath $activeProfilePath) {
+    $existingProfile = Get-Content -LiteralPath $activeProfilePath -Raw | ConvertFrom-Json
+    if (-not $PSBoundParameters.ContainsKey('DatabaseName')) {
+        $existingConnection = [string]$existingProfile.ConnectionStrings.DefaultConnection
+        if ($existingConnection -notmatch '(?:^|;)Database=(AURA_RetentionSandbox_[0-9]{8})(?:;|$)') {
+            throw 'Existing local sandbox profile has an invalid database name.'
+        }
+        $DatabaseName = $Matches[1]
+    }
+    if (-not $PSBoundParameters.ContainsKey('EnableSyntheticDrive')) {
+        $EnableSyntheticDrive = [bool]$existingProfile.DriveSandbox.Enabled
+    }
+}
 $receiptRoot = Join-Path $projectRoot ('.tmp\retention-sandbox\' + $DatabaseName + '\receipts')
 $approvalPath = Join-Path (Split-Path -Parent $receiptRoot) 'approved-synthetic-sha256.json'
-$url = 'http://127.0.0.1:' + $Port
+$url = 'http://127.0.0.1:5000'
 $overrides = @{
     ASPNETCORE_ENVIRONMENT = 'Development'
     AllowedHosts = '127.0.0.1;localhost'
@@ -32,12 +45,17 @@ $overrides = @{
     Vision__MaxConcurrentRequests = '1'
     Vision__UseSqlDistributedGate = 'false'
     OpenRouter__DenyProviderDataCollection = 'true'
+    OpenRouter__RequireZeroDataRetention = 'true'
+    OpenRouter__Model = 'qwen/qwen3.8-27b'
+    Vision__Provider = 'OpenRouter'
     ExternalImagePrivacy__Mode = 'ApprovedImagesOnly'
     ExternalImagePrivacy__ApprovedHashesFile = $approvalPath
 }
 $previous = @{}
 $originalLocation = Get-Location
 try {
+    $previous['AURA_LOCAL_SANDBOX'] = [Environment]::GetEnvironmentVariable('AURA_LOCAL_SANDBOX', 'Process')
+    [Environment]::SetEnvironmentVariable('AURA_LOCAL_SANDBOX', $null, 'Process')
     foreach ($name in $overrides.Keys) {
         $previous[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
         [Environment]::SetEnvironmentVariable($name, $overrides[$name], 'Process')
@@ -88,7 +106,7 @@ try {
     }
     ConvertTo-Json -InputObject @($approved | Sort-Object) | Set-Content -LiteralPath $approvalPath -Encoding UTF8
     Write-Output ('Synthetic retention sandbox: ' + $DatabaseName + '; URL=' + $url)
-    Write-Output 'Use synthetic receipts only. Inference uses the provider/model configured in this process and User Secrets.'
+    Write-Output 'Use synthetic receipts only. This profile pins Qwen3.8-27B with a Strict ZDR routing request; User Secrets supplies the API key.'
     if ($EnableSyntheticDrive) {
         Write-Output 'Read-only Drive is enabled for the configured synthetic test folder; exact-image egress approval remains enforced.'
     }
@@ -97,7 +115,31 @@ try {
     # Always build this exact configuration before using --no-build with EF/run.
     & dotnet ef database update --configuration Release --no-build
     if ($LASTEXITCODE -ne 0) { throw 'Sandbox database preparation failed.' }
+    # Visual Studio F5 and this launcher read the same ignored configuration.
+    # The API key, Drive folder ID and JSON credential remain outside this file.
+    $profile = [ordered]@{
+        AllowedHosts = $overrides.AllowedHosts
+        ConnectionStrings = @{ DefaultConnection = $overrides.ConnectionStrings__DefaultConnection }
+        Database = @{ ApplyMigrationsOnStartup = $false }
+        ReceiptStorage = @{ Provider = 'LocalFileSystem'; Directory = $receiptRoot }
+        DataRetention = @{ Enabled = $true; BatchSize = 25; SweepIntervalMinutes = 5 }
+        DriveSandbox = @{ Enabled = [bool]$EnableSyntheticDrive;
+            RequireMalwareScanner = -not [bool]$EnableSyntheticDrive }
+        Verify = @{ Enabled = $false }
+        Vision = @{ Provider = 'OpenRouter'; FallbackEnabled = $false;
+            MaxConcurrentRequests = 1; UseSqlDistributedGate = $false }
+        OpenRouter = @{ Model = 'qwen/qwen3.8-27b'; RequireZeroDataRetention = $true;
+            DenyProviderDataCollection = $true }
+        ExternalImagePrivacy = @{ Mode = 'ApprovedImagesOnly'; ApprovedHashesFile = $approvalPath }
+    }
+    $activeDirectory = Split-Path -Parent $activeProfilePath
+    New-Item -ItemType Directory -Path $activeDirectory -Force | Out-Null
+    $temporaryProfilePath = $activeProfilePath + '.new'
+    ConvertTo-Json -InputObject $profile -Depth 6 | Set-Content -LiteralPath $temporaryProfilePath -Encoding UTF8
+    Move-Item -LiteralPath $temporaryProfilePath -Destination $activeProfilePath -Force
+    Write-Output ('Visual Studio AURA and launcher share ' + $url + ' and database ' + $DatabaseName + '.')
     if ($PrepareOnly) { return }
+    [Environment]::SetEnvironmentVariable('AURA_LOCAL_SANDBOX', '1', 'Process')
     & dotnet run --project AURA.csproj --configuration Release --no-build --no-launch-profile --urls $url
     if ($LASTEXITCODE -ne 0) { throw 'Sandbox host stopped with an error.' }
 }

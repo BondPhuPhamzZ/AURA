@@ -14,6 +14,18 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// The IDE and PowerShell launcher share one ignored, prepared sandbox profile.
+// Fail before starting workers if it is absent; never fall back to AuraDb.
+if (string.Equals(Environment.GetEnvironmentVariable("AURA_LOCAL_SANDBOX"), "1", StringComparison.Ordinal))
+{
+    if (!builder.Environment.IsDevelopment())
+        throw new InvalidOperationException("The local synthetic profile requires Development.");
+    var profilePath = Path.Combine(builder.Environment.ContentRootPath, ".tmp", "retention-sandbox", "active.json");
+    if (!File.Exists(profilePath))
+        throw new InvalidOperationException("Local synthetic profile is missing. Run tools/Start-AuraRetentionSandbox.ps1 -PrepareOnly first.");
+    builder.Configuration.AddJsonFile(profilePath, optional: false, reloadOnChange: false);
+}
+
 // Keep logging portable across Windows development, containers and cloud hosts.
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
