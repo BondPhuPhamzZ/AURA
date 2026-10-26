@@ -1794,3 +1794,7 @@ main {
     .dashboard-metrics > div:nth-child(even) { border-right: 0; }
     .dashboard-metrics > div:nth-last-child(-n+2) { border-bottom: 0; }
 }
+/* Read-only refresh failure keeps the last confirmed rows available. */
+.workflow-sync-notice:not([hidden]) { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.workflow-sync-notice[hidden] { display: none; }
+.workflow-sync-notice > span { flex: 1 1 300px; }

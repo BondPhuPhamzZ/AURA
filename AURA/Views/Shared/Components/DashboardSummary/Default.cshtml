@@ -11,7 +11,7 @@
                     <label for="dashboardPeriod">Kỳ báo cáo</label>
                     <input id="dashboardPeriod" name="dashboardPeriod" type="month"
                            value="@($"{Model.SelectedYear:0000}-{Model.SelectedMonth:00}")"
-                           min="2000-01" max="2100-12" onchange="this.form.submit()" />
+                           min="2000-01" max="2100-12" />
                 </form>
             }
         </div>
@@ -33,7 +33,7 @@
 
     @if (!Model.IsAvailable)
     {
-        <div class="dashboard-error-state" role="alert">
+        <div class="dashboard-error-state" role="alert" data-fragment-error>
             <strong>Dữ liệu tổng quan tạm thời không khả dụng.</strong>
             <span>@(ViewData["LoadError"] as string ?? "Hãy kiểm tra kết nối cơ sở dữ liệu rồi tải lại.")</span>
             <span>Không dùng các giá trị 0 thay cho dữ liệu chưa tải được.</span>

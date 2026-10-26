@@ -4,7 +4,7 @@
     <h4 class="mb-4 form-header">Danh sách cần sếp duyệt</h4>
     @if (ViewData["LoadError"] is string loadError)
     {
-        <div class="alert alert-danger feature-card" style="padding: 16px;">@loadError</div>
+        <div class="alert alert-danger feature-card" style="padding: 16px;" data-fragment-error>@loadError</div>
     }
     else
     {

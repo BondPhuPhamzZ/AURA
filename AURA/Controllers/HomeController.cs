@@ -26,15 +26,11 @@ public class HomeController : Controller
         };
 
         ViewData["InitialTab"] = initialTab;
-        if (!string.IsNullOrWhiteSpace(dashboardPeriod))
+        var period = ParseDashboardPeriod(dashboardPeriod);
+        if (period.Year is not null)
         {
-            var parts = dashboardPeriod.Split('-', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length == 2 && int.TryParse(parts[0], out var year) &&
-                int.TryParse(parts[1], out var month) && year is >= 2000 and <= 2100 && month is >= 1 and <= 12)
-            {
-                ViewData["DashboardYear"] = year;
-                ViewData["DashboardMonth"] = month;
-            }
+            ViewData["DashboardYear"] = period.Year;
+            ViewData["DashboardMonth"] = period.Month;
         }
         return View();
     }
@@ -55,6 +51,22 @@ public class HomeController : Controller
     [HttpGet]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public IActionResult AuditTrail() => ViewComponent("AuditLogQueue");
+
+    [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public IActionResult DashboardSummary(string? dashboardPeriod = null)
+    {
+        var period = ParseDashboardPeriod(dashboardPeriod);
+        return ViewComponent("DashboardSummary", new { year = period.Year, month = period.Month });
+    }
+
+    private static (int? Year, int? Month) ParseDashboardPeriod(string? value)
+    {
+        var parts = value?.Split('-', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        return parts is { Length: 2 } && int.TryParse(parts[0], out var year) &&
+            int.TryParse(parts[1], out var month) && year is >= 2000 and <= 2100 && month is >= 1 and <= 12
+            ? (year, month) : (null, null);
+    }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()

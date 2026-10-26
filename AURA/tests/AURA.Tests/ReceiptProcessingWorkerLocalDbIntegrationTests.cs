@@ -1133,15 +1133,17 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
 
             await using (var firstDatabase = new AppDbContext(options))
             {
-                var firstResult = await CreateReviewerController(firstDatabase)
-                    .EscalateAction(id, "YES");
+                var controller = CreateReviewerController(firstDatabase);
+                var firstResult = await controller.EscalateAction(id, "YES");
+                Assert.Empty(controller.TempData);
                 Assert.IsType<JsonResult>(firstResult);
             }
 
             await using (var retryDatabase = new AppDbContext(options))
             {
-                var retryResult = await CreateReviewerController(retryDatabase)
-                    .EscalateAction(id, "YES");
+                var controller = CreateReviewerController(retryDatabase);
+                var retryResult = await controller.EscalateAction(id, "YES");
+                Assert.Empty(controller.TempData);
                 var payload = ReadJsonResult(retryResult);
                 Assert.True(payload.GetProperty("alreadyApplied").GetBoolean());
                 Assert.Equal("APPROVED_POLICY_EXCEPTION", payload.GetProperty("status").GetString());
@@ -1179,15 +1181,17 @@ public sealed class ReceiptProcessingWorkerLocalDbIntegrationTests
 
             await using (var firstDatabase = new AppDbContext(options))
             {
-                var firstResult = await CreateReviewerController(firstDatabase)
-                    .EscalateAction(id, "UNDO");
+                var controller = CreateReviewerController(firstDatabase);
+                var firstResult = await controller.EscalateAction(id, "UNDO");
+                Assert.Empty(controller.TempData);
                 Assert.IsType<JsonResult>(firstResult);
             }
 
             await using (var retryDatabase = new AppDbContext(options))
             {
-                var retryResult = await CreateReviewerController(retryDatabase)
-                    .EscalateAction(id, "UNDO");
+                var controller = CreateReviewerController(retryDatabase);
+                var retryResult = await controller.EscalateAction(id, "UNDO");
+                Assert.Empty(controller.TempData);
                 var payload = ReadJsonResult(retryResult);
                 Assert.True(payload.GetProperty("alreadyApplied").GetBoolean());
                 Assert.Equal("ESCALATE_POLICY", payload.GetProperty("status").GetString());

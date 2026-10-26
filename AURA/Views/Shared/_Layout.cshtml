@@ -49,6 +49,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/workflow-refresh.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
     
     <script>
@@ -71,12 +72,14 @@
         }
 
         function navigateToTab(tabId) {
+            if (window.AuraWorkflow) {
+                window.AuraWorkflow.navigate(tabId);
+                return;
+            }
             const url = new URL(window.location.href);
             if (tabId === 'applicant') url.searchParams.delete('tab');
             else url.searchParams.set('tab', tabId);
-            // A full navigation intentionally rebuilds every workflow table from
-            // committed database state. This avoids stale fragments racing with
-            // AI, forwarding or manager-decision requests.
+            // Retain full navigation as a recovery path if fragment support fails.
             window.location.assign(url.pathname + url.search);
         }
 

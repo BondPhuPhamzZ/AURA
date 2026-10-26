@@ -2,7 +2,7 @@
 
 @if (ViewData["LoadError"] is string loadError)
 {
-    <tr><td colspan="8" class="text-danger text-center">@loadError</td></tr>
+    <tr data-fragment-error><td colspan="8" class="text-danger text-center">@loadError</td></tr>
 }
 else if (!Model.Any())
 {

@@ -75,14 +75,15 @@ namespace AURA.Controllers
                 {
                     return Conflict(new { error = "Hồ sơ vừa được cập nhật ở thao tác khác. Vui lòng tải lại trang." });
                 }
-                TempData["Success"] = $"Đã hoàn tác quyết định cho hồ sơ {id}.";
+                var undoMessage = $"Đã hoàn tác quyết định cho hồ sơ {id}.";
                 if (IsAjaxRequest())
                     return Json(new
                     {
-                        message = TempData["Success"]?.ToString(),
+                        message = undoMessage,
                         status = req.Status,
                         redirectUrl = Url.Action("Index", "Home", new { tab = "audit" }) ?? "/?tab=audit"
                     });
+                TempData["Success"] = undoMessage;
                 return RedirectToAction("Index", "Home", new { tab = "audit" });
             }
 
@@ -102,7 +103,6 @@ namespace AURA.Controllers
                 return Conflict(new { error = "Hồ sơ vừa được cập nhật ở thao tác khác. Vui lòng tải lại trang." });
             }
             
-            TempData["Success"] = outcome.Message;
             if (IsAjaxRequest())
                 return Json(new
                 {
@@ -110,6 +110,7 @@ namespace AURA.Controllers
                     status = outcome.Status,
                     redirectUrl = Url.Action("Index", "Home", new { tab = "reviewer" }) ?? "/?tab=reviewer"
                 });
+            TempData["Success"] = outcome.Message;
             return RedirectToAction("Index", "Home", new { tab = "reviewer" });
         }
 
@@ -121,18 +122,24 @@ namespace AURA.Controllers
             var message = answer
                 ? "Quyết định đồng ý của quản lý đã được ghi nhận trước đó."
                 : "Quyết định từ chối của quản lý đã được ghi nhận trước đó.";
-            TempData["Success"] = message;
             var redirectUrl = Url.Action("Index", "Home", new { tab = "reviewer" }) ?? "/?tab=reviewer";
-            if (!IsAjaxRequest()) return Redirect(redirectUrl);
+            if (!IsAjaxRequest())
+            {
+                TempData["Success"] = message;
+                return Redirect(redirectUrl);
+            }
             return Json(new { message, status = request.Status, alreadyApplied = true, redirectUrl });
         }
 
         private IActionResult UndoAlreadyApplied(AURA.Models.ReimbursementRequest request)
         {
             const string message = "Lượt hoàn tác này đã được ghi nhận trước đó.";
-            TempData["Success"] = message;
             var redirectUrl = Url.Action("Index", "Home", new { tab = "audit" }) ?? "/?tab=audit";
-            if (!IsAjaxRequest()) return Redirect(redirectUrl);
+            if (!IsAjaxRequest())
+            {
+                TempData["Success"] = message;
+                return Redirect(redirectUrl);
+            }
             return Json(new { message, status = request.Status, alreadyApplied = true, redirectUrl });
         }
 

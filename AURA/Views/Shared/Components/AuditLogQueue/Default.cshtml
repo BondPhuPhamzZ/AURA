@@ -34,7 +34,7 @@
 
     @if (ViewData["LoadError"] is string loadError)
     {
-        <div class="alert alert-danger feature-card" style="padding: 16px;">@loadError</div>
+        <div class="alert alert-danger feature-card" style="padding: 16px;" data-fragment-error>@loadError</div>
     }
     else if (Model == null || !Model.Any())
     {
@@ -72,7 +72,7 @@
                             .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                         var actionLabel = ActionLabel(entry.Log.Action);
                         var localTimestamp = AURA.Services.VietnamTime.FromUtc(entry.Log.Timestamp);
-                        <tr class="audit-data-row" data-audit-date="@localTimestamp.ToString("yyyy-MM-dd")">
+                        <tr class="audit-data-row" data-audit-id="@entry.Log.RequestId" data-audit-date="@localTimestamp.ToString("yyyy-MM-dd")">
                             <td data-label="Thời gian" class="audit-time-cell">
                                 <time datetime="@entry.Log.Timestamp.ToString("O")">
                                     <span>@localTimestamp.ToString("dd/MM/yyyy")</span>
@@ -171,45 +171,3 @@
         </div>
     }
 </div>
-
-<script>
-    window.initializeAuditFilter = () => {
-        const fromInput = document.getElementById('auditDateFrom');
-        const toInput = document.getElementById('auditDateTo');
-        const resetButton = document.getElementById('auditFilterReset');
-        const resultText = document.getElementById('auditFilterResult');
-        const emptyRow = document.getElementById('auditNoFilterResults');
-        const rows = Array.from(document.querySelectorAll('.audit-data-row'));
-
-        if (!fromInput || !toInput || !resetButton || !resultText || !emptyRow) return;
-
-        function applyAuditDateFilter() {
-            const from = fromInput.value;
-            const to = toInput.value;
-            let visibleCount = 0;
-
-            toInput.min = from;
-            fromInput.max = to;
-
-            rows.forEach(row => {
-                const date = row.dataset.auditDate || '';
-                const isVisible = (!from || date >= from) && (!to || date <= to);
-                row.hidden = !isVisible;
-                if (isVisible) visibleCount++;
-            });
-
-            emptyRow.hidden = visibleCount !== 0;
-            resultText.textContent = `${visibleCount}/${rows.length} bản ghi`;
-        }
-
-        fromInput.addEventListener('change', applyAuditDateFilter);
-        toInput.addEventListener('change', applyAuditDateFilter);
-        resetButton.addEventListener('click', () => {
-            fromInput.value = '';
-            toInput.value = '';
-            applyAuditDateFilter();
-        });
-        applyAuditDateFilter();
-    };
-    window.initializeAuditFilter();
-</script>

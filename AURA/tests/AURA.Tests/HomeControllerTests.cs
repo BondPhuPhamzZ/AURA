@@ -50,4 +50,22 @@ public sealed class HomeControllerTests
         Assert.False(controller.ViewData.ContainsKey("DashboardYear"));
         Assert.False(controller.ViewData.ContainsKey("DashboardMonth"));
     }
+
+    [Theory]
+    [InlineData("2026-09", 2026, 9)]
+    [InlineData("2000-01", 2000, 1)]
+    [InlineData("2100-12", 2100, 12)]
+    [InlineData("2026-13", null, null)]
+    [InlineData("1999-12", null, null)]
+    [InlineData(null, null, null)]
+    public void DashboardFragmentUsesTheSameValidatedPeriodAsTheFullPage(string? value, int? year, int? month)
+    {
+        var controller = new HomeController(NullLogger<HomeController>.Instance);
+        var result = Assert.IsType<ViewComponentResult>(controller.DashboardSummary(value));
+
+        Assert.Equal("DashboardSummary", result.ViewComponentName);
+        var args = new Microsoft.AspNetCore.Routing.RouteValueDictionary(result.Arguments);
+        Assert.Equal(year, args["year"]);
+        Assert.Equal(month, args["month"]);
+    }
 }

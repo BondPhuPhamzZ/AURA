@@ -19,6 +19,17 @@
 }
 
 <!-- Tab Applicant / Tester -->
+<div id="workflowRefreshConfig" hidden
+     data-applicant-url="@Url.Action("EmployeeEscalations", "Home")"
+     data-reviewer-url="@Url.Action("ReviewerQueue", "Home")"
+     data-audit-url="@Url.Action("AuditTrail", "Home")"
+     data-dashboard-url="@Url.Action("DashboardSummary", "Home")"></div>
+<div id="workflowSyncNotice" class="alert alert-warning workflow-sync-notice" hidden>
+    <span id="workflowSyncMessage" role="status" aria-live="polite"></span>
+    <button id="workflowRetryRefresh" type="button" class="button-ghost-sm">Thử cập nhật lại</button>
+    <a class="button-ghost-sm" href="" id="workflowFullRefresh">Tải lại trang</a>
+</div>
+<span id="workflowUpdateStatus" class="visually-hidden" role="status" aria-live="polite"></span>
 <div class="tab-content-pane feature-card @(initialTab == "applicant" ? "active" : null)" id="pane-applicant" style="padding: 24px; display: @applicantDisplay;">
     
     <!-- Hướng dẫn & Verify Harness (Top Section) -->
@@ -168,7 +179,7 @@
 
 <!-- Tab Dashboard -->
 <div class="tab-content-pane feature-card @(initialTab == "dashboard" ? "active" : null)" id="pane-dashboard" style="display: @dashboardDisplay;">
-    @await Component.InvokeAsync("DashboardSummary", new { year = dashboardYear, month = dashboardMonth })
+    <div id="dashboardSummaryHost">@await Component.InvokeAsync("DashboardSummary", new { year = dashboardYear, month = dashboardMonth })</div>
 </div>
 
 <style>
@@ -249,7 +260,6 @@
     let selectedFactsCaseId = null;
     let persistedEscalationRows = Array.from(resultsBody.querySelectorAll('tr[data-case-id]'))
         .map(row => ({ caseId: row.dataset.caseId, html: row.outerHTML }));
-    let queueRefreshInFlight = false;
     let analysisProgressStartedAt = null;
     let analysisProgressTimer = null;
     let localPreviewUrl = null;
@@ -590,6 +600,7 @@
 
         resultsBody.innerHTML = currentHtml + placeholderHtml + persistedHtml || emptyResultsRow;
         updatePendingEscalationSummary();
+        window.AuraWorkflow?.rendered();
     }
 
     function setCurrentAnalysisItems(items) {
@@ -609,22 +620,20 @@
     }
 
     async function refreshEmployeeEscalationQueue() {
-        if (queueRefreshInFlight) return;
-        queueRefreshInFlight = true;
-        try {
-            const response = await fetch('@Url.Action("EmployeeEscalations", "Home")', { cache: 'no-store' });
-            if (!response.ok) return;
-            const container = document.createElement('tbody');
-            container.innerHTML = await response.text();
-            if (container.querySelector('td.text-danger')) return;
-            persistedEscalationRows = Array.from(container.querySelectorAll('tr[data-case-id]'))
-                .map(row => ({ caseId: row.dataset.caseId, html: row.outerHTML }));
-            renderResultsTable();
-        } catch {
-            // A transient queue-refresh failure must not erase the last known rows.
-        } finally {
-            queueRefreshInFlight = false;
-        }
+        return window.AuraWorkflow?.refresh('applicant');
+    }
+
+    // A committed server fragment is authoritative; remove locally cached rows
+    // that were forwarded/decided elsewhere without discarding running uploads.
+    function applyEmployeeEscalationFragment(html) {
+        const container = document.createElement('tbody');
+        container.innerHTML = html;
+        persistedEscalationRows = Array.from(container.querySelectorAll('tr[data-case-id]'))
+            .map(row => ({ caseId: row.dataset.caseId, html: row.outerHTML }));
+        const pendingIds = new Set(persistedEscalationRows.map(row => row.caseId));
+        currentAnalysisItems = currentAnalysisItems.filter(item =>
+            !item.actual?.startsWith('ESCALATE_') || pendingIds.has(item.caseId));
+        renderResultsTable();
     }
 
     function beginAnalysisProgress(title, detail) {
@@ -687,6 +696,8 @@
                 payload = JSON.parse(rawBody);
             } catch {
                 if (!response.ok) {
+                    if (response.status === 409)
+                        throw new Error('Hồ sơ đã thay đổi ở thao tác khác. Đang đọc lại trạng thái từ máy chủ.');
                     throw new Error(`${context} thất bại (HTTP ${response.status}); máy chủ trả về phản hồi không đúng định dạng.`);
                 }
                 throw new Error(`${context} nhận được phản hồi JSON không hợp lệ từ máy chủ.`);
@@ -708,6 +719,7 @@
     }
 
     async function forwardToManager(caseId, button) {
+        if (!window.AuraWorkflow?.beginMutation()) return;
         button.disabled = true;
         const originalText = button.innerText;
         button.innerText = 'Đang chuyển...';
@@ -716,40 +728,38 @@
         formData.append('__RequestVerificationToken', document.querySelector('#uploadForm input[name="__RequestVerificationToken"]').value);
 
         try {
-            const response = await fetch('@Url.Action("ForwardToManager", "Applicant")', {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                body: formData
-            });
+            const response = await window.AuraWorkflow.post('@Url.Action("ForwardToManager", "Applicant")', formData);
             const data = await readJsonResponse(response, 'Chuyển tiếp hồ sơ');
             showToast(data.message, 'success');
-            window.location.assign(data.redirectUrl || '@Url.Action("Index", "Home", new { tab = "reviewer" })');
+            window.AuraWorkflow.confirmMutation();
         } catch (error) {
-            showToast('Không thể chuyển tiếp: ' + error.message, 'danger');
+            showToast('Chưa xác nhận được thao tác chuyển tiếp: ' + error.message, 'danger');
+        } finally {
             button.disabled = false;
             button.innerText = originalText;
+            await window.AuraWorkflow.endMutation();
         }
     }
 
     async function forwardAllToManager(button) {
         if (!confirm('Chuyển toàn bộ hồ sơ đang chờ đến quản lý?')) return;
+        if (!window.AuraWorkflow?.beginMutation()) return;
         button.disabled = true;
         const originalText = button.innerText;
         button.innerText = 'Đang chuyển...';
         const formData = new FormData();
         formData.append('__RequestVerificationToken', document.querySelector('#uploadForm input[name="__RequestVerificationToken"]').value);
         try {
-            const response = await fetch('@Url.Action("ForwardAllToManager", "Applicant")', {
-                method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: formData
-            });
+            const response = await window.AuraWorkflow.post('@Url.Action("ForwardAllToManager", "Applicant")', formData);
             const data = await readJsonResponse(response, 'Chuyển tiếp tất cả');
             showToast(data.message, 'success');
-            window.location.assign(data.redirectUrl || '@Url.Action("Index", "Home", new { tab = "reviewer" })');
+            window.AuraWorkflow.confirmMutation();
         } catch (error) {
             showToast('Không thể chuyển tiếp: ' + error.message, 'danger');
         } finally {
             button.disabled = false;
             button.innerText = originalText;
+            await window.AuraWorkflow.endMutation();
         }
     }
 
@@ -903,6 +913,7 @@
     async function pollReceiptStatus(statusUrl, preserveBatch = false) {
         if (!statusUrl) throw new Error('Máy chủ không trả về địa chỉ theo dõi hồ sơ.');
         for (let attempt = 0; attempt < 900; attempt++) {
+            await window.AuraWorkflow.whenApplicantVisible();
             const response = await fetch(statusUrl, { cache: 'no-store' });
             const item = await readJsonResponse(response, 'Theo dõi trạng thái AI');
             if (preserveBatch) upsertCurrentAnalysisItem(item);
@@ -1008,26 +1019,22 @@
         const form = event.target.closest('.js-workflow-form');
         if (!form) return;
         event.preventDefault();
+        if (!window.AuraWorkflow?.beginMutation()) return;
         const submitButton = event.submitter || form.querySelector('button[type="submit"]');
         if (submitButton) submitButton.disabled = true;
         try {
-            const response = await fetch(form.action, {
-                method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: new FormData(form)
-            });
+            const response = await window.AuraWorkflow.post(form.action, new FormData(form));
             const data = await readJsonResponse(response, 'Cập nhật quyết định');
             showToast(data.message || 'Đã cập nhật thành công.', 'success');
-            window.location.assign(data.redirectUrl || window.location.href);
+            window.AuraWorkflow.confirmMutation();
         } catch (error) {
-            showToast(error.message, 'danger');
+            showToast('Chưa xác nhận được thao tác: ' + error.message, 'danger');
+        } finally {
             if (submitButton) submitButton.disabled = false;
+            await window.AuraWorkflow.endMutation();
         }
     });
 
     renderResultsTable();
-    refreshEmployeeEscalationQueue();
-    setInterval(refreshEmployeeEscalationQueue, 5000);
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) refreshEmployeeEscalationQueue();
-    });
-    resumePendingReceipt();
+    document.addEventListener('aura:workflowready', resumePendingReceipt, { once: true });
 </script>

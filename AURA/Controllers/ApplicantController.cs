@@ -76,10 +76,12 @@ public sealed class ApplicantController : Controller
             }
         }
 
-        TempData["Success"] = $"Đã chuyển hồ sơ {request.Id[..8]} đến cửa sổ quản lý.";
         var redirectUrl = Url.Action("Index", "Home", new { tab = "reviewer" }) ?? "/?tab=reviewer";
         if (!string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["Success"] = $"Đã chuyển hồ sơ {request.Id[..8]} đến cửa sổ quản lý.";
             return Redirect(redirectUrl);
+        }
 
         return Json(new
         {
@@ -114,9 +116,6 @@ public sealed class ApplicantController : Controller
             return Conflict(new { error = "Danh sách hồ sơ vừa thay đổi. Vui lòng tải lại trang rồi thử lại." });
         }
 
-        TempData["Success"] = pending.Count == 0
-            ? "Không có hồ sơ mới cần chuyển tiếp."
-            : $"Đã chuyển tiếp {pending.Count} hồ sơ đến cửa sổ quản lý.";
         if (string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase))
         {
             var redirectUrl = Url.Action("Index", "Home", new { tab = pending.Count == 0 ? "applicant" : "reviewer" })
@@ -130,6 +129,9 @@ public sealed class ApplicantController : Controller
                 redirectUrl
             });
         }
+        TempData["Success"] = pending.Count == 0
+            ? "Không có hồ sơ mới cần chuyển tiếp."
+            : $"Đã chuyển tiếp {pending.Count} hồ sơ đến cửa sổ quản lý.";
         return RedirectToAction("Index", "Home", new { tab = pending.Count == 0 ? "applicant" : "reviewer" });
     }
 
