@@ -4,7 +4,8 @@ param(
     [ValidateRange(1024, 65535)][int]$Port = 5098,
     [ValidatePattern('^AURA_RetentionSandbox_[0-9]{8}$')]
     [string]$DatabaseName = ('AURA_RetentionSandbox_' + (Get-Date -Format 'yyyyMMdd')),
-    [switch]$PrepareOnly
+    [switch]$PrepareOnly,
+    [switch]$EnableSyntheticDrive
 )
 
 Set-StrictMode -Version Latest
@@ -24,7 +25,8 @@ $overrides = @{
     DataRetention__Enabled = 'true'
     DataRetention__BatchSize = '25'
     DataRetention__SweepIntervalMinutes = '5'
-    DriveSandbox__Enabled = 'false'
+    DriveSandbox__Enabled = ([string][bool]$EnableSyntheticDrive).ToLowerInvariant()
+    DriveSandbox__RequireMalwareScanner = ([string](-not [bool]$EnableSyntheticDrive)).ToLowerInvariant()
     Verify__Enabled = 'false'
     Vision__FallbackEnabled = 'false'
     Vision__MaxConcurrentRequests = '1'
@@ -87,6 +89,9 @@ try {
     ConvertTo-Json -InputObject @($approved | Sort-Object) | Set-Content -LiteralPath $approvalPath -Encoding UTF8
     Write-Output ('Synthetic retention sandbox: ' + $DatabaseName + '; URL=' + $url)
     Write-Output 'Use synthetic receipts only. Inference uses the provider/model configured in this process and User Secrets.'
+    if ($EnableSyntheticDrive) {
+        Write-Output 'Read-only Drive is enabled for the configured synthetic test folder; exact-image egress approval remains enforced.'
+    }
     & dotnet build AURA.csproj --configuration Release --no-restore
     if ($LASTEXITCODE -ne 0) { throw 'Sandbox build failed.' }
     # Always build this exact configuration before using --no-build with EF/run.
