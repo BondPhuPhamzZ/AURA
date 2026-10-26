@@ -1,5 +1,12 @@
 # AURA Test Matrix
 
+> **Checkpoint 26/10:** full Debug/Release 371/371 mỗi bản với LocalDB và
+> PowerShell integration bật. Bao phủ retention SQL/ảnh/audit, backup UTC PS5.1/7,
+> startup drain, concurrency/rollback và egress approval trước HTTP. V3.1 qua gate
+> trên `649885e`: 15/15 quyết định, 143/146 facts; Semantic R3-06 repair một lần
+> unresolved, giữ FACT. Đây là synthetic-only một host; không phải 371 hóa đơn
+> đúng, holdout độc lập hoặc kiểm chứng hosting. Các mốc dated dưới đây giữ nguyên.
+
 **Candidate verification 24/10/2026:** commit `0568b5a` passes full Debug and
 Release suites **333/333 each** with opt-in SQL LocalDB integration enabled.
 New regression coverage ensures Semantic repair cannot silently remove a valid

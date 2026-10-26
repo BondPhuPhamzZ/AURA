@@ -1,13 +1,19 @@
 # Tổng hợp bằng chứng đánh giá AURA
 
-**Mốc baseline nộp bài:** 14/10/2026. **Cập nhật trạng thái source:** 23/10/2026.
+**Mốc baseline nộp bài:** 14/10/2026. **Cập nhật trạng thái source:** 26/10/2026.
 
-**Mục đích:** tạo một chỉ mục công khai duy nhất cho các phép đo được dùng trong proposal, slide, Build Log, README và gói Demo Day. Source snapshot mới nhất được đối chiếu 24/10/2026.
+**Mục đích:** tạo một chỉ mục công khai duy nhất cho các phép đo được dùng trong proposal, slide, Build Log, README và gói Demo Day. Source snapshot mới nhất được đối chiếu 26/10/2026; artifact đã nộp vẫn là snapshot lịch sử.
 
 ## Evidence hậu cuộc thi, không thay thế baseline nộp bài
 
 | Phép kiểm | Kết quả | Không được suy ra |
 |---|---|---|
+| Synthetic-only local, xác minh 26/10 | Giữ DB cũ 438 hồ sơ/6 migration; sandbox riêng bật retention 7 ngày và exact-hash egress approval. Full Debug/Release 371/371 mỗi bản, LocalDB + PowerShell integration bật | Không phải bật retention dữ liệu lịch sử hoặc cho phép dữ liệu thật/pilot |
+| Restart transport, 26/10 | Smoke đầu lỗi DNS 11001, không facts/auto approval. Sửa phân loại network + 4 regression cases; smoke sau sửa `5143ab4` AUTO, facts 11/11, 7.578 ms, không lỗi/fallback | Không xóa ca lỗi hoặc gộp smoke thành benchmark; không suy ra mạng/provider luôn sẵn sàng |
+| Full v3.1 qua gate, `649885e` | 15/15 quyết định; 143/146 facts; 0 missed/over/provider/system error/fallback; P50/P95 5.139/32.739 ms; R3-06 repair 1 lần unresolved, giữ FACT | Known-data regression, không phải holdout/accuracy tổng quát; không claim latency cải thiện |
+| Privacy-role sau gate, 25/10 | 4/4 route, 7/7 category, 0 missed/over category và lỗi/fallback; exact facts 31/34 (hai identifier khác field, một tên merchant sai dấu), không Semantic issue nội tại | Không phải detector recall tổng quát; Semantic không sửa mọi lỗi OCR hoặc biết ground truth |
+| SQL/file/backup/retention synthetic | 15 ảnh size/hash khớp, audit terminal duy nhất; 5 AUTO deadline đúng 7 ngày, 10 escalation không có deadline. Backup 15 ca trước đó có checksum/VERIFYONLY, restore khớp SQL/facts/audit/deadline/ảnh; scheduled task xóa probe quá hạn, giữ backup còn hạn | Không phải restore hosting, snapshot nguyên tử khi đang ghi hoặc xóa đúng giờ khi máy tắt/logged out |
+| Pre-inference privacy boundary | Unknown bytes đi PRIVACY trước HTTP, không facts; manual acceptance không duyệt hash, dashboard/CSV giữ marker; invalid approval file chặn startup trước migration | Không phải PII detector/redactor, cam kết ZDR theo hợp đồng hoặc phê duyệt pháp lý |
 | Release test/build/EF 23/10 | 231/231 test pass; build 0 warning/error; EF không có pending model change | Production safety hoặc 231 hóa đơn đúng |
 | Drive local Development 5/20/100 | 100 file tạo đúng 100 job sau fix; 98 completed, 2 fail-safe; 30 nội dung ảnh khác nhau | 98% accuracy, 100 ca độc lập hoặc connector production |
 | 15 ảnh thật có consent | 15/15 hoàn tất qua manual localhost; 15 hash khác nhau | Accuracy, blind holdout hay Drive nhận ảnh thật |

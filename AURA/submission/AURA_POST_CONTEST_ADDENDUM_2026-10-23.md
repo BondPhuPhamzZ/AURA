@@ -2,10 +2,18 @@
 
 The proposal, one-page build log and five-slide deck in this folder document the **submitted contest candidate**. They are deliberately preserved, including their then-current 163-test and claimed-amount descriptions. They must not be read as specifications for the newer source or as evidence that the newer source has been published.
 
+**26 October verification:** final Debug/Release suites passed 371/371 each
+with LocalDB and PowerShell integration enabled. A restart smoke hit a DNS
+failure and stopped safely; after transport-error classification was corrected,
+one recovery smoke returned AUTO with 11/11 facts in 7,578 ms. Both runs remain
+in the evidence. This phase is explicitly synthetic-only, preserving the old
+database; it is not approval for real-data pilot or a hosting release.
+
 **25 October update:** the separate local synthetic sandbox passed 367/367 tests
 in each of Debug and Release with LocalDB and PowerShell integration enabled.
-The latest full synthetic regression matched 15/15 decisions and 143/146 facts;
-one later approved-image smoke passed after adding an exact-hash egress guard.
+The latest full synthetic regression through exact-hash approval on `649885e`
+matched 15/15 decisions and 143/146 facts; E2E P50/P95 was 5,139/32,739 ms.
+Semantic attempted one repair on an obscured total and safely retained FACT.
 Unknown image bytes were blocked before inference and preserved for manual
 review. Seven-day retention, SQL/image restore and scheduled managed-backup
 expiry were exercised on synthetic data; the old contest database was kept

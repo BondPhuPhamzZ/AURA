@@ -12,6 +12,84 @@ disabled. App-generated receipt files and temporary databases were removed
 after the runs. Raw results remain in git-ignored local `TestResults/` and
 `test_kit/results/` folders and are intentionally not committed.
 
+## Full regression through egress approval — 25/10, commit `649885e`
+
+### Restart transport incident — 26 October
+
+A later one-case startup smoke failed safely before any provider response:
+Windows DNS could not resolve `openrouter.ai` (`SocketException 11001`). The
+stored case was `FAILED / ESCALATE_SYSTEM_ERROR`, code `AI_UNEXPECTED_ERROR`,
+with no extracted facts or automatic approval. DNS resolved on the subsequent
+read-only check. Keep this failed run in
+`restart-smoke-20261026/`; it is not erased or counted as part of the successful
+25 October benchmark below.
+
+The OpenRouter adapter now catches `HttpRequestException`, logs only the
+`HttpRequestError` enum and returns the existing known failure
+`AI_TEMPORARILY_UNAVAILABLE`. It does not copy raw diagnostics to the exception
+or automatically resend a request of uncertain delivery. Caller cancellation
+still propagates; the approval gate, image bytes, prompt, schema and policy are
+unchanged. DNS, connection and TLS failures plus caller cancellation are covered
+by four added cases. No DNS settings, API keys or provider routes were changed.
+
+Focused transport/adapter/privacy/failure-policy checks passed 49/49; final
+Debug/Release passed **371/371 each**, with LocalDB and PowerShell integration
+enabled and no skips. After restart on `5143ab4`, approved R3-01 completed
+`AUTO_APPROVE`, 11/11 expected facts, 7,578 ms, no provider/system error or
+fallback. This one recovery smoke is in `post-transport-smoke-20261026/`; it does
+not erase the DNS failure or replace the 15-case known-data measurement.
+
+### Measured full run — 25 October
+
+After the narrow approval smoke, all 15 locked v3.1 synthetic cases ran through
+manual intake, a new isolated LocalDB/private directory, queue, approved-image
+gate, Qwen3.8-27B, Semantic and policy. Retention was enabled; Strict ZDR and
+provider-data denial were requested, fallback/Drive/Verify were off and AI
+concurrency was one. The user confirmed synthetic-only scope and preserving the
+legacy database; real-data/pilot and cloud scale remain deferred gates.
+
+| Measure | Before egress gate, `24b7b33` | Through gate, `649885e` |
+| --- | ---: | ---: |
+| Decision matches | 15/15 | 15/15 |
+| Exact expected facts | 143/146 | 143/146 |
+| Missed / over escalations | 0 / 0 | 0 / 0 |
+| Provider / system errors / fallback | 0 / 0 / 0 | 0 / 0 / 0 |
+| End-to-end P50 / P95, ms | 5,678 / 15,416 | 5,139 / 32,739 |
+| Semantic repair attempts / resolved / unresolved | 1 / 0 / 1 | 1 / 0 / 1 |
+
+The three exact-string mismatches now occur in `invoiceDateEvidence` for
+R3-03/R3-07/R3-11, each retaining the printed date label; normalized dates and
+decisions match. R3-06's obscured total remains unresolved after one Semantic
+repair and safely stays FACT. The slower P95 is not an improvement or an SLA.
+R3-07's provider HTTP response alone took about 29.1 seconds; the run made
+16 provider requests including the one repair, all HTTP 200. Telemetry recorded
+Modal upstreams, not Alibaba infrastructure. Provider-reported usage cost was
+about USD 0.0221541, not independently reconciled billing.
+
+Read-only SQL/file checks verified 15/15 image sizes/hashes, exactly one terminal
+audit per record, empty queue, five AUTO deadlines exactly seven days after
+completion and ten unresolved escalations without deadlines. The runtime also
+logged 15 EF MARS/savepoint warnings. Intake disposes the transaction on failure
+and SQL rollback/race tests exist; this is not a warning-free runtime claim.
+Raw results, UTF-8-safe independent field re-scoring, health, logs, isolation and
+SQL summaries remain Git-ignored under
+`test_kit/results/privacy-full-regression-20261025/`. Model-facing contract
+sections 1–4 were unchanged when correcting the excluded section 5 policy docs.
+
+This is a repeated known-data compatibility check, not a blind holdout,
+general privacy recall estimate, 100-file throughput test or production proof.
+
+The four approved privacy-role fixtures then ran once on the same isolated
+host: 4/4 routes, 7/7 labeled categories, zero category false negatives or false
+positives and no provider/system error or fallback. Exact expected facts were
+31/34: PRV-01/PRV-02 placed the printed identifier in `invoiceNumber` instead of
+`receiptNumber`, and PRV-04 read the fabricated merchant's `HƯ CẤU` as `HƯ CẦU`.
+Semantic found no internal contradiction requiring repair: an alternative
+traceable identifier was present, and it cannot compare OCR text against hidden
+ground truth. These mismatches remain counted; labels and prompt were not
+changed to improve the score. Privacy-role P50/P95 was 3,081/4,668 ms. Raw output
+is in the `privacy-role/` subfolder of the same ignored evidence directory.
+
 ## Egress approval boundary check — 25/10, commit `a54091a`
 
 The separate sandbox now opts into exact-byte approval before external HTTP.

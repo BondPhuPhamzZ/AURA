@@ -1,12 +1,19 @@
 # Checklist hiện hành và mốc publish lịch sử
 
-> **25/10 — NO-GO publish/scale bản source mới.** Checklist
+> **26/10 — NO-GO publish/scale bản source mới.** Checklist
 > publish phía dưới là mốc lịch sử 17–21/10, không còn là lệnh triển khai
 > candidate hiện tại. Xem [trạng thái hiện hành](CURRENT_PROJECT_STATUS.md)
 > và [đối chứng model](MODEL_ROUTE_COMPARISON_2026-10-24.md).
 
+**Giai đoạn local đã chốt:** người dùng chọn synthetic-only và giữ DB cũ.
+GO cho demo/kiểm thử synthetic một host theo launcher; NO-GO dữ liệu thật,
+hosting candidate mới và nhiều host. Những ô mở về cloud/pilot bên dưới là
+giai đoạn tương lai, không phải yêu cầu phải bật để chạy sandbox hiện tại.
+
 Việc cần làm trước khi mở lại gate publish/pilot:
 
+- [x] Xác minh chốt 26/10: full Debug/Release 371/371 mỗi bản, không skip; EF sạch. Smoke restart phát hiện lỗi DNS thật, được giữ trong evidence; adapter nay trả known provider failure thay vì mã unexpected, không lộ raw diagnostic/không tự gửi lại. Recovery smoke `5143ab4`: AUTO, 11/11 facts, 7.578 ms, không lỗi/fallback. Backup checksum/hash và DB cũ đối chiếu lại đều khớp.
+- [x] Full regression qua approval gate trên `649885e`, DB/ảnh mới cô lập: 15/15 quyết định, 143/146 facts, không missed/over/provider/system error/fallback. Semantic R3-06 repair một lần vẫn unresolved, giữ FACT; P50/P95 5.139/32.739 ms. 15 ảnh/hash và terminal audit khớp, queue rỗng; 5 AUTO deadline đúng 7 ngày, 10 escalation giữ chưa hết hạn. Có EF MARS/savepoint warning, không claim runtime không warning. Xem [model evidence](MODEL_ROUTE_COMPARISON_2026-10-24.md).
 - [x] Controlled synthetic egress: `ApprovedImagesOnly` kiểm hash snapshot trước HTTP ở OpenRouter/remote Ollama, không bypass qua fallback/redirect; invalid approval file chặn startup trước migration. Full Debug/Release cuối **367/367 mỗi bản**, cả hai integration flags bật; 0 HTTP trong worker/SQL/HITL test. 49 ảnh được duyệt bao phủ byte copies của bộ 100 file. HTTP ảnh thêm byte đi PRIVACY không facts/served provider; approved R3-01 smoke AUTO, 11/11 facts, 7.234 ms. HTTP manager tiếp nhận thủ công vẫn giữ privacy trong dashboard/CSV, không duyệt hash, deadline đúng 7 ngày. Host lạ nhận 400; health sandbox ok. DB cũ vẫn 438 hồ sơ/6 migration, không có cột retention. [Chi tiết](CURRENT_PROJECT_STATUS.md). Profile cũ vẫn `LegacyConfigured`; không đồng nghĩa được phép gửi dữ liệu thật.
 - [x] Rerun E2E `24b7b33`: 15/15 quyết định v3.1 synthetic, 143/146 facts, 0 lỗi provider/system/fallback; P50/P95 5.678/15.416 ms. Semantic R3-06 repair một lần, chưa giải quyết được tổng che và giữ FACT. Health trước/sau ok, queue rỗng. Đối chiếu [model report](MODEL_ROUTE_COMPARISON_2026-10-24.md); không nâng claim accuracy/privacy/SLA từ bộ đã biết.
 - [x] Backup/restore sandbox 15 ca có checksum/VERIFYONLY; toàn bộ SQL/facts/audit/deadline và 15 ảnh khớp. Task `AURA-SyntheticBackupRetention` đã đăng ký trên máy local: 5 phút + logon, quyền Limited/Interactive; LastTaskResult=0, probe synthetic hết hạn được xóa và bản chưa hết hạn được giữ. Task phụ thuộc user đăng nhập/máy chạy; app startup chỉ dọn SQL/ảnh, không chạy script backup.
@@ -20,7 +27,7 @@ Việc cần làm trước khi mở lại gate publish/pilot:
 - [x] Runbook backup file local: đoạn Robocopy + so sánh manifest (relative path/bytes/SHA-256) pass trên hai file synthetic trong thư mục tạm, gồm một file lồng thư mục; Robocopy exit 1 là thành công có file mới. Đây chỉ xác minh thao tác copy/hash; không phải backup dữ liệu thật hoặc SQL backup.
 - [x] Screen route Ollama local: một R3-01 synthetic qua loopback `127.0.0.1:11434`, không dùng provider ngoài; `qwen3-vl:4b-instruct` hoàn tất fail-safe thành `ESCALATE_FACT` sau 278.164 giây thay vì nhãn `AUTO_APPROVE`. Semantic bắt `bookingId` không nhất quán và chạy một repair. Đây là một ca screen, không phải benchmark; xác nhận thêm trade-off privacy/locality với latency/chất lượng cần benchmark target hardware trước khi cân nhắc đổi route.
 - [ ] Privacy cho dữ liệu thật vẫn mở: sandbox có gate hash trước egress, còn triage vẫn post-inference và không che ảnh đã được duyệt. Cần phạm vi/consent/route và minimization được chốt trước pilot; không dùng allowlist synthetic hay Strict ZDR request làm bằng chứng detector/redaction/pháp lý.
-- [x] Retention 7 ngày đã bật và kiểm thử trên synthetic sandbox; giữ tắt trên DB cũ theo lựa chọn người dùng. Deadline bền vững, startup catch-up nhiều batch, SQL lock lúc purge, khóa Undo sau hạn, backup metadata/hash/UTC và task local đã có evidence phía trên. Full Debug/Release hiện **349/349** với LocalDB + PowerShell integration. Cleanup best-effort khi app/task chạy; lỗi I/O/SQL, máy tắt hoặc user đăng xuất có thể trì hoãn.
+- [x] Retention 7 ngày đã bật và kiểm thử trên synthetic sandbox; giữ tắt trên DB cũ theo lựa chọn người dùng. Deadline bền vững, startup catch-up nhiều batch, SQL lock lúc purge, khóa Undo sau hạn, backup metadata/hash/UTC và task local đã có evidence phía trên. Full Debug/Release hiện **371/371** với LocalDB + PowerShell integration. Cleanup best-effort khi app/task chạy; lỗi I/O/SQL, máy tắt hoặc user đăng xuất có thể trì hoãn.
 - [x] Local backup/restore SQL + ảnh synthetic đã hoàn tất trên host hiện tại. Hosting restore, snapshot đồng bộ khi app vẫn ghi, RPO/RTO và multi-host là các gate tương lai nếu chọn scale/cloud.
 
 - [x] Sửa fail-safe source intake: xác nhận kết quả insert lỗi mơ hồ bằng truy vấn `AsNoTracking`, không nhận nhầm entity chưa commit còn trong EF change tracker thành hồ sơ bền vững. Focused intake tests 29/29 và full Debug/Release 300/300 (18 LocalDB integration cases bật).

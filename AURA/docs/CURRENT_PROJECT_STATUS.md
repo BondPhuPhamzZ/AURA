@@ -1,4 +1,52 @@
-# Trạng thái hiện hành AURA ngày 25/10/2026
+# Trạng thái hiện hành AURA ngày 26/10/2026
+
+> **Xác minh chốt 26/10:** sau khi dừng apphost để bỏ khóa file build, Release
+> build 0 warning/error; sau sửa transport, full Debug/Release **371/371 mỗi bản, không skip**,
+> LocalDB và PowerShell integration bật. Backup synthetic còn nguyên 16 file
+> SQL/ảnh khớp size/SHA-256, `RESTORE VERIFYONLY WITH CHECKSUM` pass, scheduled
+> task Ready/LastTaskResult=0. DB cũ vẫn 438 hồ sơ, 6 migration và chưa có cột
+> retention. Đây là xác minh lại vận hành; số đo model bên dưới giữ ngày 25/10,
+> không đổi timestamp của benchmark cũ.
+>
+> Smoke restart 26/10 phát hiện DNS `openrouter.ai` lỗi 11001, fail-safe thành
+> `FAILED / ESCALATE_SYSTEM_ERROR`, không facts/auto approval. DNS đã resolve ở
+> phép kiểm sau; lỗi gốc và evidence được giữ tại `restart-smoke-20261026/`.
+> Adapter nay phân loại `HttpRequestException` thành
+> `AI_TEMPORARILY_UNAVAILABLE`, chỉ log enum lỗi, không gửi lại tự động hoặc
+> đưa raw diagnostic vào thông báo; cancellation từ caller vẫn được giữ.
+> Sau sửa trên source `5143ab4`, restart smoke R3-01 chạy lại thành
+> `COMPLETED / AUTO_APPROVE`, facts 11/11, 7.578 ms, không lỗi/fallback.
+> Đây là một smoke phục hồi, không thay benchmark 15 ca hoặc xóa ca DNS thất bại.
+> Xem [đối chứng model](MODEL_ROUTE_COMPARISON_2026-10-24.md).
+
+> **Chốt giai đoạn local — synthetic-only, giữ DB cũ.** Người dùng đã xác nhận
+> phạm vi này; không mở dữ liệu thật/pilot, không migrate/purge DB lịch sử và chưa
+> publish candidate. Bốn bước local single-host, backup/restore synthetic,
+> regression sau policy/Semantic và retention/privacy gate đã có evidence trong
+> phạm vi đó. Cloud/shared storage, nhiều host và benchmark local VLM được hoãn.
+>
+> Full v3.1 qua gate mới trên source `649885e`, DB/thư mục ảnh mới riêng: **15/15
+> quyết định, 143/146 facts (97,95%)**, 0 missed/over/system/provider error hoặc
+> fallback. Sai khác là chuỗi `invoiceDateEvidence` thêm nhãn ở R3-03/R3-07/R3-11;
+> ngày chuẩn hóa và quyết định vẫn khớp. Semantic R3-06 repair một lần, không
+> khôi phục tổng bị che và giữ FACT. P50/P95 **5.139/32.739 ms**; P95 tăng, không
+> claim cải thiện tốc độ. 16 response provider đều HTTP 200, upstream ghi nhận
+> Modal; đây không phải Alibaba-hosting hay contractual ZDR evidence.
+>
+> SQL/file check: 15 ảnh khớp size/SHA-256, mỗi hồ sơ đúng một terminal audit,
+> queue rỗng; 5 AUTO có deadline đúng 7 ngày, 10 escalation chưa chốt không có
+> deadline. Runtime có 15 EF MARS/savepoint warning; transaction intake được
+> dispose khi lỗi và có test rollback/race, nhưng không claim runtime sạch warning.
+> Full suites vẫn 367/367 mỗi cấu hình; phần tài liệu sửa thứ tự privacy nằm ở
+> mục 5 của BUSINESS_RULES, ngoài prompt model; các mục 1–4 giữ nguyên đã đối chiếu.
+> Evidence chi tiết Git-ignored: `test_kit/results/privacy-full-regression-20261025/`.
+>
+> Bốn privacy-role fixture qua cùng gate: 4/4 route, 7/7 category, 0 category
+> missed/over, không lỗi/fallback; exact facts 31/34. Hai identifier được model
+> đặt ở `invoiceNumber` thay vì `receiptNumber`, một tên merchant tổng hợp sai dấu.
+> Semantic không thấy mâu thuẫn nội tại nên không repair; nó không có ground
+> truth để sửa mọi lỗi OCR. Giữ nguyên nhãn và ghi đủ mismatch, không claim
+> detector tổng quát hoặc exact facts hoàn hảo.
 
 > **Pre-inference approval gate — `6cee437` / `a54091a`:** synthetic launcher nay
 > bật `ExternalImagePrivacy:Mode=ApprovedImagesOnly`. Adapter kiểm SHA-256 của
@@ -559,13 +607,13 @@ Các artifact cuộc thi được giữ nguyên; xem [addendum hậu cuộc thi]
 
 > Bản source sau cuộc thi có thêm gate Verify chỉ dành cho Development và rate limit HTTP trong một process; 196/196 offline tests, Release build 0 warning và EF model không đổi. **Chưa publish/smoke bản hardening này trên live; chưa sẵn sàng cho dữ liệu người dùng thật.** Xem [báo cáo hardening 21/10](POST_CONTEST_HARDENING_2026-10-21.md). Các số live bên dưới là evidence lịch sử của bản trước, không xác nhận hành vi bản mới.
 
-## Kết luận
+## Mốc live lịch sử — 17/10/2026
 
 Candidate sau feedback tại commit `de101f2` đã được publish và smoke trên live ngày 17/10: health HTTP 200, Verify 5/5, ba upload synthetic đều hoàn tất và workflow Forward → YES → Undo → Audit đi hết luồng. Source sau đó có một UX follow-up: rút gọn intake, cho chọn kỳ dashboard/CSV và tăng tương phản/scroll bảng; phần UX này cần publish lại trước khi gọi là live. Mỗi ảnh vẫn là một hồ sơ độc lập; hệ thống chưa có `InvoiceBatch`/`batchId` phía server. Video cũ chỉ là bằng chứng của baseline trước feedback.
 
-## Cấu hình live
+## Cấu hình live ghi nhận ngày 17/10/2026
 
-| Thành phần | Giá trị hiện hành |
+| Thành phần | Giá trị tại mốc lịch sử |
 |---|---|
 | Provider gateway | OpenRouter |
 | Model | `qwen/qwen3.8-flash` |
@@ -583,7 +631,7 @@ Candidate sau feedback tại commit `de101f2` đã được publish và smoke tr
 
 Read-only health ngày 17/10 lúc 12:54 ICT trả HTTP 200, `status=ok`, database/storage sẵn sàng, migration 0, Qwen3.8 Flash, reasoning none, `data_collection=deny`, AI concurrency 1 và fallback tắt. Health không gọi inference nên đã được đối chiếu thêm bằng live smoke phía dưới.
 
-## Gate kỹ thuật đã đạt
+## Gate kỹ thuật đã đạt tại mốc 17/10/2026
 
 - Debug build: 0 warning, 0 error.
 - Offline tests sau UX follow-up và multilingual fail-safe: 190/190 pass.

@@ -5,6 +5,7 @@ Thư mục này chứa tài liệu kỹ thuật hiện hành **và các báo cá
 | Tài liệu | Mục đích |
 |---|---|
 | `CURRENT_PROJECT_STATUS.md` | Nguồn sự thật duy nhất về baseline đã xác minh và các gate còn mở |
+| `MODEL_ROUTE_COMPARISON_2026-10-24.md` | Regression v3.1 qua policy/Semantic và egress gate; giữ nguyên số đo trước/sau cùng giới hạn claim |
 | `SHARED_RECEIPT_STORAGE.md` | Adapter GCS opt-in, cấu hình bucket private và các gate integration/restore còn thiếu |
 | `READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md` | Kết luận supervised MVP/Track A/production, phạm vi phòng ban, UX refresh và đa máy chủ |
 | `STORAGE_AND_DATASET_GATE_2026-10-23.md` | Gate storage dưới `wwwroot`, kiểm hash dataset và smoke local |
@@ -27,7 +28,7 @@ Thư mục này chứa tài liệu kỹ thuật hiện hành **và các báo cá
 | `EVIDENCE_LOCALIZATION_PLAN.md` | Tính khả thi của overlay khoanh vùng và giới hạn chưa-production |
 | `USER_STUDY_PROTOCOL.md` | Protocol lấy ý kiến ba người dùng dựa trên consent |
 | `SUBMISSION_CHECKLIST.md` | Checklist điều phối nộp bài và rehearsal lịch sử; không phải release gate hiện hành |
-| `CURRENT_ACTION_CHECKLIST.md` | Checklist publish sạch, smoke baseline và gate hóa đơn tiếng Trung |
+| `CURRENT_ACTION_CHECKLIST.md` | Giai đoạn local synthetic đã chốt, gate dữ liệu thật/hosting/scale còn mở; checklist thi cũ tách riêng |
 | `../BUSINESS_RULES.md` | Bản tiếng Anh chuẩn đang đồng bộ với model contract và policy hiện hành |
 | `BUSINESS_RULES_VI.md` | Bảng dịch tiếng Việt công khai cho BGK; được loại khỏi build output và gói publish |
 | `PROMPT_BUSINESS_RULES_BENCHMARK_20261023.md` | Phản hồi đánh giá prompt/business rules, thay đổi đã test và benchmark mới cần chạy |

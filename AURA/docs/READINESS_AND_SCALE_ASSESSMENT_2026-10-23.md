@@ -2,18 +2,30 @@
 
 This is a **source-and-evidence assessment**, not a certification or a statement that the public host runs this commit. The dated proposal, build log and five-slide deck remain the contest submission snapshot. See the [post-contest submission addendum](../submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) for a short outward-facing update.
 
-## Local verification update — 25 October 2026
+## Local verification update — 25–26 October 2026
 
 The current synthetic sandbox has opt-in seven-day finalized-record retention,
 a verified SQL/image restore drill and scheduled managed-backup expiry. It also
 approves exact synthetic image hashes before external inference; unknown bytes
-stop for manual privacy review. Final Debug/Release suites passed 367/367 each
+stop for manual privacy review. Final Debug/Release suites passed 371/371 each
 with LocalDB and PowerShell integration enabled. The legacy contest database
 remains unchanged. These are local synthetic results, not real-data deletion,
 PII redaction, hosting or multi-server validation. The historical counts and
 expired-key finding below describe their dated checkpoints. See [current
 status](CURRENT_PROJECT_STATUS.md) and [model evidence](MODEL_ROUTE_COMPARISON_2026-10-24.md)
 for the latest scope and remaining real-data/pilot gates.
+
+The user confirmed this phase as synthetic-only, preserving the old database.
+Full v3.1 through the approval gate on `649885e` matched 15/15 decisions and
+143/146 facts; P50/P95 was 5,139/32,739 ms, so no latency improvement is claimed.
+R3-06 remained FACT after one unresolved Semantic repair. The runtime emitted
+EF MARS/savepoint warnings; this is not a warning-free operations claim.
+
+A 26 October restart smoke encountered a real DNS failure and stopped safely.
+Transport errors are now sanitized known provider failures, covered alongside
+caller cancellation; final suites passed 371/371 each. One post-fix recovery
+smoke on `5143ab4` returned AUTO with 11/11 facts in 7,578 ms. The failed run is
+retained; this does not establish provider/network availability guarantees.
 
 ## Source update — 24 October 2026
 
