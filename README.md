@@ -15,7 +15,7 @@ SQL admission control caps combined `PENDING` and `PROCESSING` receipts at `Rece
 Prerequisites: Git, .NET 8 SDK, and SQL Server LocalDB. From the directory where you want the checkout:
 
 ```powershell
-git clone https://github.com/BondPhuPhamzZ/AURA.git
+git clone --branch codex/drive-pipeline-hardening --single-branch https://github.com/BondPhuPhamzZ/AURA.git
 cd .\AURA\AURA
 dotnet tool restore
 dotnet restore
@@ -55,7 +55,7 @@ Remove-Item Env:\AURA_RUN_LOCALDB_INTEGRATION
 
 These integration tests create uniquely named temporary databases and remove them when complete. Use a LocalDB instance owned by the current Windows account.
 
-The optional backup-script integration cases need both Windows PowerShell 5.1 and PowerShell 7. Enable `AURA_RUN_POWERSHELL_INTEGRATION=1` to execute them; the recorded full verification enabled both integration flags.
+The optional backup-script integration cases need both Windows PowerShell 5.1 and PowerShell 7. Enable `AURA_RUN_POWERSHELL_INTEGRATION=1` to execute them; the final Debug/Release verification passed 371/371 each with both integration flags enabled.
 
 ## Privacy and readiness
 
@@ -65,7 +65,7 @@ The synthetic launcher enables `ExternalImagePrivacy:Mode=ApprovedImagesOnly`: a
 
 Seven-day local retention is opt-in for finalized decisions. Pending and unresolved human-review work is retained. SQL/image backup, restore and scheduled managed-backup expiry were exercised with synthetic data; real-data activation remains a separate gate. Cleanup waits until the app/task runs when the machine is off or the interactive user is logged out.
 
-The latest full 15-case synthetic regression on `24b7b33` matched 15/15 decisions and 143/146 expected facts; a separate four-image privacy-role kit matched 12/12 decisions and 21/21 labeled categories across three runs. After adding the egress guard, a modified synthetic image was blocked and one approved smoke passed; that smoke is not a new accuracy benchmark. These are small, purpose-built synthetic checks, not general accuracy or detector-coverage estimates. See [detailed model and privacy evidence](AURA/docs/MODEL_ROUTE_COMPARISON_2026-10-24.md) and [current status](AURA/docs/CURRENT_PROJECT_STATUS.md).
+The latest full 15-case synthetic regression through the approval gate on `649885e` matched 15/15 decisions and 143/146 expected facts; a separate four-image privacy-role kit matched 12/12 decisions and 21/21 labeled categories across three runs. A modified synthetic image was blocked before inference. In the full approved regression, Semantic attempted one repair and safely retained an unresolved FACT case; E2E P50/P95 was 5,139/32,739 ms. No latency improvement is claimed. The user confirmed synthetic-only scope, preserving the old database. These are small, purpose-built synthetic checks, not general accuracy or detector-coverage estimates. See [detailed model and privacy evidence](AURA/docs/MODEL_ROUTE_COMPARISON_2026-10-24.md) and [current status](AURA/docs/CURRENT_PROJECT_STATUS.md).
 
 This is a supervised MVP / contest project, **not production-ready software**. Authentication/RBAC, malware scanning and quarantine for manual uploads, real-data retention/restore approval, real private-cloud storage validation, provider-specific privacy verification, and multi-host load/chaos testing remain open gates. See the [current status and checklist](AURA/docs/CURRENT_PROJECT_STATUS.md) and [readiness/scale assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md) before any pilot.
 

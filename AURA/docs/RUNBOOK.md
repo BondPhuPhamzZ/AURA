@@ -12,32 +12,41 @@ OpenRouter là provider chính cho cấu hình demo hiện tại. Cấu hình Ol
 ## 2. Clone và cấu hình local
 
 ```powershell
-git clone https://github.com/BondPhuPhamzZ/AURA.git
+git clone --branch codex/drive-pipeline-hardening --single-branch https://github.com/BondPhuPhamzZ/AURA.git
 cd AURA/AURA
 dotnet tool restore
 dotnet restore
 dotnet user-secrets set "Vision:Provider" "OpenRouter"
 dotnet user-secrets set "OpenRouter:ApiKey" "YOUR_OPENROUTER_KEY"
-dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3.8-flash"
-dotnet user-secrets set "OpenRouter:ReasoningEffort" "none"
-dotnet user-secrets set "Vision:FallbackEnabled" "false"
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\mssqllocaldb;Database=AuraDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0"
-dotnet ef database update
 ```
 
-Không dùng `dotnet user-secrets list` khi quay video/chia sẻ màn hình vì lệnh có thể hiển thị secret.
+Candidate hiện tại chỉ synthetic local; giữ DB cũ và không chạy migration trên
+`AuraDb`. Launcher dưới đây tạo/migrate DB và receipt root riêng, không cần đổi
+connection string trong User Secrets. Không dùng `dotnet user-secrets list`
+khi quay video/chia sẻ màn hình vì lệnh có thể hiển thị secret.
 
 ## 3. Build, test và chạy
 
 ```powershell
 dotnet build ../AURA.sln --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
-dotnet run
+$env:OpenRouter__Model = 'qwen/qwen3.8-27b'
+$env:OpenRouter__RequireZeroDataRetention = 'true'
+.\tools\Start-AuraRetentionSandbox.ps1
 ```
 
 Không thêm `--no-build` vào lệnh test trừ khi test project vừa được build đúng configuration; nếu không, CLI có thể chạy assembly cũ và báo sai số lượng test.
 
-Trước khi mở AURA, kiểm tra cấu hình mà chưa gọi API AI:
+Mở `http://127.0.0.1:5098`, kiểm `/healthz=ok`, approval mode và 49 hash.
+Hướng dẫn từng bước: [chạy synthetic local](JUDGE_LOCAL_SETUP.md). Integration
+tests LocalDB/PowerShell cần bật flags theo mục retention bên dưới; kết quả
+test mặc định không chứng minh integration đã chạy.
+
+#### Chẩn đoán profile thi cũ (lịch sử, không chạy thay sandbox mới)
+
+Các lệnh dưới đây dành cho profile `AuraDb`/cổng 5000 cũ; không migrate, sửa
+registry hoặc đổi dữ liệu cũ để thử candidate synthetic. Trước khi mở profile
+lịch sử đã được chuẩn bị, kiểm tra cấu hình mà chưa gọi API AI:
 
 ```powershell
 $evidenceRoot = Join-Path $env:TEMP "AURA-demo-evidence"

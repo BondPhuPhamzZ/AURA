@@ -1,5 +1,12 @@
 # Deploy AURA và xác minh Live URL
 
+> **Gate hiện hành 25/10/2026:** candidate trên nhánh
+> `codex/drive-pipeline-hardening` chỉ được chốt cho synthetic local, giữ nguyên
+> DB thi cũ. Chưa publish hoặc bật retention trên hosting/DB cũ. Không chạy các
+> bước deploy/migration bên dưới cho candidate mới khi chưa có quyết định riêng.
+> Xem [checklist hiện hành](CURRENT_ACTION_CHECKLIST.md); các bước/số liệu tiếp
+> theo là hướng dẫn và evidence của baseline lịch sử.
+
 > Source 21/10/2026: Verify Harness mặc định tắt và **không thể chạy trên Production**, kể cả khi hosting còn `Verify__Enabled=true`. Cần ít nhất **196/196 tests** trước publish. Bản hardening chưa được smoke live; xem [báo cáo gate](POST_CONTEST_HARDENING_2026-10-21.md). Các số live cũ bên dưới là evidence lịch sử.
 
 Live URL đã dùng để smoke Sprint 1: `https://bondphupham-001-site1.ltempurl.com/`. BTC xác nhận phần trình diễn Chung kết chạy trên laptop cá nhân, nhưng brief vẫn yêu cầu đường truy cập công khai cho bản bàn giao. Vì vậy localhost là đường demo chính; Live URL là cổng bàn giao riêng và phải được smoke lại sau mỗi bản hardening. Hosting trial có thể chậm hoặc gián đoạn nên không dùng nó làm đường trình diễn duy nhất. Baseline và ranh giới vận hành hiện hành nằm tại [`CURRENT_PROJECT_STATUS.md`](CURRENT_PROJECT_STATUS.md).

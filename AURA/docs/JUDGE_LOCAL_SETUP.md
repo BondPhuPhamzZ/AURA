@@ -1,212 +1,77 @@
-# Hướng dẫn BGK chạy AURA trên máy Windows
+# Chạy AURA synthetic trên Windows
 
-Tài liệu này mô tả baseline OpenRouter đơn giản nhất. BGK không cần cài Ollama. API key phải được nhận qua kênh riêng và lưu bằng .NET User Secrets, không ghi vào repository.
+Cập nhật 26/10/2026. Candidate hiện tại ở nhánh `codex/drive-pipeline-hardening`; dùng một host local, DB/ảnh riêng và chỉ ảnh synthetic đã duyệt. Giữ nguyên DB đi thi, chưa publish candidate này hoặc mở pilot dữ liệu thật.
 
-## 1. Điều kiện máy
+## 1. Chuẩn bị
 
-- Windows 10 hoặc 11.
-- Git.
-- .NET 8 SDK. Baseline khuyến nghị 8.0.425.
-- SQL Server Express LocalDB. Visual Studio có workload ASP.NET thường đã cài LocalDB.
-- OpenRouter API key có quyền gọi `qwen/qwen3.8-flash`.
-- Trình duyệt Chrome hoặc Edge.
-
-Kiểm tra nhanh:
+Cần Git, .NET 8 SDK, SQL Server LocalDB, PowerShell 5.1 hoặc 7 và OpenRouter key có credit/quyền gọi model được cấu hình. Không cần Ollama, bucket cloud hay tài khoản đăng nhập AURA.
 
 ```powershell
 git --version
 dotnet --info
-sqllocaldb info
+sqllocaldb info MSSQLLocalDB
 ```
 
-Nếu `dotnet` hoặc `sqllocaldb` không được nhận diện, cài dependency tương ứng rồi mở PowerShell mới. Không cần Run as Administrator cho các lệnh AURA thông thường.
+Nếu instance đang `Stopped`, chạy `sqllocaldb start MSSQLLocalDB` bằng đúng Windows account sở hữu instance. Không xóa instance, registry hoặc MDF để sửa một cảnh báo chưa được chẩn đoán.
 
-## 2. Clone repository
-
-Mở Windows PowerShell tại thư mục muốn lưu source:
+## 2. Clone đúng candidate và lưu key
 
 ```powershell
-git clone https://github.com/BondPhuPhamzZ/AURA.git
+git clone --branch codex/drive-pipeline-hardening --single-branch https://github.com/BondPhuPhamzZ/AURA.git
 cd .\AURA\AURA
-```
-
-Kiểm tra đúng thư mục:
-
-```powershell
-Test-Path -LiteralPath ".\AURA.csproj"
-```
-
-Kết quả phải là `True`.
-
-## 3. Restore tool và package
-
-```powershell
 dotnet tool restore
 dotnet restore
+dotnet user-secrets set "OpenRouter:ApiKey" "<YOUR_OPENROUTER_API_KEY>"
 ```
 
-Không cần tự cài `dotnet-ef` global; repository đã pin tool local.
+Nếu đã clone, kiểm `git status` và giữ thay đổi hiện có; không clone đè hoặc reset. Không gửi key qua chat/ảnh và không chạy `dotnet user-secrets list` khi chia sẻ màn hình. API key lưu ở User Secrets, không ở repository.
 
-## 4. Lưu cấu hình an toàn
-
-Thay `OPENROUTER_EVALUATION_KEY` bằng key được gửi riêng:
+## 3. Build, test rồi chạy sandbox
 
 ```powershell
-dotnet user-secrets set "Vision:Provider" "OpenRouter"
-dotnet user-secrets set "OpenRouter:ApiKey" "OPENROUTER_EVALUATION_KEY"
-dotnet user-secrets set "OpenRouter:Model" "qwen/qwen3.8-flash"
-dotnet user-secrets set "OpenRouter:ReasoningEffort" "none"
-dotnet user-secrets set "Vision:FallbackEnabled" "false"
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\mssqllocaldb;Database=AuraDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0"
+dotnet build AURA.csproj -c Release --no-restore
+$env:AURA_RUN_LOCALDB_INTEGRATION = '1'
+$env:AURA_RUN_POWERSHELL_INTEGRATION = '1'
+dotnet test tests/AURA.Tests/AURA.Tests.csproj -c Release --no-restore
+Remove-Item Env:\AURA_RUN_LOCALDB_INTEGRATION
+Remove-Item Env:\AURA_RUN_POWERSHELL_INTEGRATION
+$env:Vision__Provider = 'OpenRouter'
+$env:OpenRouter__Model = 'qwen/qwen3.8-27b'
+$env:OpenRouter__RequireZeroDataRetention = 'true'
+.\tools\Start-AuraRetentionSandbox.ps1
 ```
 
-Không chạy `dotnet user-secrets list` khi chia sẻ màn hình vì lệnh có thể in API key.
+Các test PowerShell integration cần máy có **cả PS5.1 và PS7**. Bộ xác minh ghi nhận 371/371 mỗi cấu hình Debug/Release với cả hai integration flags bật; chạy không bật flag không chứng minh đã chạy integration. Automated tests dùng provider giả lập, không tốn credit. Upload/evaluator model thật có tính phí.
 
-## 5. Tạo hoặc nâng database
+Launcher build và áp migration vào `AURA_RetentionSandbox_yyyyMMdd`, dùng ảnh riêng dưới `.tmp/retention-sandbox/`, bật retention 7 ngày cho hồ sơ đã chốt và `ApprovedImagesOnly`. Nó không sửa User Secrets hoặc migrate DB `AuraDb`. Không chạy `dotnet ef database update` trên DB cũ để làm theo hướng dẫn này. Biến model ở trên chỉ thuộc cửa sổ PowerShell; đóng cửa sổ sau khi dừng app để bỏ override.
+
+Giữ terminal mở, truy cập `http://127.0.0.1:5098`. Trong PowerShell thứ hai:
 
 ```powershell
-dotnet ef database update
+Invoke-RestMethod 'http://127.0.0.1:5098/healthz' | ConvertTo-Json -Depth 5
 ```
 
-Kỳ vọng: lệnh hoàn tất không có migration error. Không xóa LocalDB instance hoặc file MDF nếu chỉ thấy warning registry; hãy dùng preflight và `/healthz` ở các bước sau để xác định database có phục vụ ứng dụng hay không.
+Cần `status=ok`, `pendingMigrationCount=0`, `externalImagePrivacyMode=ApprovedImagesOnly`, `externallyApprovedImageCount=49`, `retentionCleanupEnabled=true`, `strictZeroDataRetention=true`, `providerDataCollectionDenied=true`, concurrency 1 và fallback/Drive/Verify tắt. Health kiểm cấu hình/DB/storage, không tự gọi model hoặc xác nhận key còn credit.
 
-## 6. Preflight trước khi chạy app
+## 4. Thử một ảnh và xem luồng
 
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -StartLocalDb -SkipHttp -DiagnoseLocalDb -OutputPath ".\demo_evidence\00_preflight\preflight-before-app.txt"
-```
+1. Upload `test_kit/v3_1/images/R3-01-vat-invoice-number.jpg` bằng giao diện. Không nhập tiền; AURA lấy tổng tiền từ facts đã kiểm chứng. HTTP 202 chỉ xác nhận đã tiếp nhận bền vững.
+2. Chờ job hoàn tất; kỳ vọng `AUTO_APPROVE` cho fixture này, xem facts/lý do và audit. Kết quả model có thể biến thiên; ghi đúng kết quả thay vì sửa nhãn.
+3. Với fixture cần người kiểm tra, chuyển tiếp sang Quản lý, chọn hành động rồi xem Lịch sử. Tiếp nhận `ESCALATE_FACT`/`ESCALATE_PRIVACY` là xử lý thủ công, không phải tự động duyệt chi tiền.
+4. Chọn kỳ trên dashboard và tải CSV cùng kỳ. Dấu privacy vẫn được giữ sau khi tiếp nhận thủ công.
 
-Kỳ vọng:
+Chỉ 49 nội dung synthetic đã xác minh được phép gửi model; các bản sao byte trong bộ 100 cũng khớp hash. Ảnh khác bị chặn trước HTTP thành `ESCALATE_PRIVACY`, không facts; không tự thêm hash để vượt gate. Đây không phải detector/che PII. Ảnh đã duyệt vẫn gửi nguyên pixels; Strict ZDR là yêu cầu định tuyến, chưa phải cam kết pháp lý.
 
-- đúng database `AuraDb`;
-- LocalDB `mssqllocaldb` đang chạy;
-- `BUSINESS_RULES.md` có mặt;
-- receipt storage ghi được;
-- 0 failure;
-- có thể có đúng một warning vì chủ động dùng `-SkipHttp`.
+Không bật Verify hoặc Drive để thử hướng dẫn này. Muốn chạy đủ 15 ca, xem [runbook](RUNBOOK.md) và [model evidence](MODEL_ROUTE_COMPARISON_2026-10-24.md), khóa đúng manifest/images và lưu raw output ngoài Git. Không diễn giải bộ known-data nhỏ là accuracy thực tế hay throughput 100/1.000 hóa đơn.
 
-`-OutputPath` tự tạo thư mục và transcript. Không cần khai báo `$evidenceRoot` hoặc dùng `Tee-Object`.
+## 5. Dừng và xử lý lỗi
 
-## 7. Build và test offline
+Chờ queue rỗng, lưu evidence riêng tư rồi nhấn Ctrl+C một lần. Không xóa DB/ảnh hoặc đổi User Secrets để dừng app. Retention dọn hồ sơ đã chốt theo deadline; pending/unresolved giữ để xử lý tiếp. Cleanup chỉ chạy khi app/task và máy hoạt động, không bảo đảm xóa đúng hạn khi máy tắt.
 
-```powershell
-dotnet build ..\AURA.sln -c Release --no-restore
-dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release --no-restore
-```
+- 401/402: kiểm key/credit trong dashboard riêng; không in key vào log.
+- 429/timeout: giữ evidence và chờ backoff/cooldown; không spam upload.
+- Startup báo approval file lỗi: kiểm fixture/manifest bằng Git, không tắt gate để chạy tiếp.
+- Port 5098 đã dùng: kiểm terminal AURA đang chạy và dùng phiên đó; không kill process không rõ nguồn.
+- LocalDB không kết nối được: xem [runbook](RUNBOOK.md), giữ DB cũ/backup; không reset dữ liệu.
 
-Candidate ngày 04/10/2026 phải đạt build 0 warning/0 error và 108/108 test pass. Automated tests không gọi OpenRouter và không tốn credit.
-
-## 8. Chạy AURA
-
-Trong PowerShell thứ nhất:
-
-```powershell
-dotnet run
-```
-
-Giữ cửa sổ này mở. Chờ dòng:
-
-```text
-Now listening on: http://localhost:5000
-```
-
-## 9. Full preflight khi app đang chạy
-
-Mở PowerShell thứ hai, đi vào thư mục project rồi chạy:
-
-```powershell
-cd .\AURA\AURA
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1" -DiagnoseLocalDb -OutputPath ".\demo_evidence\00_preflight\preflight-running-app.txt"
-```
-
-Nếu PowerShell thứ hai không được mở từ cùng thư mục cha, dùng đường dẫn tuyệt đối đến thư mục chứa `AURA.csproj` trước khi chạy script.
-
-Kết quả bắt buộc cho live demo:
-
-- `READY: 0 failures, 0 warning(s)`;
-- health `status=ok`;
-- `databaseAvailable=true`;
-- `databaseUpToDate=true`;
-- `pendingMigrationCount=0`;
-- `storageAvailable=true`;
-- provider `OpenRouter`;
-- model `qwen/qwen3.8-flash` và `reasoningEffort=none`;
-- `fallbackEnabled=false`.
-
-Có thể kiểm độc lập:
-
-```powershell
-Invoke-RestMethod "http://localhost:5000/healthz" | ConvertTo-Json -Depth 5
-```
-
-## 10. Chạy luồng sản phẩm
-
-Mở `http://localhost:5000` trên Chrome hoặc Edge.
-
-### Verify Harness
-
-1. Chọn **Chạy Verify Harness** đúng một lần.
-2. Chờ năm ca chạy tuần tự.
-3. Kỳ vọng ba `AUTO_APPROVE`, một `ESCALATE_FACT`, một `ESCALATE_POLICY` và 5/5 PASS.
-4. Không bấm lại nếu batch đang chạy. Nếu provider trả 429, dừng và kiểm quota thay vì spam retry.
-
-### Một hóa đơn lẻ
-
-1. Chọn JPG/PNG dưới 5 MB.
-2. Nhập số tiền nhân viên khai bằng VND.
-3. Chọn **AI tự động kiểm**.
-4. Upload trả HTTP 202 rồi UI hiển thị pending/processing cho tới trạng thái cuối.
-5. Kiểm tra ảnh, facts, quyết định và lý do.
-6. Với `ESCALATE_*`, chọn **Chuyển tiếp**, mở tab **Quản lý**, chọn đồng ý hoặc từ chối rồi xem **Lịch sử hành vi**.
-
-Ảnh mờ, thiếu dữ kiện hoặc model mâu thuẫn có thể được chuyển cho con người. Đây là fail-safe, không phải lỗi chỉ vì kết quả không phải `AUTO_APPROVE`.
-
-## 11. Dừng ứng dụng an toàn
-
-1. Chờ mọi request về trạng thái cuối; không tắt khi còn `PENDING` hoặc `PROCESSING`.
-2. Lưu evidence cần thiết và đóng trình duyệt.
-3. Tại PowerShell đang chạy app, nhấn `Ctrl+C` một lần.
-4. Chờ thông báo shutdown rồi mới đóng terminal hoặc tắt máy.
-
-Không cần xóa database, migration, user secrets hoặc dừng LocalDB thủ công.
-
-## 12. Lỗi thường gặp
-
-### Script bị execution policy chặn
-
-Dùng đúng dạng:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-DemoReadiness.ps1"
-```
-
-Bypass chỉ áp dụng cho process con của lệnh này, không thay policy toàn máy.
-
-### Dấu nhắc `>>`
-
-PowerShell đang chờ dấu ngoặc hoặc chuỗi chưa đóng. Nhấn `Ctrl+C`, quay về prompt `PS ...>` rồi dán từng lệnh một dòng. Không dán phần `PS C:\...>` hoặc ký tự `>>` từ ảnh hướng dẫn.
-
-### Port 5000 đã được dùng
-
-Đóng AURA cũ bằng `Ctrl+C`. Có thể kiểm process đang listen:
-
-```powershell
-Get-NetTCPConnection -LocalPort 5000 -State Listen -ErrorAction SilentlyContinue
-```
-
-### LocalDB registry warning
-
-Warning inspect registry không tự động có nghĩa database hỏng. Nếu full `/healthz` xác nhận `databaseAvailable=true`, `databaseUpToDate=true` và không có pending migration thì AURA đang truy cập database đúng. Không xóa registry key, LocalDB instance hoặc MDF để làm warning biến mất.
-
-Nếu health treo/degraded và log có `error: 50`, `0x89C50118` hoặc `Cannot create an automatic instance`, dừng thao tác demo và dùng nhánh phục hồi có backup trong `docs/RUNBOOK.md`; đây là blocker thật, không phải warning inspect. Sau phục hồi phải chạy bằng profile `AURA` và xác nhận lại health `ok` trước khi Verify/upload.
-
-### OpenRouter 401 402 429 5xx hoặc timeout
-
-- 401: kiểm key private.
-- 402: kiểm credit.
-- 429: dừng batch và chờ quota/rate limit.
-- 5xx/timeout: giữ response và log; hệ thống phải fail-safe thay vì tạo PASS giả.
-
-## 13. Ollama tùy chọn
-
-Ollama không phải dependency của baseline BGK. Nếu muốn đánh giá local model, làm theo `docs/LOCAL_OLLAMA.md`, chạy phiên riêng và giữ fallback tắt để đo đúng một provider. Không so sánh batch OpenRouter có fallback với batch Ollama thuần.
+Privacy cho dữ liệu thật, auth/RBAC, malware quarantine, hosting restore và nhiều host vẫn là gate tương lai. Xem [checklist hiện hành](CURRENT_ACTION_CHECKLIST.md).
