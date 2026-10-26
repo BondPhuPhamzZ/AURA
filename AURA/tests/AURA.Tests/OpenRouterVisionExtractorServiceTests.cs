@@ -14,6 +14,72 @@ namespace AURA.Tests;
 
 public sealed class OpenRouterVisionExtractorServiceTests
 {
+    [Theory]
+    [InlineData(HttpRequestError.NameResolutionError)]
+    [InlineData(HttpRequestError.ConnectionError)]
+    [InlineData(HttpRequestError.SecureConnectionError)]
+    public async Task Transport_failures_are_sanitized_known_provider_errors_without_automatic_resend(
+        HttpRequestError error)
+    {
+        var root = CreateFixtureRoot();
+        try
+        {
+            var calls = 0;
+            using var handler = new StubHandler(_ =>
+            {
+                calls++;
+                throw new HttpRequestException(error, "PRIVATE_TRANSPORT_DIAGNOSTIC");
+            });
+            using var client = new HttpClient(handler) { BaseAddress = new Uri("https://example.test/") };
+            var logger = new CollectingLogger();
+            var service = new OpenRouterVisionExtractorService(client,
+                Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions { ApiKey = "synthetic-key" }),
+                new TestEnvironment(root), logger);
+
+            var exception = await Assert.ThrowsAsync<VisionExtractionException>(() =>
+                service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg")));
+
+            Assert.Equal("AI_TEMPORARILY_UNAVAILABLE", exception.Code);
+            Assert.True(VisionProviderFailurePolicy.IsBlocking(exception.Code));
+            Assert.Equal(1, calls);
+            Assert.DoesNotContain("PRIVATE_TRANSPORT_DIAGNOSTIC", exception.ToString(), StringComparison.Ordinal);
+            Assert.Null(exception.InnerException);
+            Assert.Contains(logger.Messages, message => message.Contains(error.ToString(), StringComparison.Ordinal));
+            Assert.All(logger.Messages, message =>
+                Assert.DoesNotContain("PRIVATE_TRANSPORT_DIAGNOSTIC", message, StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Caller_cancellation_is_not_reclassified_as_a_provider_failure()
+    {
+        var root = CreateFixtureRoot();
+        try
+        {
+            using var cancellation = new CancellationTokenSource();
+            using var handler = new StubHandler(_ =>
+            {
+                cancellation.Cancel();
+                throw new TaskCanceledException("Caller cancelled.", null, cancellation.Token);
+            });
+            using var client = new HttpClient(handler) { BaseAddress = new Uri("https://example.test/") };
+            var service = new OpenRouterVisionExtractorService(client,
+                Microsoft.Extensions.Options.Options.Create(new OpenRouterOptions { ApiKey = "synthetic-key" }),
+                new TestEnvironment(root), NullLogger<OpenRouterVisionExtractorService>.Instance);
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+                service.ExtractFactsAsync(Path.Combine(root, "receipt.jpg"), cancellation.Token));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Fact]
     public void Defaults_to_benchmarked_flash_model_with_reasoning_disabled()
     {

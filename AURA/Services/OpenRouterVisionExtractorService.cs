@@ -175,6 +175,15 @@ public sealed class OpenRouterVisionExtractorService : IVisionExtractor
             throw new VisionExtractionException("AI_TIMEOUT",
                 $"Qwen không phản hồi trong {_options.TimeoutSeconds} giây. Đây là lỗi timeout mạng/dịch vụ hoặc model đang quá tải, không phải do nội dung 'kiểm thử' trong ảnh.", exception);
         }
+        catch (HttpRequestException exception)
+        {
+            // Transport diagnostics may contain URLs or other sensitive values.
+            // Preserve a known provider failure without logging the raw exception
+            // or automatically repeating a request whose delivery is uncertain.
+            _logger.LogWarning("OpenRouter transport failed with {TransportError}.", exception.HttpRequestError);
+            throw new VisionExtractionException("AI_TEMPORARILY_UNAVAILABLE",
+                "Không kết nối được dịch vụ AI. Hãy kiểm tra mạng/DNS và thử lại khi kết nối ổn định; hồ sơ đã được giữ để kiểm tra thủ công.");
+        }
 
         var (statusCode, responseText, retryAfter, requestId) = response;
         if ((int)statusCode is < 200 or >= 300)
