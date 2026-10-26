@@ -1,5 +1,18 @@
 # Trạng thái hiện hành AURA ngày 26/10/2026
 
+> **Cập nhật hiển thị Drive ngày 26/10:** Worker Drive vốn đã nhận file hợp lệ,
+> tạo hồ sơ SQL và xử lý qua AI; khoảng trống nằm ở bảng nhân viên chỉ lọc hồ sơ
+> cần chuyển tiếp. Bảng nay thêm tối đa 20 hồ sơ Drive synthetic chưa chuyển tiếp
+> tạo trong 24 giờ gần nhất, gồm PENDING/PROCESSING/kết quả; các escalation chưa
+> chuyển tiếp vẫn luôn hiện kể cả cũ hơn. `fetch` GET
+> làm mới bảng mỗi 5 giây khi tab hiện; Audit là lịch sử bền vững. Hồ sơ trùng
+> nội dung có nhãn; quy tắc quyết định trùng **không đổi**. Ngày 27/10, Release
+> 378/378 cả khi bật LocalDB và PowerShell integration; frontend 8/8. Lần đầu
+> chạy integration trong sandbox công cụ lỗi khởi tạo LocalDB (0x89c50118),
+> chạy lại trong phiên Windows được quyền thì đạt. Chưa có benchmark model mới,
+> browser timing/SLA hoặc triển khai Drive
+> trên SmartASP. Trạng thái trước đó bên dưới giữ nguyên theo thời điểm đo.
+
 > **UX fragment đã kiểm thử — 26/10:** tab, Forward, quyết định/Undo và kỳ dashboard
 > cập nhật vùng đang xem qua GET, không reload toàn trang sau POST. SQL vẫn quyết
 > định trạng thái; giữ antiforgery/rowversion/idempotency, không tự retry POST.

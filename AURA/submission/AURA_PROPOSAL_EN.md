@@ -1,5 +1,21 @@
 # AURA reimbursement review solution proposal
 
+> **Post-contest source update — 26 October 2026.** The submitted 14 October
+> proposal below is retained as a historical benchmark. The current local
+> synthetic profile accepts web uploads and reads approved images directly from
+> a Restricted Drive folder through a read-only service account. Each accepted
+> Drive file becomes a durable SQL request; the employee table now shows its
+> `PENDING`/`PROCESSING`/final state through visible-tab `fetch` polling without
+> a page reload. Unchanged Drive files are skipped by source identity; new copies
+> can be flagged as duplicate content and still run because duplicate escalation
+> is disabled in the repeatability profile. Current Release tests: 378/378 unit
+> suite; see [current status](../docs/CURRENT_PROJECT_STATUS.md) for integration
+> evidence. The profile requests Strict ZDR routing and data-collection denial,
+> and checks exact approved synthetic image hashes before external inference.
+> This is not evidence of contractual zero retention, PII redaction, production
+> identity controls, or readiness to enable Drive on SmartASP. The 163-test and
+> 5/5 Verify figures below belong to the submitted candidate.
+
 **Track:** OrganizationAI
 **Challenge:** Spec A The Escalation Referee
 **Team:** The Deciders

@@ -1,10 +1,10 @@
 # Gói nộp bài chính thức AURA
 
-Thư mục này giữ các artifact **đã nộp ở thời điểm cuộc thi**; các bản DOCX/PDF/slide không được viết lại thành số liệu hậu cuộc thi. Xem [addendum 23/10](AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) khi giới thiệu source mới. Tên file lịch sử được giữ ổn định để liên kết cũ không bị lệch.
+Các artifact proposal, build log và slide nay có **ghi chú hậu cuộc thi ngày 26/10** đặt tách khỏi số liệu lúc nộp. Không đọc 163/181 test hoặc Verify 5/5 của bản cũ như kết quả của source mới. Bản nộp gốc còn trong Git history; tên file giữ ổn định để liên kết proposal cũ không lệch. Xem [addendum](AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) và [trạng thái source hiện hành](../docs/CURRENT_PROJECT_STATUS.md).
 
 Review source/Drive/UX/deploy ngày 26/10 nằm tại [assessment hiện hành](../docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
-Default `master` cập nhật source/README; artifact nộp bài vẫn là snapshot lịch sử,
-không phải xác nhận candidate mới đã publish hoặc đạt production.
+Default `master` cập nhật source/README và ghi chú mốc mới trong artifact; điều này
+không phải xác nhận candidate đã publish hoặc đạt production.
 
 | Hạng mục | File chốt |
 |---|---|
@@ -19,7 +19,7 @@ không phải xác nhận candidate mới đã publish hoặc đạt production.
 | Báo cáo sau feedback | `AURA_AFTER_FEEDBACK_REPORT.docx`, `.pdf` |
 | Addendum hậu cuộc thi | `AURA_POST_CONTEST_ADDENDUM_2026-10-23.md` — không thay thế proposal/build log/slide đã nộp |
 
-Proposal và Build Log là artifact nộp đã khóa trước feedback ngày 17/10. Trạng thái kiến trúc hiện hành, thay đổi candidate và các giới hạn mới phải đọc cùng `AURA_AFTER_FEEDBACK_REPORT.*`, `../docs/CURRENT_PROJECT_STATUS.md` và `../docs/AFTER_FEEDBACK_ARCHITECTURE_CHECKLIST.md`; không dùng riêng proposal cũ để suy ra candidate đã publish.
+Proposal và Build Log giữ số liệu nộp ngày 14/10 dưới ghi chú hậu cuộc thi. Trạng thái kiến trúc hiện hành, thay đổi candidate và các giới hạn mới phải đọc cùng `AURA_AFTER_FEEDBACK_REPORT.*`, `../docs/CURRENT_PROJECT_STATUS.md` và `../docs/AFTER_FEEDBACK_ARCHITECTURE_CHECKLIST.md`; không dùng số liệu lịch sử để suy ra candidate đã publish.
 
 Ba file Build Log là ba định dạng của cùng một tài liệu toàn dự án, không phải các sprint log riêng. Phiên bản lịch sử được giữ trong Git history thay vì đặt cạnh bản chốt.
 

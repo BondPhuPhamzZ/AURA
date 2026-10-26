@@ -1,5 +1,19 @@
 # Đề xuất giải pháp AURA cho bài toán hoàn ứng
 
+> **Cập nhật source hậu cuộc thi — 26/10/2026.** Phần đề xuất nộp ngày 14/10
+> bên dưới là mốc lịch sử. Profile synthetic local hiện nhận ảnh qua web và đọc
+> trực tiếp ảnh đã duyệt trong folder Drive Restricted bằng service account chỉ
+> có quyền Viewer. Mỗi file được nhận tạo hồ sơ SQL bền vững; bảng nhân viên nay
+> hiển thị `PENDING`/`PROCESSING`/kết quả qua `fetch` polling khi tab đang mở,
+> không reload toàn trang. File Drive cũ không đổi được bỏ qua theo định danh
+> nguồn; bản sao có file ID mới có thể được nhận và đánh dấu trùng nội dung,
+> nhưng profile repeatability đang tắt quy tắc escalate trùng. Suite Release
+> hiện đạt 378/378; xem [trạng thái hiện hành](../docs/CURRENT_PROJECT_STATUS.md)
+> để biết evidence integration. Profile gửi yêu cầu Strict ZDR, chặn thu thập
+> dữ liệu và kiểm hash ảnh synthetic trước khi gửi ra ngoài; đó không phải
+> chứng nhận zero retention, che PII hay cơ sở bật Drive trên SmartASP. Số
+> 163 test và Verify 5/5 bên dưới chỉ thuộc bản đã nộp.
+
 **Track:** OrganizationAI | **Đề bài:** Spec A The Escalation Referee
 
 **Đội:** The Deciders | **Tác giả:** Phạm Gia Phú | **Bản chốt:** 14/10/2026

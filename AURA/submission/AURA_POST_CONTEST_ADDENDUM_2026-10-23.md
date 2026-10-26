@@ -1,5 +1,16 @@
 # AURA post-contest status addendum — 23 October 2026
 
+**26 October Drive visibility update:** In the Development synthetic profile,
+recent Drive-origin SQL requests now appear in the employee table while queued,
+processing and after the decision. The existing read-only `fetch` fragment poll
+runs every five seconds on the visible employee tab; Audit remains the permanent
+record. An unchanged Google file ID/MD5 is skipped without another inference;
+a newly uploaded copy has a new source identity and may be marked duplicate.
+The repeatability profile does not escalate duplicates. On 27 October, Release
+tests passed 378/378 with LocalDB and PowerShell integration enabled; frontend
+refresh tests passed 8/8. No new model accuracy or SmartASP Drive deployment is
+claimed.
+
 **26 October local profile update:** Visual Studio F5 and the PowerShell launcher
 now share one prepared synthetic profile at `127.0.0.1:5000`, using the same
 isolated LocalDB, private receipt store, 49-image SHA-256 approval set,

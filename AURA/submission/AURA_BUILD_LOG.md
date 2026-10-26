@@ -1,5 +1,16 @@
 # Nhật ký xây dựng dự án AURA
 
+> **Cập nhật 26/10/2026 (hậu cuộc thi):** Source local synthetic đã thống nhất
+> một profile tại cổng 5000, đọc folder Drive Restricted ở quyền Viewer và lưu
+> mỗi ảnh được nhận thành hồ sơ SQL. Bảng nhân viên nay tự cập nhật trạng thái
+> chờ/chạy/kết quả bằng `fetch` polling khi tab hiển thị; không cần F5. File Drive
+> cũ không đổi được bỏ qua; bản sao file mới có thể được đánh dấu trùng nhưng
+> profile repeatability chưa escalate trùng. Release unit suite đạt 378/378;
+> xem [status](../docs/CURRENT_PROJECT_STATUS.md) cho kiểm thử integration.
+> Strict ZDR chỉ là yêu cầu routing của API, không thay thế che PII hoặc hợp đồng
+> lưu trữ dữ liệu. Đoạn dưới giữ nguyên evidence lúc nộp (163 test, Verify 5/5)
+> để không gộp sai số liệu giữa hai thời điểm.
+
 **Track A The Escalation Referee | Bản chốt 14/10/2026 | Phạm Gia Phú**
 
 AURA là trợ lý thẩm định tuyến đầu có con người giám sát cho quy trình hoàn ứng. Vision model trích xuất dữ kiện có cấu trúc từ hóa đơn, policy C# tất định quyết định hướng xử lý, còn con người chịu trách nhiệm với ngoại lệ. Hệ thống bao phủ upload, xử lý nền bền vững, duyệt thủ công, Audit và Undo.

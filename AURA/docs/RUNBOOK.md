@@ -216,6 +216,22 @@ con. Muốn test một batch trong folder con, cấu hình đúng ID của folde
 bật recursion hoặc public sharing. Chờ queue rỗng rồi Ctrl+C; không mở hai worker trên
 cùng DB/store để thử concurrency. Scope local này không phải cấu hình SmartASP.
 
+Khi test, giữ tab **Cửa sổ nhân viên** đang hiển thị: bảng đọc SQL qua `fetch`
+GET mỗi 5 giây, thêm tối đa 20 hồ sơ Drive synthetic chưa chuyển tiếp được tạo
+trong 24 giờ gần nhất (PENDING, PROCESSING, kết quả); escalation chưa chuyển tiếp
+vẫn hiện kể cả cũ hơn. Audit giữ lịch sử sau khi
+ra quyết định; F5 không khởi động worker và không ép quét Drive. Poll Drive mặc
+định 120 giây, sau đó job còn chờ AI permit một lượt nên không có cam kết real
+time tức thì. Tab ẩn dừng polling UI, không dừng SQL worker.
+
+Cùng Google file ID và MD5 không đổi được bỏ qua im lặng trong các lần scan
+sau: không lỗi, không gọi model hay tạo audit mới. Upload một **bản sao** với
+Google file ID mới tạo nguồn mới; intake có thể đánh dấu trùng SHA-256, nhưng
+profile repeatability hiện tắt `EscalateDuplicateReceipts`, vì vậy bản sao vẫn
+có thể qua AI. Thay bytes của file cũ tạo phiên bản nguồn mới nhưng phải qua
+exact-hash approval. File không hợp lệ bị từ chối trước SQL và ghi lý do vào
+rejection log riêng; đây không phải thông báo trực tiếp trên bảng hồ sơ.
+
 Synthetic launcher tự tạo allowlist trong `.tmp/retention-sandbox/<database>/`
 từ 15 hash v3.1, 4 hash privacy và 30 ảnh lịch sử được đối chiếu Git blob rồi tính
 SHA-256. Các bản sao byte trong `images/batch_100_synthetic` được chấp nhận vì

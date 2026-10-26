@@ -5,6 +5,7 @@ Thư mục này chứa tài liệu kỹ thuật hiện hành **và các báo cá
 | Tài liệu | Mục đích |
 |---|---|
 | `CURRENT_PROJECT_STATUS.md` | Nguồn sự thật duy nhất về baseline đã xác minh và các gate còn mở |
+| `DRIVE_PROGRESS_UI_VERIFICATION_2026-10-27.md` | Evidence AJAX hiển thị hồ sơ Drive đang chờ/chạy/kết quả, test và ranh giới publish |
 | `MODEL_ROUTE_COMPARISON_2026-10-24.md` | Regression v3.1 qua policy/Semantic và egress gate; giữ nguyên số đo trước/sau cùng giới hạn claim |
 | `SHARED_RECEIPT_STORAGE.md` | Adapter GCS opt-in, cấu hình bucket private và các gate integration/restore còn thiếu |
 | `READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md` | Kết luận supervised MVP/Track A/production, phạm vi phòng ban, UX refresh và đa máy chủ |

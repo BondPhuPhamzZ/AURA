@@ -8,7 +8,7 @@ The default branch is `master`. The previous default source is preserved at tag 
 
 `JPG/PNG upload → private receipt storage → durable SQL queue → optional egress approval → vision extraction → schema/Semantic validation → policy routing → human review when required → audit trail`
 
-The current source supports manual image intake, a durable background queue, privacy-risk triage, reviewer actions, and dashboard/CSV reporting. The optional Google Drive connector is a **Development-only synthetic sandbox**, disabled by default; it is not a production mail or Drive integration.
+The current source supports manual image intake, a durable background queue, privacy-risk triage, reviewer actions, and dashboard/CSV reporting. For a controlled local synthetic demonstration, the owner can also grant Viewer access to a **Restricted** Google Drive folder. To request this route, email the project owner at the contact address provided for the pilot; there is no public upload folder or email-ingestion connector. The optional Drive reader is **Development/loopback-only** and disabled by default on public hosting.
 
 SQL admission control caps combined `PENDING` and `PROCESSING` receipts at `ReceiptProcessing__MaxOutstandingReceipts` (default `1000`) across app instances that use the same SQL database. When full, upload returns HTTP 503 with `Retry-After`; Drive sandbox items remain available for the next poll. This is a queue backlog cap—not a lifetime storage quota, spend limit, or identity/abuse-control boundary. The existing upload rate limiter is process-local.
 
@@ -55,7 +55,18 @@ Remove-Item Env:\AURA_RUN_LOCALDB_INTEGRATION
 
 These integration tests create uniquely named temporary databases and remove them when complete. Use a LocalDB instance owned by the current Windows account.
 
-The optional backup-script integration cases need both Windows PowerShell 5.1 and PowerShell 7. Enable `AURA_RUN_POWERSHELL_INTEGRATION=1` to execute them; the current Release suite passes 377/377 with both integration flags enabled. Frontend race/error tests pass 8/8 with `node .\tests\frontend\workflow-refresh.test.cjs` (Node is needed for these tests only).
+The optional backup-script integration cases need both Windows PowerShell 5.1 and PowerShell 7. Enable `AURA_RUN_POWERSHELL_INTEGRATION=1` to execute them; the current Release suite passes 378/378 with both integration flags enabled. Frontend race/error tests pass 8/8 with `node .\tests\frontend\workflow-refresh.test.cjs` (Node is needed for these tests only).
+
+## Two intake routes and live status
+
+- **Web:** select up to 10 JPG/PNG images per submission. Each accepted image is saved as a separate SQL request. The browser follows its returned request IDs while the AI queue processes them.
+- **Restricted Drive (local synthetic demonstration):** place approved JPG/PNG files directly in the shared test folder. A read-only service account polls the folder about every 120 seconds by default, then saves each accepted file as a SQL request before model processing. Ask the owner by email for access; keep the folder Restricted. This is not enabled on SmartASP.
+
+While the employee tab is visible, a read-only `fetch` request refreshes its result table every five seconds without reloading the page. Recent Drive requests show SQL `PENDING` and `PROCESSING`, then the result; Audit records the permanent events. The table includes up to 20 recent unforwarded Drive requests created in the last 24 hours **plus all unforwarded escalations**, including older ones. It is a live work view, not the complete SQL history. Polling pauses on hidden tabs. A full page refresh does not start the worker or force a Drive scan.
+
+See the [Drive progress UI verification](AURA/docs/DRIVE_PROGRESS_UI_VERIFICATION_2026-10-27.md) for the executed tests and the remaining timing/hosting limits.
+
+Drive idempotency uses folder ID, Google file ID and MD5: re-reading the same unchanged file silently skips it, without another model call or new audit. A newly uploaded *copy* has a new Google file ID and may enter SQL again; SHA-256 duplicate detection marks it, but the current synthetic repeatability profile has duplicate escalation disabled. Changing bytes creates another source version, subject to the exact-image privacy approval gate. Invalid files are rejected before SQL and recorded in the private rejection log. Do not interpret a skipped file or an `AUTO_APPROVE` duplicate as duplicate-expense protection.
 
 ## Current Drive and UX boundary
 
@@ -85,10 +96,10 @@ Build/publish boundaries exclude runtime data and private test results. A real D
 - [Operational runbook](AURA/docs/RUNBOOK.md)
 - [Business rules](AURA/BUSINESS_RULES.md)
 - [Shared private receipt storage design](AURA/docs/SHARED_RECEIPT_STORAGE.md)
-- [English proposal — contest snapshot](AURA/submission/AURA_PROPOSAL_EN.pdf)
-- [Vietnamese proposal — contest snapshot](AURA/submission/AURA_PROPOSAL_VI.pdf)
-- [Contest slides — submitted snapshot](AURA/submission/AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx)
-- [Build log — submitted snapshot](AURA/submission/AURA_BUILD_LOG.pdf)
+- [English proposal — current note plus contest baseline](AURA/submission/AURA_PROPOSAL_EN.pdf)
+- [Vietnamese proposal — current note plus contest baseline](AURA/submission/AURA_PROPOSAL_VI.pdf)
+- [Five slides — current status labeled separately](AURA/submission/AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx)
+- [Build log — current note plus contest baseline](AURA/submission/AURA_BUILD_LOG.pdf)
 - [Post-contest status addendum](AURA/submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md)
 
-The proposal, slides, and build log are preserved submission snapshots; consult the current status report for later source changes. Do not commit API keys, connection strings, User Secrets, real receipt images, database files, raw provider responses, or private evidence.
+The proposal, slides, and build log label the submitted contest results as historical and add a dated current-source note. Git history retains the original submission versions. Do not commit API keys, connection strings, User Secrets, real receipt images, database files, raw provider responses, or private evidence.
