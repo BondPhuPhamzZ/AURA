@@ -4,6 +4,10 @@ Cập nhật 26/10/2026. Nhánh mặc định `master` chứa source hiện hàn
 
 ## 1. Chuẩn bị
 
+UX hiện hành cập nhật fragment sau thao tác và giữ kỳ/bộ lọc/focus/cuộn. Release
+377/377 và frontend 8/8 đã qua kiểm; Node chỉ cần khi chạy test JS. Khi thấy cảnh
+báo dữ liệu cũ, chọn **Thử cập nhật lại** trước khi thao tác tiếp. Xem [runbook](RUNBOOK.md).
+
 Cần Git, .NET 8 SDK, SQL Server LocalDB, PowerShell 5.1 hoặc 7 và OpenRouter key có credit/quyền gọi model được cấu hình. Không cần Ollama, bucket cloud hay tài khoản đăng nhập AURA.
 
 ```powershell

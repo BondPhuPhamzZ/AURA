@@ -1,5 +1,30 @@
 # Trạng thái hiện hành AURA ngày 26/10/2026
 
+> **UX fragment đã kiểm thử — 26/10:** tab, Forward, quyết định/Undo và kỳ dashboard
+> cập nhật vùng đang xem qua GET, không reload toàn trang sau POST. SQL vẫn quyết
+> định trạng thái; giữ antiforgery/rowversion/idempotency, không tự retry POST.
+> Giữ bộ lọc/ngày, focus, cuộn bảng và Back/Forward; phản hồi cũ bị loại, lỗi đọc
+> giữ dữ liệu cũ + khóa thao tác + nút thử lại. Poll chỉ vùng đang xem khi document
+> visible (5/10/15 giây), lỗi giãn 30 giây; GET timeout 15s, workflow POST 20s.
+> Theo dõi upload tạm dừng khi rời tab nhân viên; worker SQL vẫn chạy nền.
+>
+> Release **377/377**, frontend **8/8**, LocalDB/PowerShell integration bật; hai
+> retry/Undo SQL cases kiểm thêm AJAX không lưu flash cũ đều pass. Browser synthetic
+> kiểm Forward/duyệt/Undo, hai tab YES/NO (một manager write), HTTP 503 đọc + recovery,
+> mất response sau commit (một manager write), kỳ dashboard/Back/Forward và giữ
+> ngày/focus/cuộn. Một upload R3-01 qua UI → SQL → model thật trả AUTO, có facts,
+> không provider error/fallback, processing 4.530 ms. Đây là smoke, không benchmark
+> accuracy mới; bốn hồ sơ tĩnh UX không phải model output. IAB reported visible;
+> nhánh document-hidden được kiểm bằng frontend test, chưa phải browser background
+> hoặc load/SLA test. Production local health ok, 0 pending migration, Drive/Verify
+> tắt; HTTP loopback có cảnh báo thiếu HTTPS port, không thay kiểm TLS/IIS hosting.
+>
+> Người dùng chọn chuẩn bị artifact/hướng dẫn trước, chưa thao tác hosting. Không
+> migrate/purge DB đi thi, không sửa SmartASP/secrets/Drive permissions. Drive public
+> vẫn NO-GO; quyền reviewer/metadata/duplicate policy và các gate dữ liệu thật chưa
+> đổi. Evidence: `test_kit/results/ux-fragments-20261026/`; [runbook](RUNBOOK.md) và
+> [hướng dẫn publish](DEPLOYMENT.md).
+
 > **Review Drive/UX/deploy 26/10:** default `master` được đồng bộ source/README,
 > giữ snapshot cũ qua tag `archive/master-before-hardening-20261026`; không đồng
 > nghĩa website đã publish. Current Drive E2E trên DB/ảnh mới: 3/3 JPEG trực tiếp
@@ -10,7 +35,7 @@
 > chứng chống hoàn ứng trùng. Launcher có `-EnableSyntheticDrive` opt-in local;
 > mặc định vẫn tắt và không thay User Secrets. Drive không được bật trên public host.
 >
-> Browser/source review xác nhận tab và action vẫn full navigation; chúng đọc lại
+> Review trước đợt UX phía trên xác nhận tab/action full navigation; chúng đọc lại
 > SQL, không tự enqueue AI. UX chưa có user study/load evidence; HITL có handoff,
 > quyết định/audit/Undo nhưng chưa có reminder/SLA/RBAC. Docker context đã được
 > kiểm bằng matcher thật với 21 private canary bị loại, 4 runtime input được giữ.

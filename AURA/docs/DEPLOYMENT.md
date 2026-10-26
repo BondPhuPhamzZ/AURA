@@ -64,17 +64,68 @@ và [quy trình IIS của Microsoft](https://learn.microsoft.com/en-us/aspnet/co
    nghiệp vụ chống chi trùng, chọn rõ `DecisionPolicy__EscalateDuplicateReceipts=true`
    và khóa expected cho ca ảnh trùng trước; không dùng nhãn regression cũ cho ca
    trùng. Không thay flag rồi gọi mọi sai khác route là model lỗi.
-5. Hạn chế truy cập staging bằng Site Guard/IP/biện pháp hosting đã được xác
-   nhận; AURA chưa có RBAC. Sau publish/recycle: health + 1 synthetic inference,
+5. Hạn chế truy cập staging bằng IP allowlist hoặc authentication của hosting đã
+   được xác nhận; AURA chưa có RBAC. Site Guard là WAF, không thay xác thực hay
+   phân quyền ([tài liệu hãng](https://www.smarterasp.net/support/kb/a2131/site-guard.aspx)).
+   Sau publish/recycle: health + 1 synthetic inference,
    ảnh vẫn đọc được, Forward/manager/Undo/audit, dashboard/CSV cùng kỳ, invalid
    upload bị chặn và file/job còn nguyên sau recycle. Đo hành vi worker khi idle
    và restart; chưa có test này thì không hứa chạy Drive/worker 24/7. Không chạy
    Verify trên Production và không dùng ảnh thật cho smoke.
 
-Chưa có thay đổi environment/SQL/publish nào trên SmartASP trong phiên review
-này. UX fragment refresh là cải tiến kế tiếp; không thay navigation bằng một bản
-vá vội mà chưa có browser/race/error tests. Quyền dữ liệu thật và production
-vẫn là các gate riêng.
+UX fragment hiện đã qua Release 377/377, frontend 8/8 và browser/SQL fault checks;
+Production local chạy được, không có migration mới. Người dùng chọn chuẩn bị
+artifact/hướng dẫn trước. Chưa có thay đổi environment/SQL/publish trên SmartASP;
+quyền dữ liệu thật và full Drive Production vẫn là các gate riêng.
+
+## Cập nhật site SmartASP hiện có khi người dùng sẵn sàng
+
+Staging là website/DB/ảnh tách biệt để chạy thử, không phải tên dataset. Có thể
+giữ URL cũ khi thay package của cùng website; việc này không tự sinh URL mới.
+
+1. Mở [Customer Login](https://www.smarterasp.net/login), chọn hosting plan rồi
+   **Trang web / Websites** → đúng site AURA hiện có. Chưa bấm Publish/Rebuild.
+2. Trong **File Manager**, vào đúng web root (ảnh control panel trước đây là
+   `/aura`). Backup toàn bộ bản website cũ và thư mục ảnh persistent đang dùng,
+   kể cả `App_Data/receipts` nếu đúng cấu hình. Tải về nơi private ngoài Git.
+   Trong **Cơ sở dữ liệu / Databases → MSSQL**, chọn DB cũ → **Backup** và tải
+   `.bak`; xác minh bản backup/restore riêng trước khi thay live. Không xóa ảnh.
+3. Kiểm quota, tạo **DB MSSQL demo mới** để giữ nguyên DB đi thi. Tên do hosting
+   cấp có thể có prefix. Mở SQL Studio/SSMS vào đúng DB mới và chạy script
+   idempotent của cùng commit trong gói bàn giao; kiểm đủ 9 migration. Không chạy
+   script thử trên DB cũ. Nếu không còn quota DB, tiếp tục local và chưa publish.
+4. Tạo receipt directory riêng cho DB mới, ngoài `wwwroot`; giữ allowlist 49 hash
+   ở đường dẫn tuyệt đối private riêng. File Manager có thể hiển thị đường dẫn ảo,
+   nên lấy physical path từ control panel/support thay vì đoán đường dẫn Windows.
+   App pool cần đọc allowlist và đọc/ghi receipt directory. Không ship JSON key Drive.
+5. Vào **Environment Variables** của đúng website. Dùng bảng cấu hình ở trên,
+   nhập API key/connection string trực tiếp vào hosting, giữ `Production`,
+   `Database__ApplyMigrationsOnStartup=false`, Drive/Verify off và một worker.
+   Thay `AllowedHosts` bằng hostname thực tế. Chưa bật retention trên host.
+6. Gói bàn giao có `web.zip` cùng script SQL/allowlist/manifest nằm bên ngoài.
+   **Chỉ giải nén nội dung web.zip vào web root**; không upload cả bundle hay để
+   SQL/manifest chứa đường dẫn private thành URL công khai. Không xóa folder
+   runtime để làm sạch destination. Nếu dùng Visual Studio/Web Deploy, tắt
+   **Remove additional files at destination** và không tự publish database.
+7. Publish trong cửa sổ bảo trì rồi **Recycle application pool** đúng site.
+   Hard refresh một lần để nhận JS/CSS mới. Kiểm health: `ok`, model đúng route,
+   Strict-ZDR request true, `ApprovedImagesOnly`, 49 hash, Drive/Verify false,
+   pending migration 0. `aiConfigured=true` chỉ chứng minh có cấu hình key.
+8. Chạy một synthetic inference được duyệt, rồi Forward/quản lý/Undo, audit,
+   dashboard/CSV cùng kỳ và một ảnh không được duyệt (dừng trước inference).
+   Kiểm riêng GET tới private paths không trả file. Recycle và kiểm lại job/ảnh.
+   Thử hai tab/lỗi mạng bằng DB demo; không mang fault proxy lên hosting.
+9. Kiểm chính sách idle/recycle/Always Running của gói thực tế; không suy từ local
+   rằng worker sẽ chạy 24/7. Nếu lỗi, giữ evidence, đưa lại package + environment
+   của bản cũ và trỏ lại DB/receipt directory cũ; không restore đè DB đang ghi.
+
+**Demo Drive:** upload ảnh synthetic đã duyệt trực tiếp vào folder Restricted đã
+cấu hình, chạy launcher local `-EnableSyntheticDrive` theo runbook và xem Audit/
+Dashboard tự cập nhật. Service account chỉ cần Viewer. Người khác chỉ upload được
+khi được chủ folder chia sẻ quyền phù hợp cho đúng email; một link Restricted
+không cấp quyền. Không đổi sang Anyone-with-link để vượt setup và không đưa link
+folder riêng vào README public. Luồng Drive tới live SmartASP cần gate triển khai
+connector riêng; bản UX này không mở gate đó.
 
 > Source 21/10/2026: Verify Harness mặc định tắt và **không thể chạy trên Production**, kể cả khi hosting còn `Verify__Enabled=true`. Cần ít nhất **196/196 tests** trước publish. Bản hardening chưa được smoke live; xem [báo cáo gate](POST_CONTEST_HARDENING_2026-10-21.md). Các số live cũ bên dưới là evidence lịch sử.
 

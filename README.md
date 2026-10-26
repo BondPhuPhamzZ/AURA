@@ -60,13 +60,13 @@ Remove-Item Env:\AURA_RUN_LOCALDB_INTEGRATION
 
 These integration tests create uniquely named temporary databases and remove them when complete. Use a LocalDB instance owned by the current Windows account.
 
-The optional backup-script integration cases need both Windows PowerShell 5.1 and PowerShell 7. Enable `AURA_RUN_POWERSHELL_INTEGRATION=1` to execute them; the final Debug/Release verification passed 371/371 each with both integration flags enabled.
+The optional backup-script integration cases need both Windows PowerShell 5.1 and PowerShell 7. Enable `AURA_RUN_POWERSHELL_INTEGRATION=1` to execute them; the current Release suite passes 377/377 with both integration flags enabled. Frontend race/error tests pass 8/8 with `node .\tests\frontend\workflow-refresh.test.cjs` (Node is needed for these tests only).
 
 ## Current Drive and UX boundary
 
 On 26 October, a fresh local Drive run completed 3/3 approved JPEGs; restarting left the same three jobs and six audit rows. This is execution/idempotency evidence, not an accuracy benchmark. The connector reads direct folder children, not nested folders; its bounded scan is not an unlimited batch drain. The repeatability profile has duplicate escalation off: same-source idempotency is not duplicate-expense prevention. Submitter/department are synthetic metadata.
 
-Human handoff, reviewer actions, audit and Undo work in the demo. Tabs/actions still use full navigation and read SQL; they do not themselves enqueue inference. Reviewer assignment, reminders, verified identity and measured UX/load behavior remain open. See the [readiness assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
+Tabs, Forward, reviewer decisions/Undo and dashboard periods now refresh read-only fragments after server-confirmed writes. The UI preserves filters, focus, scroll and URL history, pauses inactive/hidden polling, and retains prior rows with retry recovery on read failure. Two-tab and lost-response checks retained one SQL decision; no automatic POST retry was added. Reviewer assignment, reminders, verified identity, sustained load and independent usability acceptance remain open. See the [readiness assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
 
 ## Privacy and readiness
 
@@ -82,7 +82,7 @@ This is a supervised MVP / contest project, **not production-ready software**. A
 
 To change the queue ceiling for a controlled deployment, set `ReceiptProcessing__MaxOutstandingReceipts` (valid range `1`–`10000`). Do not raise it until storage capacity, provider budget, and queue-age behavior have been load-tested.
 
-Build/publish boundaries exclude runtime data and private test results. A real Docker ignore-matcher fixture and a local publish probe passed after fixing a raw-results inclusion defect; this does not establish container runtime readiness. The [deployment guide](AURA/docs/DEPLOYMENT.md) separates controlled staging from the current Development-only Drive connector. No hosting environment or database was changed by the 26 October review.
+Build/publish boundaries exclude runtime data and private test results. A real Docker ignore-matcher fixture and a local publish probe passed after fixing a raw-results inclusion defect; this does not establish container runtime readiness. The [deployment guide](AURA/docs/DEPLOYMENT.md) separates controlled staging from the current Development-only Drive connector. A Production-mode localhost staging check passed, and one UI/model smoke returned AUTO with facts in 4,530 ms processing; this is not a new accuracy benchmark. Hosting operations are deferred by the owner: the prepared UX package does not enable the Development-only Drive connector on the public site.
 
 ## Project documents
 

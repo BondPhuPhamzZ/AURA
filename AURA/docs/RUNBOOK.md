@@ -1,5 +1,36 @@
 # AURA Runbook
 
+## UX hiện hành và kiểm thử trước publish — 26/10
+
+Tabs và Forward/duyệt/Undo cập nhật fragment từ SQL, không tự reload. Giữ nguyên
+kỳ dashboard trong URL, bộ lọc audit, focus và vị trí cuộn. Chỉ tab đang xem khi
+document visible mới poll: nhân viên/quản lý 5s, audit 10s, dashboard 15s; khi lỗi
+đọc giãn 30s. Theo dõi upload cũng đợi khi rời tab nhân viên, còn SQL worker vẫn chạy.
+GET timeout 15s, workflow POST 20s; mất phản hồi không tự gửi lại quyết định.
+
+Nếu có thanh cảnh báo, dữ liệu là bản gần nhất và nút workflow bị khóa. Chọn
+**Thử cập nhật lại**; dùng **Tải lại trang** nếu vẫn không khôi phục được. Đối chiếu
+audit trước khi bấm lại một thao tác chưa xác nhận. Không coi timeout là đã từ chối.
+Mở tab quản lý để duyệt ngoại lệ; Forward giữ nguyên tab nhân viên sau khi ghi.
+
+Trước khi publish, dùng DB/ảnh synthetic riêng: Forward → quản lý → quyết định →
+audit → Undo; giữ ngày/kỳ khi chuyển tab và Back/Forward. Kiểm hai tab cùng một hồ
+sơ (SQL chỉ ghi một quyết định), GET lỗi giữ hàng cũ, và response mất sau commit.
+Production local không thay thế smoke IIS/TLS/recycle/idle trên hosting.
+
+```powershell
+# Node chỉ cần để chạy test frontend, không cần trên host IIS.
+node .\tests\frontend\workflow-refresh.test.cjs
+$env:AURA_RUN_LOCALDB_INTEGRATION = '1'
+$env:AURA_RUN_POWERSHELL_INTEGRATION = '1'
+dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release
+```
+
+Chốt local: Release 377/377, frontend 8/8, hai SQL retry/Undo assertions pass;
+browser evidence giữ Git-ignored trong `test_kit/results/ux-fragments-20261026/`.
+Không chạy fault proxy/fixture seed lên hosting. [Quy trình SmartASP](DEPLOYMENT.md)
+vẫn giữ Drive off trên Production; thư mục Drive không cần public để demo local.
+
 ## 1. Phụ thuộc
 
 - .NET 8 SDK; bản 8.0.425 được khuyến nghị cho baseline hiện tại

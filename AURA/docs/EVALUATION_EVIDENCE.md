@@ -6,6 +6,13 @@
 
 ## Evidence hậu cuộc thi, không thay thế baseline nộp bài
 
+**UX 26/10:** Release 377/377, frontend 8/8 và browser/SQL checks trên DB synthetic
+riêng (hai tab trái quyết định, lost response sau commit đều một manager write).
+Production local đã smoke; chưa là SmartASP/load/usability acceptance. Một ảnh
+qua UI/model trả AUTO có facts sau 4.530 ms processing, không lỗi/fallback; bốn
+fixture workflow tĩnh không được tính vào benchmark model. Chi tiết tại
+[assessment](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md); số đo 15 ca giữ ngày cũ.
+
 | Phép kiểm | Kết quả | Không được suy ra |
 |---|---|---|
 | Synthetic-only local, xác minh 26/10 | Giữ DB cũ 438 hồ sơ/6 migration; sandbox riêng bật retention 7 ngày và exact-hash egress approval. Full Debug/Release 371/371 mỗi bản, LocalDB + PowerShell integration bật | Không phải bật retention dữ liệu lịch sử hoặc cho phép dữ liệu thật/pilot |

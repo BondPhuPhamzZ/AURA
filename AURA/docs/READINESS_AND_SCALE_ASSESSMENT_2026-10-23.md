@@ -2,7 +2,40 @@
 
 This is a **source-and-evidence assessment**, not a certification or a statement that the public host runs this commit. The dated proposal, build log and five-slide deck remain the contest submission snapshot. See the [post-contest submission addendum](../submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) for a short outward-facing update.
 
-## Drive, UX and deployment review — 26 October 2026
+## Verified fragment UX — 26 October 2026
+
+Tabs and committed Forward/decision/Undo actions now refresh the active read-only
+fragment rather than navigate the full page. Dashboard period uses a validated
+GET endpoint. URL history, audit dates/details, focus and table/page scroll are
+preserved; stale/cancelled reads cannot overwrite a newer view. Only the active
+visible pane polls (5s employee/reviewer, 10s audit, 15s dashboard, 30s after a
+read failure). Upload status waits while the employee pane/document is hidden;
+SQL processing continues. Failed reads retain prior rows, disable workflow
+actions and offer retry/full-refresh recovery. GET/POST timeouts are 15s/20s;
+an uncertain mutation response is reconciled by GET, never automatic POST retry.
+AJAX messages do not persist as flash notifications for a later page load.
+
+Final Release suite: 377/377 with LocalDB and PowerShell integration enabled;
+eight frontend concurrency/error tests pass. Browser checks used a separate
+synthetic DB: Forward, approval/Undo, conflicting YES/NO from two tabs (one SQL
+manager write), read-503 recovery, a lost response after commit (one SQL write),
+date/month preservation, Back/Forward, focus and unchanged scroll after polling.
+Production-mode localhost checks also pass; this is not SmartASP/IIS/TLS proof.
+One actual UI upload through the model completed AUTO with facts in 4,530ms,
+without provider error/fallback. Four static workflow fixtures are not model
+samples and no new accuracy benchmark is claimed. The IAB reported both tabs
+visible, so document-hidden suppression is frontend-unit evidence, not an
+actual background-browser measurement. Sustained load, independent usability,
+reviewer notifications/RBAC and real-data gates remain open.
+
+The user chose artifact/instructions first and deferred hosting operations.
+Drive is still Development/loopback-only; publishing UX alone does not make the
+public site ingest Drive files. Keep folder permissions Restricted and do not
+put a private folder URL or credentials in public README. See [the runbook](RUNBOOK.md)
+and [SmartASP handoff](DEPLOYMENT.md). Raw proof stays Git-ignored under
+`test_kit/results/ux-fragments-20261026/`.
+
+## Drive, UX and deployment review before the UX update — 26 October 2026
 
 **Decision:** supervised synthetic MVP on one local host is demonstrated. This
 does not mean all business rules are approved for a company, every OCR field is
@@ -29,15 +62,10 @@ business pilot. Do not silently change this flag or re-score past regressions.
 Drive metadata currently records a synthetic submitter/department, not a
 verified employee identity; owner/cost-center mapping remains a business gate.
 
-Browser/source review confirms tab changes and completed workflow POSTs use a
-full navigation. Page reloads do not themselves enqueue an AI request; they
-re-read SQL/view components. The applicant fragment also polls every five
-seconds, including while hidden. There is no load/usability evidence proving
-this cannot overload SQL at scale or that staff find it easy to use. Follow-up
-UX should refresh the active read-only fragment after a committed action,
-preserve tab/month/focus/scroll, avoid overlapping/stale responses, pause hidden
-polling and retain an explicit refresh recovery path. Existing SQL rowversion,
-antiforgery and server-confirmed decisions must remain intact.
+The earlier review found full navigation after tabs/actions and hidden-pane
+polling. The verified fragment update above addresses those findings while
+retaining SQL rowversion, antiforgery and server-confirmed decisions. It does
+not establish sustained-load capacity or independent usability acceptance.
 
 HITL exists as employee handoff, manager route-specific action, audit and Undo
 before retention expiry. FACT/PRIVACY acceptance is manual intake, not payment
@@ -134,11 +162,14 @@ The current source is not claimed to be published on the live URL. An expired Op
 
 The workflow concerns **employee expense reimbursement**. Employees from any department *could* submit receipts if their employer adopts one common expense policy; accounting/finance or an operations reviewer checks exceptions, and a designated budget owner/manager decides authority and policy exceptions. The current code does **not** implement organization-wide rollout, department-specific policy, cost-center routing, delegated authority, tax validation, ERP/payment posting or roles. Therefore “covers all departments” is a possible future deployment model, **not** a demonstrated capability. AURA does not transfer money or certify invoice authenticity.
 
-## UX: why some actions reload the page
+## Historical UX finding before the 26 October fragment update
+
+The following describes the 23 October baseline. The verified 26 October
+implementation and its remaining limits are recorded at the top of this file.
 
 The applicant escalation queue already refreshes a read-only HTML fragment every five seconds, and individual job status is polled. However, `ForwardToManager`, `ForwardAllToManager` and `.js-workflow-form` send a fetch POST and then call `window.location.assign(...)`; tab navigation also reloads the page. This was an intentional way to reconstruct all tables from committed SQL state and avoid stale, conflicting fragments, but it makes the UI feel as though it requires refresh after each action.
 
-**Low-risk next UX iteration:** keep POST endpoints and SQL as the only source of truth; after a successful mutation, fetch fresh read-only `EmployeeEscalations`, `ReviewerQueue`, `AuditTrail` and dashboard fragments (or one versioned summary response), then replace only affected DOM regions. Preserve the selected tab, date filter, focus and scroll; announce updates through an accessible live region. Disable duplicate submissions until the response, show an explicit stale/error state if any fragment fetch fails, and retain a manual full-page refresh as recovery. Never optimistically display an approval before server confirmation. Cover forward/decision/undo, two-tab races, failed fragment fetches and accessibility in browser tests before changing the existing reload behavior. SignalR is unnecessary at this scale; bounded polling is simpler and already partly implemented.
+**Plan recorded on 23 October:** keep POST endpoints and SQL as the only source of truth; after a successful mutation, fetch fresh read-only `EmployeeEscalations`, `ReviewerQueue`, `AuditTrail` and dashboard fragments, then replace only affected DOM regions. Preserve the selected tab, date filter, focus and scroll; announce updates through an accessible live region. Disable duplicate submissions until the response, show an explicit stale/error state if any fragment fetch fails, and retain a manual full-page refresh as recovery. Never optimistically display an approval before server confirmation. The 26 October implementation above followed this plan and was tested on a separate synthetic DB.
 
 ## Multi-instance concurrency
 
