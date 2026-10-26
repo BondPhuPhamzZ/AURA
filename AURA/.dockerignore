@@ -2,7 +2,21 @@
 **/obj/
 **/.vs/
 **/TestResults/
-App_Data/receipts/*
+# Private runtime data must never enter the build context or cached build layers.
+App_Data/
+.tmp/
+.codex_tmp/
+publish/
+Properties/PublishProfiles/
+wwwroot/uploads/
+wwwroot/temp_test/
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
 tests/
 test_kit/
 .git/
@@ -11,3 +25,12 @@ test_kit/
 *.suo
 *.mdf
 *.ldf
+**/*.bak
+**/*.publishsettings
+**/*.pubxml.user
+**/appsettings.Secrets.json
+**/appsettings.Production.local.json
+**/*service-account*.json
+**/client_secret*.json
+**/*.pem
+**/*.pfx
