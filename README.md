@@ -23,34 +23,29 @@ dotnet tool restore
 dotnet restore
 ```
 
-Store the OpenRouter key and local database connection string in .NET User Secrets (never commit either value):
+Store the OpenRouter key in .NET User Secrets (never commit it). The synthetic launcher prepares its own isolated database connection:
 
 ```powershell
 dotnet user-secrets set "OpenRouter:ApiKey" "<YOUR_OPENROUTER_API_KEY>"
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\MSSQLLocalDB;Database=AuraDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Connect Timeout=5;ConnectRetryCount=0"
 ```
 
-To keep an existing database unchanged, use the isolated synthetic profile first:
+To keep an existing database unchanged, prepare the isolated synthetic profile first:
 
 ```powershell
-$env:Vision__Provider = "OpenRouter"
-$env:OpenRouter__Model = "qwen/qwen3.8-27b"
-$env:OpenRouter__RequireZeroDataRetention = "true"
+.\tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly -EnableSyntheticDrive
 .\tools\Start-AuraRetentionSandbox.ps1
 ```
 
-It prepares a separate dated LocalDB and receipt directory, enables retention and exact-image approval, and serves `http://127.0.0.1:5098`. It does not change User Secrets. Only verified synthetic fixtures are approved; the key comes from your private configuration. The process settings above reproduce the tested route without changing User Secrets. For an already configured Restricted test folder and read-only service account, add `-EnableSyntheticDrive`; this opt-in is limited to localhost synthetic data. See the [runbook](AURA/docs/RUNBOOK.md) for credentials, exact folder selection and rollback.
+It prepares a separate LocalDB and receipt directory, enables retention and exact-image approval, and serves `http://127.0.0.1:5000`. Visual Studio **AURA** (F5) and the launcher use the same Git-ignored active profile; run only one host at a time. The launcher reuses the prepared DB on later days. Strict ZDR and provider-data denial are requested for Qwen3.8-27B; this does not redact images or establish a legal privacy guarantee. Only 49 verified synthetic fixture contents may reach the provider. The Restricted Drive test folder remains read-only and Development/loopback only. See the [single-profile evidence and two-case manual test](AURA/docs/LOCAL_SYNTHETIC_PROFILE_2026-10-26.md) and [runbook](AURA/docs/RUNBOOK.md).
 
-For a new empty demo database, create the schema, then build, test, and run:
+For a new empty synthetic database, the preparation command above applies all EF migrations. To use a different database, pass a name such as `-DatabaseName AURA_RetentionSandbox_20261027` to that command. Build and test independently with:
 
 ```powershell
-dotnet ef database update
 dotnet build AURA.csproj -c Release
 dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release
-dotnet run --project AURA.csproj
 ```
 
-Open the local URL printed by `dotnet run`. Database migrations are **not** applied automatically at startup by default. For the opt-in SQL/LocalDB integration tests, start the existing LocalDB instance if needed and run:
+Open the local URL printed by the launcher or press F5 with Visual Studio profile **AURA** after preparation. Database migrations are **not** applied automatically at startup. For the opt-in SQL/LocalDB integration tests, start the existing LocalDB instance if needed and run:
 
 ```powershell
 $env:AURA_RUN_LOCALDB_INTEGRATION = "1"
@@ -64,7 +59,7 @@ The optional backup-script integration cases need both Windows PowerShell 5.1 an
 
 ## Current Drive and UX boundary
 
-On 26 October, a fresh local Drive run completed 3/3 approved JPEGs; restarting left the same three jobs and six audit rows. This is execution/idempotency evidence, not an accuracy benchmark. The connector reads direct folder children, not nested folders; its bounded scan is not an unlimited batch drain. The repeatability profile has duplicate escalation off: same-source idempotency is not duplicate-expense prevention. Submitter/department are synthetic metadata.
+On 26 October, a fresh local Drive run completed 3/3 approved JPEGs; the later R3-01/R3-12 pair completed and a restart left **5 requests, 10 audit rows and no queued jobs**. This is execution/idempotency evidence, not an accuracy benchmark. The connector reads direct folder children, not nested folders; its bounded scan is not an unlimited batch drain. The repeatability profile has duplicate escalation off: same-source idempotency is not duplicate-expense prevention. Submitter/department are synthetic metadata.
 
 Tabs, Forward, reviewer decisions/Undo and dashboard periods now refresh read-only fragments after server-confirmed writes. The UI preserves filters, focus, scroll and URL history, pauses inactive/hidden polling, and retains prior rows with retry recovery on read failure. Two-tab and lost-response checks retained one SQL decision; no automatic POST retry was added. Reviewer assignment, reminders, verified identity, sustained load and independent usability acceptance remain open. See the [readiness assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
 

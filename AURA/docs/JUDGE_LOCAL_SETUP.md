@@ -39,23 +39,21 @@ $env:AURA_RUN_POWERSHELL_INTEGRATION = '1'
 dotnet test tests/AURA.Tests/AURA.Tests.csproj -c Release --no-restore
 Remove-Item Env:\AURA_RUN_LOCALDB_INTEGRATION
 Remove-Item Env:\AURA_RUN_POWERSHELL_INTEGRATION
-$env:Vision__Provider = 'OpenRouter'
-$env:OpenRouter__Model = 'qwen/qwen3.8-27b'
-$env:OpenRouter__RequireZeroDataRetention = 'true'
+.\tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly -EnableSyntheticDrive
 .\tools\Start-AuraRetentionSandbox.ps1
 ```
 
 Các test PowerShell integration cần máy có **cả PS5.1 và PS7**. Bộ xác minh ghi nhận 371/371 mỗi cấu hình Debug/Release với cả hai integration flags bật; chạy không bật flag không chứng minh đã chạy integration. Automated tests dùng provider giả lập, không tốn credit. Upload/evaluator model thật có tính phí.
 
-Launcher build và áp migration vào `AURA_RetentionSandbox_yyyyMMdd`, dùng ảnh riêng dưới `.tmp/retention-sandbox/`, bật retention 7 ngày cho hồ sơ đã chốt và `ApprovedImagesOnly`. Nó không sửa User Secrets hoặc migrate DB `AuraDb`. Không chạy `dotnet ef database update` trên DB cũ để làm theo hướng dẫn này. Biến model ở trên chỉ thuộc cửa sổ PowerShell; đóng cửa sổ sau khi dừng app để bỏ override.
+Launcher build và áp migration vào `AURA_RetentionSandbox_yyyyMMdd`, dùng ảnh riêng dưới `.tmp/retention-sandbox/`, bật retention 7 ngày cho hồ sơ đã chốt và `ApprovedImagesOnly`. Nó không sửa User Secrets hoặc migrate DB `AuraDb`. Profile Visual Studio **AURA** (F5) dùng cùng cấu hình đã chuẩn bị; chỉ chạy một host tại một thời điểm. Xem [profile local chung](LOCAL_SYNTHETIC_PROFILE_2026-10-26.md).
 
-Giữ terminal mở, truy cập `http://127.0.0.1:5098`. Trong PowerShell thứ hai:
+Giữ terminal mở, truy cập `http://127.0.0.1:5000`. Trong PowerShell thứ hai:
 
 ```powershell
-Invoke-RestMethod 'http://127.0.0.1:5098/healthz' | ConvertTo-Json -Depth 5
+Invoke-RestMethod 'http://127.0.0.1:5000/healthz' | ConvertTo-Json -Depth 5
 ```
 
-Cần `status=ok`, `pendingMigrationCount=0`, `externalImagePrivacyMode=ApprovedImagesOnly`, `externallyApprovedImageCount=49`, `retentionCleanupEnabled=true`, `strictZeroDataRetention=true`, `providerDataCollectionDenied=true`, concurrency 1 và fallback/Drive/Verify tắt. Health kiểm cấu hình/DB/storage, không tự gọi model hoặc xác nhận key còn credit.
+Cần `status=ok`, `pendingMigrationCount=0`, `externalImagePrivacyMode=ApprovedImagesOnly`, `externallyApprovedImageCount=49`, `retentionCleanupEnabled=true`, `strictZeroDataRetention=true`, `providerDataCollectionDenied=true`, concurrency 1, `driveSandboxConfigured=true`, fallback/Verify tắt. Health kiểm cấu hình/DB/storage, không tự gọi model hoặc xác nhận key còn credit.
 
 ## 4. Thử một ảnh và xem luồng
 
@@ -66,7 +64,7 @@ Cần `status=ok`, `pendingMigrationCount=0`, `externalImagePrivacyMode=Approved
 
 Chỉ 49 nội dung synthetic đã xác minh được phép gửi model; các bản sao byte trong bộ 100 cũng khớp hash. Ảnh khác bị chặn trước HTTP thành `ESCALATE_PRIVACY`, không facts; không tự thêm hash để vượt gate. Đây không phải detector/che PII. Ảnh đã duyệt vẫn gửi nguyên pixels; Strict ZDR là yêu cầu định tuyến, chưa phải cam kết pháp lý.
 
-Không bật Verify trong luồng này. Muốn thử Drive, đọc [runbook](RUNBOOK.md), giữ folder synthetic Restricted và bật rõ `-EnableSyntheticDrive`; file trong folder con không được quét tự động. Muốn chạy đủ 15 ca, xem [model evidence](MODEL_ROUTE_COMPARISON_2026-10-24.md), khóa đúng manifest/images và lưu raw output ngoài Git. Không diễn giải bộ known-data nhỏ là accuracy thực tế hay throughput 100/1.000 hóa đơn.
+Không bật Verify trong luồng này. Drive đã được bật lúc chuẩn bị profile bằng `-EnableSyntheticDrive`; chỉ quét file trực tiếp trong folder Restricted. Hai file R3-01/R3-12 đã có bản ghi, nên dùng R3-02/R3-13 để thử ca mới theo [hướng dẫn](LOCAL_SYNTHETIC_PROFILE_2026-10-26.md). Muốn chạy đủ 15 ca, xem [model evidence](MODEL_ROUTE_COMPARISON_2026-10-24.md), khóa đúng manifest/images và lưu raw output ngoài Git. Không diễn giải bộ known-data nhỏ là accuracy thực tế hay throughput 100/1.000 hóa đơn.
 
 ## 5. Dừng và xử lý lỗi
 
@@ -75,7 +73,7 @@ Chờ queue rỗng, lưu evidence riêng tư rồi nhấn Ctrl+C một lần. Kh
 - 401/402: kiểm key/credit trong dashboard riêng; không in key vào log.
 - 429/timeout: giữ evidence và chờ backoff/cooldown; không spam upload.
 - Startup báo approval file lỗi: kiểm fixture/manifest bằng Git, không tắt gate để chạy tiếp.
-- Port 5098 đã dùng: kiểm terminal AURA đang chạy và dùng phiên đó; không kill process không rõ nguồn.
+- Port 5000 đã dùng: kiểm Visual Studio/terminal AURA đang chạy và dùng phiên đó; không kill process không rõ nguồn.
 - LocalDB không kết nối được: xem [runbook](RUNBOOK.md), giữ DB cũ/backup; không reset dữ liệu.
 
 Privacy cho dữ liệu thật, auth/RBAC, malware quarantine, hosting restore và nhiều host vẫn là gate tương lai. Xem [checklist hiện hành](CURRENT_ACTION_CHECKLIST.md).

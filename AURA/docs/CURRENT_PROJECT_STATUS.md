@@ -714,7 +714,7 @@ FAHASA còn over ổn định do validator chưa chấp nhận chắc chắn nh�
 ## Gate con người còn mở
 
 1. Publish/recycle UX follow-up mới nhất, kiểm lại `/healthz`, bộ chọn kỳ/CSV và một synthetic smoke; không rerun holdout cũ để tạo accuracy claim mới.
-2. Xác nhận route Alibaba/OpenRouter vẫn nhận `data_collection=deny`; chỉ cân nhắc bật strict ZDR sau một probe có kiểm soát.
+2. Local synthetic đã yêu cầu Strict ZDR và `data_collection=deny` trên Qwen3.8-27B; phải kiểm lại endpoint/điều khoản tại thời điểm deploy. Không suy ra Alibaba là đơn vị vận hành endpoint hoặc hosting cũng đang bật cùng cấu hình.
 3. Hoàn tất ba phiên user study thật, có consent, quote nguyên văn, một thay đổi truy vết được và một negative effect.
 4. Rehearsal có bấm giờ theo demo mới: dashboard → lượt nhiều ảnh không nhập tiền → privacy escalation → manager → audit.
 
@@ -723,3 +723,13 @@ FAHASA còn over ổn định do validator chưa chấp nhận chắc chắn nh�
 ## Cách đọc ngày trong gói Demo Day
 
 Các gói evidence có timestamp ngoài repository là bằng chứng lịch sử bất biến, không được sửa ngày để tạo cảm giác đây là phép đo mới. Nguồn trạng thái hiện hành là tài liệu này; bản tổng hợp số liệu công khai nằm tại `EVALUATION_EVIDENCE.md`. Tài liệu ôn tập, kịch bản và Q&A cá nhân được giữ ngoài repository; chúng không phải evidence đánh giá hay hồ sơ nộp.
+## Một profile local — 26/10/2026
+
+Profile Visual Studio **AURA** và `Start-AuraRetentionSandbox.ps1` dùng chung cấu
+hình synthetic được chuẩn bị trong `.tmp`, tại `127.0.0.1:5000`. Cả hai cách
+khởi động đều trả `/healthz=ok` trên cùng LocalDB sandbox; `AuraDb` đi thi được
+giữ nguyên. Release 377/377, frontend 8/8. Sau restart Drive, số liệu vẫn là
+5 hồ sơ/10 audit/0 job chờ; không gọi AI mới trong lượt kiểm này. Route yêu cầu
+Strict ZDR và từ chối provider thu thập dữ liệu, nhưng duyệt hash không che PII
+và chưa cho phép hóa đơn thật. Hướng dẫn hai ca thủ công và ranh giới privacy:
+[profile synthetic local](LOCAL_SYNTHETIC_PROFILE_2026-10-26.md).

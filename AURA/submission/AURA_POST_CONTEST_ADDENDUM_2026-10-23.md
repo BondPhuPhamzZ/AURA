@@ -1,5 +1,16 @@
 # AURA post-contest status addendum — 23 October 2026
 
+**26 October local profile update:** Visual Studio F5 and the PowerShell launcher
+now share one prepared synthetic profile at `127.0.0.1:5000`, using the same
+isolated LocalDB, private receipt store, 49-image SHA-256 approval set,
+Qwen3.8-27B Strict ZDR routing request, one AI permit and optional read-only
+Drive poller. On this checkpoint, both start paths returned `/healthz=ok`;
+Release tests passed 377/377 and frontend refresh tests 8/8. The previous
+R3-01/R3-12 Drive pair remained idempotent after restart: 5 requests, 10 audit
+rows and 0 queued jobs. These are configuration and known-data checks, not a
+new accuracy result or a production privacy certification. See the
+[current local profile](../docs/LOCAL_SYNTHETIC_PROFILE_2026-10-26.md).
+
 The proposal, one-page build log and five-slide deck in this folder document the **submitted contest candidate**. They are deliberately preserved, including their then-current 163-test and claimed-amount descriptions. They must not be read as specifications for the newer source or as evidence that the newer source has been published.
 
 **26 October verification:** final Debug/Release suites passed 371/371 each

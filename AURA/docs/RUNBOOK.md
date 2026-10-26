@@ -63,14 +63,15 @@ khi quay video/chia sẻ màn hình vì lệnh có thể hiển thị secret.
 ```powershell
 dotnet build ../AURA.sln --no-restore
 dotnet test tests/AURA.Tests/AURA.Tests.csproj --no-restore
-$env:OpenRouter__Model = 'qwen/qwen3.8-27b'
-$env:OpenRouter__RequireZeroDataRetention = 'true'
+.\tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly -EnableSyntheticDrive
 .\tools\Start-AuraRetentionSandbox.ps1
 ```
 
 Không thêm `--no-build` vào lệnh test trừ khi test project vừa được build đúng configuration; nếu không, CLI có thể chạy assembly cũ và báo sai số lượng test.
 
-Mở `http://127.0.0.1:5098`, kiểm `/healthz=ok`, approval mode và 49 hash.
+Mở `http://127.0.0.1:5000`, kiểm `/healthz=ok`, approval mode và 49 hash.
+Visual Studio profile **AURA** dùng cùng cấu hình sau bước prepare; không chạy F5
+và launcher cùng lúc. Xem [profile chung và hai ca mới](LOCAL_SYNTHETIC_PROFILE_2026-10-26.md).
 Hướng dẫn từng bước: [chạy synthetic local](JUDGE_LOCAL_SETUP.md). Integration
 tests LocalDB/PowerShell cần bật flags theo mục retention bên dưới; kết quả
 test mặc định không chứng minh integration đã chạy.
@@ -173,12 +174,12 @@ Integration test `Synthetic_database_and_receipt_backup_restore_preserves_pendin
 
 ### Retention local 7 ngày (opt-in, chưa bật mặc định)
 
-Để giữ nguyên DB đi thi, chạy sandbox riêng bằng script dưới đây. Mặc định script
-dùng LocalDB tên `AURA_RetentionSandbox_yyyyMMdd` và ảnh riêng trong
-`.tmp/retention-sandbox/<database>/receipts`; `.tmp` được Git/publish exclude.
-Nó override connection string/retention chỉ trong process đang chạy, khôi phục
-environment khi dừng và không sửa User Secrets. Chỉ dùng ảnh synthetic: model/API
-key vẫn lấy từ cấu hình hiện có, script không tự kiểm chứng hay thay đổi route ZDR.
+Để giữ nguyên DB đi thi, chạy sandbox riêng bằng script dưới đây. Lần prepare
+đầu dùng LocalDB `AURA_RetentionSandbox_yyyyMMdd`; các lần sau dùng lại DB từ
+`.tmp/retention-sandbox/active.json`. Ảnh riêng ở `.tmp/retention-sandbox/<database>/receipts`;
+`.tmp` được Git/publish exclude. Visual Studio F5 và launcher dùng chung profile
+này, không sửa User Secrets. Chỉ dùng ảnh synthetic. Model Qwen3.8-27B và yêu
+cầu Strict ZDR được ghim trong profile; API key vẫn lấy từ User Secrets.
 
 ```powershell
 .\tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly
@@ -186,14 +187,15 @@ key vẫn lấy từ cấu hình hiện có, script không tự kiểm chứng h
 ```
 
 Lệnh đầu build Release và áp dụng migration vào DB sandbox. Lệnh thứ hai mở app
-ở `http://127.0.0.1:5098`; nhấn Ctrl+C để dừng. Kiểm `/healthz`: `status=ok`,
+ở `http://127.0.0.1:5000`; nhấn Ctrl+C để dừng. Kiểm `/healthz`: `status=ok`,
 `pendingMigrationCount=0`, `retentionCleanupEnabled=true`, `retentionDays=7`,
-`receiptStorageProvider=LocalFileSystem`, fallback/Drive/Verify tắt và concurrency
+`receiptStorageProvider=LocalFileSystem`, fallback/Verify tắt, Drive theo active profile và concurrency
 1; `externalImagePrivacyMode=ApprovedImagesOnly`, `externallyApprovedImageCount=49`.
 Launcher bind loopback và đặt `AllowedHosts=127.0.0.1;localhost`; HTTP Host khác
 bị trả 400. Đây không phải cơ chế đăng nhập hay quyền truy cập người dùng.
-DB cũ vẫn cần migration riêng nếu chạy qua lệnh `dotnet run` thường; không dùng
-lệnh đó để thử retention trước khi chốt chuyển đổi dữ liệu lịch sử.
+Không dùng `dotnet run --no-launch-profile` để thử retention; lệnh đó bỏ qua
+profile chung và có thể chọn cấu hình legacy. Dùng F5 profile **AURA** hoặc
+launcher trên, sau khi prepare. Giữ `AuraDb` lịch sử nguyên trạng.
 
 #### Duyệt ảnh trước khi gửi ra provider
 
@@ -201,19 +203,17 @@ lệnh đó để thử retention trước khi chốt chuyển đổi dữ liệ
 chỉ chứa fixture synthetic đã duyệt và dùng cờ opt-in trong cùng profile:
 
 ```powershell
-$env:Vision__Provider = 'OpenRouter'
-$env:OpenRouter__Model = 'qwen/qwen3.8-27b'
-$env:OpenRouter__RequireZeroDataRetention = 'true'
-.\tools\Start-AuraRetentionSandbox.ps1 -EnableSyntheticDrive
+.\tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly -EnableSyntheticDrive
+.\tools\Start-AuraRetentionSandbox.ps1
 ```
 
-Mặc định launcher vẫn tắt Drive. Cờ trên chỉ override process, đặt scanner
-requirement false cho sandbox synthetic và giữ approval gate; không đổi User
-Secrets hoặc cấp thêm quyền Google. Program tiếp tục chặn connector ngoài
+Lần đầu Drive tắt; cờ prepare trên bật Drive trong active profile và lần chạy
+sau giữ lựa chọn đó. Muốn tắt, prepare lại với `-EnableSyntheticDrive:$false`.
+Chỉ sandbox synthetic được đặt scanner requirement false; không đổi User Secrets
+hoặc cấp thêm quyền Google. Program tiếp tục chặn connector ngoài
 Development/loopback. Nó chỉ đọc trực tiếp `FolderId`, không tự đọc các folder
 con. Muốn test một batch trong folder con, cấu hình đúng ID của folder đó; không
-bật recursion hoặc public sharing. Chờ queue rỗng rồi Ctrl+C; chạy lại không có
-cờ để tắt Drive. Dùng cổng khác nếu một sandbox đã chạy; không mở hai worker trên
+bật recursion hoặc public sharing. Chờ queue rỗng rồi Ctrl+C; không mở hai worker trên
 cùng DB/store để thử concurrency. Scope local này không phải cấu hình SmartASP.
 
 Synthetic launcher tự tạo allowlist trong `.tmp/retention-sandbox/<database>/`
@@ -322,17 +322,16 @@ Get-ScheduledTask -TaskName 'AURA-SyntheticBackupRetention'
 Get-ScheduledTaskInfo -TaskName 'AURA-SyntheticBackupRetention'
 ```
 
-Để tái lập đúng route của regression 25/10 trong một cửa sổ PowerShell riêng:
+Để tái lập route synthetic hiện hành, chuẩn bị profile trước rồi chạy một host:
 
 ```powershell
-$env:OpenRouter__Model = 'qwen/qwen3.8-27b'
-$env:OpenRouter__RequireZeroDataRetention = 'true'
+.\tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly -EnableSyntheticDrive
 .\tools\Start-AuraRetentionSandbox.ps1
 ```
 
-Các biến trên chỉ áp dụng cửa sổ này, không ghi User Secrets. Chỉ gửi synthetic;
-Strict ZDR request không che ảnh hoặc chứng nhận điều khoản provider. Dừng app
-trước khi copy/backup DB + ảnh; đóng cửa sổ để bỏ các override route.
+Profile được Git ignore và không ghi User Secrets. Chỉ gửi synthetic; Strict ZDR
+request không che ảnh hoặc chứng nhận điều khoản provider. Dừng app trước khi
+copy/backup DB + ảnh.
 
 SQL và filesystem không có một transaction/snapshot nguyên tử chung. Dừng tất cả writer trước khi copy ảnh và backup DB để giảm cửa sổ lệch; nếu cần RPO/RTO được cam kết hoặc snapshot nhất quán khi app đang chạy, phải thiết kế backup quiesce/coordination riêng và kiểm thử đúng host. Đừng xem một lần LocalDB test là bằng chứng hosting backup, retention, hay recovery time.
 
