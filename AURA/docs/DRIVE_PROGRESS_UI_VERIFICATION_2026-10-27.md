@@ -5,7 +5,8 @@
 The Development/loopback synthetic Drive worker already persisted accepted files to
 SQL and sent them through the queue. The employee result component previously
 selected only unforwarded escalations, so Drive PENDING, PROCESSING and AUTO
-records were invisible there until a full refresh or audit lookup. It now
+records were invisible in that table; users had to inspect other views or
+Audit after completion. It now
 adds the latest 20 unforwarded Drive records created in the last 24 hours;
 unforwarded escalations continue to appear regardless of age.
 The existing visible-tab `fetch` fragment poll reads that SQL view every five
