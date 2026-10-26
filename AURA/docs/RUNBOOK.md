@@ -12,7 +12,7 @@ OpenRouter là provider chính cho cấu hình demo hiện tại. Cấu hình Ol
 ## 2. Clone và cấu hình local
 
 ```powershell
-git clone --branch codex/drive-pipeline-hardening --single-branch https://github.com/BondPhuPhamzZ/AURA.git
+git clone https://github.com/BondPhuPhamzZ/AURA.git
 cd AURA/AURA
 dotnet tool restore
 dotnet restore
@@ -20,6 +20,8 @@ dotnet user-secrets set "Vision:Provider" "OpenRouter"
 dotnet user-secrets set "OpenRouter:ApiKey" "YOUR_OPENROUTER_KEY"
 ```
 
+Nhánh mặc định là `master`; bản source trước hardening được giữ bằng tag
+`archive/master-before-hardening-20261026`. Tag chỉ giữ code, không backup SQL/ảnh.
 Candidate hiện tại chỉ synthetic local; giữ DB cũ và không chạy migration trên
 `AuraDb`. Launcher dưới đây tạo/migrate DB và receipt root riêng, không cần đổi
 connection string trong User Secrets. Không dùng `dotnet user-secrets list`
@@ -163,6 +165,25 @@ DB cũ vẫn cần migration riêng nếu chạy qua lệnh `dotnet run` thườ
 lệnh đó để thử retention trước khi chốt chuyển đổi dữ liệu lịch sử.
 
 #### Duyệt ảnh trước khi gửi ra provider
+
+Để kiểm thử input Drive đã cấu hình trong User Secrets, giữ folder Restricted,
+chỉ chứa fixture synthetic đã duyệt và dùng cờ opt-in trong cùng profile:
+
+```powershell
+$env:Vision__Provider = 'OpenRouter'
+$env:OpenRouter__Model = 'qwen/qwen3.8-27b'
+$env:OpenRouter__RequireZeroDataRetention = 'true'
+.\tools\Start-AuraRetentionSandbox.ps1 -EnableSyntheticDrive
+```
+
+Mặc định launcher vẫn tắt Drive. Cờ trên chỉ override process, đặt scanner
+requirement false cho sandbox synthetic và giữ approval gate; không đổi User
+Secrets hoặc cấp thêm quyền Google. Program tiếp tục chặn connector ngoài
+Development/loopback. Nó chỉ đọc trực tiếp `FolderId`, không tự đọc các folder
+con. Muốn test một batch trong folder con, cấu hình đúng ID của folder đó; không
+bật recursion hoặc public sharing. Chờ queue rỗng rồi Ctrl+C; chạy lại không có
+cờ để tắt Drive. Dùng cổng khác nếu một sandbox đã chạy; không mở hai worker trên
+cùng DB/store để thử concurrency. Scope local này không phải cấu hình SmartASP.
 
 Synthetic launcher tự tạo allowlist trong `.tmp/retention-sandbox/<database>/`
 từ 15 hash v3.1, 4 hash privacy và 30 ảnh lịch sử được đối chiếu Git blob rồi tính

@@ -1,6 +1,6 @@
 # Chạy AURA synthetic trên Windows
 
-Cập nhật 26/10/2026. Candidate hiện tại ở nhánh `codex/drive-pipeline-hardening`; dùng một host local, DB/ảnh riêng và chỉ ảnh synthetic đã duyệt. Giữ nguyên DB đi thi, chưa publish candidate này hoặc mở pilot dữ liệu thật.
+Cập nhật 26/10/2026. Nhánh mặc định `master` chứa source hiện hành; snapshot code trước hardening ở tag `archive/master-before-hardening-20261026`. Dùng một host local, DB/ảnh riêng và chỉ ảnh synthetic đã duyệt. Giữ nguyên DB đi thi, chưa publish candidate này hoặc mở pilot dữ liệu thật.
 
 ## 1. Chuẩn bị
 
@@ -17,7 +17,7 @@ Nếu instance đang `Stopped`, chạy `sqllocaldb start MSSQLLocalDB` bằng đ
 ## 2. Clone đúng candidate và lưu key
 
 ```powershell
-git clone --branch codex/drive-pipeline-hardening --single-branch https://github.com/BondPhuPhamzZ/AURA.git
+git clone https://github.com/BondPhuPhamzZ/AURA.git
 cd .\AURA\AURA
 dotnet tool restore
 dotnet restore
@@ -62,7 +62,7 @@ Cần `status=ok`, `pendingMigrationCount=0`, `externalImagePrivacyMode=Approved
 
 Chỉ 49 nội dung synthetic đã xác minh được phép gửi model; các bản sao byte trong bộ 100 cũng khớp hash. Ảnh khác bị chặn trước HTTP thành `ESCALATE_PRIVACY`, không facts; không tự thêm hash để vượt gate. Đây không phải detector/che PII. Ảnh đã duyệt vẫn gửi nguyên pixels; Strict ZDR là yêu cầu định tuyến, chưa phải cam kết pháp lý.
 
-Không bật Verify hoặc Drive để thử hướng dẫn này. Muốn chạy đủ 15 ca, xem [runbook](RUNBOOK.md) và [model evidence](MODEL_ROUTE_COMPARISON_2026-10-24.md), khóa đúng manifest/images và lưu raw output ngoài Git. Không diễn giải bộ known-data nhỏ là accuracy thực tế hay throughput 100/1.000 hóa đơn.
+Không bật Verify trong luồng này. Muốn thử Drive, đọc [runbook](RUNBOOK.md), giữ folder synthetic Restricted và bật rõ `-EnableSyntheticDrive`; file trong folder con không được quét tự động. Muốn chạy đủ 15 ca, xem [model evidence](MODEL_ROUTE_COMPARISON_2026-10-24.md), khóa đúng manifest/images và lưu raw output ngoài Git. Không diễn giải bộ known-data nhỏ là accuracy thực tế hay throughput 100/1.000 hóa đơn.
 
 ## 5. Dừng và xử lý lỗi
 

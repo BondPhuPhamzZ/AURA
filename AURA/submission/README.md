@@ -2,6 +2,10 @@
 
 Thư mục này giữ các artifact **đã nộp ở thời điểm cuộc thi**; các bản DOCX/PDF/slide không được viết lại thành số liệu hậu cuộc thi. Xem [addendum 23/10](AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) khi giới thiệu source mới. Tên file lịch sử được giữ ổn định để liên kết cũ không bị lệch.
 
+Review source/Drive/UX/deploy ngày 26/10 nằm tại [assessment hiện hành](../docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
+Default `master` cập nhật source/README; artifact nộp bài vẫn là snapshot lịch sử,
+không phải xác nhận candidate mới đã publish hoặc đạt production.
+
 | Hạng mục | File chốt |
 |---|---|
 | Slide 5 trang | `AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx` |

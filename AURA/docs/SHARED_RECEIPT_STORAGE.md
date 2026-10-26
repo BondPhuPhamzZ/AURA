@@ -4,9 +4,13 @@
 
 AURA mặc định lưu ảnh cục bộ (`LocalFileSystem`); Google Cloud Storage (GCS) là tùy chọn để nhiều máy chủ cùng đọc ảnh. GCS **chưa được kiểm thử với bucket và quyền truy cập thật**. Khi chưa bật GCS, ảnh vẫn nằm trên máy chủ hiện tại.
 
+Giai đoạn đã chốt vẫn dùng một host local. Các bước bucket/IAM dưới đây là hướng
+tương lai khi có lựa chọn triển khai/ngân sách riêng, không phải yêu cầu phải
+mở cloud để chạy supervised synthetic MVP.
+
 Ảnh được đặt tên bằng mã hồ sơ do AURA sinh. GCS chỉ tạo đối tượng lưu trữ mới, không ghi đè ảnh khác; nếu đã có ảnh cùng tên, AURA chỉ dùng lại khi kích thước và SHA-256 khớp. Khi đọc, AURA cố định phiên bản ảnh rồi đối chiếu kích thước/hash với SQL trước khi xử lý. Ứng dụng không công khai địa chỉ bucket hoặc tạo liên kết truy cập tạm thời (signed URL).
 
-Với `LocalFileSystem`, bộ dọn nền chỉ xóa file tạm `.tmp` do AURA tạo, mặc định quá 24 giờ và không bị tiến trình khác sử dụng. Nó **không xóa hóa đơn đã nhận**. Chức năng dọn hóa đơn theo thời hạn chưa được triển khai.
+Với `LocalFileSystem`, staging sweeper dọn file tạm quá 24 giờ. Bộ retention riêng đã được triển khai opt-in và kiểm thử synthetic: xóa ảnh/SQL/facts/audit của hồ sơ đã chốt sau 7 ngày, giữ pending và escalation chưa chốt. Startup catch-up và cleanup là best-effort khi app chạy; DB cũ vẫn chưa bật theo lựa chọn người dùng. Xem [runbook](RUNBOOK.md).
 
 ## 1. Tạo bucket và quyền truy cập
 
@@ -91,4 +95,4 @@ Khi kiểm tra máy chủ thử nghiệm qua đường hầm tới `127.0.0.1`, 
 
 Các điều kiện còn thiếu gồm: GCS/IAM thật; kiểm thử hai máy chủ; diễn tập khôi phục cloud và RPO/RTO; xác thực/phân quyền người dùng; cách ly file nghi nhiễm mã độc; thời hạn lưu trữ được duyệt; giám sát/cảnh báo; cam kết quyền riêng tư của dịch vụ AI; và kiểm thử tải. Chỉ có bộ kết nối GCS **không làm AURA sẵn sàng cho production**.
 
-GCS là nơi lưu ảnh riêng tư, không phải nguồn Drive. Bộ kết nối này không xóa ảnh gốc trên Drive và hiện cũng không tự dọn ảnh GCS theo thời hạn lưu trữ.
+GCS là nơi lưu ảnh riêng tư, không phải nguồn Drive. Adapter đã có `DeleteAsync` để cleanup qua interface; retention, versions/lifecycle và backup trên bucket thật **chưa được kiểm chứng**, không bật dựa trên test local. Không có thao tác xóa ảnh gốc trên Drive.

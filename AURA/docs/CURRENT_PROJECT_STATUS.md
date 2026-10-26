@@ -1,5 +1,26 @@
 # Trạng thái hiện hành AURA ngày 26/10/2026
 
+> **Review Drive/UX/deploy 26/10:** default `master` được đồng bộ source/README,
+> giữ snapshot cũ qua tag `archive/master-before-hardening-20261026`; không đồng
+> nghĩa website đã publish. Current Drive E2E trên DB/ảnh mới: 3/3 JPEG trực tiếp
+> hoàn tất, 3 job/6 audit giữ nguyên sau restart; SHA-256 đều thuộc 49 ảnh synthetic
+> đã duyệt, nguồn tiền `AI_EXTRACTED`. Không chấm accuracy. Folder còn 2 thư mục
+> con và 1 TXT, không quét đệ quy/ingest TXT. Một ảnh trùng được phát hiện nhưng
+> profile regression đang tắt duplicate escalation, nên không coi AUTO là bằng
+> chứng chống hoàn ứng trùng. Launcher có `-EnableSyntheticDrive` opt-in local;
+> mặc định vẫn tắt và không thay User Secrets. Drive không được bật trên public host.
+>
+> Browser/source review xác nhận tab và action vẫn full navigation; chúng đọc lại
+> SQL, không tự enqueue AI. UX chưa có user study/load evidence; HITL có handoff,
+> quyết định/audit/Undo nhưng chưa có reminder/SLA/RBAC. Docker context đã được
+> kiểm bằng matcher thật với 21 private canary bị loại, 4 runtime input được giữ.
+> Publish probe phát hiện 9 TestResults JSON lọt artifact; đã sửa project exclusions
+> và publish lại không có raw/runtime/secret paths, required runtime files còn đủ.
+> Chưa build/run pipeline .NET/SQL trong Docker, chưa publish hoặc đổi env hosting.
+> Full Release sau packaging guard 371/371, build 0 warning/error. Evidence local:
+> `test_kit/results/mvp-deploy-review-20261026/`; xem [assessment](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md)
+> và [gate SmartASP](DEPLOYMENT.md) trước bước tiếp theo.
+
 > **Xác minh chốt 26/10:** sau khi dừng apphost để bỏ khóa file build, Release
 > build 0 warning/error; sau sửa transport, full Debug/Release **371/371 mỗi bản, không skip**,
 > LocalDB và PowerShell integration bật. Backup synthetic còn nguyên 16 file

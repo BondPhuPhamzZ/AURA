@@ -35,6 +35,12 @@ Thư mục này chứa tài liệu kỹ thuật hiện hành **và các báo cá
 
 Hóa đơn thô, raw provider response, API dashboard, database, secret và dữ liệu định danh cá nhân được chủ động loại khỏi Git. Gói evidence riêng tư giữ nguyên timestamp và hash ban đầu; không đổi tên hoặc tạo lại để làm chúng trông mới hơn.
 
+Review 26/10 về 12 ảnh tham khảo deploy/architecture, Drive 3 ảnh + restart,
+UX/HITL và boundary publish/Docker nằm trong [assessment hiện hành](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
+Default source/README là `master`; mốc cũ được giữ qua tag
+`archive/master-before-hardening-20261026`. [Gate SmartASP](DEPLOYMENT.md) vẫn tách
+biệt với việc đồng bộ Git; chưa publish candidate mới.
+
 Ngày cũ trong `DATASET_EVALUATION_GUIDE.md`, `DEPLOYMENT.md`, `LOCAL_OLLAMA.md` hoặc `TEST_CASES.md` là ngày của protocol hay baseline đo tương ứng, không có nghĩa candidate hiện tại vẫn dùng model cũ. Cấu hình và release gate hiện hành nằm trong `CURRENT_PROJECT_STATUS.md`; số liệu công khai hiện hành nằm trong `EVALUATION_EVIDENCE.md`.
 
 Các artifact nộp bài được lập chỉ mục riêng tại `../submission/README.md`.

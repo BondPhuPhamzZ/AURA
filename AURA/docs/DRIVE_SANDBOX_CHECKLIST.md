@@ -1,5 +1,14 @@
 # Drive sandbox: checklist trạng thái và bước tiếp theo
 
+> **Xác minh hiện hành 26/10:** thư mục cấu hình có 3 JPEG trực tiếp, 2 folder con
+> và 1 TXT. E2E mới trên DB/ảnh riêng: 3/3 ảnh hoàn tất qua approval gate 49 hash,
+> Qwen3.8-27B/Strict ZDR request; 3 job/6 audit không tăng sau restart. Không chấm
+> accuracy hoặc quét folder con. Launcher hỗ trợ `-EnableSyntheticDrive` rõ ràng;
+> mặc định vẫn tắt, không đổi User Secrets. Full Release sau packaging guard
+> 371/371, không skip. Profile regression đang tắt duplicate escalation; một ảnh
+> trùng được phát hiện nhưng vẫn AUTO theo cấu hình. Xem [assessment hiện hành](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md)
+> và [runbook](RUNBOOK.md); các số 22–23/10 bên dưới là lịch sử.
+
 Cập nhật sau lần kiểm tra local đêm 22–23/10/2026. Checklist này mô tả
 **Drive prototype Development-only với fixture tổng hợp** và một lần test
 manual intake có consent riêng; không phải phê duyệt dùng dữ liệu người dùng
@@ -11,7 +20,7 @@ Drive metadata version đổi; bản sửa đã chạy lại trên DB sạch: đ
 98 hoàn tất và 2 fail-safe, không tăng job/audit sau poll và restart. 15 ảnh
 thật có consent cũng hoàn tất qua manual intake local, nhưng không có nhãn
 khớp hash để tính accuracy. Xem [báo cáo kiểm thử MVP](DRIVE_MVP_VALIDATION_2026-10-22.md).
-E2E 3 ca bên dưới là snapshot lịch sử; hiện Release suite **231/231 pass**.
+E2E 3 ca bên dưới là snapshot lịch sử; tại mốc đó Release suite **231/231 pass**.
 Storage dưới `wwwroot` bị chặn và gate hash xác nhận 70 bản sao trong bộ 100;
 xem [evidence hardening 23/10](STORAGE_AND_DATASET_GATE_2026-10-23.md).
 
@@ -68,8 +77,9 @@ xem [evidence hardening 23/10](STORAGE_AND_DATASET_GATE_2026-10-23.md).
   bị cách ly. Hiện `RequireMalwareScanner=true` là mặc định an toàn; bypass chỉ
   được cho fixture tổng hợp local.
 - [ ] User identity, SSO/RBAC, phân quyền xem/tải ảnh, consent và audit truy cập.
-- [ ] Quyết định retention/backup/restore (kể cả ảnh, DB, audit, rejection
-  log); mục tiêu “giữ một tuần” chưa được biến thành chính sách xóa/kiểm chứng.
+- [ ] Retention/backup/restore cho dữ liệu thật, Drive source và rejection log còn
+  mở. Local SQL/ảnh/facts/audit synthetic đã có chính sách 7 ngày và restore drill;
+  không áp dụng tự động lên ảnh nguồn Drive, DB cũ hoặc hosting.
 - [ ] Xác nhận độc lập chính sách dữ liệu/ZDR đúng theo model-route đang dùng;
   `data_collection=deny` hoặc health status không tự chứng minh Strict ZDR.
 - [ ] Secret vault/workload identity và quy trình rotate/revoke service account;

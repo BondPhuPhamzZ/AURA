@@ -2,6 +2,8 @@
 
 AURA helps review employee expense receipts. It extracts candidate facts from an image, validates them with a schema and semantic checks, then applies deterministic C# policy. Cases that are uncertain or need authority go to a human reviewer. The model does not approve or pay expenses.
 
+The default branch is `master`. The previous default source is preserved at tag `archive/master-before-hardening-20261026`; a Git tag does not back up databases or receipt files. Git synchronization does not deploy the public website.
+
 ## Processing flow
 
 `JPG/PNG upload → private receipt storage → durable SQL queue → optional egress approval → vision extraction → schema/Semantic validation → policy routing → human review when required → audit trail`
@@ -15,7 +17,7 @@ SQL admission control caps combined `PENDING` and `PROCESSING` receipts at `Rece
 Prerequisites: Git, .NET 8 SDK, and SQL Server LocalDB. From the directory where you want the checkout:
 
 ```powershell
-git clone --branch codex/drive-pipeline-hardening --single-branch https://github.com/BondPhuPhamzZ/AURA.git
+git clone https://github.com/BondPhuPhamzZ/AURA.git
 cd .\AURA\AURA
 dotnet tool restore
 dotnet restore
@@ -31,10 +33,13 @@ dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\
 To keep an existing database unchanged, use the isolated synthetic profile first:
 
 ```powershell
+$env:Vision__Provider = "OpenRouter"
+$env:OpenRouter__Model = "qwen/qwen3.8-27b"
+$env:OpenRouter__RequireZeroDataRetention = "true"
 .\tools\Start-AuraRetentionSandbox.ps1
 ```
 
-It prepares a separate dated LocalDB and receipt directory, enables retention and exact-image approval, and serves `http://127.0.0.1:5098`. It does not change User Secrets. Only verified synthetic fixtures are approved; the model/key still come from your current configuration. See the [runbook](AURA/docs/RUNBOOK.md) to reproduce the tested Qwen/Strict-ZDR request route.
+It prepares a separate dated LocalDB and receipt directory, enables retention and exact-image approval, and serves `http://127.0.0.1:5098`. It does not change User Secrets. Only verified synthetic fixtures are approved; the key comes from your private configuration. The process settings above reproduce the tested route without changing User Secrets. For an already configured Restricted test folder and read-only service account, add `-EnableSyntheticDrive`; this opt-in is limited to localhost synthetic data. See the [runbook](AURA/docs/RUNBOOK.md) for credentials, exact folder selection and rollback.
 
 For a new empty demo database, create the schema, then build, test, and run:
 
@@ -57,6 +62,12 @@ These integration tests create uniquely named temporary databases and remove the
 
 The optional backup-script integration cases need both Windows PowerShell 5.1 and PowerShell 7. Enable `AURA_RUN_POWERSHELL_INTEGRATION=1` to execute them; the final Debug/Release verification passed 371/371 each with both integration flags enabled.
 
+## Current Drive and UX boundary
+
+On 26 October, a fresh local Drive run completed 3/3 approved JPEGs; restarting left the same three jobs and six audit rows. This is execution/idempotency evidence, not an accuracy benchmark. The connector reads direct folder children, not nested folders; its bounded scan is not an unlimited batch drain. The repeatability profile has duplicate escalation off: same-source idempotency is not duplicate-expense prevention. Submitter/department are synthetic metadata.
+
+Human handoff, reviewer actions, audit and Undo work in the demo. Tabs/actions still use full navigation and read SQL; they do not themselves enqueue inference. Reviewer assignment, reminders, verified identity and measured UX/load behavior remain open. See the [readiness assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
+
 ## Privacy and readiness
 
 The default receipt store is local filesystem storage. Private GCS support remains opt-in and has not been validated against a real bucket in this evidence.
@@ -70,6 +81,8 @@ The latest full 15-case synthetic regression through the approval gate on `64988
 This is a supervised MVP / contest project, **not production-ready software**. Authentication/RBAC, malware scanning and quarantine for manual uploads, real-data retention/restore approval, real private-cloud storage validation, provider-specific privacy verification, and multi-host load/chaos testing remain open gates. See the [current status and checklist](AURA/docs/CURRENT_PROJECT_STATUS.md) and [readiness/scale assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md) before any pilot.
 
 To change the queue ceiling for a controlled deployment, set `ReceiptProcessing__MaxOutstandingReceipts` (valid range `1`–`10000`). Do not raise it until storage capacity, provider budget, and queue-age behavior have been load-tested.
+
+Build/publish boundaries exclude runtime data and private test results. A real Docker ignore-matcher fixture and a local publish probe passed after fixing a raw-results inclusion defect; this does not establish container runtime readiness. The [deployment guide](AURA/docs/DEPLOYMENT.md) separates controlled staging from the current Development-only Drive connector. No hosting environment or database was changed by the 26 October review.
 
 ## Project documents
 

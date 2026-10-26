@@ -1,11 +1,80 @@
 # Deploy AURA và xác minh Live URL
 
 > **Gate hiện hành 25/10/2026:** candidate trên nhánh
-> `codex/drive-pipeline-hardening` chỉ được chốt cho synthetic local, giữ nguyên
+> `master` chỉ được chốt cho synthetic local, giữ nguyên
 > DB thi cũ. Chưa publish hoặc bật retention trên hosting/DB cũ. Không chạy các
 > bước deploy/migration bên dưới cho candidate mới khi chưa có quyết định riêng.
 > Xem [checklist hiện hành](CURRENT_ACTION_CHECKLIST.md); các bước/số liệu tiếp
 > theo là hướng dẫn và evidence của baseline lịch sử.
+
+## Gate hiện hành trước SmartASP staging — 26/10
+
+Đồng bộ `master` cập nhật source và README, không publish website, migrate SQL
+hoặc thay biến môi trường hosting. Bản mặc định cũ được giữ bằng tag
+`archive/master-before-hardening-20261026`; tag không phải backup database/ảnh.
+
+Health live read-only ngày 26/10 trả `ok`, Flash, Strict ZDR false, Verify true;
+không có commit ID được xác minh. Đây là cấu hình của bản đang chạy, không chứng
+minh source mới đã live. Source hiện có 9 migration; `pendingMigrationCount=0`
+trên package cũ không chứng minh DB sẵn sàng cho package mới. DB local cũ có 6
+migration và vẫn được giữ nguyên theo lựa chọn người dùng.
+
+**Chưa GO cho Drive trên Production:** connector cố ý chỉ chạy Development và
+loopback. Không đổi public website sang Development để bật Drive. SmartASP
+Windows/IIS hiện là mục tiêu `dotnet publish`; Docker là hướng triển khai riêng,
+chưa có container-runtime/SQL evidence và không tự áp dụng trên gói shared này.
+Xem [IIS/platform của SmartASP](https://www.smarterasp.net/developers/websites)
+và [quy trình IIS của Microsoft](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/?view=aspnetcore-8.0#application-initialization-module-and-idle-timeout).
+
+Để chuẩn bị **manual synthetic staging** mà không đụng DB cũ:
+
+1. Tạo hoặc xác nhận một database test và receipt directory riêng, quyền đọc/ghi
+   đúng app pool, ngoài `wwwroot`. Giữ backup SQL + ảnh của site cũ và restore
+   thử trên môi trường tách biệt. Nếu không có quota DB/site tách biệt, giữ local;
+   không dùng DB cũ để bỏ qua gate.
+2. Apply migration có kiểm soát vào đúng DB test mới; kiểm đủ schema. Không bật
+   startup migration trên live để thử. Package phải có `BUSINESS_RULES.md`,
+   `AURA.dll`, `web.config`, `wwwroot`; không có `App_Data`, `TestResults`, `.tmp`,
+   `test_kit`, JSON key hoặc secret. Publish probe hiện hành đã kiểm được boundary
+   này; probe đầu có 9 raw TestResults JSON nên không dùng artifact đầu.
+3. Đặt hash allowlist synthetic ở một đường dẫn private riêng trên host, ngoài
+   `wwwroot`; `.tmp` local và service-account key không được ship trong package.
+   File UTF-8 array 49 hash có thể tạo bằng launcher local rồi chuyển riêng theo
+   runbook. Không thêm hash ảnh thật để vượt gate.
+4. Chỉ khi ba bước trên xong, nhập giá trị private trực tiếp trên hosting:
+
+   | Biến | Giá trị cho staging synthetic |
+   | --- | --- |
+   | `ASPNETCORE_ENVIRONMENT` | `Production` |
+   | `ConnectionStrings__DefaultConnection` | Connection string DB test mới; không gửi qua chat/log |
+   | `ReceiptStorage__Provider` / `ReceiptStorage__Directory` | `LocalFileSystem` / thư mục private, persistent, riêng cho DB test |
+   | `Database__ApplyMigrationsOnStartup` | `false` |
+   | `DriveSandbox__Enabled` / `Verify__Enabled` | `false` / `false` |
+   | `Vision__Provider` / `Vision__MaxConcurrentRequests` | `OpenRouter` / `1` |
+   | `Vision__FallbackEnabled` / `Vision__UseSqlDistributedGate` | `false` / `false`; chỉ một instance |
+   | `OpenRouter__ApiKey` | Key hiện hành qua hosting secret UI, không đưa vào package |
+   | `OpenRouter__Model` | `qwen/qwen3.8-27b` — route đã được kiểm local |
+   | `OpenRouter__RequireZeroDataRetention` / `OpenRouter__DenyProviderDataCollection` | `true` / `true`; đây là request settings |
+   | `ExternalImagePrivacy__Mode` | `ApprovedImagesOnly` |
+   | `ExternalImagePrivacy__ApprovedHashesFile` | Đường dẫn tuyệt đối tới allowlist private trên host |
+   | `AllowedHosts` | Hostname staging thực tế, không copy `127.0.0.1;localhost` lên hosting |
+   | `DataRetention__Enabled` | Giữ `false` đến khi rehearsal cleanup/backup trên host được duyệt; không bật trên DB cũ |
+
+   Profile regression đang tắt duplicate escalation để lặp fixture. Khi test
+   nghiệp vụ chống chi trùng, chọn rõ `DecisionPolicy__EscalateDuplicateReceipts=true`
+   và khóa expected cho ca ảnh trùng trước; không dùng nhãn regression cũ cho ca
+   trùng. Không thay flag rồi gọi mọi sai khác route là model lỗi.
+5. Hạn chế truy cập staging bằng Site Guard/IP/biện pháp hosting đã được xác
+   nhận; AURA chưa có RBAC. Sau publish/recycle: health + 1 synthetic inference,
+   ảnh vẫn đọc được, Forward/manager/Undo/audit, dashboard/CSV cùng kỳ, invalid
+   upload bị chặn và file/job còn nguyên sau recycle. Đo hành vi worker khi idle
+   và restart; chưa có test này thì không hứa chạy Drive/worker 24/7. Không chạy
+   Verify trên Production và không dùng ảnh thật cho smoke.
+
+Chưa có thay đổi environment/SQL/publish nào trên SmartASP trong phiên review
+này. UX fragment refresh là cải tiến kế tiếp; không thay navigation bằng một bản
+vá vội mà chưa có browser/race/error tests. Quyền dữ liệu thật và production
+vẫn là các gate riêng.
 
 > Source 21/10/2026: Verify Harness mặc định tắt và **không thể chạy trên Production**, kể cả khi hosting còn `Verify__Enabled=true`. Cần ít nhất **196/196 tests** trước publish. Bản hardening chưa được smoke live; xem [báo cáo gate](POST_CONTEST_HARDENING_2026-10-21.md). Các số live cũ bên dưới là evidence lịch sử.
 
@@ -176,12 +245,12 @@ Render chạy được .NET qua Dockerfile và cấp URL `onrender.com`, nhưng 
 
 Muốn dùng Render ổn định phải trả phí Web Service + persistent disk và dùng SQL Server bên ngoài, hoặc đổi code sang PostgreSQL/object storage. Đây là thay đổi kiến trúc không nên làm sát deadline. Tài liệu chính thức: `https://render.com/docs/free`, `https://render.com/docs/docker`, `https://render.com/docs/disks`.
 
-## 8. Điều kiện coi deploy hoàn tất
+## 8. Điều kiện bản nộp lịch sử (đọc cùng gate hiện hành)
 
 - Live URL HTTPS mở được ở cửa sổ ẩn danh, không cần login.
 - `/healthz` trả 200.
 - SQL migration hoàn tất và `pendingMigrationCount=0`; ba tab đọc được dữ liệu.
 - Ảnh vẫn mở sau recycle/redeploy kiểm soát.
 - Không có secret trong Git, log, slide hoặc video.
-- Một ảnh smoke và đúng một lượt Verify hoạt động; lỗi provider phải fail-safe chứ không giả PASS.
+- Một ảnh smoke hoạt động; Verify chỉ kiểm ở Development cô lập, Production phải bị khóa. Lỗi provider phải fail-safe chứ không giả PASS.
 - URL phải được điền đồng nhất vào README, video description và form nộp sau khi bản hardening được smoke lại; không dùng trạng thái Sprint 1 cũ để suy ra bản hiện tại đã sẵn sàng.

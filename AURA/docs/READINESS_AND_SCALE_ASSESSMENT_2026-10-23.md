@@ -2,6 +2,86 @@
 
 This is a **source-and-evidence assessment**, not a certification or a statement that the public host runs this commit. The dated proposal, build log and five-slide deck remain the contest submission snapshot. See the [post-contest submission addendum](../submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) for a short outward-facing update.
 
+## Drive, UX and deployment review — 26 October 2026
+
+**Decision:** supervised synthetic MVP on one local host is demonstrated. This
+does not mean all business rules are approved for a company, every OCR field is
+correct, or the complete Drive pipeline is ready for SmartASP Production.
+
+The configured Restricted test folder currently has three JPEG entries, two
+subfolders and one TXT. The connector reads direct children of the configured
+folder, rejects unsupported entries and does not recurse into subfolders. A
+fresh local Drive run on 26 October used Qwen3.8-27B, Strict ZDR requested,
+data-collection denial, one AI permit, no fallback and the 49-image approval
+gate. All three images completed as AUTO with facts and matching stored
+size/SHA-256; three jobs/six audit rows remained unchanged after process restart.
+No Drive files or User Secrets were modified. This is current execution and
+idempotency evidence, not a ground-truth accuracy score or a rerun of 100 files.
+The older 100-file run has 30 distinct contents, 98 completed and two fail-safe
+errors; retain its original model/date and denominator.
+
+The repeatability profile has duplicate escalation disabled. One of the three
+images was detected as duplicate and still routed AUTO by that configuration.
+Same-source idempotency prevents another job for the same Drive file/content;
+it does not prevent a different file ID from representing the same expense.
+Choose and test `DecisionPolicy__EscalateDuplicateReceipts=true` before any
+business pilot. Do not silently change this flag or re-score past regressions.
+Drive metadata currently records a synthetic submitter/department, not a
+verified employee identity; owner/cost-center mapping remains a business gate.
+
+Browser/source review confirms tab changes and completed workflow POSTs use a
+full navigation. Page reloads do not themselves enqueue an AI request; they
+re-read SQL/view components. The applicant fragment also polls every five
+seconds, including while hidden. There is no load/usability evidence proving
+this cannot overload SQL at scale or that staff find it easy to use. Follow-up
+UX should refresh the active read-only fragment after a committed action,
+preserve tab/month/focus/scroll, avoid overlapping/stale responses, pause hidden
+polling and retain an explicit refresh recovery path. Existing SQL rowversion,
+antiforgery and server-confirmed decisions must remain intact.
+
+HITL exists as employee handoff, manager route-specific action, audit and Undo
+before retention expiry. FACT/PRIVACY acceptance is manual intake, not payment
+approval. Timely handling still requires an operator to open the app; there is
+no assigned reviewer, reminder/SLA notification or endpoint RBAC. The tabs are
+demo roles, not an authorization boundary. Do not present the workflow as a
+fully autonomous finance agent or promise unattended approval quality.
+
+All 12 reference images in the two supplied local folders were inspected:
+
+| Reference topic | Apply to AURA now | Keep for a later requirement |
+| --- | --- | --- |
+| Folder layout, API/worker responsibilities | Keep Controllers, Services, policy and infrastructure boundaries; extraction stays separate from deterministic decisions | Separate worker deployment only when operations/scale justify it |
+| Dockerfile/Compose/network/volumes | Harden build context and publish inputs, external secrets, private persistent receipt storage | Actual container runtime with TCP SQL Server; LocalDB is not the Linux container database |
+| Health, logs, restore, controlled updates | Keep aggregate queue monitoring, bounded failures, backup/restore and rollback evidence | Alert delivery, SLOs and cross-host restore/load tests |
+| Kafka and the large multi-agent sample stack | SQL durable queue is sufficient for the measured local workflow | Kafka, Redis, vector DB, RAG and microservices require a concrete need; they are not an agent-completeness checklist |
+| Retrieval scoring/filtering | Do not use a retrieval score or an arbitrary 0.75 threshold to approve expenses | A versioned policy-document assistant could later use retrieval, with independently calibrated relevance |
+| Encoder/decoder, MoE/SSM and model naming | Distinguish model internals from app architecture; verify actual image support and evidence | Local VLM selection/VRAM/quantization benchmarking remains deferred |
+
+The pictured Python `pip install -r pyproject.toml` is not an AURA setup command.
+Use the repository's .NET SDK build. Compose short-form `depends_on` orders
+startup but does not wait for application health; use healthchecks and
+`service_healthy` when a container deployment is actually tested. A `.env` file
+is not an encrypted vault; a persistent volume is not a backup. See
+[Docker startup ordering](https://docs.docker.com/compose/how-tos/startup-order/).
+
+Packaging review found an actual boundary defect: nine raw `TestResults` JSON
+files entered a local publish probe. The project now excludes test/runtime and
+known secret inputs. A repeat publish with a synthetic runtime JSON canary
+excluded all protected paths and retained required runtime files. Docker's real
+ignore matcher also excluded 21 synthetic private canaries and retained four
+public runtime inputs. The scratch fixture build does not prove the .NET/SQL
+pipeline runs in a container; no image was pushed or hosting changed.
+
+The live public health endpoint still returned Flash, Strict ZDR false and
+Verify enabled on 26 October. It does not expose a verified source commit, so
+it is not proof the newer master is deployed. Source synchronization and web
+deployment are distinct. Drive remains Development/loopback-only; do not set a
+public site to Development to bypass that boundary. IIS idle/recycle behavior
+can pause in-process workers; see [Microsoft IIS guidance](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/?view=aspnetcore-8.0#application-initialization-module-and-idle-timeout).
+Use the current [deployment gate](DEPLOYMENT.md) before preparing a controlled
+manual synthetic staging site. Raw metadata, logs, screenshots, TRX and packaging
+proof stay Git-ignored at `test_kit/results/mvp-deploy-review-20261026/`.
+
 ## Local verification update — 25–26 October 2026
 
 The current synthetic sandbox has opt-in seven-day finalized-record retention,
