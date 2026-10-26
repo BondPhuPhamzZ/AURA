@@ -45,7 +45,8 @@ Bảng dưới đây là bản dịch tiếng Việt để BGK và người nghi
 | Ngoại lệ từ khóa | Cụm stationery như `Bìa hồ sơ` không được hiểu nhầm thành `Bia`; alcohol rõ ràng như `Bia lon`, `beer`, `rượu` vẫn bị cấm. | Tránh false positive nhưng không nới danh mục cấm. |
 | Hạn mức | Tổng đáng tin và hợp policy nhưng trên 1.000.000 VND vượt quyền tự động. | `ESCALATE_AUTHORITY`. |
 | Auto approve | Chỉ khi evidence đủ và đáng tin, total bằng claimed amount, ngày trong tuần và không quá 90 ngày, giờ hợp lệ, không có mặt hàng cấm, tổng không quá 1.000.000 VND. | `AUTO_APPROVE`; thiếu bất kỳ điều kiện nào thì không được auto. |
-| Thứ tự quyết định | Khi nhiều vấn đề cùng tồn tại, thứ tự là `FACT -> POLICY -> AUTHORITY -> AUTO_APPROVE`. | Không đánh giá policy/authority trên facts chưa đáng tin. |
+| Gate trước inference | Trong sandbox `ApprovedImagesOnly`, bytes chưa được duyệt bị chặn trước HTTP, không tạo facts. Đây là quyền gửi ảnh, không phải phát hiện/che dữ liệu cá nhân. Profile thi cũ vẫn `LegacyConfigured`. | `ESCALATE_PRIVACY`; người quản lý tiếp nhận thủ công không cấp quyền gửi ảnh. |
+| Thứ tự quyết định sau inference | Khi nhiều vấn đề cùng tồn tại, thứ tự là `FACT -> PRIVACY -> POLICY -> AUTHORITY -> AUTO_APPROVE`. | Không đánh giá policy/authority trên facts chưa đáng tin; privacy triage diễn ra sau khi provider đã nhận ảnh được phép gửi. |
 | Con người | Nhân viên chỉ xác nhận chuyển tiếp; quản lý nhận câu hỏi tiếng Việt cụ thể và chọn duyệt hoặc từ chối. | Quyết định ngoại lệ được ghi Audit và có thể Undo. |
 
 ## Câu hỏi xin góp ý từ BGK và doanh nghiệp

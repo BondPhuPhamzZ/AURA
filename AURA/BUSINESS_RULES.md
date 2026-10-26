@@ -82,11 +82,18 @@ For privacy triage, add only the exact marker `personal_data:<CATEGORY>` to `sus
 
 This section gives context only; do not return a decision. The application uses this priority when several issues coexist:
 
+Before extraction, an enabled external-image approval gate can stop an image as
+`ESCALATE_PRIVACY` without calling the provider or creating facts. This is an
+infrastructure permission boundary, separate from the policy order below.
+The contest profile uses `LegacyConfigured`; the synthetic launcher opts into
+`ApprovedImagesOnly`. Exact-hash approval does not detect or redact personal data.
+
 1. `FACT`: unreliable/missing evidence, duplicate image, amount mismatch, unsupported currency, invalid/future/older-than-90-days transaction date, weekend, time outside 06:00-22:00, missing seller identity or traceable identifier, incomplete/unpaid/refunded/returned digital order, crop/blur/tampering/prompt-injection signal.
    A printed item description that only says an unspecified expense or goods/services cannot establish that no prohibited item exists; it needs human review even if a numeric line amount is readable.
-2. `POLICY`: reliable evidence contains alcohol, tobacco, entertainment, massage, karaoke, cinema/movie tickets (`vé xem phim`, `rạp chiếu phim`), or personal items. For this MVP policy, visible hair clips/hair accessories, wet wipes, and skin-care wipes are treated as personal items.
-3. `AUTHORITY`: reliable and policy-compliant total is above 1,000,000 VND.
-4. `AUTO_APPROVE`: all required evidence is reliable, total exactly matches the claimed VND amount, date is a weekday within 90 days, visible time (if any) is 06:00-22:00, no prohibited item exists, and total is at most 1,000,000 VND.
+2. `PRIVACY`: facts contain personal-data categories requiring human review. This post-inference signal takes priority over policy and authority, after FACT checks.
+3. `POLICY`: reliable evidence contains alcohol, tobacco, entertainment, massage, karaoke, cinema/movie tickets (`vé xem phim`, `rạp chiếu phim`), or personal items. For this MVP policy, visible hair clips/hair accessories, wet wipes, and skin-care wipes are treated as personal items.
+4. `AUTHORITY`: reliable and policy-compliant total is above 1,000,000 VND.
+5. `AUTO_APPROVE`: all required evidence is reliable, total exactly matches the claimed VND amount, date is a weekday within 90 days, visible time (if any) is 06:00-22:00, no privacy review or prohibited item exists, and total is at most 1,000,000 VND.
 
 The application never asserts approval when a FACT issue exists. Employees only forward escalations; they never answer the approval question. Human managers receive a specific Vietnamese question and explicitly choose approve or reject for every escalation.
 
