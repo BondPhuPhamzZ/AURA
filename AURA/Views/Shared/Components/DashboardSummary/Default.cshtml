@@ -18,9 +18,9 @@
         <div class="dashboard-actions">
             @if (Model.IsAvailable)
             {
-                <a class="button-ghost-sm" asp-controller="Reports" asp-action="CurrentMonth"
+                <a class="button-ghost-sm" asp-controller="Reports" asp-action="CurrentMonthWorkbook"
                    asp-route-year="@Model.SelectedYear" asp-route-month="@Model.SelectedMonth"
-                   title="Tải dữ liệu vận hành của kỳ đang chọn, không gồm raw AI facts">Tải CSV kỳ này</a>
+                   title="Tải Excel kỳ đang chọn, tiêu đề xanh nhạt, không gồm raw AI facts">Tải Excel kỳ này</a>
             }
             <a class="button-ghost-sm dashboard-refresh-button" asp-controller="Home" asp-action="Index"
                asp-route-tab="dashboard"

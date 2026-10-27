@@ -36,6 +36,38 @@ public static class ManagerOperationsReportExporter
         int year,
         int month)
     {
+        var rows = BuildRows(requests, year, month);
+        var csv = new StringBuilder();
+        csv.AppendLine(string.Join(',', Headers.Select(EscapeCsv)));
+        foreach (var cells in rows)
+            csv.AppendLine(string.Join(',', cells.Select(EscapeCsv)));
+
+        var body = Encoding.UTF8.GetBytes(csv.ToString());
+        var preamble = Encoding.UTF8.GetPreamble();
+        var content = new byte[preamble.Length + body.Length];
+        Buffer.BlockCopy(preamble, 0, content, 0, preamble.Length);
+        Buffer.BlockCopy(body, 0, content, preamble.Length, body.Length);
+
+        return new ManagerOperationsReport(
+            $"AURA_Operations_{year:0000}-{month:00}.csv",
+            content,
+            rows.Length);
+    }
+
+    public static ManagerOperationsReport ExportWorkbookMonth(
+        IEnumerable<ReimbursementRequest> requests,
+        int year,
+        int month)
+    {
+        var rows = BuildRows(requests, year, month);
+        return new ManagerOperationsReport(
+            $"AURA_Operations_{year:0000}-{month:00}.xlsx",
+            ManagerOperationsWorkbookWriter.Write(Headers, rows),
+            rows.Length);
+    }
+
+    private static string[][] BuildRows(IEnumerable<ReimbursementRequest> requests, int year, int month)
+    {
         if (year is < 2000 or > 2100) throw new ArgumentOutOfRangeException(nameof(year));
         if (month is < 1 or > 12) throw new ArgumentOutOfRangeException(nameof(month));
 
@@ -47,10 +79,7 @@ public static class ManagerOperationsReportExporter
             .ThenBy(item => item.Request.Id, StringComparer.Ordinal)
             .ToArray();
 
-        var csv = new StringBuilder();
-        csv.AppendLine(string.Join(',', Headers.Select(EscapeCsv)));
-
-        foreach (var item in selected)
+        return selected.Select(item =>
         {
             var request = item.Request;
             var facts = item.Facts;
@@ -81,19 +110,8 @@ public static class ManagerOperationsReportExporter
                 Math.Max(0, request.ProcessingLatencyMs).ToString(CultureInfo.InvariantCulture)
             };
 
-            csv.AppendLine(string.Join(',', cells.Select(EscapeCsv)));
-        }
-
-        var body = Encoding.UTF8.GetBytes(csv.ToString());
-        var preamble = Encoding.UTF8.GetPreamble();
-        var content = new byte[preamble.Length + body.Length];
-        Buffer.BlockCopy(preamble, 0, content, 0, preamble.Length);
-        Buffer.BlockCopy(body, 0, content, preamble.Length, body.Length);
-
-        return new ManagerOperationsReport(
-            $"AURA_Operations_{year:0000}-{month:00}.csv",
-            content,
-            selected.Length);
+            return cells;
+        }).ToArray();
     }
 
     private static ExportFacts ReadFacts(ReimbursementRequest request)

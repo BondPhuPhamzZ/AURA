@@ -1706,10 +1706,19 @@ main {
     padding: 16px;
     border-right: 1px solid #3b4658;
     background: var(--colors-surface-soft);
+    display: flex;
+    flex-direction: column;
 }
 
 .dashboard-metrics > div:last-child { border-right: 0; }
-.dashboard-metrics span { display: block; color: var(--colors-ink-subtle); font-size: .8rem; margin-bottom: 5px; }
+.dashboard-metrics span {
+    display: block;
+    color: var(--colors-ink-subtle);
+    font-size: .8rem;
+    line-height: 1.35;
+    min-height: 2.7em;
+    margin-bottom: 5px;
+}
 .dashboard-metrics strong { font-size: 1.55rem; }
 
 .dashboard-secondary-metrics {

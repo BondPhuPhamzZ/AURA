@@ -1,5 +1,7 @@
 using System.Text;
 using System.Text.Json;
+using System.IO.Compression;
+using System.Xml.Linq;
 using AURA.Models;
 using AURA.Services;
 using Xunit;
@@ -8,6 +10,42 @@ namespace AURA.Tests;
 
 public sealed class ManagerOperationsReportExporterTests
 {
+    [Fact]
+    public void Workbook_has_light_green_header_and_text_only_data_without_raw_facts()
+    {
+        var request = Request("safe", new DateTime(2026, 10, 17, 1, 0, 0, DateTimeKind.Utc));
+        request.OriginalFileName = "=HYPERLINK(\"https://invalid.example\")";
+        request.ExtractedFactsJson = JsonSerializer.Serialize(new ReceiptExtractionDto
+        {
+            MerchantName = "DO_NOT_EXPORT_RAW_FACTS",
+            AmountSource = AmountSources.AiExtracted
+        });
+
+        var report = ManagerOperationsReportExporter.ExportWorkbookMonth([request], 2026, 10);
+        Assert.Equal("AURA_Operations_2026-10.xlsx", report.FileName);
+        Assert.Equal(1, report.RecordCount);
+        using var zip = new ZipArchive(new MemoryStream(report.Content), ZipArchiveMode.Read);
+        var styles = ReadXml(zip, "xl/styles.xml");
+        var sheet = ReadXml(zip, "xl/worksheets/sheet1.xml");
+        XNamespace ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+        Assert.Contains(styles.Descendants(ns + "fgColor"),
+            color => (string?)color.Attribute("rgb") == "FFD9F2E3");
+        Assert.All(sheet.Descendants(ns + "row").First().Elements(ns + "c"),
+            cell => Assert.Equal("1", (string?)cell.Attribute("s")));
+        Assert.All(sheet.Descendants(ns + "row").Skip(1).SelectMany(row => row.Elements(ns + "c")),
+            cell => Assert.Equal("0", (string?)cell.Attribute("s")));
+        Assert.Contains("=HYPERLINK", sheet.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(sheet.Descendants(ns + "f"), _ => true);
+        Assert.DoesNotContain("DO_NOT_EXPORT_RAW_FACTS", sheet.ToString(), StringComparison.Ordinal);
+        Assert.Equal("A1:L2", (string?)sheet.Root?.Element(ns + "dimension")?.Attribute("ref"));
+    }
+
+    private static XDocument ReadXml(ZipArchive archive, string name)
+    {
+        using var stream = archive.GetEntry(name)!.Open();
+        return XDocument.Load(stream);
+    }
+
     [Fact]
     public void Preserves_pre_inference_privacy_review_in_CSV_after_manual_acceptance_without_facts()
     {
