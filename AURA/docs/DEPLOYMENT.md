@@ -61,7 +61,9 @@ toàn bộ cho người upload. [Văn bản luật](https://datafiles.chinhphu.v
 
 Folder [AURA_INVOICE Restricted](https://drive.google.com/drive/folders/1CozQh8rmg4rz_tJenwhbI1snZSKyYhZU?usp=drive_link)
 chỉ là điểm xin quyền demo synthetic. Chủ folder phải **accept/chia sẻ quyền**
-cho từng Google account; link không tự cấp quyền. Connector Drive hiện không
+cho từng Google account; để upload vào folder chung cần Editor, vốn cũng có thể
+sửa/xóa nội dung trong folder, nên chỉ cấp cho người thử đáng tin cậy. Link
+không tự cấp quyền. Connector Drive hiện không
 chạy trên SmartASP Production.
 
 > **Đối chiếu 27/10:** Evidence mới chứng minh thêm ba fixture Drive local có kết quả/hành động và ba ảnh thật trên web bị chặn trước inference. Chưa có smoke SmartASP hoặc phép đo latency đầu cuối; gate staging riêng và `DriveSandbox__Enabled=false` trên Production vẫn giữ nguyên. [Chi tiết](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md).
