@@ -1,5 +1,7 @@
 # Tài liệu kỹ thuật AURA
 
+**Phương án sau SmartASP:** [đánh giá Azure Free và các lựa chọn hosting miễn phí ngày 27/10](FREE_HOSTING_DECISION_2026-10-27.md). Chưa có Azure deployment; Drive trên cloud vẫn NO-GO.
+
 **Mốc local 27/10:** [Đối chiếu ba ca Drive synthetic và ba ca real bị chặn trước inference](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). Đây là evidence supervised local; không đo upload-to-result latency và không đổi gate SmartASP.
 
 Thư mục này chứa tài liệu kỹ thuật hiện hành **và các báo cáo evidence theo ngày**. Báo cáo có ngày là snapshot tại thời điểm đo; không dùng số liệu trong đó thay cho trạng thái source hiện tại. Tài liệu cá nhân về pitching và ôn phản biện nằm ngoài repository tại `D:\aura\phan_bien`.

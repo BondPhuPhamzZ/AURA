@@ -1,5 +1,7 @@
 # Deploy AURA và xác minh Live URL
 
+> **Giới hạn gói SmartASP hiện tại:** Ảnh control panel ngày 27/10 cho thấy MSSQL 1/1 và 1000/1000 MB quota đã phân bổ. Nút `+ Database` vẫn mở form nhưng không chứng minh còn suất DB thứ hai. Giữ DB thi cũ; không áp migration candidate vào đó chỉ để thay thế staging. [Phương án Azure Free được đối chiếu](FREE_HOSTING_DECISION_2026-10-27.md) là một dự án triển khai riêng, chưa được smoke.
+
 > **Đối chiếu 27/10:** Evidence mới chứng minh thêm ba fixture Drive local có kết quả/hành động và ba ảnh thật trên web bị chặn trước inference. Chưa có smoke SmartASP hoặc phép đo latency đầu cuối; gate staging riêng và `DriveSandbox__Enabled=false` trên Production vẫn giữ nguyên. [Chi tiết](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md).
 
 > **Gate hiện hành 25/10/2026:** candidate trên nhánh
