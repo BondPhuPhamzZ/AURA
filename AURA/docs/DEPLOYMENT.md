@@ -2,6 +2,68 @@
 
 > **Giới hạn gói SmartASP hiện tại:** Ảnh control panel ngày 27/10 cho thấy MSSQL 1/1 và 1000/1000 MB quota đã phân bổ. Nút `+ Database` vẫn mở form nhưng không chứng minh còn suất DB thứ hai. Giữ DB thi cũ; không áp migration candidate vào đó chỉ để thay thế staging. [Phương án Azure Free được đối chiếu](FREE_HOSTING_DECISION_2026-10-27.md) là một dự án triển khai riêng, chưa được smoke.
 
+## Phương án giữ SmartASP với một DB — cần làm trước khi publish mới
+
+Site hiện có vẫn dùng được trong thời hạn gói hosting. Không cần mua thêm DB chỉ để
+đổi CSS/đưa thêm báo cáo Excel; bản thay đổi này **không thêm migration**. Tuy
+nhiên không thể giả định DB live đã có đủ schema của source hiện hành. Các đoạn
+hướng dẫn staging DB riêng bên dưới là phương án ưu tiên nếu sau này có quota;
+với gói 1/1, áp dụng trình tự kiểm soát tại chỗ này:
+
+1. Trên local, chạy Release build, toàn bộ test, `dotnet ef migrations has-pending-model-changes`
+   và một smoke synthetic trên DB cô lập. Ghi lại commit và số migration của source.
+2. Trong SmartASP **Websites → đúng site AURA → File Manager**, tải bản website
+   hiện tại và thư mục ảnh receipts private về nơi backup ngoài Git. Trong
+   **Databases → MSSQL → đúng DB AURA → Backup**, tải `.bak`. Kiểm có thể
+   đọc/restore bản sao trên SQL Server tương thích ở môi trường cô lập. Chụp
+   lại tên các biến môi trường, nhưng không đưa giá trị key/connection string
+   vào Git hoặc ảnh công khai. Nếu chưa chứng minh restore được, chưa thay live.
+3. Đọc `__EFMigrationsHistory` trên DB live theo cách read-only và đối chiếu
+   với migration trong source. Nếu còn thiếu, tạo script EF **idempotent** từ
+   đúng commit, rà soát SQL và thực hiện trong cửa sổ bảo trì sau backup.
+   Nếu không có migration thiếu thì **không chạy migration**. Giữ
+   `Database__ApplyMigrationsOnStartup=false`; tuyệt đối không dùng recycle để
+   tự chạy migration thử trên DB cũ.
+4. Trong **Advanced Tools → Pool Manager → Environment Variables**, kiểm đúng
+   application pool/site, rồi đặt hoặc cập nhật: `ASPNETCORE_ENVIRONMENT=Production`,
+   `ConnectionStrings__DefaultConnection` trỏ **DB AURA hiện tại**,
+   `ReceiptStorage__Provider=LocalFileSystem`, `ReceiptStorage__Directory` trỏ
+   đường dẫn receipts private/persistent **đang chứa ảnh cũ**, `Vision__Provider=OpenRouter`,
+   `Vision__MaxConcurrentRequests=1`, `Vision__FallbackEnabled=false`,
+   `OpenRouter__ApiKey` mới, `OpenRouter__Model=qwen/qwen3.8-27b`,
+   `OpenRouter__RequireZeroDataRetention=true`,
+   `OpenRouter__DenyProviderDataCollection=true`,
+   `ExternalImagePrivacy__Mode=ApprovedImagesOnly`,
+   `ExternalImagePrivacy__ApprovedHashesFile` trỏ manifest synthetic private
+   có thể đọc được, `DriveSandbox__Enabled=false`, `Verify__Enabled=false`,
+   `DataRetention__Enabled=false`, `Database__ApplyMigrationsOnStartup=false`
+   và `AllowedHosts` là hostname live. Chỉ một worker process; xác minh model
+   còn endpoint nhận `zdr=true` bằng smoke synthetic. Health chỉ báo **cấu hình**
+   Strict ZDR, không chứng minh hợp đồng lưu trữ dữ liệu của provider.
+5. Publish package Release vào đúng web root, **giữ nguyên** thư mục receipts,
+   `App_Data` và file private; tắt tùy chọn Web Deploy xóa file ngoài package.
+   Không upload khóa Drive, manifest vào `wwwroot`, ảnh thật, hoặc dữ liệu test
+   local. Recycle pool một lần, kiểm `/healthz` = `ok`, schema up to date,
+   Strict ZDR/data-collection flags, storage, provider/model đúng; sau đó thử
+   một ảnh synthetic được duyệt, xem SQL/audit, Excel/CSV, Forward/Undo,
+   rồi recycle và kiểm ảnh/job còn. Nếu lỗi, dừng tiếp nhận mới và dùng bản
+   website/DB/receipts backup theo kế hoạch restore đã diễn tập; không restore
+   đè DB đang có ghi mới.
+
+**Giới hạn ảnh thật:** Upload đã nhận và lưu ảnh trước khi gate hash chặn gửi
+ra model. Không đổi `ExternalImagePrivacy__Mode` sang `LegacyConfigured` trên
+site công khai chỉ vì uploader xác nhận consent. AURA chưa xác thực/phân quyền
+người xem và chưa có pre-inference redaction; retention trên DB cũ đang tắt.
+Trước pilot dữ liệu thật cần giới hạn truy cập site, chính sách lưu/xóa và
+backup, kiểm quyền/consent, đánh giá provider và thử nghiệm phục hồi. Luật bảo
+vệ dữ liệu cá nhân cũng đặt trách nhiệm ở bên kiểm soát/xử lý, không chuyển
+toàn bộ cho người upload. [Văn bản luật](https://datafiles.chinhphu.vn/cpp/files/vbpq/2025/7/91qh.signed.pdf).
+
+Folder [AURA_INVOICE Restricted](https://drive.google.com/drive/folders/1CozQh8rmg4rz_tJenwhbI1snZSKyYhZU?usp=drive_link)
+chỉ là điểm xin quyền demo synthetic. Chủ folder phải **accept/chia sẻ quyền**
+cho từng Google account; link không tự cấp quyền. Connector Drive hiện không
+chạy trên SmartASP Production.
+
 > **Đối chiếu 27/10:** Evidence mới chứng minh thêm ba fixture Drive local có kết quả/hành động và ba ảnh thật trên web bị chặn trước inference. Chưa có smoke SmartASP hoặc phép đo latency đầu cuối; gate staging riêng và `DriveSandbox__Enabled=false` trên Production vẫn giữ nguyên. [Chi tiết](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md).
 
 > **Gate hiện hành 25/10/2026:** candidate trên nhánh
@@ -34,8 +96,8 @@ và [quy trình IIS của Microsoft](https://learn.microsoft.com/en-us/aspnet/co
 
 1. Tạo hoặc xác nhận một database test và receipt directory riêng, quyền đọc/ghi
    đúng app pool, ngoài `wwwroot`. Giữ backup SQL + ảnh của site cũ và restore
-   thử trên môi trường tách biệt. Nếu không có quota DB/site tách biệt, giữ local;
-   không dùng DB cũ để bỏ qua gate.
+   thử trên môi trường tách biệt. Nếu không có quota DB/site tách biệt, làm theo
+   phương án nâng cấp tại chỗ ở đầu tài liệu; DB cũ không phải staging.
 2. Apply migration có kiểm soát vào đúng DB test mới; kiểm đủ schema. Không bật
    startup migration trên live để thử. Package phải có `BUSINESS_RULES.md`,
    `AURA.dll`, `web.config`, `wwwroot`; không có `App_Data`, `TestResults`, `.tmp`,
@@ -72,7 +134,7 @@ và [quy trình IIS của Microsoft](https://learn.microsoft.com/en-us/aspnet/co
    được xác nhận; AURA chưa có RBAC. Site Guard là WAF, không thay xác thực hay
    phân quyền ([tài liệu hãng](https://www.smarterasp.net/support/kb/a2131/site-guard.aspx)).
    Sau publish/recycle: health + 1 synthetic inference,
-   ảnh vẫn đọc được, Forward/manager/Undo/audit, dashboard/CSV cùng kỳ, invalid
+   ảnh vẫn đọc được, Forward/manager/Undo/audit, dashboard/CSV/Excel cùng kỳ, invalid
    upload bị chặn và file/job còn nguyên sau recycle. Đo hành vi worker khi idle
    và restart; chưa có test này thì không hứa chạy Drive/worker 24/7. Không chạy
    Verify trên Production và không dùng ảnh thật cho smoke.
@@ -127,8 +189,8 @@ giữ URL cũ khi thay package của cùng website; việc này không tự sinh
 cấu hình, chạy launcher local `-EnableSyntheticDrive` theo runbook và xem Audit/
 Dashboard tự cập nhật. Service account chỉ cần Viewer. Người khác chỉ upload được
 khi được chủ folder chia sẻ quyền phù hợp cho đúng email; một link Restricted
-không cấp quyền. Không đổi sang Anyone-with-link để vượt setup và không đưa link
-folder riêng vào README public. Luồng Drive tới live SmartASP cần gate triển khai
+không cấp quyền. Không đổi sang Anyone-with-link để vượt setup; README chỉ
+công bố link xin quyền theo quyết định của chủ folder. Luồng Drive tới live SmartASP cần gate triển khai
 connector riêng; bản UX này không mở gate đó.
 
 > Source 21/10/2026: Verify Harness mặc định tắt và **không thể chạy trên Production**, kể cả khi hosting còn `Verify__Enabled=true`. Cần ít nhất **196/196 tests** trước publish. Bản hardening chưa được smoke live; xem [báo cáo gate](POST_CONTEST_HARDENING_2026-10-21.md). Các số live cũ bên dưới là evidence lịch sử.
@@ -180,7 +242,10 @@ Kỳ vọng source 21/10: preflight trả `READY: 0 failures`, Release build 0 w
 
 3. Trong Visual Studio, mở `AURA.csproj` và chọn **Publish → Folder** hoặc **Publish → Web Deploy**. Target framework là `net8.0`, cấu hình `Release`.
 
-## 2. Tạo trial SmarterASP.NET
+## 2. Tạo trial SmarterASP.NET (hướng dẫn lịch sử cho tài khoản mới)
+
+Tài khoản AURA hiện có đã dùng hết 1/1 suất MSSQL. Bỏ qua bước tạo DB mới
+bên dưới khi cập nhật website hiện tại; dùng checklist tại đầu tài liệu.
 
 1. Đăng ký tại `https://www.smarterasp.net/free_trial` bằng tài khoản của nhóm.
 2. Từ màn hình **Các gói hosting**, tại thẻ `bondphupham-001` / plan `W60-US`, bấm nút xanh **Quản lý**. Không cần bấm `+ Đơn hàng mới`, `Kế hoạch nâng cấp`, `Tên miền`, `VPN` hoặc `MCP/API`.
@@ -189,7 +254,11 @@ Kỳ vọng source 21/10: preflight trả `READY: 0 failures`, Release build 0 w
 5. Kiểm tra hosting plan đã bật ASP.NET Core 8 và application pool 64-bit. Nếu runtime không có, mở ticket support trước khi deploy.
 6. Trong Pool Manager, đặt **Maximum Worker Processes = 1** cho baseline demo. Limiter/cooldown hiện nằm trong memory từng process.
 
-## 3. Cấu hình biến môi trường
+## 3. Cấu hình biến môi trường (baseline lịch sử)
+
+Bảng bên dưới ghi lại cấu hình ban đầu; với source hiện tại, dùng bảng cấu
+hình trong **Phương án giữ SmartASP với một DB** ở đầu tài liệu, nhất là model
+và Strict ZDR. Không thay các biến mới bằng giá trị lịch sử bên dưới.
 
 Trong SmarterASP Control Panel V10, mở **Advanced Tools → Pool Manager → Actions → Environment Variables**. Biến được đặt ở application-pool level; dùng tên duy nhất nếu pool chứa nhiều site.
 

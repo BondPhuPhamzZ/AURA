@@ -1,6 +1,6 @@
 # AURA — AI-Assisted Reimbursement Review
 
-**27 October local checkpoint:** The owner's new synthetic Drive check showed an AUTO result for R3-01 and human handling for R3-06/R3-13; three unapproved real web uploads took the fail-safe privacy route before model inference. The screenshots do not measure upload-to-result latency or prove real-data privacy. [Evidence and publication boundary](AURA/docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). GitHub source remains separate from the SmartASP website; this checkpoint does not enable Drive on public hosting.
+**27 October checkpoint:** The owner's synthetic Drive check showed an AUTO result for R3-01 and human handling for R3-06/R3-13; three unapproved real web uploads took the fail-safe privacy route before model inference. The screenshots do not measure upload-to-result latency or prove real-data privacy. [Evidence and publication boundary](AURA/docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). GitHub source remains separate from the SmartASP website; this checkpoint does not enable Drive on public hosting.
 
 AURA helps review employee expense receipts. It extracts candidate facts from an image, validates them with a schema and semantic checks, then applies deterministic C# policy. Cases that are uncertain or need authority go to a human reviewer. The model does not approve or pay expenses.
 
@@ -10,7 +10,15 @@ The default branch is `master`. The previous default source is preserved at tag 
 
 `JPG/PNG upload → private receipt storage → durable SQL queue → optional egress approval → vision extraction → schema/Semantic validation → policy routing → human review when required → audit trail`
 
-The current source supports manual image intake, a durable background queue, privacy-risk triage, reviewer actions, and dashboard/CSV reporting. For a controlled local synthetic demonstration, the owner can also grant Viewer access to a **Restricted** Google Drive folder. To request this route, email the project owner at the contact address provided for the pilot; there is no public upload folder or email-ingestion connector. The optional Drive reader is **Development/loopback-only** and disabled by default on public hosting.
+The current source supports manual image intake, a durable background queue, privacy-risk triage, reviewer actions, and dashboard/CSV plus styled Excel reporting. For a controlled local synthetic demonstration, the owner may grant access to a **Restricted** Google Drive folder. The optional Drive reader is **Development/loopback-only** and disabled by default on public hosting; it is not an email-ingestion connector.
+
+## Try the synthetic receipts
+
+- [Browse the 15 labeled v3.1 synthetic receipts](AURA/test_kit/v3_1/images) or the [30-image synthetic test kit](AURA/test_kit/images), then download individual files for testing. These are committed fixtures; the local 100-file repeatability set contains copies and is not an independent public benchmark.
+- [Request access to the owner's Restricted Drive folder](https://drive.google.com/drive/folders/1CozQh8rmg4rz_tJenwhbI1snZSKyYhZU?usp=drive_link). The link does **not** grant upload access. Contact the owner through the email listed on their GitHub profile, provide the Google account to be invited, and wait for the owner to approve and grant the appropriate folder permission. The owner should confirm the folder remains Restricted before each test. Files placed there are read by the **local synthetic connector only**, not by the SmartASP site.
+- The web form accepts up to 10 JPG/PNG images per submission. In the current supervised synthetic profile, an unapproved real image is stored as a case but **blocked before external model inference**. Do not interpret a successful upload as permission to send the image to a model.
+
+Anyone proposing a real-receipt pilot must first confirm they are authorized to submit every image and have obtained the permissions/consents needed for the people and data it contains. The uploader is responsible for the accuracy of that declaration; the project operator must still meet its own access, provider, retention, security and applicable legal obligations. The current public demo has no user authentication or pre-inference redaction, so real-data external inference is **not enabled by this README notice**. [SmartASP preparation and real-data gate](AURA/docs/DEPLOYMENT.md).
 
 SQL admission control caps combined `PENDING` and `PROCESSING` receipts at `ReceiptProcessing__MaxOutstandingReceipts` (default `1000`) across app instances that use the same SQL database. When full, upload returns HTTP 503 with `Retry-After`; Drive sandbox items remain available for the next poll. This is a queue backlog cap—not a lifetime storage quota, spend limit, or identity/abuse-control boundary. The existing upload rate limiter is process-local.
 
