@@ -1,30 +1,29 @@
-# AURA — AI-Assisted Reimbursement Review
+# AURA — Supervised AI for reimbursement receipts
 
-**27 October checkpoint:** The owner's synthetic Drive check showed an AUTO result for R3-01 and human handling for R3-06/R3-13; three unapproved real web uploads took the fail-safe privacy route before model inference. The screenshots do not measure upload-to-result latency or prove real-data privacy. [Evidence and publication boundary](AURA/docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). GitHub source remains separate from the SmartASP website; this checkpoint does not enable Drive on public hosting.
+AURA reviews expense receipts, extracts verifiable facts, applies deterministic reimbursement rules, and sends uncertain cases to a person. It was built for VNG Track A, **The Escalation Referee**. This repository is a supervised MVP: the AI suggests facts; C# policy and a reviewer make the decisions.
 
-AURA helps review employee expense receipts. It extracts candidate facts from an image, validates them with a schema and semantic checks, then applies deterministic C# policy. Cases that are uncertain or need authority go to a human reviewer. The model does not approve or pay expenses.
+## How it works
 
-The default branch is `master`. The previous default source is preserved at tag `archive/master-before-hardening-20261026`; a Git tag does not back up databases or receipt files. Git synchronization does not deploy the public website.
+`Web JPG/PNG or local synthetic Drive → private receipt storage → SQL queue → image privacy gate → vision model → schema and Semantic checks → C# policy → automatic result or human review → audit and reports`
 
-## Processing flow
+The queue survives restarts and currently permits one AI request at a time. A reviewer can accept, reject, or undo a decision. See the [business rules](AURA/BUSINESS_RULES.md) and [current project status](AURA/docs/CURRENT_PROJECT_STATUS.md) for exact behavior and evidence.
 
-`JPG/PNG upload → private receipt storage → durable SQL queue → optional egress approval → vision extraction → schema/Semantic validation → policy routing → human review when required → audit trail`
+## Explore the app
 
-The current source supports manual image intake, a durable background queue, privacy-risk triage, reviewer actions, and dashboard/CSV plus styled Excel reporting. For a controlled local synthetic demonstration, the owner may grant access to a **Restricted** Google Drive folder. The optional Drive reader is **Development/loopback-only** and disabled by default on public hosting; it is not an email-ingestion connector.
+| Area | What it shows | Suggested screenshot |
+| --- | --- | --- |
+| **Cửa sổ nhân viên** | Upload up to 10 JPG/PNG receipts per submission; follow processing and inspect extracted facts. | Upload box beside AI facts and result table. |
+| **Cửa sổ quản lý** | Human review, decision, and Undo. | One escalated case with its reason and actions. |
+| **Lịch sử hành vi** | Recorded processing and reviewer events. | Expanded timeline for one request. |
+| **Tổng quan** | Monthly workload and outcomes; CSV/Excel export. | Selected month, metrics, and table. |
 
-## Try the synthetic receipts
+Use [labeled synthetic images](AURA/test_kit/v3_1/images) for a safe demo; the [larger synthetic fixture folder](AURA/test_kit/images) is also available. For the optional **local** batch demo, [request upload access to the owner's Restricted Drive folder](https://drive.google.com/drive/folders/1CozQh8rmg4rz_tJenwhbI1snZSKyYhZU?usp=drive_link) and wait for approval. The link alone grants no access. Drive intake is disabled on the public SmartASP site. The [demo video](https://drive.google.com/file/d/14Co4QjnoDeYPTORXcxi1u-r1MOuX2KM0/view?usp=sharing) remains available; it shows the recorded contest workflow.
 
-- [Browse the 15 labeled v3.1 synthetic receipts](AURA/test_kit/v3_1/images) or the [30-image synthetic test kit](AURA/test_kit/images), then download individual files for testing. These are committed fixtures; the local 100-file repeatability set contains copies and is not an independent public benchmark.
-- [Request access to the owner's Restricted Drive folder](https://drive.google.com/drive/folders/1CozQh8rmg4rz_tJenwhbI1snZSKyYhZU?usp=drive_link). Sign in to the Google account you want to use; if Drive offers **Request access**, send a note asking to upload synthetic receipts and wait for the owner's email approval. The owner must grant **Editor** access to that account before it can add files; Editor can also change existing folder contents, so this shared demo folder is only for trusted testers. The link alone grants no access. The owner should confirm the folder remains Restricted before each test. Files placed there are read by the **local synthetic connector only**, not by the SmartASP site.
-- The web form accepts up to 10 JPG/PNG images per submission. In the current supervised synthetic profile, an unapproved real image is stored as a case but **blocked before external model inference**. Do not interpret a successful upload as permission to send the image to a model.
+If you wish to submit real receipts, contact the owner first and confirm that you have authority and all necessary permissions or consents for every image. The current synthetic demo blocks unapproved images **before external model inference**. Uploading a file does not authorize sending it to a provider. The Strict ZDR and data-collection-denial options are routing requests, not a guarantee that real data is safe for this public demo.
 
-Anyone proposing a real-receipt pilot must first confirm they are authorized to submit every image and have obtained the permissions/consents needed for the people and data it contains. The uploader is responsible for the accuracy of that declaration; the project operator must still meet its own access, provider, retention, security and applicable legal obligations. The current public demo has no user authentication or pre-inference redaction, so real-data external inference is **not enabled by this README notice**. [SmartASP preparation and real-data gate](AURA/docs/DEPLOYMENT.md).
+## Run locally on Windows
 
-SQL admission control caps combined `PENDING` and `PROCESSING` receipts at `ReceiptProcessing__MaxOutstandingReceipts` (default `1000`) across app instances that use the same SQL database. When full, upload returns HTTP 503 with `Retry-After`; Drive sandbox items remain available for the next poll. This is a queue backlog cap—not a lifetime storage quota, spend limit, or identity/abuse-control boundary. The existing upload rate limiter is process-local.
-
-## Run locally (Windows / PowerShell)
-
-Prerequisites: Git, .NET 8 SDK, and SQL Server LocalDB. From the directory where you want the checkout:
+Install [Git](https://git-scm.com/downloads), [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0), and [SQL Server Express LocalDB](https://learn.microsoft.com/sql/database-engine/configure-windows/sql-server-express-localdb). Use PowerShell in the folder where you want the checkout:
 
 ```powershell
 git clone https://github.com/BondPhuPhamzZ/AURA.git
@@ -33,83 +32,31 @@ dotnet tool restore
 dotnet restore
 ```
 
-Store the OpenRouter key in .NET User Secrets (never commit it). The synthetic launcher prepares its own isolated database connection:
+Ask the project owner for an **active trial OpenRouter API key through a private channel**. Store it in .NET User Secrets, never in Git or screenshots:
 
 ```powershell
-dotnet user-secrets set "OpenRouter:ApiKey" "<YOUR_OPENROUTER_API_KEY>"
+dotnet user-secrets set "OpenRouter:ApiKey" "<KEY_FROM_OWNER>"
 ```
 
-To keep an existing database unchanged, prepare the isolated synthetic profile first:
+Prepare a separate synthetic LocalDB, apply EF migrations, and start the app:
 
 ```powershell
-.\tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly -EnableSyntheticDrive
+.\tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly
 .\tools\Start-AuraRetentionSandbox.ps1
 ```
 
-It prepares a separate LocalDB and receipt directory, enables retention and exact-image approval, and serves `http://127.0.0.1:5000`. Visual Studio **AURA** (F5) and the launcher use the same Git-ignored active profile; run only one host at a time. The launcher reuses the prepared DB on later days. Strict ZDR and provider-data denial are requested for Qwen3.8-27B; this does not redact images or establish a legal privacy guarantee. Only 49 verified synthetic fixture contents may reach the provider. The Restricted Drive test folder remains read-only and Development/loopback only. See the [single-profile evidence and two-case manual test](AURA/docs/LOCAL_SYNTHETIC_PROFILE_2026-10-26.md) and [runbook](AURA/docs/RUNBOOK.md).
-
-For a new empty synthetic database, the preparation command above applies all EF migrations. To use a different database, pass a name such as `-DatabaseName AURA_RetentionSandbox_20261027` to that command. Build and test independently with:
+Open `http://127.0.0.1:5000`. The launcher uses a separate database and private receipt directory; it does not modify the contest database. Only approved synthetic image contents can pass its external-image gate. To enable the optional Restricted Drive reader after the owner grants access and you configure a local service account, follow the [runbook](AURA/docs/RUNBOOK.md) and [local setup guide](AURA/docs/JUDGE_LOCAL_SETUP.md). The service-account JSON must stay outside this repository. For hosting configuration and database backup/migration, use the [deployment guide](AURA/docs/DEPLOYMENT.md).
 
 ```powershell
 dotnet build AURA.csproj -c Release
 dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release
 ```
 
-Open the local URL printed by the launcher or press F5 with Visual Studio profile **AURA** after preparation. Database migrations are **not** applied automatically at startup. For the opt-in SQL/LocalDB integration tests, start the existing LocalDB instance if needed and run:
+## Scope and project files
 
-```powershell
-$env:AURA_RUN_LOCALDB_INTEGRATION = "1"
-dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release
-Remove-Item Env:\AURA_RUN_LOCALDB_INTEGRATION
-```
+AURA already demonstrates durable intake, schema/Semantic validation, deterministic escalation, timely human intervention, audit, and reporting. The local Drive adapter shows how a Restricted folder can supply many synthetic receipts without repeated web uploads. Production rollout would additionally require verified user identity and permissions, real-data privacy approval, malware screening, provider and storage review, and multi-host load testing. The architecture keeps intake, policy, and storage boundaries separate for those later changes.
 
-These integration tests create uniquely named temporary databases and remove them when complete. Use a LocalDB instance owned by the current Windows account.
+- [English proposal](AURA/submission/AURA_PROPOSAL_EN.pdf) · [Vietnamese proposal](AURA/submission/AURA_PROPOSAL_VI.pdf) · [five slides](AURA/submission/AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx) · [build log](AURA/submission/AURA_BUILD_LOG.pdf)
+- [Post-contest addendum](AURA/submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) · [operational runbook](AURA/docs/RUNBOOK.md) · [deployment guide](AURA/docs/DEPLOYMENT.md) · [readiness and scale assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md)
 
-The optional backup-script integration cases need both Windows PowerShell 5.1 and PowerShell 7. Enable `AURA_RUN_POWERSHELL_INTEGRATION=1` to execute them; the current Release suite passes 378/378 with both integration flags enabled. Frontend race/error tests pass 8/8 with `node .\tests\frontend\workflow-refresh.test.cjs` (Node is needed for these tests only).
-
-## Two intake routes and live status
-
-- **Web:** select up to 10 JPG/PNG images per submission. Each accepted image is saved as a separate SQL request. The browser follows its returned request IDs while the AI queue processes them.
-- **Restricted Drive (local synthetic demonstration):** place approved JPG/PNG files directly in the shared test folder after the owner grants upload permission. A read-only service account polls the folder about every 120 seconds by default, then saves each accepted file as a SQL request before model processing. Keep the folder Restricted. This is not enabled on SmartASP.
-
-While the employee tab is visible, a read-only `fetch` request refreshes its result table every five seconds without reloading the page. Recent Drive requests show SQL `PENDING` and `PROCESSING`, then the result; Audit records the permanent events. The table includes up to 20 recent unforwarded Drive requests created in the last 24 hours **plus all unforwarded escalations**, including older ones. It is a live work view, not the complete SQL history. Polling pauses on hidden tabs. A full page refresh does not start the worker or force a Drive scan.
-
-See the [Drive progress UI verification](AURA/docs/DRIVE_PROGRESS_UI_VERIFICATION_2026-10-27.md) for the executed tests and the remaining timing/hosting limits.
-
-Drive idempotency uses folder ID, Google file ID and MD5: re-reading the same unchanged file silently skips it, without another model call or new audit. A newly uploaded *copy* has a new Google file ID and may enter SQL again; SHA-256 duplicate detection marks it, but the current synthetic repeatability profile has duplicate escalation disabled. Changing bytes creates another source version, subject to the exact-image privacy approval gate. Invalid files are rejected before SQL and recorded in the private rejection log. Do not interpret a skipped file or an `AUTO_APPROVE` duplicate as duplicate-expense protection.
-
-## Current Drive and UX boundary
-
-On 26 October, a fresh local Drive run completed 3/3 approved JPEGs; the later R3-01/R3-12 pair completed and a restart left **5 requests, 10 audit rows and no queued jobs**. This is execution/idempotency evidence, not an accuracy benchmark. The connector reads direct folder children, not nested folders; its bounded scan is not an unlimited batch drain. The repeatability profile has duplicate escalation off: same-source idempotency is not duplicate-expense prevention. Submitter/department are synthetic metadata.
-
-Tabs, Forward, reviewer decisions/Undo and dashboard periods now refresh read-only fragments after server-confirmed writes. The UI preserves filters, focus, scroll and URL history, pauses inactive/hidden polling, and retains prior rows with retry recovery on read failure. Two-tab and lost-response checks retained one SQL decision; no automatic POST retry was added. Reviewer assignment, reminders, verified identity, sustained load and independent usability acceptance remain open. See the [readiness assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
-
-## Privacy and readiness
-
-The default receipt store is local filesystem storage. Private GCS support remains opt-in and has not been validated against a real bucket in this evidence.
-
-The synthetic launcher enables `ExternalImagePrivacy:Mode=ApprovedImagesOnly`: adapters check the exact image SHA-256 before external HTTP, and unapproved images become human-review cases. An invalid approval file blocks startup. `BlockExternal` blocks remote inference while allowing loopback Ollama; `LegacyConfigured` preserves the contest configuration. These controls do not detect or redact personal data. Approved pixels still reach the configured provider before post-inference privacy triage. Strict-ZDR routing and data-collection denial are request settings, not contractual no-retention guarantees.
-
-Seven-day local retention is opt-in for finalized decisions. Pending and unresolved human-review work is retained. SQL/image backup, restore and scheduled managed-backup expiry were exercised with synthetic data; real-data activation remains a separate gate. Cleanup waits until the app/task runs when the machine is off or the interactive user is logged out.
-
-The latest full 15-case synthetic regression through the approval gate on `649885e` matched 15/15 decisions and 143/146 expected facts; a separate four-image privacy-role kit matched 12/12 decisions and 21/21 labeled categories across three runs. A modified synthetic image was blocked before inference. In the full approved regression, Semantic attempted one repair and safely retained an unresolved FACT case; E2E P50/P95 was 5,139/32,739 ms. No latency improvement is claimed. The user confirmed synthetic-only scope, preserving the old database. These are small, purpose-built synthetic checks, not general accuracy or detector-coverage estimates. See [detailed model and privacy evidence](AURA/docs/MODEL_ROUTE_COMPARISON_2026-10-24.md) and [current status](AURA/docs/CURRENT_PROJECT_STATUS.md).
-
-This is a supervised MVP / contest project, **not production-ready software**. Authentication/RBAC, malware scanning and quarantine for manual uploads, real-data retention/restore approval, real private-cloud storage validation, provider-specific privacy verification, and multi-host load/chaos testing remain open gates. See the [current status and checklist](AURA/docs/CURRENT_PROJECT_STATUS.md) and [readiness/scale assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md) before any pilot.
-
-To change the queue ceiling for a controlled deployment, set `ReceiptProcessing__MaxOutstandingReceipts` (valid range `1`–`10000`). Do not raise it until storage capacity, provider budget, and queue-age behavior have been load-tested.
-
-Build/publish boundaries exclude runtime data and private test results. A real Docker ignore-matcher fixture and a local publish probe passed after fixing a raw-results inclusion defect; this does not establish container runtime readiness. The [deployment guide](AURA/docs/DEPLOYMENT.md) separates controlled staging from the current Development-only Drive connector. A Production-mode localhost staging check passed, and one UI/model smoke returned AUTO with facts in 4,530 ms processing; this is not a new accuracy benchmark. Hosting operations are deferred by the owner: the prepared UX package does not enable the Development-only Drive connector on the public site.
-
-## Project documents
-
-- [Local setup for reviewers](AURA/docs/JUDGE_LOCAL_SETUP.md)
-- [Operational runbook](AURA/docs/RUNBOOK.md)
-- [Business rules](AURA/BUSINESS_RULES.md)
-- [Shared private receipt storage design](AURA/docs/SHARED_RECEIPT_STORAGE.md)
-- [English proposal — current note plus contest baseline](AURA/submission/AURA_PROPOSAL_EN.pdf)
-- [Vietnamese proposal — current note plus contest baseline](AURA/submission/AURA_PROPOSAL_VI.pdf)
-- [Five slides — current status labeled separately](AURA/submission/AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx)
-- [Build log — current note plus contest baseline](AURA/submission/AURA_BUILD_LOG.pdf)
-- [Post-contest status addendum](AURA/submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md)
-
-The proposal, slides, and build log label the submitted contest results as historical and add a dated current-source note. Git history retains the original submission versions. Do not commit API keys, connection strings, User Secrets, real receipt images, database files, raw provider responses, or private evidence.
+**Author:** Phạm Gia Phú — solo development during MLAI Hackathon 2026.
