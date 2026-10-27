@@ -12,6 +12,8 @@ giai đoạn tương lai, không phải yêu cầu phải bật để chạy san
 
 Việc cần làm trước khi mở lại gate publish/pilot:
 
+- [x] Đối chiếu screenshot người dùng 27/10: ba JPEG R3-01/R3-06/R3-13 khớp hash fixture; R3-01 AUTO kèm nhãn duplicate, R3-06/R3-13 có thao tác quản lý; ba ảnh thật web bị `ESCALATE_PRIVACY` trước external inference. Chưa có log timestamp để đo latency Drive đầu cuối hoặc bằng chứng hosting. [Báo cáo giới hạn](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). Gate synthetic-only và staging riêng không đổi.
+
 - [x] Review 26/10: Drive thật trên DB synthetic mới xử lý 3/3 JPEG đã duyệt; sau restart vẫn 3 job/6 audit, không nhận lại cùng nguồn. Folder còn 2 thư mục con và 1 TXT; connector không đệ quy. Một ảnh bị nhận diện trùng nhưng regression profile tắt duplicate escalation; chưa chứng minh chống chi trùng. Launcher thêm `-EnableSyntheticDrive` opt-in local, mặc định tắt. [Phạm vi và kết quả](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
 - [x] Boundary publish/Docker: sửa lỗi 9 raw TestResults JSON lọt local artifact; publish lại loại runtime/test/secret paths và đủ runtime inputs. Docker matcher thật loại 21 private canary, giữ 4 runtime inputs; chưa build/run AURA trong container. Full Release sau sửa 371/371, build 0 warning/error. Raw proof giữ ngoài Git.
 - [x] Đồng bộ source/README lên default `master`, giữ mốc cũ qua `archive/master-before-hardening-20261026`. Đồng bộ Git không thay hosting, database hoặc secrets; [gate SmartASP](DEPLOYMENT.md) vẫn NO-GO cho full Drive Production.

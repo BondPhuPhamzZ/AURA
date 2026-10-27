@@ -1,5 +1,7 @@
 # AURA — AI-Assisted Reimbursement Review
 
+**27 October local checkpoint:** The owner's new synthetic Drive check showed an AUTO result for R3-01 and human handling for R3-06/R3-13; three unapproved real web uploads took the fail-safe privacy route before model inference. The screenshots do not measure upload-to-result latency or prove real-data privacy. [Evidence and publication boundary](AURA/docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). GitHub source remains separate from the SmartASP website; this checkpoint does not enable Drive on public hosting.
+
 AURA helps review employee expense receipts. It extracts candidate facts from an image, validates them with a schema and semantic checks, then applies deterministic C# policy. Cases that are uncertain or need authority go to a human reviewer. The model does not approve or pay expenses.
 
 The default branch is `master`. The previous default source is preserved at tag `archive/master-before-hardening-20261026`; a Git tag does not back up databases or receipt files. Git synchronization does not deploy the public website.

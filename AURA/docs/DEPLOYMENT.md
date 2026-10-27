@@ -1,5 +1,7 @@
 # Deploy AURA và xác minh Live URL
 
+> **Đối chiếu 27/10:** Evidence mới chứng minh thêm ba fixture Drive local có kết quả/hành động và ba ảnh thật trên web bị chặn trước inference. Chưa có smoke SmartASP hoặc phép đo latency đầu cuối; gate staging riêng và `DriveSandbox__Enabled=false` trên Production vẫn giữ nguyên. [Chi tiết](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md).
+
 > **Gate hiện hành 25/10/2026:** candidate trên nhánh
 > `master` chỉ được chốt cho synthetic local, giữ nguyên
 > DB thi cũ. Chưa publish hoặc bật retention trên hosting/DB cũ. Không chạy các

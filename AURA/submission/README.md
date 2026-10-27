@@ -1,5 +1,7 @@
 # Gói nộp bài chính thức AURA
 
+**Evidence bổ sung 27/10:** [Báo cáo kiểm thử Drive synthetic và privacy gate](../docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md) là ghi chú source hiện hành. Các PDF/DOCX/slide đã nộp vẫn là artifact lịch sử, không được hiểu là báo cáo triển khai SmartASP hoặc kiểm thử ảnh thật bằng model. Ảnh evidence riêng tư không nằm trong repo.
+
 Các artifact proposal, build log và slide nay có **ghi chú hậu cuộc thi ngày 26/10** đặt tách khỏi số liệu lúc nộp. Không đọc 163/181 test hoặc Verify 5/5 của bản cũ như kết quả của source mới. Bản nộp gốc còn trong Git history; tên file giữ ổn định để liên kết proposal cũ không lệch. Xem [addendum](AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) và [trạng thái source hiện hành](../docs/CURRENT_PROJECT_STATUS.md).
 
 Review source/Drive/UX/deploy ngày 26/10 nằm tại [assessment hiện hành](../docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).

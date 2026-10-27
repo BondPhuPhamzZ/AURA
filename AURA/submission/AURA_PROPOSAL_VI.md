@@ -1,5 +1,7 @@
 # Đề xuất giải pháp AURA cho bài toán hoàn ứng
 
+> **Evidence local 27/10:** Kiểm thử Drive synthetic bằng tay cho thấy R3-01 AUTO kèm nhãn trùng nội dung, R3-06/R3-13 có hành động quản lý tiếp theo. Ba ảnh thật trên web bị chuyển `ESCALATE_PRIVACY` trước khi gửi model vì chưa được duyệt hash. Chưa đo độ trễ đầu cuối Drive hoặc accuracy dữ liệu thật. Điều này không thay đổi đề xuất lúc thi và chưa cho phép bật Drive trên SmartASP. [Bằng chứng và giới hạn](../docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md).
+
 > **Cập nhật source hậu cuộc thi — 26/10/2026.** Phần đề xuất nộp ngày 14/10
 > bên dưới là mốc lịch sử. Profile synthetic local hiện nhận ảnh qua web và đọc
 > trực tiếp ảnh đã duyệt trong folder Drive Restricted bằng service account chỉ

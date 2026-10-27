@@ -1,5 +1,7 @@
 # Nhật ký xây dựng dự án AURA
 
+> **Đối chiếu 27/10/2026:** Ảnh chụp kiểm thử thủ công cho thấy ba fixture Drive R3-01/R3-06/R3-13 có kết quả hoặc hành động quản lý; ba ảnh thật trên web đi vào `ESCALATE_PRIVACY` trước inference vì không được duyệt hash. Độ trễ đầu cuối Drive chưa đo được từ ảnh chụp. Xem [evidence có giới hạn](../docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md); bản nộp cuộc thi bên dưới vẫn là mốc lịch sử.
+
 > **Cập nhật 26/10/2026 (hậu cuộc thi):** Source local synthetic đã thống nhất
 > một profile tại cổng 5000, đọc folder Drive Restricted ở quyền Viewer và lưu
 > mỗi ảnh được nhận thành hồ sơ SQL. Bảng nhân viên nay tự cập nhật trạng thái

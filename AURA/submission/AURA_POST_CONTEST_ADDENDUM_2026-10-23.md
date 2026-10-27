@@ -1,5 +1,7 @@
 # AURA post-contest status addendum — 23 October 2026
 
+**27 October owner check:** Three exact locked synthetic fixtures were placed in the local Restricted Drive test folder. Supplied screenshots show an AUTO result with a duplicate-content marker for R3-01 and subsequent human decisions for R3-06/R3-13. Three real web uploads were blocked from external inference by the synthetic exact-image approval gate and routed to privacy review. These screenshots do not provide upload-to-result timing, independent SQL/outbound traces or real-data accuracy evidence. [Dated evidence note](../docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). The submitted contest documents below remain historical; SmartASP Drive and unrestricted real receipts remain outside this checkpoint.
+
 **26 October Drive visibility update:** In the Development synthetic profile,
 recent Drive-origin SQL requests now appear in the employee table while queued,
 processing and after the decision. The existing read-only `fetch` fragment poll

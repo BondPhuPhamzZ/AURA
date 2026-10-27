@@ -1,5 +1,7 @@
 # AURA reimbursement review solution proposal
 
+> **27 October local evidence:** A manual synthetic Drive check showed R3-01 AUTO with a duplicate-content marker and later reviewer actions for R3-06/R3-13. Three unapproved real web images took the privacy escalation route before model inference. No end-to-end Drive latency or real-data accuracy was measured. This does not change the historical contest proposal or authorize Drive on SmartASP. [Dated evidence and limits](../docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md).
+
 > **Post-contest source update — 26 October 2026.** The submitted 14 October
 > proposal below is retained as a historical benchmark. The current local
 > synthetic profile accepts web uploads and reads approved images directly from
