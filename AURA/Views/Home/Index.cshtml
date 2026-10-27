@@ -73,8 +73,7 @@
                             <div class="dropzone-subtext">JPG, PNG · tối đa 10 ảnh/lượt · @ReceiptStorage.Value.MaxFileSizeMb MB/ảnh</div>
                         </div>
                     </div>
-                    <p class="intake-safety-note" role="note"><strong>Demo có giám sát:</strong> dùng chứng từ tổng hợp hoặc đã ẩn danh. Ảnh thật chỉ nên gửi khi bạn có quyền và sự đồng ý cần thiết; cấu hình public hiện không cho ảnh chưa được duyệt đi tới AI bên ngoài.</p>
-                    <p class="intake-safety-note" role="note">Có thể gửi ảnh tại đây. Muốn thử thư mục Drive Restricted, hãy liên hệ chủ dự án và chờ được cấp quyền; luồng Drive hiện chỉ dành cho bộ ảnh synthetic local.</p>
+                    <p class="intake-safety-note" role="note"><strong>Demo có giám sát:</strong> dùng <a href="https://github.com/BondPhuPhamzZ/AURA/tree/master/AURA/test_kit/v3_1/images" target="_blank" rel="noopener noreferrer">ảnh synthetic trên GitHub</a>. Muốn tải nhiều ảnh qua <a href="https://drive.google.com/drive/folders/1CozQh8rmg4rz_tJenwhbI1snZSKyYhZU?usp=drive_link" target="_blank" rel="noopener noreferrer">Drive Restricted</a>, hãy xin quyền chủ dự án và chờ phê duyệt; luồng này chỉ chạy ở local.</p>
                     <div class="upload-action-row">
                         <div class="ai-amount-note" role="note">
                             <strong>AURA tự đọc tổng tiền.</strong>
@@ -196,7 +195,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+        background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.12), transparent);
         animation: loading 1.5s infinite;
     }
     @@keyframes loading {
@@ -205,7 +204,7 @@
     }
     .skeleton-text {
         height: 16px;
-        background-color: var(--colors-surface-alt);
+        background-color: var(--colors-surface-soft);
         border-radius: 6px;
         width: 80%;
     }
@@ -228,7 +227,7 @@
         width: 16px;
         height: 16px;
         flex: 0 0 16px;
-        border: 2px solid rgba(255,255,255,.22);
+        border: 2px solid rgba(37, 99, 235, .22);
         border-top-color: var(--colors-primary);
         border-radius: 50%;
         animation: analysis-spin .8s linear infinite;
