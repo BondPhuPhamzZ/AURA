@@ -1,5 +1,7 @@
 # Deploy AURA và xác minh Live URL
 
+> **Mốc hosting:** Chủ dự án xác nhận SmartASP trial hết hạn ngày **20/11/2026**. Sau mốc này, nếu site không còn hoạt động, người thử dùng hướng dẫn clone/local trong README và liên hệ chủ dự án qua kênh riêng để nhận API key. Chưa ghi nhận bản source hiện tại đã publish trên live URL.
+
 > **Giới hạn gói SmartASP hiện tại:** Ảnh control panel ngày 27/10 cho thấy MSSQL 1/1 và 1000/1000 MB quota đã phân bổ. Nút `+ Database` vẫn mở form nhưng không chứng minh còn suất DB thứ hai. Giữ DB thi cũ; không áp migration candidate vào đó chỉ để thay thế staging. [Phương án Azure Free được đối chiếu](FREE_HOSTING_DECISION_2026-10-27.md) là một dự án triển khai riêng, chưa được smoke.
 
 ## Phương án giữ SmartASP với một DB — cần làm trước khi publish mới
@@ -40,6 +42,47 @@ với gói 1/1, áp dụng trình tự kiểm soát tại chỗ này:
    và `AllowedHosts` là hostname live. Chỉ một worker process; xác minh model
    còn endpoint nhận `zdr=true` bằng smoke synthetic. Health chỉ báo **cấu hình**
    Strict ZDR, không chứng minh hợp đồng lưu trữ dữ liệu của provider.
+
+   **Profile biến cho bản synthetic trên một SmartASP app pool** (giá trị trong ảnh control panel đều bị che, không thể suy ra giá trị đang lưu):
+
+   | Biến hiện có | Giá trị mục tiêu |
+   | --- | --- |
+   | `ASPNETCORE_ENVIRONMENT` | `Production` |
+   | `Vision__Provider` / `Vision__FallbackProvider` | `OpenRouter` / `Ollama` (fallback vẫn tắt) |
+   | `Vision__CircuitBreakFailureThreshold` / `Vision__CircuitBreakSeconds` | `3` / `60` |
+   | `Vision__MaxConcurrentRequests` / `Vision__ProviderCooldownSeconds` / `Vision__FallbackEnabled` | `1` / `120` / `false` |
+   | `OpenRouter__BaseUrl` / `OpenRouter__ChatCompletionsPath` | `https://openrouter.ai/api/v1/` / `chat/completions` |
+   | `OpenRouter__Model` / `OpenRouter__ReasoningEffort` | `qwen/qwen3.8-27b` / `none` |
+   | `OpenRouter__PolicyPath` / `OpenRouter__TimeoutSeconds` / `OpenRouter__MaxOutputTokens` | `BUSINESS_RULES.md` / `90` / `4096` |
+   | `OpenRouter__DenyProviderDataCollection` / `OpenRouter__RequireZeroDataRetention` | `true` / `true` |
+   | `ReceiptStorage__MaxFileSizeMb` | `5` |
+   | `DecisionPolicy__EscalateDuplicateReceipts` | `false` để giữ baseline regression synthetic; chưa tuyên bố chống thanh toán trùng ở production |
+   | `ReceiptProcessing__PollIntervalMs` / `ReceiptProcessing__LeaseSeconds` / `ReceiptProcessing__FailureBackoffMaxSeconds` | `5000` / `600` / `60` |
+   | `Verify__Enabled` / `Verify__InterCaseDelayMs` | `false` / `4000` (giá trị delay không dùng khi Verify tắt) |
+   | `Database__ApplyMigrationsOnStartup` | `false` |
+
+   Các biến hiện có **không thể điền thay từ ảnh đã che**:
+
+   | Biến | Cách đặt an toàn |
+   | --- | --- |
+   | `OpenRouter__ApiKey` | Key mới còn hiệu lực, nhập trực tiếp vào pool; không dùng User Secrets local và không gửi qua chat/Git. |
+   | `ConnectionStrings__DefaultConnection` | Chuỗi kết nối SQL của **DB AURA hiện có**, không phải LocalDB; giữ đúng tài khoản/quyền và kiểm schema trước publish. |
+   | `ReceiptStorage__Directory` | Giữ đường dẫn thư mục ảnh private/persistent **đang chứa ảnh cũ**. Nếu trước đó dùng mặc định `App_Data/receipts`, xác minh thư mục tương ứng trên host; không trỏ vào `wwwroot`. |
+
+   **Thêm/kiểm tra các biến còn thiếu:** `ReceiptStorage__Provider=LocalFileSystem`,
+   `Vision__UseSqlDistributedGate=false`, `ExternalImagePrivacy__Mode=ApprovedImagesOnly`,
+   `ExternalImagePrivacy__ApprovedHashesFile=<đường dẫn tuyệt đối tới manifest synthetic trên host, ngoài wwwroot>`,
+   `DriveSandbox__Enabled=false`, `DataRetention__Enabled=false`, và
+   `AllowedHosts=bondphupham-001-site1.ltempurl.com` **nếu đây vẫn là hostname site AURA**.
+   Manifest phải được chuyển riêng, đọc được bởi app pool và chứa hash của đúng ảnh synthetic sẽ thử; thiếu hoặc sai file này sẽ chặn khởi động.
+   `ReceiptProcessing__MaxOutstandingReceipts=1000` đang có trong `appsettings.json`; chỉ thêm biến khi cần ghi đè rõ ràng.
+
+   **Dọn cấu hình mailbox đã gỡ khỏi source:** `MailboxSandbox__ApiKey`,
+   `MailboxSandbox__Provider`, `MailboxSandbox__MailboxId`, `MailboxSandbox__AllowedFolder`,
+   `MailboxSandbox__AllowedSenders__0`, `MailboxSandbox__RequireMalwareScanner`,
+   `MailboxSandbox__MaxAttachmentsPerMessage`, `MailboxSandbox__Enabled` không còn được đọc.
+   Xóa các biến cũ sau khi lưu bản ghi cấu hình riêng an toàn; thu hồi key cũ nếu không dùng ở nơi khác. Không thay bằng biến Gmail/Drive trên Production.
+
 5. Publish package Release vào đúng web root, **giữ nguyên** thư mục receipts,
    `App_Data` và file private; tắt tùy chọn Web Deploy xóa file ngoài package.
    Không upload khóa Drive, manifest vào `wwwroot`, ảnh thật, hoặc dữ liệu test
@@ -68,7 +111,7 @@ chạy trên SmartASP Production.
 
 > **Đối chiếu 27/10:** Evidence mới chứng minh thêm ba fixture Drive local có kết quả/hành động và ba ảnh thật trên web bị chặn trước inference. Chưa có smoke SmartASP hoặc phép đo latency đầu cuối; gate staging riêng và `DriveSandbox__Enabled=false` trên Production vẫn giữ nguyên. [Chi tiết](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md).
 
-> **Gate hiện hành 25/10/2026:** candidate trên nhánh
+> **Mốc lịch sử 25/10/2026, không phải release gate mới:** candidate trên nhánh
 > `master` chỉ được chốt cho synthetic local, giữ nguyên
 > DB thi cũ. Chưa publish hoặc bật retention trên hosting/DB cũ. Không chạy các
 > bước deploy/migration bên dưới cho candidate mới khi chưa có quyết định riêng.

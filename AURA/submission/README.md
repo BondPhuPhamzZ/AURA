@@ -1,5 +1,7 @@
 # Gói nộp bài chính thức AURA
 
+**Hosting:** SmartASP trial được chủ dự án xác nhận hết hạn ngày **20/11/2026**. Link trong `AURA_SUBMISSION_LINKS.*` thuộc bản thi lịch sử; sau ngày hết hạn hãy clone repo và dùng hướng dẫn local trong README gốc, rồi liên hệ chủ dự án riêng để nhận API key. Bản source mới chỉ được ghi là live sau khi publish và smoke thành công.
+
 **Evidence bổ sung 27/10:** [Báo cáo kiểm thử Drive synthetic và privacy gate](../docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md) là ghi chú source hiện hành. Các PDF/DOCX/slide đã nộp vẫn là artifact lịch sử, không được hiểu là báo cáo triển khai SmartASP hoặc kiểm thử ảnh thật bằng model. Ảnh evidence riêng tư không nằm trong repo.
 
 Các artifact proposal, build log và slide nay có **ghi chú hậu cuộc thi ngày 26/10** đặt tách khỏi số liệu lúc nộp. Không đọc 163/181 test hoặc Verify 5/5 của bản cũ như kết quả của source mới. Bản nộp gốc còn trong Git history; tên file giữ ổn định để liên kết proposal cũ không lệch. Xem [addendum](AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) và [trạng thái source hiện hành](../docs/CURRENT_PROJECT_STATUS.md).
