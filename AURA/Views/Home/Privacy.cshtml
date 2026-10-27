@@ -4,7 +4,7 @@
 <h1>@ViewData["Title"]</h1>
 
 <div class="feature-card" style="padding: 24px;">
-    <p>AURA gửi ảnh hóa đơn qua OpenRouter tới provider Alibaba Cloud để Qwen trích xuất dữ kiện. Không tải dữ liệu cá nhân thật khi chưa có sự đồng thuận và căn cứ xử lý phù hợp.</p>
-    <p>Ảnh upload được lưu ngoài thư mục public để phục vụ tra cứu/audit. Bản Sprint 1 chưa có tài khoản hoặc phân quyền production; chỉ dùng dữ liệu tổng hợp/đã ẩn danh.</p>
-    <p>API key không được lưu trong mã nguồn. Khi triển khai thực tế phải bổ sung phân quyền, mã hóa, thời hạn lưu, quy trình xóa và persistent storage.</p>
+    <p>AURA chỉ gửi ảnh đã được chính sách cho phép tới OpenRouter để model trích xuất dữ kiện. Endpoint thực tế có thể thay đổi theo route; yêu cầu Strict ZDR và từ chối thu thập dữ liệu không tự chứng minh ảnh thật đã an toàn.</p>
+    <p>Ảnh được tiếp nhận sẽ lưu ở vùng private cùng hồ sơ và audit. Bản demo công khai chưa có xác thực hoặc phân quyền người xem; chỉ sử dụng ảnh synthetic đã được duyệt.</p>
+    <p>Không gửi hóa đơn thật qua bản demo này. Triển khai cho người dùng thật cần kiểm soát truy cập, căn cứ xử lý dữ liệu, chính sách lưu/xóa, backup và xác nhận route provider. API key không lưu trong mã nguồn.</p>
 </div>
