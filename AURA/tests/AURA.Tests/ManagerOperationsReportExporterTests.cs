@@ -30,6 +30,9 @@ public sealed class ManagerOperationsReportExporterTests
         XNamespace ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
         Assert.Contains(styles.Descendants(ns + "fgColor"),
             color => (string?)color.Attribute("rgb") == "FFD9F2E3");
+        Assert.Equal(2, styles.Descendants(ns + "font").Count());
+        Assert.All(styles.Descendants(ns + "font"), font =>
+            Assert.Equal("Calibri", (string?)font.Element(ns + "name")?.Attribute("val")));
         Assert.All(sheet.Descendants(ns + "row").First().Elements(ns + "c"),
             cell => Assert.Equal("1", (string?)cell.Attribute("s")));
         Assert.All(sheet.Descendants(ns + "row").Skip(1).SelectMany(row => row.Elements(ns + "c")),

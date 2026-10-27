@@ -129,10 +129,13 @@ internal static class ManagerOperationsWorkbookWriter
         writer.WriteAttributeString("count", "2");
         writer.WriteStartElement("font", MainNs);
         writer.WriteStartElement("sz", MainNs); writer.WriteAttributeString("val", "11"); writer.WriteEndElement();
+        writer.WriteStartElement("name", MainNs); writer.WriteAttributeString("val", "Calibri"); writer.WriteEndElement();
         writer.WriteEndElement();
         writer.WriteStartElement("font", MainNs);
         writer.WriteStartElement("b", MainNs); writer.WriteEndElement();
         writer.WriteStartElement("color", MainNs); writer.WriteAttributeString("rgb", "FF14532D"); writer.WriteEndElement();
+        writer.WriteStartElement("sz", MainNs); writer.WriteAttributeString("val", "11"); writer.WriteEndElement();
+        writer.WriteStartElement("name", MainNs); writer.WriteAttributeString("val", "Calibri"); writer.WriteEndElement();
         writer.WriteEndElement();
         writer.WriteEndElement();
         writer.WriteStartElement("fills", MainNs);
