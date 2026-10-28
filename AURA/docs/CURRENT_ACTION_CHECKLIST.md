@@ -1,6 +1,12 @@
-# Checklist hiện hành và mốc publish lịch sử
+# Checklist sau lần publish SmartASP 28/10 và các mốc lịch sử
 
-> **26/10 — NO-GO publish/scale bản source mới.** Checklist
+> **Hiện hành:** GO cho việc chia sẻ URL dưới nhãn **demo synthetic có giám sát**:
+> health live ok, zero pending migration, R3-01 synthetic đã hoàn tất AUTO,
+> audit và ảnh đọc lại được. [Evidence live](SMARTASP_LIVE_VALIDATION_2026-10-28.md).
+> NO-GO cho dữ liệu thật không kiểm soát, Drive Production và production-ready.
+> Backup đã tải nhưng chưa restore thử; migration flag phải giữ `false`.
+
+> **Mốc lịch sử 26/10 — NO-GO publish/scale bản source mới.** Checklist
 > publish phía dưới là mốc lịch sử 17–21/10, không còn là lệnh triển khai
 > candidate hiện tại. Xem [trạng thái hiện hành](CURRENT_PROJECT_STATUS.md)
 > và [đối chứng model](MODEL_ROUTE_COMPARISON_2026-10-24.md).

@@ -1,6 +1,17 @@
-# Trạng thái hiện hành AURA ngày 27/10/2026
+# Trạng thái AURA ngày 28/10/2026
 
-> **Đối chiếu người dùng 27/10:** Ba JPEG R3-01/R3-06/R3-13 trong evidence mới khớp byte với fixture khóa. Ảnh chụp cho thấy R3-01 AUTO và nhãn trùng nội dung; R3-06/R3-13 đã đi qua thao tác quản lý. Ba ảnh thật upload qua web bị `ESCALATE_PRIVACY` vì chưa thuộc allowlist ảnh được phép gửi ra ngoài, nên không có kết quả model cho ba ca này. Chưa có timestamp đủ để đo latency từ upload Drive đến kết quả; ô xử lý 5.135 ms của R3-01 không phải thời gian chờ đầu cuối. [Evidence, giới hạn và gate](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). Quyết định giữ synthetic-only/Drive local và chưa publish SmartASP không đổi.
+> **Live synthetic demo:** Site SmartASP hiện trả `/healthz=ok`, zero pending
+> migration và đã chạy thành công R3-01 qua web → queue → OpenRouter →
+> `AUTO_APPROVE` → audit/ảnh. Ca đầu trả `AI_AUTH_ERROR`; sau khi chủ dự án cập
+> nhật key hosting và recycle, ca lặp lại hoàn tất. Đây là một smoke synthetic,
+> không phải benchmark, restore proof hay chứng nhận dữ liệu thật. Drive public
+> vẫn tắt, retention cleanup tắt, cấu hình dành cho một host/process và chưa có RBAC. Xem
+> [báo cáo kiểm chứng live 28/10](SMARTASP_LIVE_VALIDATION_2026-10-28.md).
+
+Các ghi nhận từ 27/10 trở về trước bên dưới là lịch sử theo thời điểm đo; câu
+"chưa publish" trong các mốc cũ đã được thay thế bằng kết quả live ở trên.
+
+> **Đối chiếu người dùng 27/10:** Ba JPEG R3-01/R3-06/R3-13 trong evidence mới khớp byte với fixture khóa. Ảnh chụp cho thấy R3-01 AUTO và nhãn trùng nội dung; R3-06/R3-13 đã đi qua thao tác quản lý. Ba ảnh thật upload qua web bị `ESCALATE_PRIVACY` vì chưa thuộc allowlist ảnh được phép gửi ra ngoài, nên không có kết quả model cho ba ca này. Chưa có timestamp đủ để đo latency từ upload Drive đến kết quả; ô xử lý 5.135 ms của R3-01 không phải thời gian chờ đầu cuối. [Evidence, giới hạn và gate](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). Quyết định synthetic-only/Drive local vẫn giữ; trạng thái publish đã cập nhật ở đầu tài liệu.
 
 > **Cập nhật hiển thị Drive ngày 26/10:** Worker Drive vốn đã nhận file hợp lệ,
 > tạo hồ sơ SQL và xử lý qua AI; khoảng trống nằm ở bảng nhân viên chỉ lọc hồ sơ

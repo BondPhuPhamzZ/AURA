@@ -8,7 +8,7 @@ AURA reviews expense receipts, extracts verifiable facts, applies deterministic 
 
 The queue survives restarts and currently permits one AI request at a time. A reviewer can accept, reject, or undo a decision. See the [business rules](AURA/BUSINESS_RULES.md) and [current project status](AURA/docs/CURRENT_PROJECT_STATUS.md) for exact behavior and evidence.
 
-The SmartASP trial is scheduled to expire on **20 November 2026**. The current source has not yet been confirmed on the public site; its live URL will be listed here after a successful publish and smoke test. If the hosted demo is unavailable, follow the local setup below and request a trial API key from the author privately.
+**Live synthetic demo:** [Open AURA](https://bondphupham-001-site1.ltempurl.com/) on SmartASP through **20 November 2026**. Only approved synthetic images can reach the AI model; Restricted Drive intake runs locally. See the [live validation](AURA/docs/SMARTASP_LIVE_VALIDATION_2026-10-28.md). After the trial, use the local setup below and request a trial API key from the author privately.
 
 ## Explore the app
 

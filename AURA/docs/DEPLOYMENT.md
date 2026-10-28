@@ -1,10 +1,10 @@
 # Deploy AURA và xác minh Live URL
 
-> **Mốc hosting:** Chủ dự án xác nhận SmartASP trial hết hạn ngày **20/11/2026**. Sau mốc này, nếu site không còn hoạt động, người thử dùng hướng dẫn clone/local trong README và liên hệ chủ dự án qua kênh riêng để nhận API key. Chưa ghi nhận bản source hiện tại đã publish trên live URL.
+> **Trạng thái 28/10/2026:** Bản hiện tại đã được publish tại [SmartASP live demo](https://bondphupham-001-site1.ltempurl.com/) và chạy một ca synthetic R3-01 thành công sau khi chủ dự án cập nhật API key. `/healthz` báo zero pending migration; ảnh, audit và bốn fragment đọc được. [Bằng chứng và giới hạn](SMARTASP_LIVE_VALIDATION_2026-10-28.md). Trial hết hạn **20/11/2026**; sau đó dùng hướng dẫn clone/local trong README và xin key qua kênh riêng. Giữ `Database__ApplyMigrationsOnStartup=false`; không chạy lại migration chỉ vì các bước lịch sử bên dưới.
 
-> **Giới hạn gói SmartASP hiện tại:** Ảnh control panel ngày 27/10 cho thấy MSSQL 1/1 và 1000/1000 MB quota đã phân bổ. Nút `+ Database` vẫn mở form nhưng không chứng minh còn suất DB thứ hai. Giữ DB thi cũ; không áp migration candidate vào đó chỉ để thay thế staging. [Phương án Azure Free được đối chiếu](FREE_HOSTING_DECISION_2026-10-27.md) là một dự án triển khai riêng, chưa được smoke.
+> **Giới hạn gói SmartASP:** MSSQL 1/1 và quota 1000 MB đã phân bổ theo ảnh control panel 27/10. Chủ dự án đã chọn nâng cấp schema của DB hiện có tại chỗ sau backup; file backup chưa được restore thử. Không có DB staging riêng. [Phương án Azure Free từng đối chiếu](FREE_HOSTING_DECISION_2026-10-27.md) chưa được smoke.
 
-## Phương án giữ SmartASP với một DB — cần làm trước khi publish mới
+## Runbook nâng cấp tại chỗ với một DB — đối chiếu bản live 28/10
 
 Site hiện có vẫn dùng được trong thời hạn gói hosting. Không cần mua thêm DB chỉ để
 đổi CSS/đưa thêm báo cáo Excel; bản thay đổi này **không thêm migration**. Tuy
@@ -109,7 +109,7 @@ sửa/xóa nội dung trong folder, nên chỉ cấp cho người thử đáng t
 không tự cấp quyền. Connector Drive hiện không
 chạy trên SmartASP Production.
 
-> **Đối chiếu 27/10:** Evidence mới chứng minh thêm ba fixture Drive local có kết quả/hành động và ba ảnh thật trên web bị chặn trước inference. Chưa có smoke SmartASP hoặc phép đo latency đầu cuối; gate staging riêng và `DriveSandbox__Enabled=false` trên Production vẫn giữ nguyên. [Chi tiết](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md).
+> **Đối chiếu 27/10, trước lần publish mới:** Ba fixture Drive local có kết quả/hành động và ba ảnh thật trên web bị chặn trước inference. Lúc đó chưa có smoke SmartASP; bằng chứng live ngày 28/10 được ghi [riêng tại đây](SMARTASP_LIVE_VALIDATION_2026-10-28.md). `DriveSandbox__Enabled=false` trên Production vẫn giữ nguyên. [Evidence local](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md).
 
 > **Mốc lịch sử 25/10/2026, không phải release gate mới:** candidate trên nhánh
 > `master` chỉ được chốt cho synthetic local, giữ nguyên
@@ -118,7 +118,7 @@ chạy trên SmartASP Production.
 > Xem [checklist hiện hành](CURRENT_ACTION_CHECKLIST.md); các bước/số liệu tiếp
 > theo là hướng dẫn và evidence của baseline lịch sử.
 
-## Gate hiện hành trước SmartASP staging — 26/10
+## Gate lịch sử trước SmartASP staging — 26/10
 
 Đồng bộ `master` cập nhật source và README, không publish website, migrate SQL
 hoặc thay biến môi trường hosting. Bản mặc định cũ được giữ bằng tag
@@ -184,10 +184,10 @@ và [quy trình IIS của Microsoft](https://learn.microsoft.com/en-us/aspnet/co
    và restart; chưa có test này thì không hứa chạy Drive/worker 24/7. Không chạy
    Verify trên Production và không dùng ảnh thật cho smoke.
 
-UX fragment hiện đã qua Release 377/377, frontend 8/8 và browser/SQL fault checks;
-Production local chạy được, không có migration mới. Người dùng chọn chuẩn bị
-artifact/hướng dẫn trước. Chưa có thay đổi environment/SQL/publish trên SmartASP;
-quyền dữ liệu thật và full Drive Production vẫn là các gate riêng.
+UX fragment tại mốc 26/10 đã qua Release 377/377, frontend 8/8 và browser/SQL
+fault checks; Production local chạy được. Ở thời điểm đó chưa thay đổi SmartASP;
+trạng thái sau publish 28/10 nằm ở [báo cáo live](SMARTASP_LIVE_VALIDATION_2026-10-28.md).
+Quyền dữ liệu thật và full Drive Production vẫn là các gate riêng.
 
 ## Cập nhật site SmartASP hiện có khi người dùng sẵn sàng
 

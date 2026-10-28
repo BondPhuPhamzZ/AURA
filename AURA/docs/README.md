@@ -1,12 +1,13 @@
 # Tài liệu AURA
 
-**Trạng thái source hiện tại:** AURA là supervised MVP đã kiểm thử với dữ liệu synthetic trên local. Bản source mới chưa được xác nhận đã publish trên SmartASP; trial hosting hết hạn **20/11/2026**. Không dùng hóa đơn thật trên site công khai hoặc coi yêu cầu Strict ZDR là chứng nhận bảo vệ dữ liệu.
+**Trạng thái 28/10/2026:** AURA là supervised MVP đã chạy một ca synthetic trọn luồng trên [SmartASP live demo](https://bondphupham-001-site1.ltempurl.com/). Trial hosting hết hạn **20/11/2026**. Không dùng hóa đơn thật trên site công khai hoặc coi yêu cầu Strict ZDR là chứng nhận bảo vệ dữ liệu.
 
 ## Bắt đầu từ đây
 
 | Cần tìm | Tài liệu |
 | --- | --- |
 | Trạng thái, evidence và giới hạn hiện hành | [CURRENT_PROJECT_STATUS.md](CURRENT_PROJECT_STATUS.md) |
+| Kiểm chứng live sau migration và đổi API key | [SMARTASP_LIVE_VALIDATION_2026-10-28.md](SMARTASP_LIVE_VALIDATION_2026-10-28.md) |
 | Trình tự backup, biến SmartASP, publish và smoke | [DEPLOYMENT.md](DEPLOYMENT.md) |
 | Chạy local, lỗi thường gặp và khôi phục | [RUNBOOK.md](RUNBOOK.md) |
 | Thiết lập Drive synthetic trên localhost | [DRIVE_SANDBOX_LOCAL.md](DRIVE_SANDBOX_LOCAL.md) |
