@@ -2,6 +2,8 @@
 
 AURA reviews expense receipts, extracts verifiable facts, applies deterministic reimbursement rules, and sends uncertain cases to a person. It was built for VNG Track A, **The Escalation Referee**. This repository is a supervised MVP: the AI suggests facts; C# policy and a reviewer make the decisions.
 
+<img src="AURA/docs/images/aura-ui-overview.png" alt="AURA employee interface showing receipt upload, AI facts and review results" width="900">
+
 ## How it works
 
 `Web JPG/PNG or local synthetic Drive → private receipt storage → SQL queue → image privacy gate → vision model → schema and Semantic checks → C# policy → automatic result or human review → audit and reports`
