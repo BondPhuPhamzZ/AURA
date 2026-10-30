@@ -1,6 +1,6 @@
 # AURA — Supervised AI for reimbursement receipts
 
-AURA reviews expense receipts, extracts verifiable facts, applies deterministic reimbursement rules, and sends uncertain cases to a person. It was built in **MLAI Hackathon 2026** for **VNG Track A**, **The Escalation Referee**. This repository is a supervised MVP: **the AI suggests facts; C# policy and a reviewer make the decisions**.
+AURA reviews expense receipts, extracts verifiable facts, applies deterministic reimbursement rules, and sends uncertain cases to a person. It was built in **MLAI Hackathon 2026** for **VNG - Track A:** **The Escalation Referee**. This repository is a supervised MVP: **the AI suggests facts; C# policy and a reviewer make the decisions**.
 
 <img src="AURA/docs/images/aura-ui-overview.png" alt="AURA employee interface showing receipt upload, AI facts and review results" width="900">
 
