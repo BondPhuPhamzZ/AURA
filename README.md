@@ -63,4 +63,4 @@ AURA already demonstrates durable intake, schema/Semantic validation, determinis
 - [English proposal](AURA/submission/AURA_PROPOSAL_EN.pdf) · [Vietnamese proposal](AURA/submission/AURA_PROPOSAL_VI.pdf) · [five slides](AURA/submission/AURA_SLIDE.pptx) · [build log](AURA/submission/AURA_BUILD_LOG.pdf)
 - [Post-contest addendum](AURA/submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) · [operational runbook](AURA/docs/RUNBOOK.md) · [deployment guide](AURA/docs/DEPLOYMENT.md) · [readiness and scale assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md)
 
-**Author:** Phạm Gia Phú — solo development during MLAI Hackathon 2026.
+Author: **Phạm Gia Phú** — solo development during MLAI Hackathon 2026.
