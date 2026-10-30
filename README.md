@@ -60,7 +60,7 @@ dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release
 
 AURA already demonstrates durable intake, schema/Semantic validation, deterministic escalation, timely human intervention, audit, and reporting. The local Drive adapter shows how a Restricted folder can supply many synthetic receipts without repeated web uploads. Production rollout would additionally require verified user identity and permissions, real-data privacy approval, malware screening, provider and storage review, and multi-host load testing. The architecture keeps intake, policy, and storage boundaries separate for those later changes.
 
-- [English proposal](AURA/submission/AURA_PROPOSAL_EN.pdf) · [Vietnamese proposal](AURA/submission/AURA_PROPOSAL_VI.pdf) · [five slides](AURA/submission/AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx) · [build log](AURA/submission/AURA_BUILD_LOG.pdf)
+- [English proposal](AURA/submission/AURA_PROPOSAL_EN.pdf) · [Vietnamese proposal](AURA/submission/AURA_PROPOSAL_VI.pdf) · [five slides](AURA/submission/AURA_SLIDE.pptx) · [build log](AURA/submission/AURA_BUILD_LOG.pdf)
 - [Post-contest addendum](AURA/submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) · [operational runbook](AURA/docs/RUNBOOK.md) · [deployment guide](AURA/docs/DEPLOYMENT.md) · [readiness and scale assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md)
 
 **Author:** Phạm Gia Phú — solo development during MLAI Hackathon 2026.

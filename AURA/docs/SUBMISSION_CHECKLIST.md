@@ -1,6 +1,6 @@
 # Checklist nộp bài chính thức AURA
 
-**Cập nhật:** 17/10/2026
+**Cập nhật liên kết slide hiện hành:** 30/10/2026. Các trạng thái nộp bài bên dưới phản ánh checklist gốc và cần kiểm tra lại nếu tái sử dụng.
 
 **Trạng thái hiện hành:** `CURRENT_PROJECT_STATUS.md`
 
@@ -12,7 +12,7 @@
 |---|---|---|
 | Repository source công khai và README | Sẵn sàng | `README.md` ở root repository |
 | Ứng dụng live | Candidate `de101f2` đã health/smoke; UX follow-up chờ publish lại | URL trong README và `CURRENT_PROJECT_STATUS.md` |
-| Slide 5 trang | Sẵn sàng | `../submission/AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx` |
+| Slide 5 trang | Sẵn sàng trong repository | `../submission/AURA_SLIDE.pptx` |
 | Proposal tiếng Việt và tiếng Anh | Sẵn sàng | `../submission/AURA_PROPOSAL_VI.*`, `../submission/AURA_PROPOSAL_EN.*` |
 | Build Log một trang của toàn dự án | Sẵn sàng | `../submission/AURA_BUILD_LOG.*` |
 | Video demo sản phẩm tối đa 3 phút | Đã upload | URL trong `../submission/AURA_SUBMISSION_LINKS.*` |
@@ -25,7 +25,7 @@
 | Thư mục Drive | File lấy từ repository | Việc cần làm |
 |---|---|---|
 | `00_READ_FIRST` | `../submission/AURA_SUBMISSION_LINKS.pdf` và `README.md` ngắn | Chỉ giữ một PDF hiện hành; mở từng URL trong cửa sổ ẩn danh |
-| `01_SLIDES` | `../submission/AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx` | Sẵn sàng |
+| `01_SLIDES` | `../submission/AURA_SLIDE.pptx` | Đồng bộ bản mới lên Team Drive nếu còn sử dụng gói này |
 | `02_PROPOSAL` | `../submission/AURA_PROPOSAL_VI.pdf`, `../submission/AURA_PROPOSAL_EN.pdf` | Sẵn sàng |
 | `03_VIDEO` | MP4 chính thức được dẫn trong `../submission/AURA_SUBMISSION_LINKS.*` | Đánh dấu rõ một video dưới 3 phút là bản chính thức; các video hóa đơn thật chỉ là bổ sung |
 | `04_BUILD_LOG` | `../submission/AURA_BUILD_LOG.pdf` | Chỉ dùng một Build Log một trang cho toàn dự án |

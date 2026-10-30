@@ -72,7 +72,7 @@ $requiredCopies = @(
 
     # Video and presentation
     @("$PersonalRoot\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md", "$DemoRoot\kich_ban_video\AURA_OFFICIAL_VIDEO_SCRIPT_3_MIN_VI.md"),
-    @("$AppRoot\submission\AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx", "$DemoRoot\kich_ban_thuyettrinh_slide\AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx"),
+    @("$AppRoot\submission\AURA_SLIDE.pptx", "$DemoRoot\kich_ban_thuyettrinh_slide\AURA_SLIDE.pptx"),
     @("$PersonalRoot\AURA_HUONG_DAN_THUYET_TRINH_5_SLIDE_VI.md", "$DemoRoot\kich_ban_thuyettrinh_slide\AURA_HUONG_DAN_THUYET_TRINH_5_SLIDE_VI.md"),
 
     # Upload-ready package
@@ -80,7 +80,7 @@ $requiredCopies = @(
     @("$AppRoot\submission\AURA_SUBMISSION_LINKS.md", "$DemoRoot\Nop\00_READ_FIRST\AURA_SUBMISSION_LINKS.md"),
     @("$AppRoot\submission\AURA_SUBMISSION_LINKS.docx", "$DemoRoot\Nop\00_READ_FIRST\AURA_SUBMISSION_LINKS.docx"),
     @("$AppRoot\submission\AURA_SUBMISSION_LINKS.pdf", "$DemoRoot\Nop\00_READ_FIRST\AURA_SUBMISSION_LINKS.pdf"),
-    @("$AppRoot\submission\AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx", "$DemoRoot\Nop\01_SLIDES\AURA_5_SLIDES_AFTER_FEEDBACK_FINAL.pptx"),
+    @("$AppRoot\submission\AURA_SLIDE.pptx", "$DemoRoot\Nop\01_SLIDES\AURA_SLIDE.pptx"),
     @("$AppRoot\submission\AURA_PROPOSAL_VI.docx", "$DemoRoot\Nop\02_PROPOSAL\AURA_PROPOSAL_VI.docx"),
     @("$AppRoot\submission\AURA_PROPOSAL_VI.pdf", "$DemoRoot\Nop\02_PROPOSAL\AURA_PROPOSAL_VI.pdf"),
     @("$AppRoot\submission\AURA_PROPOSAL_EN.docx", "$DemoRoot\Nop\02_PROPOSAL\AURA_PROPOSAL_EN.docx"),
