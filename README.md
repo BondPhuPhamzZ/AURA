@@ -2,8 +2,8 @@
 
 AURA reviews expense receipts, extracts verifiable facts, applies deterministic reimbursement rules, and sends uncertain cases to a person. It was built in **MLAI Hackathon 2026** for **VNG - Track A:** **The Escalation Referee**. This repository is a supervised MVP: **the AI suggests facts; C# policy and a reviewer make the decisions**.
 
-<img src="AURA/docs/images/aura-ui-overview_1.png" alt="AURA employee interface showing receipt upload, AI facts and review results" width="900">
-<img src="AURA/docs/images/aura-ui-overview_2.png" alt="AURA employee interface showing receipt upload, AI facts and review results" width="900">
+<img src="AURA/docs/images/aura-ui-overview_1.png" alt="AURA employee window: multi-receipt upload, submitter fields and the AI facts panel" width="900">
+<img src="AURA/docs/images/aura-ui-overview_2.png" alt="AURA review results table with synthetic Drive receipts, system decisions, reasons and forward actions" width="900">
 
 ## How it works
 
