@@ -1,6 +1,10 @@
-/* In-page receipt viewer. Reads the existing NoStore receipt route; never changes facts or decisions. */
+/* In-page receipt viewer. Reads the existing NoStore receipt route; never changes facts or decisions.
+   When the local evidence localizer is enabled it also draws read-only OCR evidence boxes. */
 (function (root) {
     'use strict';
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const SPACE = 1000;
 
     // Only a plain primary click opens the dialog; Ctrl/Cmd/Shift/Alt or middle click keep the
     // browser's normal "open in new tab" behaviour of the underlying link.
@@ -21,6 +25,29 @@
         }
     }
 
+    // Evidence regions use the same request ID as the receipt route.
+    function evidenceUrl(source, base) {
+        if (!source || !base) return null;
+        const id = new URL(source).pathname.split('/').pop();
+        return /^[A-Za-z0-9-]+$/.test(id || '') ? `${base.replace(/\/$/, '')}/${id}` : null;
+    }
+
+    // Fail closed: draw only well-formed boxes inside the 0..1000 space; everything else is dropped.
+    function validRegions(payload) {
+        const space = payload?.coordinateSpace;
+        if (!payload || space?.width !== SPACE || space?.height !== SPACE || space.orientationApplied !== true)
+            return { regions: [], unlocated: [] };
+        const isInt = value => Number.isInteger(value) && value >= 0 && value <= SPACE;
+        const regions = (Array.isArray(payload.regions) ? payload.regions : []).filter(region =>
+            typeof region?.field === 'string' && typeof region.label === 'string' &&
+            isInt(region.box?.x) && isInt(region.box?.y) && isInt(region.box?.width) && isInt(region.box?.height) &&
+            region.box.width > 0 && region.box.height > 0 &&
+            region.box.x + region.box.width <= SPACE && region.box.y + region.box.height <= SPACE);
+        const unlocated = (Array.isArray(payload.unlocated) ? payload.unlocated : []).filter(item =>
+            typeof item?.label === 'string' && typeof item.reason === 'string');
+        return { regions, unlocated };
+    }
+
     function describe(link) {
         const row = link.closest('tr');
         const code = row?.querySelector('.cell-code')?.textContent.trim() || '';
@@ -29,7 +56,8 @@
         return { title: code ? `${name} · ${code}` : name, alt: image?.getAttribute('alt') || name };
     }
 
-    if (typeof module !== 'undefined' && module.exports) module.exports = { isPlainActivation, receiptSource, describe };
+    if (typeof module !== 'undefined' && module.exports)
+        module.exports = { isPlainActivation, receiptSource, evidenceUrl, validRegions, describe };
     if (!root.document) return;
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -40,7 +68,16 @@
         const status = document.getElementById('receiptViewerStatus');
         const openTab = document.getElementById('receiptViewerOpenTab');
         const zoom = document.getElementById('receiptViewerZoom');
+        const overlay = document.getElementById('receiptViewerOverlay');
+        const evidence = document.getElementById('receiptViewerEvidence');
+        const evidenceStatus = document.getElementById('receiptViewerEvidenceStatus');
+        const evidenceList = document.getElementById('receiptViewerEvidenceList');
+        const evidenceToggle = document.getElementById('receiptViewerEvidenceToggle');
+        const evidenceBase = dialog.dataset.evidenceUrl || '';
+        dialog.classList.toggle('has-evidence', Boolean(evidenceBase && evidence));
         let returnFocus = null;
+        let evidenceTarget = null;
+        let evidenceRequest = 0;
 
         function setZoom(actualSize) {
             dialog.classList.toggle('is-actual-size', actualSize);
@@ -48,9 +85,87 @@
             zoom.textContent = actualSize ? 'Vừa khung' : 'Kích thước gốc';
         }
 
+        function resetEvidence() {
+            evidenceRequest++;
+            evidenceTarget = null;
+            overlay?.replaceChildren();
+            // SVG elements have no hidden IDL property; toggle the attribute itself.
+            overlay?.toggleAttribute('hidden', true);
+            evidenceList?.replaceChildren();
+            if (evidence) evidence.hidden = true;
+        }
+
+        function selectField(field) {
+            overlay?.querySelectorAll('rect').forEach(rect =>
+                rect.classList.toggle('is-active', rect.dataset.field === field));
+            evidenceList?.querySelectorAll('button[data-field]').forEach(button =>
+                button.setAttribute('aria-pressed', button.dataset.field === field ? 'true' : 'false'));
+        }
+
+        function renderEvidence({ regions, unlocated }) {
+            for (const region of regions) {
+                const rect = document.createElementNS(SVG_NS, 'rect');
+                for (const key of ['x', 'y', 'width', 'height']) rect.setAttribute(key, String(region.box[key]));
+                rect.dataset.field = region.field;
+                rect.addEventListener('click', () => selectField(region.field));
+                overlay.appendChild(rect);
+
+                const item = document.createElement('li');
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'receipt-evidence-item is-located';
+                button.dataset.field = region.field;
+                button.setAttribute('aria-pressed', 'false');
+                const label = document.createElement('strong');
+                label.textContent = region.label;
+                const text = document.createElement('span');
+                text.textContent = region.text ? `“${region.text}”` : 'Đã định vị';
+                button.append(label, text);
+                button.addEventListener('click', () => selectField(region.field));
+                item.appendChild(button);
+                evidenceList.appendChild(item);
+            }
+            for (const missing of unlocated) {
+                const item = document.createElement('li');
+                item.className = 'receipt-evidence-item is-unlocated';
+                const label = document.createElement('strong');
+                label.textContent = missing.label;
+                const reason = document.createElement('span');
+                reason.textContent = `Không định vị được: ${missing.reason}`;
+                item.append(label, reason);
+                evidenceList.appendChild(item);
+            }
+            overlay.toggleAttribute('hidden', regions.length === 0 || !evidenceToggle.checked);
+            evidenceStatus.textContent = regions.length
+                ? `Đã định vị ${regions.length} trường; chọn một trường để làm nổi khung. Khung chỉ hỗ trợ đọc, không thay dữ kiện hay quyết định.`
+                : 'Chưa định vị được trường nào; hãy đọc trực tiếp ảnh gốc.';
+        }
+
+        async function loadEvidence() {
+            if (!evidenceTarget || !overlay || !evidence) return;
+            const request = ++evidenceRequest;
+            evidence.hidden = false;
+            evidenceStatus.textContent = 'Đang chạy OCR cục bộ để định vị bằng chứng…';
+            try {
+                const response = await fetch(evidenceTarget, {
+                    cache: 'no-store', headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (request !== evidenceRequest) return;
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const payload = validRegions(await response.json());
+                if (request !== evidenceRequest) return;
+                renderEvidence(payload);
+            } catch {
+                if (request !== evidenceRequest) return;
+                evidenceStatus.textContent = 'Không tải được vùng bằng chứng; ảnh gốc vẫn xem bình thường.';
+            }
+        }
+
         function open(link, source) {
             const details = describe(link);
+            resetEvidence();
             returnFocus = { element: link, href: link.getAttribute('href') };
+            evidenceTarget = evidenceUrl(source, evidenceBase);
             title.textContent = details.title;
             image.alt = details.alt;
             openTab.href = source;
@@ -77,6 +192,7 @@
             status.hidden = true;
             image.hidden = false;
             zoom.disabled = false;
+            loadEvidence();
         });
         image.addEventListener('error', () => {
             if (!dialog.open) return;
@@ -86,11 +202,15 @@
             status.textContent = 'Không tải được ảnh chứng từ. Ảnh có thể đã hết hạn lưu hoặc không còn khớp SHA-256 đã ghi nhận.';
         });
         zoom.addEventListener('click', () => setZoom(!dialog.classList.contains('is-actual-size')));
+        evidenceToggle?.addEventListener('change', () => {
+            overlay.toggleAttribute('hidden', !evidenceToggle.checked || overlay.childElementCount === 0);
+        });
         dialog.querySelector('[data-receipt-viewer-close]').addEventListener('click', () => dialog.close());
         // A click on the backdrop (the dialog box itself, outside its content) closes it.
         dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
         dialog.addEventListener('close', () => {
             image.removeAttribute('src');
+            resetEvidence();
             // Fragment polling may have replaced the row; fall back to the same receipt link.
             const target = returnFocus?.element?.isConnected ? returnFocus.element
                 : Array.from(document.querySelectorAll('a.receipt-preview-link'))

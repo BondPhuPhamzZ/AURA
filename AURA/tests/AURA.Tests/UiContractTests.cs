@@ -80,7 +80,15 @@ public sealed class UiContractTests
         Assert.Contains("typeof dialog.showModal !== 'function'", viewer, StringComparison.Ordinal);
         Assert.Contains("isPlainActivation(event)", viewer, StringComparison.Ordinal);
         Assert.Contains("Applicant\\/Receipt\\/", viewer, StringComparison.Ordinal);
-        Assert.DoesNotContain("fetch(", viewer, StringComparison.Ordinal);
+        // The only request the viewer makes is the opt-in, read-only evidence-regions GET.
+        Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(viewer, @"fetch\(").Count);
+        Assert.Contains("fetch(evidenceTarget", viewer, StringComparison.Ordinal);
+        Assert.Contains("validRegions(await response.json())", viewer, StringComparison.Ordinal);
+        Assert.DoesNotContain("innerHTML", viewer, StringComparison.Ordinal);
+        // <svg> has no hidden IDL property: assigning overlay.hidden would leave the boxes invisible.
+        Assert.DoesNotContain("overlay.hidden", viewer, StringComparison.Ordinal);
+        Assert.Contains("overlay.toggleAttribute('hidden'", viewer, StringComparison.Ordinal);
+        Assert.Contains("data-evidence-url=\"@(EvidenceLocalization.IsActive ?", dashboard, StringComparison.Ordinal);
         Assert.Contains("class=\"receipt-preview-link\" href=\"@item.ImageUrl\" target=\"_blank\"", queueView,
             StringComparison.Ordinal);
     }

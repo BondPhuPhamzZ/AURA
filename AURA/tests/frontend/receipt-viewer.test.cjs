@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { isPlainActivation, receiptSource, describe } = require('../../wwwroot/js/receipt-viewer.js');
+const { isPlainActivation, receiptSource, evidenceUrl, validRegions, describe } = require('../../wwwroot/js/receipt-viewer.js');
 
 const origin = 'http://127.0.0.1:5000';
 
@@ -38,4 +38,29 @@ test('the dialog title names the receipt and the short case code', () => {
     assert.deepEqual(describe(link(null, 'Ảnh chứng từ x.jpg', null)),
         { title: 'Ảnh chứng từ x.jpg', alt: 'Ảnh chứng từ x.jpg' });
     assert.deepEqual(describe(link(null, null, null)), { title: 'Ảnh chứng từ', alt: 'Ảnh chứng từ' });
+});
+
+test('evidence regions are requested only for a receipt ID and only when the feature is on', () => {
+    const source = `${origin}/Applicant/Receipt/0f3a9c1e-77aa-4b1d-9e21-5c2d8f1b0a11`;
+    assert.equal(evidenceUrl(source, '/Evidence/Regions'), '/Evidence/Regions/0f3a9c1e-77aa-4b1d-9e21-5c2d8f1b0a11');
+    assert.equal(evidenceUrl(source, '/Evidence/Regions/'), '/Evidence/Regions/0f3a9c1e-77aa-4b1d-9e21-5c2d8f1b0a11');
+    assert.equal(evidenceUrl(source, ''), null);
+    assert.equal(evidenceUrl(null, '/Evidence/Regions'), null);
+});
+
+test('malformed evidence payloads draw nothing (fail closed)', () => {
+    const space = { width: 1000, height: 1000, orientationApplied: true };
+    const good = { field: 'totalAmount', label: 'Tổng thanh toán', text: '241.920 đ', box: { x: 10, y: 790, width: 800, height: 40 } };
+    const ok = validRegions({ coordinateSpace: space, regions: [good], unlocated: [{ field: 'identifier', label: 'Mã', reason: 'r' }] });
+    assert.equal(ok.regions.length, 1);
+    assert.equal(ok.unlocated.length, 1);
+
+    for (const box of [
+        { x: -1, y: 0, width: 10, height: 10 }, { x: 0, y: 0, width: 0, height: 10 },
+        { x: 995, y: 0, width: 10, height: 10 }, { x: 0, y: 0, width: 10.5, height: 10 }, { x: '1', y: 0, width: 10, height: 10 }
+    ]) assert.equal(validRegions({ coordinateSpace: space, regions: [{ ...good, box }] }).regions.length, 0, JSON.stringify(box));
+
+    for (const coordinateSpace of [{ ...space, width: 100 }, { ...space, orientationApplied: false }, undefined])
+        assert.deepEqual(validRegions({ coordinateSpace, regions: [good] }), { regions: [], unlocated: [] });
+    assert.deepEqual(validRegions(null), { regions: [], unlocated: [] });
 });

@@ -6,6 +6,7 @@
 @inject IOptions<ReceiptStorageOptions> ReceiptStorage
 @inject IOptions<VerifyOptions> VerifySettings
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostEnvironment
+@inject AURA.Services.EvidenceLocalizationService EvidenceLocalization
 @{
     var initialTab = ViewData["InitialTab"] as string ?? "applicant";
     var applicantDisplay = initialTab == "applicant" ? "block" : "none";
@@ -170,7 +171,8 @@
 </div>
 
 @* Outside every polled fragment host, so a 5-second refresh never closes or rebuilds it. *@
-<dialog id="receiptViewer" class="receipt-viewer" aria-labelledby="receiptViewerTitle">
+<dialog id="receiptViewer" class="receipt-viewer" aria-labelledby="receiptViewerTitle"
+        data-evidence-url="@(EvidenceLocalization.IsActive ? Url.Action("Regions", "Evidence") : null)">
     <div class="receipt-viewer-header">
         <h2 id="receiptViewerTitle" class="receipt-viewer-title">Ảnh chứng từ</h2>
         <div class="receipt-viewer-actions">
@@ -181,8 +183,23 @@
     </div>
     <div class="receipt-viewer-body">
         <p id="receiptViewerStatus" class="receipt-viewer-status" role="status" aria-live="polite">Đang tải ảnh…</p>
-        <img id="receiptViewerImage" class="receipt-viewer-image" alt="" hidden />
+        <div class="receipt-viewer-stage">
+            <img id="receiptViewerImage" class="receipt-viewer-image" alt="" hidden />
+            <svg id="receiptViewerOverlay" class="receipt-viewer-overlay" viewBox="0 0 1000 1000"
+                 preserveAspectRatio="none" aria-hidden="true" hidden></svg>
+        </div>
     </div>
+    @if (EvidenceLocalization.IsActive)
+    {
+        <section id="receiptViewerEvidence" class="receipt-viewer-evidence" aria-labelledby="receiptViewerEvidenceTitle" hidden>
+            <div class="receipt-viewer-evidence-head">
+                <h3 id="receiptViewerEvidenceTitle">Vùng bằng chứng · OCR cục bộ, thử nghiệm</h3>
+                <label><input type="checkbox" id="receiptViewerEvidenceToggle" checked /> Hiện khung</label>
+            </div>
+            <p id="receiptViewerEvidenceStatus" class="receipt-viewer-evidence-status" role="status" aria-live="polite"></p>
+            <ul id="receiptViewerEvidenceList" class="receipt-viewer-evidence-list"></ul>
+        </section>
+    }
     <p class="receipt-viewer-note">Ảnh gốc đã lưu, chỉ để xem; dữ kiện AI và quyết định không thay đổi. Esc để đóng.</p>
 </dialog>
 
