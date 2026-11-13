@@ -51,15 +51,15 @@
         </div>
 
         <div class="dashboard-secondary-metrics">
-            <span>Tổng tiền tham chiếu: <strong>@Model.TotalAmountVnd.ToString("N0") VND</strong> (không phải tổng đã phê duyệt)</span>
-            <span>Độ trễ trung bình hồ sơ đã kết thúc: <strong>@(Model.AverageLatencyMs == 0 ? "Chưa có dữ liệu" : $"{Model.AverageLatencyMs:N0} ms")</strong></span>
+            <span>Tổng tiền tham chiếu: <strong>@AURA.Services.DisplayFormat.Vnd(Model.TotalAmountVnd)</strong> (không phải tổng đã phê duyệt)</span>
+            <span>Độ trễ trung bình hồ sơ đã kết thúc: <strong>@(Model.AverageLatencyMs == 0 ? "Chưa có dữ liệu" : $"{AURA.Services.DisplayFormat.Number(Model.AverageLatencyMs)} ms")</strong></span>
         </div>
 
         <div class="dashboard-year-summary" aria-label="Tổng hợp năm">
             <strong>@Model.YearLabel</strong>
             <span>@Model.YearReceived hồ sơ tiếp nhận</span>
             <span>@Model.YearCompleted hồ sơ đã kết thúc</span>
-            <span>@Model.YearTotalAmountVnd.ToString("N0") VND tham chiếu</span>
+            <span>@AURA.Services.DisplayFormat.Vnd(Model.YearTotalAmountVnd) tham chiếu</span>
         </div>
 
         <div class="table-responsive-aura table-scroll-area dashboard-table-scroll">
@@ -86,14 +86,14 @@
                 foreach (var day in Model.Days)
                 {
                     <tr>
-                        <td>@day.Date.ToString("dd/MM/yyyy")</td>
+                        <td>@AURA.Services.DisplayFormat.Date(day.Date)</td>
                         <td>@day.Received</td>
                         <td>@day.Completed</td>
                         <td>@day.AutoApproved</td>
                         <td>@day.Escalated</td>
                         <td>@day.PrivacyReview</td>
                         <td>@day.Failed</td>
-                        <td>@day.TotalAmountVnd.ToString("N0") VND</td>
+                        <td>@AURA.Services.DisplayFormat.Vnd(day.TotalAmountVnd)</td>
                     </tr>
                 }
             }
@@ -122,7 +122,7 @@
                     <tr>
                         <td>@($"{month.Month:00}/{month.Year}")</td><td>@month.Received</td><td>@month.Completed</td>
                         <td>@month.AutoApproved</td><td>@month.Escalated</td><td>@month.PrivacyReview</td>
-                        <td>@month.Failed</td><td>@month.TotalAmountVnd.ToString("N0") VND</td>
+                        <td>@month.Failed</td><td>@AURA.Services.DisplayFormat.Vnd(month.TotalAmountVnd)</td>
                     </tr>
                 }
             }

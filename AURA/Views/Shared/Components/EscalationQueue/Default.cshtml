@@ -40,7 +40,7 @@
                                     <small>@item.SubmitterDepartment</small>
                                 </div>
                             </td>
-                            <td data-label="Số tiền" style="font-weight: 500;">@item.ClaimedAmount.ToString("N0") VND</td>
+                            <td data-label="Số tiền" style="font-weight: 500;">@AURA.Services.DisplayFormat.Vnd(item.ClaimedAmount)</td>
                             <td data-label="Lý do từ AI" class="manager-reason-column">
                                 <span class="badge bg-warning text-dark">@item.Status</span><br />
                                 <span class="manager-ai-reason">@item.AiReasoning</span><br />
