@@ -4,7 +4,8 @@ param(
     [ValidatePattern('^AURA_RetentionSandbox_[0-9]{8}$')]
     [string]$DatabaseName = ('AURA_RetentionSandbox_' + (Get-Date -Format 'yyyyMMdd')),
     [switch]$PrepareOnly,
-    [switch]$EnableSyntheticDrive
+    [switch]$EnableSyntheticDrive,
+    [switch]$EnableEvidenceLocalization
 )
 
 Set-StrictMode -Version Latest
@@ -22,6 +23,19 @@ if (Test-Path -LiteralPath $activeProfilePath) {
     }
     if (-not $PSBoundParameters.ContainsKey('EnableSyntheticDrive')) {
         $EnableSyntheticDrive = [bool]$existingProfile.DriveSandbox.Enabled
+    }
+    if (-not $PSBoundParameters.ContainsKey('EnableEvidenceLocalization') -and
+        $existingProfile.PSObject.Properties.Name -contains 'EvidenceLocalization') {
+        $EnableEvidenceLocalization = [bool]$existingProfile.EvidenceLocalization.Enabled
+    }
+}
+# Optional local OCR evidence boxes for the reviewer viewer; never part of decisions.
+$tessdataPath = Join-Path $projectRoot '.tmp\tessdata'
+if ($EnableEvidenceLocalization) {
+    foreach ($language in @('vie', 'eng')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $tessdataPath ($language + '.traineddata')))) {
+            throw 'Evidence localization needs the pinned language data. Run tools\Get-TesseractData.ps1 first.'
+        }
     }
 }
 $receiptRoot = Join-Path $projectRoot ('.tmp\retention-sandbox\' + $DatabaseName + '\receipts')
@@ -41,6 +55,8 @@ $overrides = @{
     DriveSandbox__Enabled = ([string][bool]$EnableSyntheticDrive).ToLowerInvariant()
     DriveSandbox__RequireMalwareScanner = ([string](-not [bool]$EnableSyntheticDrive)).ToLowerInvariant()
     Verify__Enabled = 'false'
+    EvidenceLocalization__Enabled = ([string][bool]$EnableEvidenceLocalization).ToLowerInvariant()
+    EvidenceLocalization__TessdataPath = $tessdataPath
     Vision__FallbackEnabled = 'false'
     Vision__MaxConcurrentRequests = '1'
     Vision__UseSqlDistributedGate = 'false'
@@ -110,6 +126,9 @@ try {
     if ($EnableSyntheticDrive) {
         Write-Output 'Read-only Drive is enabled for the configured synthetic test folder; exact-image egress approval remains enforced.'
     }
+    if ($EnableEvidenceLocalization) {
+        Write-Output 'Local Tesseract evidence boxes are enabled in the receipt viewer; they are a reading aid, not a decision input.'
+    }
     & dotnet build AURA.csproj --configuration Release --no-restore
     if ($LASTEXITCODE -ne 0) { throw 'Sandbox build failed.' }
     # Always build this exact configuration before using --no-build with EF/run.
@@ -126,6 +145,7 @@ try {
         DriveSandbox = @{ Enabled = [bool]$EnableSyntheticDrive;
             RequireMalwareScanner = -not [bool]$EnableSyntheticDrive }
         Verify = @{ Enabled = $false }
+        EvidenceLocalization = @{ Enabled = [bool]$EnableEvidenceLocalization; TessdataPath = $tessdataPath }
         Vision = @{ Provider = 'OpenRouter'; FallbackEnabled = $false;
             MaxConcurrentRequests = 1; UseSqlDistributedGate = $false }
         OpenRouter = @{ Model = 'qwen/qwen3.8-27b'; RequireZeroDataRetention = $true;
