@@ -24,9 +24,7 @@ public sealed class ReportsController : Controller
         try
         {
             var requests = await _repository.GetAllRequestsAsync();
-            var localNow = VietnamTime.FromUtc(DateTime.UtcNow);
-            var targetYear = year is >= 2000 and <= 2100 ? year.Value : localNow.Year;
-            var targetMonth = month is >= 1 and <= 12 ? month.Value : localNow.Month;
+            var (targetYear, targetMonth) = ReportingPeriod.ResolveOrCurrent(year, month, DateTime.UtcNow);
             var report = ManagerOperationsReportExporter.ExportMonth(requests, targetYear, targetMonth);
             return File(report.Content, "text/csv; charset=utf-8", report.FileName);
         }
@@ -47,9 +45,7 @@ public sealed class ReportsController : Controller
         try
         {
             var requests = await _repository.GetAllRequestsAsync();
-            var localNow = VietnamTime.FromUtc(DateTime.UtcNow);
-            var targetYear = year is >= 2000 and <= 2100 ? year.Value : localNow.Year;
-            var targetMonth = month is >= 1 and <= 12 ? month.Value : localNow.Month;
+            var (targetYear, targetMonth) = ReportingPeriod.ResolveOrCurrent(year, month, DateTime.UtcNow);
             var report = ManagerOperationsReportExporter.ExportWorkbookMonth(requests, targetYear, targetMonth);
             return File(report.Content,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", report.FileName);

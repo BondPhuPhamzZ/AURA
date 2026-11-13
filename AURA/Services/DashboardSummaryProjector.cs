@@ -9,9 +9,7 @@ public static class DashboardSummaryProjector
     public static DashboardSummaryViewModel Project(
         IEnumerable<ReimbursementRequest> requests, DateTime utcNow, int? selectedYear = null, int? selectedMonth = null)
     {
-        var localNow = VietnamTime.FromUtc(utcNow);
-        var targetYear = selectedYear is >= 2000 and <= 2100 ? selectedYear.Value : localNow.Year;
-        var targetMonth = selectedMonth is >= 1 and <= 12 ? selectedMonth.Value : localNow.Month;
+        var (targetYear, targetMonth) = ReportingPeriod.ResolveOrCurrent(selectedYear, selectedMonth, utcNow);
         var projected = requests
             .Select(request => new ProjectedRequest(request, VietnamTime.FromUtc(request.CreatedAt),
                 HasPrivacyReview(request)))
