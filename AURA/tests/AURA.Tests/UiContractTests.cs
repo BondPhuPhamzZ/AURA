@@ -24,6 +24,27 @@ public sealed class UiContractTests
     }
 
     [Fact]
+    public void Ai_facts_placeholder_is_centred_inside_its_panel()
+    {
+        var stylesheet = File.ReadAllText(Path.Combine(ProjectRoot, "wwwroot", "css", "site.css"));
+
+        var panel = ReadCssRule(stylesheet, ".extracted-facts-panel");
+        Assert.Contains("display: flex", panel, StringComparison.Ordinal);
+        Assert.Contains("flex-direction: column", panel, StringComparison.Ordinal);
+
+        var placeholder = ReadCssRule(stylesheet, ".extracted-facts-empty");
+        Assert.Contains("flex: 1 1 auto", placeholder, StringComparison.Ordinal);
+        Assert.Contains("align-items: center", placeholder, StringComparison.Ordinal);
+        Assert.Contains("justify-content: center", placeholder, StringComparison.Ordinal);
+        Assert.Contains("text-align: center", placeholder, StringComparison.Ordinal);
+
+        // Error notices keep their compact, left-aligned alert shape at the top of the panel.
+        var unavailable = ReadCssRule(stylesheet, ".extracted-facts-unavailable");
+        Assert.Contains("flex: 0 0 auto", unavailable, StringComparison.Ordinal);
+        Assert.Contains("text-align: left", unavailable, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Mobile_manager_actions_stay_in_the_content_column()
     {
         var queueView = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Shared", "Components",
@@ -152,6 +173,15 @@ public sealed class UiContractTests
         Assert.Contains("overlay.toggleAttribute('hidden', shouldHide)", html, StringComparison.Ordinal);
         Assert.Contains("TAM TINH", File.ReadAllText(imagePath), StringComparison.Ordinal);
         Assert.Contains("TONG THANH TOAN", File.ReadAllText(imagePath), StringComparison.Ordinal);
+    }
+
+    private static string ReadCssRule(string stylesheet, string selector)
+    {
+        var start = stylesheet.IndexOf("\n" + selector + " {", StringComparison.Ordinal);
+        Assert.True(start >= 0, $"Missing top-level CSS rule {selector}.");
+        var end = stylesheet.IndexOf('}', start);
+        Assert.True(end > start);
+        return stylesheet[start..end];
     }
 
     private static string FindProjectRoot()

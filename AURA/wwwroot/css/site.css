@@ -392,7 +392,9 @@ main {
 
 .extracted-facts-panel {
     position: relative;
+    display: flex;
     flex: 1 1 auto;
+    flex-direction: column;
     min-height: 0;
     padding: 20px;
     border: 1px solid transparent;
@@ -418,16 +420,27 @@ main {
     line-height: 1.1;
 }
 
+/* The placeholder fills the panel below the badge and sits in its optical
+   centre, matching the centred dropzone copy in the neighbouring column. */
 .extracted-facts-empty {
     display: flex;
+    flex: 1 1 auto;
     align-items: center;
+    justify-content: center;
     min-height: 160px;
+    padding: 0 clamp(8px, 6%, 48px) 46px;
     color: var(--colors-ink-subtle);
     font-size: 0.88rem;
     line-height: 1.6;
+    text-align: center;
+    text-wrap: balance;
 }
 
 .extracted-facts-unavailable {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    min-height: 0;
+    text-align: left;
     padding: 18px;
     border: 1px solid rgba(245, 158, 11, 0.45);
     border-radius: 6px;
