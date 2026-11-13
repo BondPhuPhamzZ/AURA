@@ -169,6 +169,27 @@
     <div id="dashboardSummaryHost">@await Component.InvokeAsync("DashboardSummary", new { year = dashboardYear, month = dashboardMonth })</div>
 </div>
 
+@* Outside every polled fragment host, so a 5-second refresh never closes or rebuilds it. *@
+<dialog id="receiptViewer" class="receipt-viewer" aria-labelledby="receiptViewerTitle">
+    <div class="receipt-viewer-header">
+        <h2 id="receiptViewerTitle" class="receipt-viewer-title">Ảnh chứng từ</h2>
+        <div class="receipt-viewer-actions">
+            <button type="button" id="receiptViewerZoom" class="button-ghost-sm" aria-pressed="false">Kích thước gốc</button>
+            <a id="receiptViewerOpenTab" class="button-ghost-sm" href="#" target="_blank" rel="noopener">Mở tab mới</a>
+            <button type="button" class="button-ghost-sm" data-receipt-viewer-close aria-label="Đóng xem ảnh">Đóng</button>
+        </div>
+    </div>
+    <div class="receipt-viewer-body">
+        <p id="receiptViewerStatus" class="receipt-viewer-status" role="status" aria-live="polite">Đang tải ảnh…</p>
+        <img id="receiptViewerImage" class="receipt-viewer-image" alt="" hidden />
+    </div>
+    <p class="receipt-viewer-note">Ảnh gốc đã lưu, chỉ để xem; dữ kiện AI và quyết định không thay đổi. Esc để đóng.</p>
+</dialog>
+
+@section Scripts {
+    <script src="~/js/receipt-viewer.js" asp-append-version="true"></script>
+}
+
 <style>
     /* CSS for skeleton loading animation */
     .skeleton-row td {

@@ -62,6 +62,30 @@ public sealed class UiContractTests
     }
 
     [Fact]
+    public void Receipt_viewer_dialog_sits_outside_polled_fragments_and_keeps_the_link_fallback()
+    {
+        var dashboard = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Home", "Index.cshtml"));
+        var viewer = File.ReadAllText(Path.Combine(ProjectRoot, "wwwroot", "js", "receipt-viewer.js"));
+        var queueView = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Shared", "Components",
+            "EscalationQueue", "Default.cshtml"));
+
+        var dialog = dashboard.IndexOf("<dialog id=\"receiptViewer\"", StringComparison.Ordinal);
+        Assert.True(dialog > dashboard.IndexOf("id=\"dashboardSummaryHost\"", StringComparison.Ordinal),
+            "The viewer must not live inside a fragment host that polling replaces.");
+        Assert.Contains("aria-labelledby=\"receiptViewerTitle\"", dashboard, StringComparison.Ordinal);
+        Assert.Contains("<script src=\"~/js/receipt-viewer.js\" asp-append-version=\"true\"></script>", dashboard,
+            StringComparison.Ordinal);
+
+        // Same image route, fallback for browsers without <dialog>, and modified clicks stay native.
+        Assert.Contains("typeof dialog.showModal !== 'function'", viewer, StringComparison.Ordinal);
+        Assert.Contains("isPlainActivation(event)", viewer, StringComparison.Ordinal);
+        Assert.Contains("Applicant\\/Receipt\\/", viewer, StringComparison.Ordinal);
+        Assert.DoesNotContain("fetch(", viewer, StringComparison.Ordinal);
+        Assert.Contains("class=\"receipt-preview-link\" href=\"@item.ImageUrl\" target=\"_blank\"", queueView,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Mobile_manager_actions_stay_in_the_content_column()
     {
         var queueView = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Shared", "Components",

@@ -1087,6 +1087,108 @@ main {
     white-space: nowrap;
 }
 
+/* In-page receipt viewer (native dialog). */
+.receipt-viewer {
+    width: min(960px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    padding: 0;
+    border: 1px solid #83baf3;
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--colors-ink);
+    box-shadow: 0 24px 64px rgba(15, 42, 77, 0.28);
+}
+
+.receipt-viewer[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+.receipt-viewer::backdrop {
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.receipt-viewer-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--colors-border);
+}
+
+.receipt-viewer-title {
+    min-width: 0;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.receipt-viewer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.receipt-viewer-actions a.button-ghost-sm {
+    text-decoration: none;
+}
+
+.receipt-viewer-body {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    min-height: 240px;
+    overflow: auto;
+    padding: 12px;
+    background: #eaf2fb;
+}
+
+.receipt-viewer-image {
+    display: block;
+    max-width: 100%;
+    max-height: calc(100dvh - 190px);
+    object-fit: contain;
+    background: #ffffff;
+}
+
+/* Actual size: the image keeps its own pixels and the body scrolls in both directions. */
+.receipt-viewer.is-actual-size .receipt-viewer-body {
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.receipt-viewer.is-actual-size .receipt-viewer-image {
+    max-width: none;
+    max-height: none;
+}
+
+.receipt-viewer-status {
+    margin: 0;
+    color: var(--colors-ink-subtle);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.receipt-viewer-status.is-error {
+    padding: 14px 16px;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    border-radius: 6px;
+    background: rgba(245, 158, 11, 0.08);
+    color: #92400e;
+}
+
+.receipt-viewer-note {
+    margin: 0;
+    padding: 10px 16px;
+    border-top: 1px solid var(--colors-border);
+    color: var(--colors-ink-subtle);
+    font-size: 0.8rem;
+}
+
 .receipt-preview-link:hover {
     color: #1745a3;
 }
