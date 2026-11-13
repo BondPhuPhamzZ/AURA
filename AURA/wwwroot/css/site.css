@@ -1108,7 +1108,76 @@ main {
 }
 
 .manager-table {
-    min-width: 1180px;
+    min-width: 1320px;
+}
+
+/* Review waiting time: informational ordering only, never an automatic decision. */
+.manager-queue-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+    margin-bottom: 8px;
+}
+
+.manager-queue-heading .form-header {
+    margin: 0;
+}
+
+.review-sla-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.review-sla-count,
+.review-sla-overdue {
+    padding: 4px 8px;
+    border: 1px solid;
+    border-radius: 6px;
+}
+
+.review-sla-count {
+    border-color: #83baf3;
+    background: #edf5ff;
+    color: #1d4ed8;
+}
+
+.review-sla-overdue {
+    border-color: #f87171;
+    background: rgba(239, 68, 68, 0.08);
+    color: #b91c1c;
+}
+
+.review-sla-note {
+    margin: 0 0 16px;
+    color: var(--colors-ink-subtle);
+    font-size: 0.82rem;
+}
+
+.review-wait {
+    display: grid;
+    gap: 4px;
+    min-width: 130px;
+}
+
+.review-wait strong {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.review-wait small {
+    color: var(--colors-ink-muted);
+}
+
+.manager-table tr.review-overdue > td:first-child {
+    box-shadow: inset 3px 0 0 #ef4444;
 }
 
 .manager-submitter,
@@ -1553,6 +1622,10 @@ main {
 
     .table-aura.responsive-cards tr[hidden] {
         display: none !important;
+    }
+
+    .table-aura.responsive-cards tr.review-overdue {
+        border-color: #f87171;
     }
 
     .table-aura.responsive-cards td {

@@ -133,6 +133,10 @@ builder.Services.AddOptions<ExternalImagePrivacyOptions>()
     .Validate(options => ExternalImagePrivacyOptions.IsSupported(options.Mode),
         "ExternalImagePrivacy:Mode phải là LegacyConfigured, BlockExternal hoặc ApprovedImagesOnly.")
     .ValidateOnStart();
+builder.Services.AddOptions<ReviewSlaOptions>()
+    .Bind(builder.Configuration.GetSection(ReviewSlaOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 builder.Services.AddOptions<VerifyOptions>()
     .Bind(builder.Configuration.GetSection(VerifyOptions.SectionName))
     .ValidateDataAnnotations()

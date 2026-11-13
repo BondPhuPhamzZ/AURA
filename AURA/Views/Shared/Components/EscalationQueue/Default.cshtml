@@ -1,25 +1,36 @@
-﻿@model IEnumerable<AURA.Models.ReimbursementRequest>
+﻿@model AURA.ViewModels.ManagerQueueViewModel
 
 <div class="escalation-queue">
-    <h4 class="mb-4 form-header">Hồ sơ chờ quản lý duyệt</h4>
+    <div class="manager-queue-heading">
+        <h4 class="form-header">Hồ sơ chờ quản lý duyệt</h4>
+        @if (ViewData["LoadError"] is null && Model.Items.Count > 0)
+        {
+            <div class="review-sla-summary" role="status">
+                <span class="review-sla-count">@Model.Items.Count hồ sơ đang chờ</span>
+                @if (Model.OverdueCount > 0)
+                {
+                    <span class="review-sla-overdue">@Model.OverdueCount quá @Model.TargetHours giờ</span>
+                }
+            </div>
+        }
+    </div>
+    <p class="review-sla-note">Sắp xếp theo thời điểm chuyển tiếp, ca chờ lâu nhất ở trên. Mốc @Model.TargetHours giờ chỉ để ưu tiên xử lý; hệ thống không tự duyệt hay từ chối khi quá hạn.</p>
     @if (ViewData["LoadError"] is string loadError)
     {
         <div class="alert alert-danger feature-card" style="padding: 16px;" data-fragment-error>@loadError</div>
     }
+    else if (Model.Items.Count == 0)
+    {
+        <div class="alert alert-info feature-card" style="padding: 16px;">Hiện không có ca nào cần duyệt.</div>
+    }
     else
     {
-        var escalations = Model?.ToList();
-        if (escalations == null || escalations.Count == 0)
-        {
-            <div class="alert alert-info feature-card" style="padding: 16px;">Hiện không có ca nào cần duyệt.</div>
-        }
-        else
-        {
         <div class="table-responsive-aura table-scroll-area">
             <table class="table-aura manager-table responsive-cards">
                 <thead>
                     <tr>
                         <th>Mã Đơn</th>
+                        <th>Thời gian chờ</th>
                         <th>Nhân Viên</th>
                         <th>Số tiền</th>
                         <th>Lý do từ AI</th>
@@ -28,11 +39,31 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in escalations)
+                    @foreach (var entry in Model.Items)
                     {
+                        var item = entry.Request;
                         var choices = AURA.Services.EscalationWorkflow.ExplainChoices(item.Status);
-                        <tr>
+                        <tr class="@(entry.IsOverdue ? "review-overdue" : null)">
                             <td data-label="Mã đơn" class="cell-code">@item.Id[..Math.Min(8, item.Id.Length)]</td>
+                            <td data-label="Thời gian chờ">
+                                <div class="review-wait">
+                                    @if (entry.Waited is { } waited)
+                                    {
+                                        <strong>
+                                            @AURA.Services.ReviewSlaPolicy.FormatWait(waited)
+                                            @if (entry.IsOverdue)
+                                            {
+                                                <span class="badge bg-danger">Quá hạn</span>
+                                            }
+                                        </strong>
+                                        <small>Chuyển lúc @AURA.Services.DisplayFormat.DateTime(entry.ForwardedAtVietnam!.Value)</small>
+                                    }
+                                    else
+                                    {
+                                        <small>Chưa rõ thời điểm chuyển tiếp</small>
+                                    }
+                                </div>
+                            </td>
                             <td data-label="Nhân viên">
                                 <div class="manager-submitter">
                                     <strong>@item.SubmitterDisplayName</strong>
@@ -71,8 +102,5 @@
                 </tbody>
             </table>
         </div>
-        }
     }
 </div>
-
-

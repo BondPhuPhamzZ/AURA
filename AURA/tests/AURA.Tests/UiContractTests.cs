@@ -45,6 +45,23 @@ public sealed class UiContractTests
     }
 
     [Fact]
+    public void Manager_queue_shows_waiting_time_without_automatic_decisions()
+    {
+        var queueView = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Shared", "Components",
+            "EscalationQueue", "Default.cshtml"));
+        var settings = File.ReadAllText(Path.Combine(ProjectRoot, "appsettings.json"));
+
+        Assert.Contains("@model AURA.ViewModels.ManagerQueueViewModel", queueView, StringComparison.Ordinal);
+        Assert.Contains("class=\"escalation-queue\"", queueView, StringComparison.Ordinal);
+        Assert.Contains("data-label=\"Thời gian chờ\"", queueView, StringComparison.Ordinal);
+        Assert.Contains("ReviewSlaPolicy.FormatWait", queueView, StringComparison.Ordinal);
+        Assert.Contains("hệ thống không tự duyệt hay từ chối khi quá hạn", queueView, StringComparison.Ordinal);
+        // Each card cell keeps one content element beside its mobile label.
+        Assert.Contains("<div class=\"review-wait\">", queueView, StringComparison.Ordinal);
+        Assert.Contains("\"ReviewSla\"", settings, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Mobile_manager_actions_stay_in_the_content_column()
     {
         var queueView = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Shared", "Components",
