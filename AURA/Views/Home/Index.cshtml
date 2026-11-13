@@ -511,11 +511,11 @@
         const workflowAction = isProcessing
             ? '<span class="text-muted">Đang chờ</span>'
             : item.canForward
-            ? '<button type="button" class="button-primary button-compact" onclick="forwardToManager(\'' + escapeJsString(item.caseId) + '\', this)">Chuyển tiếp</button>'
+            ? '<button type="button" class="button-primary button-compact" onclick="forwardToManager(\'' + escapeHtml(escapeJsString(item.caseId)) + '\', this)">Chuyển tiếp</button>'
             : '<span class="text-muted">Không cần</span>';
         const factsAction = item.facts
             ? '<button type="button" class="button-ghost-sm facts-view-button" aria-pressed="' +
-              (selectedFactsCaseId === item.caseId ? 'true' : 'false') + '" onclick="showAnalysisFacts(\'' + escapeJsString(item.caseId) + '\')">Xem dữ kiện</button>'
+              (selectedFactsCaseId === item.caseId ? 'true' : 'false') + '" onclick="showAnalysisFacts(\'' + escapeHtml(escapeJsString(item.caseId)) + '\')">Xem dữ kiện</button>'
             : '';
         const receipt = item.receiptUrl
             ? '<a class="receipt-preview-link" href="' + escapeHtml(item.receiptUrl) + '" target="_blank" rel="noopener">' +
@@ -564,10 +564,15 @@
         }
     }
 
+    // Used for both text and attribute values (href, src, alt, data-*), so quotes are
+    // escaped too; textContent/innerHTML alone leaves " and ' untouched.
     function escapeHtml(value) {
-        const element = document.createElement('div');
-        element.textContent = value == null ? '' : String(value);
-        return element.innerHTML;
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     function escapeJsString(value) {
