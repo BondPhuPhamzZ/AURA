@@ -23,9 +23,11 @@ Việc cần làm trước khi mở lại gate publish/pilot:
   - hàng đợi quản lý xếp ca chờ lâu nhất lên đầu và đánh dấu quá `ReviewSla:TargetHours`, không tự quyết định;
   - validation người gửi khai báo trên model (form dùng tag helper);
   - tiền và ngày hiển thị không phụ thuộc culture của host;
-  - vá lỗi escape dấu nháy trong bảng render bằng JS.
+  - vá lỗi escape dấu nháy trong bảng render bằng JS;
+  - xem ảnh chứng từ trong dialog ngay trên trang (giai đoạn 1 của [evidence localization](EVIDENCE_LOCALIZATION_PLAN.md)).
 
-  Kiểm thử: Release/Debug 420/420 với LocalDB, frontend 10/10. Hai ca PowerShell 7 chưa chạy được vì máy kiểm thử không cài `pwsh`.
+  Kiểm thử: Release 421/421 với LocalDB, frontend 13/13. Khi bật thêm PowerShell integration, hai ca PowerShell 7 không chạy được vì máy kiểm thử không cài `pwsh` (419/421).
+- [ ] Evidence localization giai đoạn 2–3: chọn nguồn tọa độ (ưu tiên OCR word box local + đối chiếu evidence text), annotate tập ảnh mới chưa từng chạy, đo region recall/false highlight. Không dùng khung để tự sửa facts hay ra quyết định.
 
 - [x] Đối chiếu screenshot người dùng 27/10: ba JPEG R3-01/R3-06/R3-13 khớp hash fixture; R3-01 AUTO kèm nhãn duplicate, R3-06/R3-13 có thao tác quản lý; ba ảnh thật web bị `ESCALATE_PRIVACY` trước external inference. Chưa có log timestamp để đo latency Drive đầu cuối hoặc bằng chứng hosting. [Báo cáo giới hạn](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). Gate synthetic-only và staging riêng không đổi.
 

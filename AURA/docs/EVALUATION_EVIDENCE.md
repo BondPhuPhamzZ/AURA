@@ -64,7 +64,7 @@ Hai lượt synthetic tuần tự trên cùng năm fixture đều 5/5 completed 
 | Lặp tuần tự cùng 12 ảnh | 11/12 exact, 0 missed, 1 over, P95 32,903 giây | Không phải holdout mới |
 | Năm upload khác nhau | 5/5 về trạng thái cuối; E2E P95 93,684 giây | Test queue integrity ở AI concurrency 1, không phải Verify SLA |
 | Human workflow | Synthetic escalation, quyết định quản lý, Audit và Undo đều pass | Evidence workflow, không phải xác nhận từ người dùng thật |
-| Evidence localization | Prototype overlay synthetic gắn với hash | Chưa nối extraction hoặc policy; chưa có benchmark annotation unseen |
+| Evidence localization | Prototype overlay synthetic gắn với hash; từ 13/11 có dialog xem ảnh gốc trong trang (P0) | Chưa khoanh vùng trong app, chưa nối extraction hoặc policy; chưa có benchmark annotation unseen |
 
 ## Bằng chứng lịch sử được giữ ngoài cây docs hiện hành
 

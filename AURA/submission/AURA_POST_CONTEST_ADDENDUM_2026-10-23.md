@@ -10,7 +10,9 @@
   - the JavaScript row renderer now escapes quotes;
   - the empty AI-facts panel is centred.
 
-Release and Debug tests passed 420/420 each with LocalDB integration enabled, and frontend tests passed 10/10. The two PowerShell 7 backup-script cases could not run because `pwsh` is not installed on the test machine. There is no schema change, no new model or accuracy result, and no change to the synthetic-only and Restricted-Drive-local boundary. See [current status](../docs/CURRENT_PROJECT_STATUS.md).
+- **Receipt viewer:** reviewers can open a stored receipt at full size in an in-page dialog instead of a new tab. This is stage 1 of the evidence-localization plan; it draws no evidence regions and does not change facts or decisions.
+
+With LocalDB integration enabled, Release tests passed 421/421, and frontend tests passed 13/13. The two PowerShell 7 backup-script cases could not run because `pwsh` is not installed on the test machine. There is no schema change, no new model or accuracy result, and no change to the synthetic-only and Restricted-Drive-local boundary. See [current status](../docs/CURRENT_PROJECT_STATUS.md).
 
 **27 October owner check:** Three exact locked synthetic fixtures were placed in the local Restricted Drive test folder. Supplied screenshots show an AUTO result with a duplicate-content marker for R3-01 and subsequent human decisions for R3-06/R3-13. Three real web uploads were blocked from external inference by the synthetic exact-image approval gate and routed to privacy review. These screenshots do not provide upload-to-result timing, independent SQL/outbound traces or real-data accuracy evidence. [Dated evidence note](../docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). The submitted contest documents below remain historical; SmartASP Drive and unrestricted real receipts remain outside this checkpoint.
 

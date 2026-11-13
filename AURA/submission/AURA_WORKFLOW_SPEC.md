@@ -13,7 +13,10 @@ Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — Th
 > - **Mục 5.1–5.2:** hàng đợi quản lý xếp theo `ForwardedAt`, ca chờ lâu nhất lên đầu,
 >   hiện thời gian chờ và đánh dấu ca vượt `ReviewSla:TargetHours` (mặc định 24 giờ).
 >   Đây chỉ là chỉ báo ưu tiên; quản lý vẫn ra mọi quyết định, hệ thống không tự
->   duyệt hay gửi nhắc việc.
+>   duyệt hay gửi nhắc việc. Bấm ảnh chứng từ sẽ mở dialog xem ảnh gốc ngay trên
+>   trang qua cùng route `GET /Applicant/Receipt/{id}`.
+> - **Mục 10, evidence localization:** đã làm giai đoạn xem ảnh trong trang; khoanh
+>   vùng trên ảnh vẫn chưa nằm trong pipeline.
 > - **Mục 7:** từ 26/10, sau khi server commit, giao diện cập nhật fragment bằng GET
 >   và poll vùng đang xem thay vì tải lại toàn trang. Từ 13/11, mỗi fragment chỉ
 >   truy vấn SQL phần dữ liệu cần thiết. Vẫn chưa có SignalR.

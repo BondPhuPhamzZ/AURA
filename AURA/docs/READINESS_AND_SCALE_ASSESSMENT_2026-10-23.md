@@ -18,7 +18,18 @@ This update touches source and tests only. It has not been published to SmartASP
   - submitter fields follow model-driven validation, so an empty or over-long field returns HTTP 400 instead of being silently replaced;
   - VND amounts and dates are formatted the same way on any host culture;
   - the JavaScript row renderer now escapes quotes in attribute values.
-- **Tests:** Release and Debug each passed **420/420** with LocalDB integration enabled; frontend tests passed **10/10**. With PowerShell integration also enabled, the Windows PowerShell 5.1 backup cases passed, but the two `pwsh.exe` cases could not start because PowerShell 7 is not installed on this machine. That makes 418/420; it is an environment gap, not a regression, and those two cases have not been re-run for this update.
+- **In-page receipt viewer:** this is stage 1 (P0) of the [evidence-localization plan](EVIDENCE_LOCALIZATION_PLAN.md). Clicking a receipt in the employee or manager table opens a native dialog that reuses the NoStore receipt route:
+  - only same-origin receipt URLs are accepted;
+  - the image can be viewed fitted to the screen or at actual size;
+  - a missing or hash-mismatched image shows a clear message;
+  - polling does not close the dialog;
+  - focus returns to the link that opened it;
+  - modified clicks, and browsers without `<dialog>`, keep the original new-tab link.
+
+  No region is drawn and no fact or decision changes.
+- **Tests:**
+  - With LocalDB integration enabled, Release passed **421/421**. Frontend tests passed **13/13**.
+  - With LocalDB and PowerShell integration both enabled, Release and Debug each passed 419/421. The Windows PowerShell 5.1 backup cases passed, but the two `pwsh.exe` cases could not start because PowerShell 7 is not installed on this machine. This is an environment gap, not a regression.
 
 ## Verified fragment UX — 26 October 2026
 

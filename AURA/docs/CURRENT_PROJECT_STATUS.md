@@ -30,19 +30,32 @@
 >   - khoảng kỳ báo cáo 2000–2100 định nghĩa ở một nơi;
 >   - hàm escape của bảng render bằng JS nay escape cả dấu nháy trong thuộc tính,
 >     vá lỗi chèn thuộc tính qua tên file (chỉ ảnh hưởng hàng của chính người upload).
-> - **Kiểm thử:** Release và Debug mỗi bản **420/420** khi bật LocalDB integration;
->   frontend **10/10**. Khi bật thêm PowerShell integration, các ca Windows PowerShell
->   5.1 pass, còn hai ca `pwsh.exe` không khởi chạy được vì máy kiểm thử không cài
->   PowerShell 7 (418/420, lỗi môi trường, chưa chạy lại). Kiểm tra giao diện trên DB
+> - **Xem ảnh chứng từ ngay trong trang (giai đoạn 1 của kế hoạch evidence
+>   localization).** Bấm ảnh ở bảng nhân viên hoặc quản lý sẽ mở dialog:
+>   - ảnh vừa khung, có nút xem kích thước gốc, mở tab mới và đóng (Esc hoặc click nền);
+>   - dùng lại route `NoStore` hiện có và chỉ nhận URL ảnh cùng origin;
+>   - ảnh thiếu hoặc sai SHA-256 hiện thông báo rõ;
+>   - poll 5 giây không đóng dialog;
+>   - Ctrl/giữa chuột hoặc trình duyệt không hỗ trợ dialog vẫn mở tab như cũ.
+>
+>   Không khoanh vùng, không đổi facts/quyết định.
+> - **Kiểm thử:** Release **421/421** khi bật LocalDB integration; frontend **13/13**.
+>   Khi bật cả LocalDB và PowerShell integration, Release và Debug mỗi bản 419/421:
+>   hai ca `pwsh.exe` không khởi chạy được vì máy kiểm thử không cài PowerShell 7
+>   (lỗi môi trường), các ca Windows PowerShell 5.1 đều pass. Kiểm tra giao diện trên DB
 >   sandbox (Drive tắt, chặn gọi AI ra ngoài) và một LocalDB tạm có 3 ca synthetic đã
->   chuyển tiếp (đã xóa sau khi kiểm); thao tác duyệt vẫn làm mới hàng đợi đúng. Chi
->   tiết: [assessment](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
+>   chuyển tiếp (đã xóa sau khi kiểm); thao tác duyệt vẫn làm mới hàng đợi đúng. Dialog
+>   ảnh được kiểm trên LocalDB tạm khác, với fixture R3-01 synthetic khớp SHA-256 và
+>   một ca thiếu file (desktop và mobile). Chi tiết:
+>   [assessment](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
 > - **Chưa làm và lý do:**
 >   - quét malware: chưa có engine để kiểm chứng trên máy này;
 >   - thông báo email/Teams: chưa chốt người nhận và chưa có RBAC; giữ phạm vi supervised;
 >   - SignalR: polling hiện tại đã được kiểm chứng; hosting WebSocket chưa xác minh;
 >   - lưu trữ dùng chung nhiều host: cần bucket/IAM thật;
->   - overlay vùng bằng chứng: cần đổi schema/prompt và benchmark lại.
+>   - khoanh vùng bằng chứng (giai đoạn 2–3): cần nguồn tọa độ (OCR word box local,
+>     hoặc đổi schema/prompt để VLM trả box rồi benchmark lại) và tập ảnh có
+>     annotation chưa từng chạy. Xem [kế hoạch](EVIDENCE_LOCALIZATION_PLAN.md).
 
 > **Live synthetic demo:** Site SmartASP hiện trả `/healthz=ok`, zero pending
 > migration và đã chạy thành công R3-01 qua web → queue → OpenRouter →

@@ -80,6 +80,14 @@ Tối thiểu nên annotate bốn field quan trọng trên tập development hi�
 
 ### P0 — sau submission freeze
 
+> **Đã triển khai trong source 13/11/2026, chưa publish.** `wwwroot/js/receipt-viewer.js` mở
+> `<dialog>` ngay trên trang; dialog nằm ngoài vùng fragment được poll. Ảnh hiển thị vừa khung
+> hoặc kích thước gốc, có nút mở tab mới và đóng (Esc, click nền hoặc nút Đóng); focus trả về
+> link đã bấm. Dialog dùng lại route `NoStore` hiện có và chỉ nhận URL ảnh cùng origin; ảnh
+> thiếu hoặc sai SHA-256 hiện thông báo. Click có phím bổ trợ và trình duyệt không hỗ trợ
+> dialog vẫn mở tab như cũ. Kiểm tra node + UI contract, cùng browser desktop/mobile trên
+> LocalDB tạm với fixture R3-01. Không vẽ vùng, không đổi extraction/policy.
+
 - Hiển thị ảnh lớn ngay trong modal/panel, không mở tab mới; vẫn dùng route ảnh hiện tại.
 - Giữ thumbnail/link dự phòng và không đổi extraction/policy.
 - Bổ sung test responsive, keyboard, screen-reader label và `NoStore`.
