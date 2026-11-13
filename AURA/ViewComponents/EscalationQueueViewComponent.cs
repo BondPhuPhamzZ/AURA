@@ -22,9 +22,7 @@ namespace AURA.ViewComponents
         {
             try
             {
-                var items = (await _repo.GetAllRequestsAsync())
-                    .Where(x => x.IsForwardedToManager && PolicyDecisionEngine.IsEscalation(x.Status));
-                return View(items);
+                return View(await _repo.GetManagerQueueAsync());
             }
             catch (Exception exception)
             {

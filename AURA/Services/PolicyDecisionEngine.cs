@@ -214,8 +214,10 @@ public static class PolicyDecisionEngine
             string.Empty);
     }
 
+    public const string EscalationStatusPrefix = "ESCALATE_";
+
     public static bool IsEscalation(string? status) =>
-        status?.StartsWith("ESCALATE_", StringComparison.Ordinal) == true;
+        status?.StartsWith(EscalationStatusPrefix, StringComparison.Ordinal) == true;
 
     private static (string, string, string) Fact(string reason, string question) =>
         ("ESCALATE_FACT", reason, question);

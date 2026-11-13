@@ -95,9 +95,7 @@ public sealed class ApplicantController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ForwardAllToManager()
     {
-        var pending = (await _repository.GetAllRequestsAsync())
-            .Where(x => !x.IsForwardedToManager && PolicyDecisionEngine.IsEscalation(x.Status))
-            .ToList();
+        var pending = await _repository.GetPendingHandoffsAsync();
 
         var forwardedAt = DateTime.UtcNow;
         foreach (var request in pending)

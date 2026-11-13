@@ -42,6 +42,22 @@ public static class ReportingPeriod
         return true;
     }
 
+    /// <summary>UTC bounds [from, to) of a Vietnam calendar year, for SQL range filters.</summary>
+    public static (DateTime FromUtc, DateTime ToUtc) YearUtcRange(int year)
+    {
+        if (!IsValidYear(year)) throw new ArgumentOutOfRangeException(nameof(year));
+        return (VietnamTime.ToUtc(new DateTime(year, 1, 1)), VietnamTime.ToUtc(new DateTime(year + 1, 1, 1)));
+    }
+
+    /// <summary>UTC bounds [from, to) of a Vietnam calendar month, for SQL range filters.</summary>
+    public static (DateTime FromUtc, DateTime ToUtc) MonthUtcRange(int year, int month)
+    {
+        if (!IsValidYear(year)) throw new ArgumentOutOfRangeException(nameof(year));
+        if (!IsValidMonth(month)) throw new ArgumentOutOfRangeException(nameof(month));
+        var start = new DateTime(year, month, 1);
+        return (VietnamTime.ToUtc(start), VietnamTime.ToUtc(start.AddMonths(1)));
+    }
+
     public static string FormatMonthValue(int year, int month) =>
         string.Create(CultureInfo.InvariantCulture, $"{year:0000}-{month:00}");
 }

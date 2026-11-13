@@ -23,8 +23,7 @@ public sealed class ReportsController : Controller
     {
         try
         {
-            var requests = await _repository.GetAllRequestsAsync();
-            var (targetYear, targetMonth) = ReportingPeriod.ResolveOrCurrent(year, month, DateTime.UtcNow);
+            var (targetYear, targetMonth, requests) = await LoadMonthAsync(year, month);
             var report = ManagerOperationsReportExporter.ExportMonth(requests, targetYear, targetMonth);
             return File(report.Content, "text/csv; charset=utf-8", report.FileName);
         }
@@ -44,8 +43,7 @@ public sealed class ReportsController : Controller
     {
         try
         {
-            var requests = await _repository.GetAllRequestsAsync();
-            var (targetYear, targetMonth) = ReportingPeriod.ResolveOrCurrent(year, month, DateTime.UtcNow);
+            var (targetYear, targetMonth, requests) = await LoadMonthAsync(year, month);
             var report = ManagerOperationsReportExporter.ExportWorkbookMonth(requests, targetYear, targetMonth);
             return File(report.Content,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", report.FileName);
@@ -57,5 +55,14 @@ public sealed class ReportsController : Controller
                 title: "Không thể tạo báo cáo Excel",
                 detail: "Hãy kiểm tra kết nối cơ sở dữ liệu rồi thử lại.");
         }
+    }
+
+    // Reads only the selected Vietnam month from SQL; the exporter still filters by local month.
+    private async Task<(int Year, int Month, List<AURA.Models.ReimbursementRequest> Requests)> LoadMonthAsync(
+        int? year, int? month)
+    {
+        var (targetYear, targetMonth) = ReportingPeriod.ResolveOrCurrent(year, month, DateTime.UtcNow);
+        var (fromUtc, toUtc) = ReportingPeriod.MonthUtcRange(targetYear, targetMonth);
+        return (targetYear, targetMonth, await _repository.GetRequestsCreatedBetweenAsync(fromUtc, toUtc));
     }
 }

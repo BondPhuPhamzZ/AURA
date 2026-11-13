@@ -33,6 +33,21 @@ public sealed class ReportingPeriodTests
     }
 
     [Fact]
+    public void Utc_ranges_follow_vietnam_calendar_boundaries()
+    {
+        Assert.Equal((new DateTime(2025, 12, 31, 17, 0, 0, DateTimeKind.Utc),
+                new DateTime(2026, 12, 31, 17, 0, 0, DateTimeKind.Utc)),
+            ReportingPeriod.YearUtcRange(2026));
+        Assert.Equal((new DateTime(2026, 1, 31, 17, 0, 0, DateTimeKind.Utc),
+                new DateTime(2026, 2, 28, 17, 0, 0, DateTimeKind.Utc)),
+            ReportingPeriod.MonthUtcRange(2026, 2));
+        Assert.Equal(DateTimeKind.Utc, ReportingPeriod.MonthUtcRange(2026, 12).ToUtc.Kind);
+        Assert.Equal(new DateTime(2027, 1, 1), VietnamTime.FromUtc(ReportingPeriod.MonthUtcRange(2026, 12).ToUtc));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ReportingPeriod.YearUtcRange(1999));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ReportingPeriod.MonthUtcRange(2026, 13));
+    }
+
+    [Fact]
     public void Each_invalid_part_falls_back_to_the_current_vietnam_month()
     {
         // 2026-12-31 18:00 UTC is already 2027-01-01 in Vietnam.

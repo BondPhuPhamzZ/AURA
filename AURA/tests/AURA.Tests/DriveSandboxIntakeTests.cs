@@ -980,6 +980,14 @@ public sealed class DriveSandboxIntakeTests
             return ReceiptIntakePersistenceResult.Added;
         }
         public Task<List<ReimbursementRequest>> GetAllRequestsAsync() => throw new NotSupportedException();
+        public Task<List<ReimbursementRequest>> GetManagerQueueAsync() => throw new NotSupportedException();
+        public Task<List<ReimbursementRequest>> GetPendingHandoffsAsync() => throw new NotSupportedException();
+        public Task<List<ReimbursementRequest>> GetRecentDriveRequestsAsync(DateTime sinceUtc, int limit) =>
+            throw new NotSupportedException();
+        public Task<List<ReimbursementRequest>> GetRequestsWithAuditSinceAsync(DateTime sinceUtc) =>
+            throw new NotSupportedException();
+        public Task<List<ReimbursementRequest>> GetRequestsCreatedBetweenAsync(DateTime fromUtc, DateTime toUtc) =>
+            throw new NotSupportedException();
         public Task UpdateRequestAsync(ReimbursementRequest request) => throw new NotSupportedException();
         public Task UpdateRequestWithAuditAsync(ReimbursementRequest request, string action, string details) =>
             throw new NotSupportedException();
@@ -1009,6 +1017,14 @@ public sealed class DriveSandboxIntakeTests
         public Task<ReimbursementRequest?> GetPersistedRequestByIdAsync(string id) =>
             inner.GetPersistedRequestByIdAsync(id);
         public Task<List<ReimbursementRequest>> GetAllRequestsAsync() => inner.GetAllRequestsAsync();
+        public Task<List<ReimbursementRequest>> GetManagerQueueAsync() => inner.GetManagerQueueAsync();
+        public Task<List<ReimbursementRequest>> GetPendingHandoffsAsync() => inner.GetPendingHandoffsAsync();
+        public Task<List<ReimbursementRequest>> GetRecentDriveRequestsAsync(DateTime sinceUtc, int limit) =>
+            inner.GetRecentDriveRequestsAsync(sinceUtc, limit);
+        public Task<List<ReimbursementRequest>> GetRequestsWithAuditSinceAsync(DateTime sinceUtc) =>
+            inner.GetRequestsWithAuditSinceAsync(sinceUtc);
+        public Task<List<ReimbursementRequest>> GetRequestsCreatedBetweenAsync(DateTime fromUtc, DateTime toUtc) =>
+            inner.GetRequestsCreatedBetweenAsync(fromUtc, toUtc);
         public Task AddRequestWithAuditAsync(ReimbursementRequest request, string action, string details) =>
             inner.AddRequestWithAuditAsync(request, action, details);
         public Task<ReceiptIntakePersistenceResult> TryAddRequestWithAuditAsync(ReimbursementRequest request,
