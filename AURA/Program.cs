@@ -160,6 +160,13 @@ builder.Services.AddOptions<DriveSandboxOptions>()
     },
         "DriveSandbox local cần folder ID hợp lệ và service-account JSON nằm ngoài project.")
     .ValidateOnStart();
+builder.Services.AddOptions<EvidenceLocalizationOptions>()
+    .Bind(builder.Configuration.GetSection(EvidenceLocalizationOptions.SectionName))
+    .ValidateDataAnnotations()
+    .Validate(options => !EvidenceLocalizationOptions.IsActive(options, builder.Environment.EnvironmentName) ||
+            EvidenceLocalizationOptions.HasLanguageData(options),
+        "EvidenceLocalization cần TessdataPath tuyệt đối chứa đủ *.traineddata (chạy tools/Get-TesseractData.ps1).")
+    .ValidateOnStart();
 
 var maxUploadBytes = builder.Configuration.GetValue<int>("ReceiptStorage:MaxFileSizeMb", 5) * 1024L * 1024L;
 // Multipart contains the file plus antiforgery fields, boundaries and headers. Keep transport
@@ -197,6 +204,10 @@ builder.Services.AddHttpClient<DriveSandboxClient>(client =>
         AllowAutoRedirect = false
     });
 builder.Services.AddHostedService<DriveSandboxWorker>();
+// Reviewer-only evidence boxes: the Tesseract engine is created lazily, only when enabled in Development.
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IReceiptOcrEngine, TesseractReceiptOcrEngine>();
+builder.Services.AddScoped<EvidenceLocalizationService>();
 builder.Services.AddHttpClient<OpenRouterVisionExtractorService>((services, client) =>
 {
     var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenRouterOptions>>().Value;
@@ -245,6 +256,7 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
     IOptions<OllamaOptions> configuredOllama,
     IOptions<VerifyOptions> configuredVerify,
     IOptions<DriveSandboxOptions> configuredDriveSandbox,
+    IOptions<EvidenceLocalizationOptions> configuredEvidenceLocalization,
     IOptions<ReceiptRetentionOptions> configuredRetention,
     ExternalImagePrivacyGate externalImagePrivacy,
     IOptions<ReceiptStorageOptions> configuredReceiptStorage,
@@ -318,6 +330,8 @@ app.MapGet("/healthz", async (IOptions<VisionOptions> configuredVision,
             configuredVerify.Value.Enabled, environment.EnvironmentName),
         driveSandboxConfigured = DriveSandboxRuntimePolicy.IsAllowed(configuredDriveSandbox.Value,
             environment.EnvironmentName, builder.Configuration["urls"]),
+        evidenceLocalizationEnabled = EvidenceLocalizationOptions.IsActive(
+            configuredEvidenceLocalization.Value, environment.EnvironmentName),
         fallbackEnabled = vision.FallbackEnabled,
         configuredFallbackProvider = vision.FallbackProvider,
         fallbackProvider = vision.FallbackEnabled ? vision.FallbackProvider : null,
