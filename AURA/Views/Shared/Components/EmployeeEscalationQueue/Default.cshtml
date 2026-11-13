@@ -25,7 +25,8 @@ else
             data-row-source="@(isDrive ? "persisted-drive" : "persisted-escalation")">
             <td data-label="Mã hồ sơ" class="cell-code">@item.Id[..Math.Min(8, item.Id.Length)]</td>
             <td data-label="Ảnh">
-                <a class="receipt-preview-link" href="@item.ImageUrl" target="_blank" rel="noopener">
+                <a class="receipt-preview-link" href="@item.ImageUrl" target="_blank" rel="noopener"
+                   title="@item.OriginalFileName">
                     <img class="receipt-thumbnail" src="@item.ImageUrl" alt="Ảnh chứng từ @item.OriginalFileName" loading="lazy" />
                     <span>@item.OriginalFileName</span>
                 </a>

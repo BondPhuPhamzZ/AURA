@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<AURA.Models.ReimbursementRequest>
 
 <div class="escalation-queue">
-    <h4 class="mb-4 form-header">Danh sách cần sếp duyệt</h4>
+    <h4 class="mb-4 form-header">Hồ sơ chờ quản lý duyệt</h4>
     @if (ViewData["LoadError"] is string loadError)
     {
         <div class="alert alert-danger feature-card" style="padding: 16px;" data-fragment-error>@loadError</div>
@@ -32,7 +32,7 @@
                     {
                         var choices = AURA.Services.EscalationWorkflow.ExplainChoices(item.Status);
                         <tr>
-                            <td data-label="Mã đơn" style="font-family: monospace;">@item.Id.Substring(0, 8)...</td>
+                            <td data-label="Mã đơn" class="cell-code">@item.Id[..Math.Min(8, item.Id.Length)]</td>
                             <td data-label="Nhân viên">
                                 <div class="manager-submitter">
                                     <strong>@item.SubmitterDisplayName</strong>

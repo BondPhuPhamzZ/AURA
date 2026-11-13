@@ -518,7 +518,7 @@
               (selectedFactsCaseId === item.caseId ? 'true' : 'false') + '" onclick="showAnalysisFacts(\'' + escapeHtml(escapeJsString(item.caseId)) + '\')">Xem dữ kiện</button>'
             : '';
         const receipt = item.receiptUrl
-            ? '<a class="receipt-preview-link" href="' + escapeHtml(item.receiptUrl) + '" target="_blank" rel="noopener">' +
+            ? '<a class="receipt-preview-link" href="' + escapeHtml(item.receiptUrl) + '" target="_blank" rel="noopener" title="' + escapeHtml(item.image) + '">' +
               '<img class="receipt-thumbnail" src="' + escapeHtml(item.receiptUrl) + '" alt="Ảnh chứng từ ' + escapeHtml(item.image) + '" loading="lazy" />' +
               '<span>' + escapeHtml(item.image) + '</span></a>'
             : escapeHtml(item.image);

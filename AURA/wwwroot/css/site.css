@@ -296,6 +296,8 @@ main {
     border-left: 3px solid var(--colors-primary);
     background: #edf5ff;
     color: var(--colors-ink-subtle);
+    font-size: 0.875rem;
+    line-height: 1.45;
 }
 
 .ai-amount-note strong {
@@ -1074,6 +1076,15 @@ main {
     max-width: 150px;
     color: #1d4ed8;
     text-decoration: none;
+}
+
+/* Long file names stay on one line; the full name is in the link title. */
+.receipt-preview-link > span {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .receipt-preview-link:hover {
