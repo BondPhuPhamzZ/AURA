@@ -1,5 +1,49 @@
 # Trạng thái AURA ngày 28/10/2026
 
+> **Cập nhật source 13/11/2026 — chưa publish SmartASP.** Thay đổi nằm trên nhánh
+> `codex/drive-pipeline-hardening` (PR #1 vào `master`). Site live vẫn là bản 28/10.
+> Đây không phải benchmark model, accuracy hay load test mới.
+>
+> - **Màn hình đọc dữ liệu có lọc SQL.** Trước đây mỗi tab, mỗi lần poll 5–15 giây,
+>   *Chuyển tiếp tất cả* và hai file export đều tải toàn bảng `ReimbursementRequests`
+>   (kể cả `ExtractedFactsJson`) rồi mới lọc trong bộ nhớ. Nay mỗi màn hình chỉ đọc
+>   phần cần thiết:
+>   - hàng đợi quản lý: escalation đã chuyển tiếp;
+>   - hàng đợi nhân viên: escalation chưa chuyển, cộng tối đa 20 hồ sơ Drive gần đây
+>     (chỉ ở local Development);
+>   - Audit: cửa sổ 500 sự kiện, rồi chỉ các hồ sơ có sự kiện kể từ mốc cũ nhất;
+>   - Dashboard/export: khoảng UTC của năm hoặc tháng theo giờ Việt Nam.
+>
+>   Tra hồ sơ cho Audit dùng subquery SQL thay cho danh sách ID, vì EF Core 8 sẽ gửi
+>   danh sách đó qua `OPENJSON` (cần compatibility level ≥130, chưa xác minh trên DB
+>   hosting). Không đổi schema, không có migration. Audit vẫn chỉ hiện 500 sự kiện mới nhất.
+> - **Thời gian chờ của quản lý.** Hàng đợi xếp ca chờ lâu nhất lên đầu, hiện thời gian
+>   chờ và thời điểm chuyển tiếp theo giờ Việt Nam. Ca vượt `ReviewSla:TargetHours`
+>   (mặc định 24, hợp lệ 1–720) có nhãn "Quá hạn". Đây chỉ là chỉ báo: hệ thống không
+>   tự duyệt, từ chối, giao việc hay gửi thông báo.
+> - **Nhất quán và an toàn giao diện:**
+>   - khung "Nội dung AI" lúc chưa có dữ liệu được căn giữa;
+>   - ba trường người gửi khai báo validation một lần trên model, form dùng tag helper.
+>     Upload web có trường trống hoặc quá dài nay trả HTTP 400 kèm thông báo tiếng Việt,
+>     thay vì âm thầm thay bằng giá trị demo; Drive/Verify giữ fallback phía server;
+>   - tiền VND và ngày giờ hiển thị giống nhau trên mọi culture của host;
+>   - khoảng kỳ báo cáo 2000–2100 định nghĩa ở một nơi;
+>   - hàm escape của bảng render bằng JS nay escape cả dấu nháy trong thuộc tính,
+>     vá lỗi chèn thuộc tính qua tên file (chỉ ảnh hưởng hàng của chính người upload).
+> - **Kiểm thử:** Release và Debug mỗi bản **420/420** khi bật LocalDB integration;
+>   frontend **10/10**. Khi bật thêm PowerShell integration, các ca Windows PowerShell
+>   5.1 pass, còn hai ca `pwsh.exe` không khởi chạy được vì máy kiểm thử không cài
+>   PowerShell 7 (418/420, lỗi môi trường, chưa chạy lại). Kiểm tra giao diện trên DB
+>   sandbox (Drive tắt, chặn gọi AI ra ngoài) và một LocalDB tạm có 3 ca synthetic đã
+>   chuyển tiếp (đã xóa sau khi kiểm); thao tác duyệt vẫn làm mới hàng đợi đúng. Chi
+>   tiết: [assessment](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
+> - **Chưa làm và lý do:**
+>   - quét malware: chưa có engine để kiểm chứng trên máy này;
+>   - thông báo email/Teams: chưa chốt người nhận và chưa có RBAC; giữ phạm vi supervised;
+>   - SignalR: polling hiện tại đã được kiểm chứng; hosting WebSocket chưa xác minh;
+>   - lưu trữ dùng chung nhiều host: cần bucket/IAM thật;
+>   - overlay vùng bằng chứng: cần đổi schema/prompt và benchmark lại.
+
 > **Live synthetic demo:** Site SmartASP hiện trả `/healthz=ok`, zero pending
 > migration và đã chạy thành công R3-01 qua web → queue → OpenRouter →
 > `AUTO_APPROVE` → audit/ảnh. Ca đầu trả `AI_AUTH_ERROR`; sau khi chủ dự án cập

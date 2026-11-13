@@ -76,6 +76,8 @@ với gói 1/1, áp dụng trình tự kiểm soát tại chỗ này:
    `AllowedHosts=bondphupham-001-site1.ltempurl.com` **nếu đây vẫn là hostname site AURA**.
    Manifest phải được chuyển riêng, đọc được bởi app pool và chứa hash của đúng ảnh synthetic sẽ thử; thiếu hoặc sai file này sẽ chặn khởi động.
    `ReceiptProcessing__MaxOutstandingReceipts=1000` đang có trong `appsettings.json`; chỉ thêm biến khi cần ghi đè rõ ràng.
+   Tương tự, `ReviewSla__TargetHours=24` (hợp lệ 1–720, sai giá trị sẽ chặn khởi động) đã có trong `appsettings.json`;
+   mốc này chỉ sắp xếp và đánh dấu "Quá hạn" ở cửa sổ quản lý, không tự duyệt/từ chối hay gửi thông báo.
 
    **Dọn cấu hình mailbox đã gỡ khỏi source:** `MailboxSandbox__ApiKey`,
    `MailboxSandbox__Provider`, `MailboxSandbox__MailboxId`, `MailboxSandbox__AllowedFolder`,

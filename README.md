@@ -17,7 +17,7 @@ The queue survives restarts and currently permits one AI request at a time. A re
 | Area | What it shows | Suggested screenshot |
 | --- | --- | --- |
 | **Cửa sổ nhân viên** | Upload up to 10 JPG/PNG receipts per submission; follow processing and inspect extracted facts. | Upload box beside AI facts and result table. |
-| **Cửa sổ quản lý** | Human review, decision, and Undo. | One escalated case with its reason and actions. |
+| **Cửa sổ quản lý** | Human review, decision, and Undo; the oldest handoff is listed first, with its waiting time and an overdue cue. | One escalated case with its reason and actions. |
 | **Lịch sử hành vi** | Recorded processing and reviewer events. | Expanded timeline for one request. |
 | **Tổng quan** | Monthly workload and outcomes; CSV/Excel export. | Selected month, metrics, and table. |
 
@@ -54,6 +54,7 @@ Open `http://127.0.0.1:5000`. The launcher uses a separate database and private 
 ```powershell
 dotnet build AURA.csproj -c Release
 dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Release
+node --test .\tests\frontend\workflow-refresh.test.cjs .\tests\frontend\dashboard-escape.test.cjs
 ```
 
 ## Scope and project files

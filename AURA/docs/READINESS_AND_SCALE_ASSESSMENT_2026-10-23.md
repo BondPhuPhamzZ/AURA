@@ -2,6 +2,24 @@
 
 This is a **source-and-evidence assessment**, not a certification or a statement that the public host runs this commit. The dated proposal, build log and five-slide deck remain the contest submission snapshot. See the [post-contest submission addendum](../submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) for a short outward-facing update.
 
+## Source update — 13 November 2026
+
+This update touches source and tests only. It has not been published to SmartASP and is not a new model, accuracy or load result.
+
+- **SQL-filtered screen reads.** Before this update, every tab, its 5–15 second poll, *Forward all* and both monthly exports loaded the whole `ReimbursementRequests` table, including `ExtractedFactsJson`, and then filtered in memory. Each now filters in SQL Server:
+  - the manager queue reads forwarded escalations;
+  - the employee queue reads unforwarded escalations plus at most 20 recent Drive rows, and only in local Development;
+  - the audit reads the 500-event window and then only the requests referenced from its oldest event onward;
+  - the dashboard and the exports read a UTC range for the Vietnam year or month.
+
+  The audit lookup is a SQL `IN` subquery, not a client-side ID list, because EF Core 8 would send that list through `OPENJSON`, which needs compatibility level 130 or higher; the hosting database level has not been verified. There is no schema change and no migration. This reduces the data each request reads; it is not a load test, and the audit still shows at most the latest 500 events.
+- **Reviewer waiting time.** The manager queue lists cases oldest handoff first and shows the wait and the Vietnam handoff time. Cases past `ReviewSla:TargetHours` (default 24) are marked overdue. Nothing is sent, assigned or decided automatically.
+- **Intake and display consistency:**
+  - submitter fields follow model-driven validation, so an empty or over-long field returns HTTP 400 instead of being silently replaced;
+  - VND amounts and dates are formatted the same way on any host culture;
+  - the JavaScript row renderer now escapes quotes in attribute values.
+- **Tests:** Release and Debug each passed **420/420** with LocalDB integration enabled; frontend tests passed **10/10**. With PowerShell integration also enabled, the Windows PowerShell 5.1 backup cases passed, but the two `pwsh.exe` cases could not start because PowerShell 7 is not installed on this machine. That makes 418/420; it is an environment gap, not a regression, and those two cases have not been re-run for this update.
+
 ## Verified fragment UX — 26 October 2026
 
 Tabs and committed Forward/decision/Undo actions now refresh the active read-only
@@ -70,7 +88,10 @@ not establish sustained-load capacity or independent usability acceptance.
 HITL exists as employee handoff, manager route-specific action, audit and Undo
 before retention expiry. FACT/PRIVACY acceptance is manual intake, not payment
 approval. Timely handling still requires an operator to open the app; there is
-no assigned reviewer, reminder/SLA notification or endpoint RBAC. The tabs are
+no assigned reviewer, reminder/SLA notification or endpoint RBAC. *(13 November
+source update: the manager queue now orders cases by handoff time and flags
+waits beyond `ReviewSla:TargetHours`; this is an in-app indicator only, with no
+notification and no automatic decision. See the section above.)* The tabs are
 demo roles, not an authorization boundary. Do not present the workflow as a
 fully autonomous finance agent or promise unattended approval quality.
 

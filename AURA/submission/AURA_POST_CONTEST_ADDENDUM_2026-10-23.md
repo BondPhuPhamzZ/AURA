@@ -1,5 +1,17 @@
 # AURA post-contest status addendum — 23 October 2026
 
+**13 November source update (not yet published to SmartASP; PR #1 into `master`):**
+
+- **Database reads:** each screen now filters in SQL. Previously every tab, poll and export loaded the whole receipt table.
+- **Manager queue:** cases are ordered by handoff time. Waits beyond `ReviewSla:TargetHours` (default 24 hours) are marked "Quá hạn" as an in-app cue only. Nothing is sent, assigned or decided automatically, so the workflow stays supervised.
+- **Web intake validation:** submitter fields use model-driven validation. Empty or over-long values now return HTTP 400 instead of being silently replaced with demo values.
+- **Display and safety fixes:**
+  - VND amounts and dates no longer depend on the host culture;
+  - the JavaScript row renderer now escapes quotes;
+  - the empty AI-facts panel is centred.
+
+Release and Debug tests passed 420/420 each with LocalDB integration enabled, and frontend tests passed 10/10. The two PowerShell 7 backup-script cases could not run because `pwsh` is not installed on the test machine. There is no schema change, no new model or accuracy result, and no change to the synthetic-only and Restricted-Drive-local boundary. See [current status](../docs/CURRENT_PROJECT_STATUS.md).
+
 **27 October owner check:** Three exact locked synthetic fixtures were placed in the local Restricted Drive test folder. Supplied screenshots show an AUTO result with a duplicate-content marker for R3-01 and subsequent human decisions for R3-06/R3-13. Three real web uploads were blocked from external inference by the synthetic exact-image approval gate and routed to privacy review. These screenshots do not provide upload-to-result timing, independent SQL/outbound traces or real-data accuracy evidence. [Dated evidence note](../docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). The submitted contest documents below remain historical; SmartASP Drive and unrestricted real receipts remain outside this checkpoint.
 
 **26 October Drive visibility update:** In the Development synthetic profile,

@@ -3,6 +3,21 @@
 Phiên bản: 2.3 — 13/10/2026
 Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — The Escalation Referee
 
+> **Ghi chú hậu cuộc thi 13/11/2026.** Nội dung bên dưới là đặc tả v2.3 đã nộp và được
+> giữ nguyên. Một số mục đã thay đổi trong source hiện hành; đọc cùng
+> [trạng thái hiện hành](../docs/CURRENT_PROJECT_STATUS.md):
+>
+> - **Mục 3, bước 2–3:** nhân viên không còn nhập số tiền; AURA tự đọc tổng tiền. Ba
+>   trường người gửi được validation phía server bằng model: thiếu hoặc quá dài trả
+>   400 kèm thông báo, không còn âm thầm thay bằng giá trị demo.
+> - **Mục 5.1–5.2:** hàng đợi quản lý xếp theo `ForwardedAt`, ca chờ lâu nhất lên đầu,
+>   hiện thời gian chờ và đánh dấu ca vượt `ReviewSla:TargetHours` (mặc định 24 giờ).
+>   Đây chỉ là chỉ báo ưu tiên; quản lý vẫn ra mọi quyết định, hệ thống không tự
+>   duyệt hay gửi nhắc việc.
+> - **Mục 7:** từ 26/10, sau khi server commit, giao diện cập nhật fragment bằng GET
+>   và poll vùng đang xem thay vì tải lại toàn trang. Từ 13/11, mỗi fragment chỉ
+>   truy vấn SQL phần dữ liệu cần thiết. Vẫn chưa có SignalR.
+
 ## 1. Mục tiêu và nguyên tắc kiểm soát
 
 AURA hỗ trợ hoàn ứng chi phí theo nguyên tắc **AI đọc dữ kiện, policy quyết định, con người xử lý ngoại lệ**. Qwen vision không có quyền phê duyệt. Qwen3.8 Flash qua OpenRouter, route Alibaba và `reasoning=none`, là cấu hình primary hiện hành; Ollama 4B local là fallback có kiểm soát nhưng mặc định tắt. `PolicyDecisionEngine` tạo trạng thái nghiệp vụ theo quy tắc tất định và thứ tự ưu tiên `FACT → POLICY → AUTHORITY`.
