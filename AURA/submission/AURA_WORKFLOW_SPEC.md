@@ -15,8 +15,10 @@ Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — Th
 >   Đây chỉ là chỉ báo ưu tiên; quản lý vẫn ra mọi quyết định, hệ thống không tự
 >   duyệt hay gửi nhắc việc. Bấm ảnh chứng từ sẽ mở dialog xem ảnh gốc ngay trên
 >   trang qua cùng route `GET /Applicant/Receipt/{id}`.
-> - **Mục 10, evidence localization:** đã làm giai đoạn xem ảnh trong trang; khoanh
->   vùng trên ảnh vẫn chưa nằm trong pipeline.
+> - **Mục 10, evidence localization:** đã có xem ảnh trong trang (13/11). Từ 14/11 có thêm
+>   khung OCR Tesseract cục bộ trong dialog: mặc định tắt, chỉ chạy trên Development,
+>   fail-closed. Khung chỉ hỗ trợ người duyệt đọc ảnh, **không** nằm trong pipeline
+>   extraction/policy và không thay facts hay quyết định. Chưa có annotation độc lập.
 > - **Mục 7:** từ 26/10, sau khi server commit, giao diện cập nhật fragment bằng GET
 >   và poll vùng đang xem thay vì tải lại toàn trang. Từ 13/11, mỗi fragment chỉ
 >   truy vấn SQL phần dữ liệu cần thiết. Vẫn chưa có SignalR.

@@ -94,6 +94,40 @@ Tối thiểu nên annotate bốn field quan trọng trên tập development hi�
 
 ### P1 — prototype evidence overlay
 
+> **Đã triển khai trong source 14/11/2026, local và chưa publish.**
+>
+> - **Bật/tắt:** `EvidenceLocalization:Enabled` mặc định `false` và chỉ có hiệu lực trên
+>   host Development. Khi tắt, `GET /Evidence/Regions/{id}` trả 404 và DLL Tesseract
+>   không được nạp.
+> - **OCR:** dùng Tesseract 5.2.0 trong process, dữ liệu ngôn ngữ `vie+eng`
+>   (`tessdata_fast`, ghim commit và SHA-256 qua `tools/Get-TesseractData.ps1`). OCR chạy
+>   theo yêu cầu khi người duyệt mở ảnh, mỗi lần một trang, có timeout.
+> - **Không lưu xuống DB:** kết quả chỉ cache trong bộ nhớ theo hash ảnh, hash facts và
+>   phiên bản localizer. Không có migration, không đổi worker/prompt/facts/quyết định.
+>   Mục "JSON phụ" bên dưới vì vậy chưa cần.
+> - **Kiểm tra trước khi OCR:** ảnh phải khớp kích thước/SHA-256 đã ghi; hồ sơ không có
+>   facts AI thì bỏ qua OCR; ảnh có EXIF xoay thì không định vị. Log chỉ ghi loại lỗi.
+> - **Ghép chữ tất định, fail-closed:**
+>   - giá trị phải xuất hiện đúng một lần;
+>   - tổng tiền phải nằm cùng hàng với nhãn tổng in nguyên văn, nên dòng tổng bị phá
+>     không bị chuyển sang dòng tạm tính;
+>   - hàng được hiệu chỉnh theo độ nghiêng ảnh; so khớp không dấu để chịu được OCR đọc
+>     sai dấu.
+> - **Giao diện:** SVG overlay trong dialog xem ảnh, có bật/tắt, đúng ở cả chế độ vừa
+>   khung/kích thước gốc và trên mobile, bấm hai chiều giữa trường và khung, liệt kê
+>   lý do các trường "Không định vị được".
+> - **Smoke trên tập phát triển** (`AURA_RUN_OCR_INTEGRATION=1`, OCR thật trên 15 ảnh
+>   synthetic v3.1, facts lấy từ manifest): **57/57** trường có thể định vị đã được vẽ.
+>   R3-06 (dòng tổng bị phá), R3-08 (số biên nhận bị phá) và R3-07 (không có mã) đều
+>   **không** bị vẽ.
+>   - Hai lỗi phát hiện trên tập này đã được sửa: ngày bị OCR tách `05/1 0/2026`, và ảnh
+>     nghiêng ~2° (R3-12).
+>   - Vì đã nhìn tập này khi phát triển, đây **không phải** số liệu độ chính xác; gate P3
+>     bên dưới vẫn mở.
+>
+> Kiểm tra bằng mắt trên LocalDB tạm (R3-01 thẳng, R3-12 nghiêng, một ca privacy không có
+> facts): khung trùng đúng vị trí chữ, kể cả khi đổi chế độ xem và trên mobile.
+
 - Thêm `EvidenceRegion` dạng JSON phụ, chưa migration nếu lưu cùng facts versioned; tốt hơn là cột/bảng riêng khi cần query/audit.
 - Chỉ định vị merchant, ngày, canonical identifier và final total.
 - Dùng OCR word boxes + deterministic text matching; vùng không chắc chắn thì không vẽ thay vì bịa vị trí.
@@ -122,6 +156,13 @@ Tối thiểu nên annotate bốn field quan trọng trên tập development hi�
 - Route ảnh/overlay phải có authorization trước khi xem xét pilot nhiều người; `NoStore` một mình chưa thay authentication/RBAC.
 
 ## Quyết định hiện tại
+
+> **Cập nhật 14/11/2026:**
+> - P0 (xem ảnh trong trang) và P1 (overlay OCR local) đã có trong source, chưa publish.
+> - P1 chỉ dùng **local trên Development với ảnh synthetic**; hosting giữ tắt.
+> - P2 (typed quality issues) và P3 (annotation độc lập + tập unseen + đo IoU/false
+>   highlight) vẫn mở. Chưa đủ cơ sở để bật overlay khi demo chính thức hay claim
+>   explainability.
 
 - **GO** cho thiết kế/prototype sau khi freeze submission.
 - **NO-GO** cho việc sửa pipeline hoặc prompt ngay trước demo.

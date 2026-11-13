@@ -17,7 +17,7 @@ The queue survives restarts and currently permits one AI request at a time. A re
 | Area | What it shows | Suggested screenshot |
 | --- | --- | --- |
 | **Cửa sổ nhân viên** | Upload up to 10 JPG/PNG receipts per submission; follow processing and inspect extracted facts. | Upload box beside AI facts and result table. |
-| **Cửa sổ quản lý** | Human review, decision, and Undo; the oldest handoff is listed first, with its waiting time and an overdue cue. Receipts open full-size in an in-page viewer. | One escalated case with its reason and actions. |
+| **Cửa sổ quản lý** | Human review, decision, and Undo; the oldest handoff is listed first, with its waiting time and an overdue cue. Receipts open full-size in an in-page viewer, which can show optional local OCR evidence boxes. | One escalated case with its reason and actions. |
 | **Lịch sử hành vi** | Recorded processing and reviewer events. | Expanded timeline for one request. |
 | **Tổng quan** | Monthly workload and outcomes; CSV/Excel export. | Selected month, metrics, and table. |
 
@@ -49,7 +49,7 @@ Prepare a separate synthetic LocalDB, apply EF migrations, and start the app:
 .\tools\Start-AuraRetentionSandbox.ps1
 ```
 
-Open `http://127.0.0.1:5000`. The launcher uses a separate database and private receipt directory; it does not modify the contest database. Only approved synthetic image contents can pass its external-image gate. To enable the optional Restricted Drive reader after the owner grants access and you configure a local service account, follow the [runbook](AURA/docs/RUNBOOK.md) and [local setup guide](AURA/docs/JUDGE_LOCAL_SETUP.md). The service-account JSON must stay outside this repository. For hosting configuration and database backup/migration, use the [deployment guide](AURA/docs/DEPLOYMENT.md).
+Open `http://127.0.0.1:5000`. The launcher uses a separate database and private receipt directory; it does not modify the contest database. Only approved synthetic image contents can pass its external-image gate. To enable the optional Restricted Drive reader after the owner grants access and you configure a local service account, follow the [runbook](AURA/docs/RUNBOOK.md) and [local setup guide](AURA/docs/JUDGE_LOCAL_SETUP.md). The service-account JSON must stay outside this repository. Optional local evidence boxes: run `.\tools\Get-TesseractData.ps1`, then prepare the launcher with `-EnableEvidenceLocalization`, and the receipt viewer will outline the merchant, identifier, date and total using on-machine Tesseract OCR. The boxes are a reading aid and are off by default (see the [runbook](AURA/docs/RUNBOOK.md)). For hosting configuration and database backup/migration, use the [deployment guide](AURA/docs/DEPLOYMENT.md).
 
 ```powershell
 dotnet build AURA.csproj -c Release

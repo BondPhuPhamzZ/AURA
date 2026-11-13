@@ -2,6 +2,17 @@
 
 This is a **source-and-evidence assessment**, not a certification or a statement that the public host runs this commit. The dated proposal, build log and five-slide deck remain the contest submission snapshot. See the [post-contest submission addendum](../submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) for a short outward-facing update.
 
+## Source update — 14 November 2026
+
+**Local OCR evidence boxes (stage 2, plan item P1). Not published.**
+
+- **What reviewers see:** the receipt dialog can outline the merchant, the canonical identifier, the printed date and the final-total row, using in-process Tesseract 5.2.0 with SHA-256-pinned `vie+eng` data.
+- **When it runs:** it is off by default, takes effect only on a Development host, and runs on demand. Results are cached only in memory. It writes nothing to SQL, needs no migration, and does not touch the worker, prompt, facts, policy or decisions.
+- **When it draws nothing:** matching is fail-closed. A value must appear exactly once, and the total must share a row with its verbatim label. Nothing is drawn for rotated (EXIF) images or for requests without AI facts.
+- **Development-set smoke:** real OCR on the 15 synthetic v3.1 receipts placed 57/57 locatable fields. It did not draw the destroyed total (R3-06), the destroyed receipt number (R3-08) or the absent identifier (R3-07). This is not an accuracy result; independent annotation and an unseen set (stage 3) remain open.
+- **Tests:** Release and Debug each passed **451/451** with LocalDB and OCR integration enabled; frontend tests passed **15/15**.
+- **Hosting impact:** the publish output grows by about 13 MB of native DLLs, which are never loaded unless the feature is enabled on Development.
+
 ## Source update — 13 November 2026
 
 This update touches source and tests only. It has not been published to SmartASP and is not a new model, accuracy or load result.

@@ -1,5 +1,34 @@
 # Trạng thái AURA ngày 28/10/2026
 
+> **Cập nhật source 14/11/2026 — khung bằng chứng OCR cục bộ (giai đoạn 2), chưa publish.**
+> Nằm trên cùng nhánh/PR #1. Người dùng chọn Tesseract local và **chưa** làm quét malware.
+>
+> - **Đã làm:** trong dialog xem ảnh, người duyệt có thể thấy khung SVG đánh dấu đơn vị
+>   bán, mã định danh, ngày in và hàng tổng thanh toán. Chi tiết và gate xem
+>   [kế hoạch](EVIDENCE_LOCALIZATION_PLAN.md).
+> - **Điều kiện chạy:**
+>   - mặc định tắt, chỉ chạy trên host Development;
+>   - OCR Tesseract 5.2.0 chạy ngay trên máy, theo yêu cầu, với dữ liệu ngôn ngữ ghim
+>     SHA-256;
+>   - không lưu xuống DB, không có migration, không đổi worker/prompt/facts/quyết định.
+> - **Fail-closed:**
+>   - giá trị phải xuất hiện đúng một lần;
+>   - tổng tiền phải nằm cùng hàng với nhãn tổng in nguyên văn;
+>   - ảnh có EXIF xoay hoặc hồ sơ không có facts AI thì không vẽ.
+> - **Kiểm thử:** Release và Debug mỗi bản **451/451** khi bật LocalDB integration và OCR
+>   integration; frontend **15/15**.
+>   - Smoke OCR thật trên 15 ảnh synthetic v3.1: 57/57 trường có thể định vị được vẽ;
+>     tổng bị phá (R3-06), số biên nhận bị phá (R3-08) và ca không có mã (R3-07) đều
+>     không bị vẽ.
+>   - Đây là tập phát triển đã xem khi làm, không phải số liệu độ chính xác.
+>   - Kiểm bằng mắt trên LocalDB tạm (desktop, kích thước gốc, mobile): khung trùng đúng
+>     chữ. Lần kiểm đầu phát hiện SVG bị ẩn do dùng `hidden` sai cách; đã sửa và thêm test.
+> - **Còn mở:**
+>   - giai đoạn 3: annotation độc lập, tập ảnh mới chưa từng chạy, đo tỉ lệ khoanh
+>     nhầm/bỏ sót;
+>   - quét malware;
+>   - hosting vẫn tắt tính năng này.
+
 > **Cập nhật source 13/11/2026 — chưa publish SmartASP.** Thay đổi nằm trên nhánh
 > `codex/drive-pipeline-hardening` (PR #1 vào `master`). Site live vẫn là bản 28/10.
 > Đây không phải benchmark model, accuracy hay load test mới.

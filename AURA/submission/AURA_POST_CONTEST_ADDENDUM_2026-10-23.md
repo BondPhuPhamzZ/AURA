@@ -1,5 +1,14 @@
 # AURA post-contest status addendum — 23 October 2026
 
+**14 November source update (not yet published; same PR #1):**
+
+- **What changed:** an optional local Tesseract OCR step can outline the merchant, identifier, printed date and final-total row inside the reviewer's receipt viewer. It is a reading aid only; facts, policy and decisions are unchanged.
+- **Where it runs:** it is off by default, runs only on a Development host, keeps images on the machine, and writes nothing to the database.
+- **When it draws nothing:** if a field is ambiguous, destroyed or rotated, no box is drawn.
+- **Development-set smoke:** on the 15 synthetic v3.1 receipts, 57/57 locatable fields were placed and the 3 destroyed or absent fields were not drawn. This is not an accuracy claim; independent annotation on unseen images is still required.
+- **Tests:** 451/451 with LocalDB and OCR integration enabled.
+- **Not built:** malware scanning, at the owner's choice.
+
 **13 November source update (not yet published to SmartASP; PR #1 into `master`):**
 
 - **Database reads:** each screen now filters in SQL. Previously every tab, poll and export loaded the whole receipt table.
