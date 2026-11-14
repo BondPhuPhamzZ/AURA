@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Private personal notes must stay outside Git, including accidental in-repo copies.
+phan_bien/
+phanbien/
