@@ -81,7 +81,7 @@ public sealed class UiContractTests
         Assert.Contains("isPlainActivation(event)", viewer, StringComparison.Ordinal);
         Assert.Contains("Applicant\\/Receipt\\/", viewer, StringComparison.Ordinal);
         // The only request the viewer makes is the opt-in, read-only evidence-regions GET.
-        Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(viewer, @"fetch\(").Count);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(viewer, @"fetch\("));
         Assert.Contains("fetch(evidenceTarget", viewer, StringComparison.Ordinal);
         Assert.Contains("validRegions(await response.json())", viewer, StringComparison.Ordinal);
         Assert.DoesNotContain("innerHTML", viewer, StringComparison.Ordinal);
