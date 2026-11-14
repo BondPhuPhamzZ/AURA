@@ -618,7 +618,9 @@ public sealed class ReceiptSemanticValidatorTests
             utcNow: new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc));
 
         Assert.Equal("ESCALATE_FACT", result.Status);
-        Assert.Contains("180,286", result.Reason, StringComparison.Ordinal);
+        // Amounts in reasons use Vietnamese grouping on every host (see DisplayFormat).
+        Assert.Contains("tổng tiền 180.286 VND không khớp số tiền khai báo 183.114 VND", result.Reason,
+            StringComparison.Ordinal);
     }
 
     [Fact]
