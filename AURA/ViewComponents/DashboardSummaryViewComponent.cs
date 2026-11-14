@@ -21,8 +21,12 @@ public sealed class DashboardSummaryViewComponent : ViewComponent
     {
         try
         {
-            var requests = await _repository.GetAllRequestsAsync();
-            return View(DashboardSummaryProjector.Project(requests, DateTime.UtcNow, year, month));
+            // The dashboard shows one Vietnam calendar year (monthly table) and a month inside it.
+            var utcNow = DateTime.UtcNow;
+            var (targetYear, _) = ReportingPeriod.ResolveOrCurrent(year, month, utcNow);
+            var (fromUtc, toUtc) = ReportingPeriod.YearUtcRange(targetYear);
+            var requests = await _repository.GetRequestsCreatedBetweenAsync(fromUtc, toUtc);
+            return View(DashboardSummaryProjector.Project(requests, utcNow, year, month));
         }
         catch (Exception exception)
         {

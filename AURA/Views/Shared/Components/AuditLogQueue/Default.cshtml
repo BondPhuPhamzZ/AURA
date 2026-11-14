@@ -72,11 +72,11 @@
                             .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                         var actionLabel = ActionLabel(entry.Log.Action);
                         var localTimestamp = AURA.Services.VietnamTime.FromUtc(entry.Log.Timestamp);
-                        <tr class="audit-data-row" data-audit-id="@entry.Log.RequestId" data-audit-date="@localTimestamp.ToString("yyyy-MM-dd")">
+                        <tr class="audit-data-row" data-audit-id="@entry.Log.RequestId" data-audit-date="@localTimestamp.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">
                             <td data-label="Thời gian" class="audit-time-cell">
                                 <time datetime="@entry.Log.Timestamp.ToString("O")">
-                                    <span>@localTimestamp.ToString("dd/MM/yyyy")</span>
-                                    <small>@localTimestamp.ToString("HH:mm:ss")</small>
+                                    <span>@AURA.Services.DisplayFormat.Date(localTimestamp)</span>
+                                    <small>@AURA.Services.DisplayFormat.Time(localTimestamp)</small>
                                 </time>
                             </td>
                             <td data-label="Mã đơn" class="cell-code">@entry.Log.RequestId[..Math.Min(8, entry.Log.RequestId.Length)]</td>
@@ -100,7 +100,7 @@
                                 @if (request is not null && !string.IsNullOrWhiteSpace(request.ImageUrl))
                                 {
                                     <a href="@request.ImageUrl" target="_blank" rel="noopener">@request.OriginalFileName</a>
-                                    <div><small>@request.ClaimedAmount.ToString("N0") VND</small></div>
+                                    <div><small>@AURA.Services.DisplayFormat.Vnd(request.ClaimedAmount)</small></div>
                                     <div class="audit-submitter">
                                         <strong>@request.SubmitterDisplayName</strong>
                                         <small>@request.SubmitterCode · @request.SubmitterDepartment</small>
@@ -129,7 +129,7 @@
                                                 .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                                             <li>
                                                 <div class="audit-timeline-heading">
-                                                    <time datetime="@timelineEvent.Timestamp.ToString("O")">@AURA.Services.VietnamTime.FromUtc(timelineEvent.Timestamp).ToString("dd/MM/yyyy HH:mm:ss")</time>
+                                                    <time datetime="@timelineEvent.Timestamp.ToString("O")">@AURA.Services.DisplayFormat.DateTime(AURA.Services.VietnamTime.FromUtc(timelineEvent.Timestamp))</time>
                                                     <strong>@ActionLabel(timelineEvent.Action)</strong>
                                                 </div>
                                                 @if (eventParts.Length > 0)

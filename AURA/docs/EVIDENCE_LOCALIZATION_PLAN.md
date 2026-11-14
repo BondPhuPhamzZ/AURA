@@ -1,5 +1,7 @@
 # AURA — Kế hoạch định vị evidence trên ảnh — 13/10/2026
 
+> **Smoke bổ sung 14/11:** facts AI đã lưu của R3-01/06/13/14 cho 4/3/4/4 trường định vị, R3-06 không có khung tổng. Đây là kiểm chức năng trên dữ liệu đã biết, không thay lần đo khóa P3. Xem [báo cáo viewer 14/11](EVIDENCE_VIEWER_VALIDATION_2026-11-14.md).
+
 ## Kết luận
 
 Tính năng cho người duyệt xem ảnh ngay trong AURA và bấm vào một field để thấy vùng evidence tương ứng là **khả thi** và phù hợp với mục tiêu minh bạch. Tuy nhiên baseline hiện tại chỉ có text facts/evidence; chưa có tọa độ, OCR token box hoặc ground truth vùng ảnh. Vì vậy có thể làm prototype sau submission freeze, nhưng chưa đủ dữ liệu để tuyên bố bounding-box accuracy hoặc đưa vùng khoanh vào quyết định tự động.
@@ -80,11 +82,63 @@ Tối thiểu nên annotate bốn field quan trọng trên tập development hi�
 
 ### P0 — sau submission freeze
 
+> **Đã triển khai trong source 13/11/2026, chưa publish.** `wwwroot/js/receipt-viewer.js` mở
+> `<dialog>` ngay trên trang; dialog nằm ngoài vùng fragment được poll. Ảnh hiển thị vừa khung
+> hoặc kích thước gốc, có nút mở tab mới và đóng (Esc, click nền hoặc nút Đóng); focus trả về
+> link đã bấm. Dialog dùng lại route `NoStore` hiện có và chỉ nhận URL ảnh cùng origin; ảnh
+> thiếu hoặc sai SHA-256 hiện thông báo. Click có phím bổ trợ và trình duyệt không hỗ trợ
+> dialog vẫn mở tab như cũ. Kiểm tra node + UI contract, cùng browser desktop/mobile trên
+> LocalDB tạm với fixture R3-01. Không vẽ vùng, không đổi extraction/policy.
+
 - Hiển thị ảnh lớn ngay trong modal/panel, không mở tab mới; vẫn dùng route ảnh hiện tại.
 - Giữ thumbnail/link dự phòng và không đổi extraction/policy.
 - Bổ sung test responsive, keyboard, screen-reader label và `NoStore`.
 
 ### P1 — prototype evidence overlay
+
+> **Đã triển khai trong source 14/11/2026, local và chưa publish.**
+>
+> - **Bật/tắt:** `EvidenceLocalization:Enabled` mặc định `false` và chỉ có hiệu lực trên
+>   host Development. Khi tắt, `GET /Evidence/Regions/{id}` trả 404 và DLL Tesseract
+>   không được nạp.
+> - **OCR:** dùng Tesseract 5.2.0 trong process, dữ liệu ngôn ngữ `vie+eng`
+>   (`tessdata_fast`, ghim commit và SHA-256 qua `tools/Get-TesseractData.ps1`). OCR chạy
+>   theo yêu cầu khi người duyệt mở ảnh, mỗi lần một trang, có timeout.
+> - **Không lưu xuống DB:** kết quả chỉ cache trong bộ nhớ theo hash ảnh, hash facts và
+>   phiên bản localizer. Không có migration, không đổi worker/prompt/facts/quyết định.
+>   Mục "JSON phụ" bên dưới vì vậy chưa cần.
+> - **Kiểm tra trước khi OCR:** ảnh phải khớp kích thước/SHA-256 đã ghi; hồ sơ không có
+>   facts AI thì bỏ qua OCR; ảnh có EXIF xoay thì không định vị. Log chỉ ghi loại lỗi.
+> - **Ghép chữ tất định, fail-closed:**
+>   - giá trị phải xuất hiện đúng một lần;
+>   - tổng tiền phải nằm cùng hàng với nhãn tổng in nguyên văn, nên dòng tổng bị phá
+>     không bị chuyển sang dòng tạm tính;
+>   - hàng được hiệu chỉnh theo độ nghiêng ảnh; so khớp không dấu để chịu được OCR đọc
+>     sai dấu.
+> - **Giao diện:** SVG overlay trong dialog xem ảnh, có bật/tắt, đúng ở cả chế độ vừa
+>   khung/kích thước gốc và trên mobile, bấm hai chiều giữa trường và khung, liệt kê
+>   lý do các trường "Không định vị được".
+> - **Smoke trên tập phát triển** (`AURA_RUN_OCR_INTEGRATION=1`, OCR thật trên 15 ảnh
+>   synthetic v3.1, facts lấy từ manifest): **57/57** trường có thể định vị đã được vẽ.
+>   R3-06 (dòng tổng bị phá), R3-08 (số biên nhận bị phá) và R3-07 (không có mã) đều
+>   **không** bị vẽ.
+>   - Hai lỗi phát hiện trên tập này đã được sửa: ngày bị OCR tách `05/1 0/2026`, và ảnh
+>     nghiêng ~2° (R3-12).
+>   - Vì đã nhìn tập này khi phát triển, đây **không phải** số liệu độ chính xác; gate P3
+>     bên dưới vẫn mở.
+>
+> Kiểm tra bằng mắt trên LocalDB tạm (R3-01 thẳng, R3-12 nghiêng, một ca privacy không có
+> facts): khung trùng đúng vị trí chữ, kể cả khi đổi chế độ xem và trên mobile.
+>
+> **Rà soát toàn bộ 14/11 (lần 3):**
+> - Endpoint thật trả khung cho cả 15 ảnh v3.1 (facts lấy từ manifest). Cả 57 khung được vẽ
+>   lại lên ảnh gốc và soát từng khung: mọi khung đúng tên đơn vị, dòng mã (R3-12 chọn đúng
+>   "Số biên nhận", không lấy "Số chứng từ" ngay bên dưới), dòng ngày và hàng tổng cuối;
+>   không khung nào rơi vào tạm tính.
+> - R3-06 (tổng bị phá), R3-07 (không có mã) và R3-08 (mã bị phá) đều bỏ qua đúng.
+> - Thẻ bên dưới ảnh nay cố định 4 thẻ theo thứ tự trường, kích thước bằng nhau (4/2/1 cột)
+>   và ghi rõ `OCR:` cho chữ OCR thô.
+> - Đây vẫn là tập phát triển; không thay phép đo khóa P3.
 
 - Thêm `EvidenceRegion` dạng JSON phụ, chưa migration nếu lưu cùng facts versioned; tốt hơn là cột/bảng riêng khi cần query/audit.
 - Chỉ định vị merchant, ngày, canonical identifier và final total.
@@ -98,6 +152,30 @@ Tối thiểu nên annotate bốn field quan trọng trên tập development hi�
 - Thêm audit cho version localizer, image hash và confidence; không dùng region để tự sửa facts.
 
 ### P3 — evaluation
+
+> **Công cụ đã sẵn sàng (14/11/2026); phép đo chính thức chưa chạy.**
+>
+> - **Công cụ đánh dấu** [`tools/evidence_annotation`](../tools/evidence_annotation/README.md):
+>   - chạy offline, có CSP chặn mọi kết nối mạng; ảnh không rời trình duyệt;
+>   - người đánh dấu vẽ khung hoặc chọn "không có / không đọc được" cho 4 trường, và nhập
+>     giá trị in trên ảnh;
+>   - xuất `annotations.json` (`aura-evidence-annotations-v1`) kèm SHA-256 từng ảnh, và hiện
+>     SHA-256 của chính file để khóa;
+>   - trường chưa trả lời được xuất là `unset`, nên không thể bị tính nhầm thành ca đối chứng âm.
+> - **Bộ đo opt-in** (`AURA_RUN_LOCALIZATION_EVAL=1`):
+>   - kiểm định file annotation trước khi OCR, kiểm SHA-256 từng ảnh và bỏ qua ảnh có EXIF xoay;
+>   - chạy OCR thật và phân loại từng trường: đúng (IoU ≥ 0,5), đặt nhầm, bỏ sót, bỏ qua đúng,
+>     hoặc vẽ khi không có;
+>   - tính recall, tỉ lệ khoanh nhầm và IoU trung bình; ghi báo cáo kèm SHA-256 annotation vào
+>     `test_kit/results/` (Git-ignored).
+> - **Gate đề xuất** (chủ dự án xác nhận trước lần chạy khóa):
+>   - ít nhất 30 ảnh chưa từng dùng khi phát triển, và ít nhất 5 ca đối chứng âm;
+>   - không có khung đặt nhầm ở `totalAmount`;
+>   - tỉ lệ khoanh nhầm ≤ 2% và recall ≥ 80% cho mỗi trường.
+> - **Đã kiểm tra đường ống:** một bộ 2 ảnh (R3-01, R3-06) với khung do trợ lý ước lượng bằng
+>   mắt chạy trọn vòng. Bộ này **không phải ground truth** và không được lưu.
+> - **Còn thiếu để kết luận:** một bộ ảnh mới chưa từng chạy, và một người khác người phát
+>   triển đánh dấu, khóa file rồi chạy bộ đo.
 
 - Khóa annotation trước chạy; một reviewer khác kiểm box/field.
 - Đo region recall theo field, IoU, false-highlight rate, missing-region rate và thời gian reviewer.
@@ -114,6 +192,14 @@ Tối thiểu nên annotate bốn field quan trọng trên tập development hi�
 - Route ảnh/overlay phải có authorization trước khi xem xét pilot nhiều người; `NoStore` một mình chưa thay authentication/RBAC.
 
 ## Quyết định hiện tại
+
+> **Cập nhật 14/11/2026:**
+> - P0 (xem ảnh trong trang) và P1 (overlay OCR local) đã có trong source, chưa publish.
+> - P1 chỉ dùng **local trên Development với ảnh synthetic**; hosting giữ tắt.
+> - P2 (typed quality issues) vẫn mở.
+> - P3 đã có công cụ đánh dấu, bộ đo và gate đề xuất, nhưng **chưa có lần đo khóa** trên bộ
+>   ảnh chưa từng chạy với người đánh dấu độc lập. Chưa đủ cơ sở để bật overlay khi demo chính
+>   thức hay claim explainability.
 
 - **GO** cho thiết kế/prototype sau khi freeze submission.
 - **NO-GO** cho việc sửa pipeline hoặc prompt ngay trước demo.

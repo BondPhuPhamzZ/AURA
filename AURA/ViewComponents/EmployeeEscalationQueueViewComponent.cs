@@ -9,6 +9,9 @@ namespace AURA.ViewComponents;
 
 public sealed class EmployeeEscalationQueueViewComponent : ViewComponent
 {
+    private const int RecentDriveDays = 1;
+    private const int RecentDriveLimit = 20;
+
     private readonly IReimbursementRepository _repository;
     private readonly ILogger<EmployeeEscalationQueueViewComponent> _logger;
     private readonly IWebHostEnvironment _environment;
@@ -28,9 +31,13 @@ public sealed class EmployeeEscalationQueueViewComponent : ViewComponent
     {
         try
         {
-            var items = SelectRows(await _repository.GetAllRequestsAsync(),
-                _environment.IsDevelopment() && _drive.Enabled, DateTime.UtcNow);
-            return View(items);
+            var utcNow = DateTime.UtcNow;
+            var showDrive = _environment.IsDevelopment() && _drive.Enabled;
+            var candidates = await _repository.GetPendingHandoffsAsync();
+            if (showDrive)
+                candidates.AddRange(await _repository.GetRecentDriveRequestsAsync(
+                    utcNow.AddDays(-RecentDriveDays), RecentDriveLimit));
+            return View(SelectRows(candidates, showDrive, utcNow));
         }
         catch (Exception exception)
         {
@@ -49,9 +56,9 @@ public sealed class EmployeeEscalationQueueViewComponent : ViewComponent
         // Show the latest synthetic Drive jobs while they move through SQL and AI.
         // Keep this local-only; public hosting has no Drive intake or identity boundary.
         var recentDrive = showDrive
-                ? all.Where(x => x.SubmitterCode == "DRIVE-SANDBOX" &&
-                        !x.IsForwardedToManager && x.CreatedAt >= utcNow.AddDays(-1))
-                    .OrderByDescending(x => x.QueuedAt).Take(20)
+                ? all.Where(x => x.SubmitterCode == DriveSandboxWorker.SubmitterCode &&
+                        !x.IsForwardedToManager && x.CreatedAt >= utcNow.AddDays(-RecentDriveDays))
+                    .OrderByDescending(x => x.QueuedAt).Take(RecentDriveLimit)
                 : Enumerable.Empty<ReimbursementRequest>();
         return escalations.Concat(recentDrive).DistinctBy(x => x.Id)
             .OrderByDescending(x => x.QueuedAt).ToList();

@@ -68,8 +68,8 @@ public static class ManagerOperationsReportExporter
 
     private static string[][] BuildRows(IEnumerable<ReimbursementRequest> requests, int year, int month)
     {
-        if (year is < 2000 or > 2100) throw new ArgumentOutOfRangeException(nameof(year));
-        if (month is < 1 or > 12) throw new ArgumentOutOfRangeException(nameof(month));
+        if (!ReportingPeriod.IsValidYear(year)) throw new ArgumentOutOfRangeException(nameof(year));
+        if (!ReportingPeriod.IsValidMonth(month)) throw new ArgumentOutOfRangeException(nameof(month));
 
         var selected = requests
             .Select(request => new ProjectedRequest(request, VietnamTime.FromUtc(request.CreatedAt),

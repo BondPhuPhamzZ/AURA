@@ -2,6 +2,8 @@
 
 Đây là prototype độc lập, không có dependency, dùng để thử nghiệm evidence localization hướng tới reviewer của AURA. Prototype **không được nối vào extraction, policy, database hoặc route ảnh hóa đơn live**.
 
+> Từ 14/11/2026, ứng dụng có phiên bản chạy thật trong dialog xem ảnh: OCR Tesseract cục bộ, mặc định tắt, chỉ chạy trên Development. Phiên bản đó dùng lại các nguyên tắc ở đây (tọa độ `0..1000`, không tự vẽ khi không chắc chắn, bật/tắt không đổi quyết định). Prototype này vẫn giữ nguyên làm tài liệu tham chiếu. Xem `docs/EVIDENCE_LOCALIZATION_PLAN.md`.
+
 ## Prototype chứng minh được gì
 
 - Ảnh nguồn được hiển thị nguyên vẹn; vùng evidence được vẽ bằng SVG overlay.

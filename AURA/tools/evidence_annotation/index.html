@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Offline tool: images stay in this browser tab; nothing is uploaded. -->
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'none'; script-src 'self'; style-src 'self'; img-src blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+    <title>AURA — Đánh dấu vùng bằng chứng</title>
+    <link rel="stylesheet" href="annotation.css">
+</head>
+<body>
+<header class="toolbar">
+    <h1>Đánh dấu vùng bằng chứng (giai đoạn 3)</h1>
+    <label>Người đánh dấu <input id="annotator" maxlength="60" placeholder="vai trò hoặc viết tắt, không ghi tên đầy đủ"></label>
+    <label>Ghi chú bộ ảnh <input id="note" maxlength="200" placeholder="ví dụ: bộ unseen synthetic 11/2026"></label>
+    <label class="file-button">Chọn ảnh <input id="images" type="file" accept="image/jpeg,image/png" multiple></label>
+    <label class="file-button">Mở annotations.json <input id="import" type="file" accept="application/json,.json"></label>
+    <button id="export" type="button">Xuất annotations.json</button>
+</header>
+<p id="status" class="status" role="status" aria-live="polite">Chọn ảnh để bắt đầu. Ảnh chỉ mở trong tab này, không tải lên đâu cả.</p>
+<main class="layout">
+    <nav aria-label="Danh sách ảnh"><ol id="imageList" class="image-list"></ol></nav>
+    <section class="stage-wrap" aria-label="Ảnh đang đánh dấu">
+        <div id="stage" class="stage" hidden>
+            <img id="photo" alt="Ảnh đang đánh dấu">
+            <svg id="overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"></svg>
+        </div>
+        <p id="drawHint" class="hint"></p>
+    </section>
+    <aside id="panel" class="panel" hidden>
+        <fieldset class="facts">
+            <legend>Giá trị in trên chứng từ</legend>
+            <label>Tên đơn vị bán <input data-fact="merchantName"></label>
+            <label>Mã định danh <input data-fact="identifier"></label>
+            <label>Loại mã
+                <select data-fact="identifierField">
+                    <option value="invoiceNumber">Số hóa đơn</option>
+                    <option value="receiptNumber">Số biên nhận / Bill No</option>
+                    <option value="transactionReference">Mã giao dịch</option>
+                    <option value="orderId">Mã đơn hàng</option>
+                    <option value="bookingId">Mã chuyến / đặt chỗ</option>
+                    <option value="documentNumber">Số chứng từ</option>
+                </select>
+            </label>
+            <label>Ngày in nguyên văn <input data-fact="dateEvidence" placeholder="05/10/2026"></label>
+            <label>Tổng tiền (số, VND) <input data-fact="totalAmount" type="number" min="1" step="1"></label>
+            <label>Dòng tổng in nguyên văn <input data-fact="totalEvidence" placeholder="TỔNG THANH TOÁN 241.920 đ"></label>
+        </fieldset>
+        <div id="fields"></div>
+        <p id="missing" class="missing"></p>
+    </aside>
+</main>
+<details class="output">
+    <summary>Xem JSON sẽ xuất</summary>
+    <textarea id="preview" readonly rows="12"></textarea>
+</details>
+<script src="annotation-core.js"></script>
+<script src="annotation-app.js"></script>
+</body>
+</html>

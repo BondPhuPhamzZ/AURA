@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using AURA.Models;
+using AURA.Services;
 using System.Threading.Tasks;
 
 namespace AURA.Controllers;
@@ -60,13 +61,8 @@ public class HomeController : Controller
         return ViewComponent("DashboardSummary", new { year = period.Year, month = period.Month });
     }
 
-    private static (int? Year, int? Month) ParseDashboardPeriod(string? value)
-    {
-        var parts = value?.Split('-', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        return parts is { Length: 2 } && int.TryParse(parts[0], out var year) &&
-            int.TryParse(parts[1], out var month) && year is >= 2000 and <= 2100 && month is >= 1 and <= 12
-            ? (year, month) : (null, null);
-    }
+    private static (int? Year, int? Month) ParseDashboardPeriod(string? value) =>
+        ReportingPeriod.TryParseMonthValue(value, out var year, out var month) ? (year, month) : (null, null);
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()

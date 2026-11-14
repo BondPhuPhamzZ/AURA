@@ -21,6 +21,8 @@ tests/
 test_kit/
 .git/
 .github/
+**/phan_bien/
+**/phanbien/
 *.user
 *.suo
 *.mdf

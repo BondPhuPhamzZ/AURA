@@ -69,7 +69,7 @@ public static class PolicyDecisionEngine
         if (claimedAmount <= 0)
             factProblems.Add("số tiền đề nghị hoàn ứng không hợp lệ");
         else if (facts.TotalAmount.HasValue && decimal.Round(facts.TotalAmount.Value, 0) != decimal.Round(claimedAmount, 0))
-            factProblems.Add($"tổng tiền {facts.TotalAmount.Value:N0} VND không khớp số tiền khai báo {claimedAmount:N0} VND");
+            factProblems.Add($"tổng tiền {DisplayFormat.Vnd(facts.TotalAmount.Value)} không khớp số tiền khai báo {DisplayFormat.Vnd(claimedAmount)}");
 
         if (string.IsNullOrWhiteSpace(facts.MerchantName))
             factProblems.Add("thiếu tên đơn vị bán hàng");
@@ -205,17 +205,19 @@ public static class PolicyDecisionEngine
         if (facts.TotalAmount!.Value > AutoApprovalLimitVnd)
         {
             return ("ESCALATE_AUTHORITY",
-                $"Tổng tiền {facts.TotalAmount.Value:N0} VND vượt hạn mức tự động {AutoApprovalLimitVnd:N0} VND.",
-                $"Khoản chi {facts.TotalAmount.Value:N0} VND vượt hạn mức tự động {AutoApprovalLimitVnd:N0} VND. Quản lý có đồng ý chuyển hồ sơ lên cấp có thẩm quyền không? [CÓ/KHÔNG]");
+                $"Tổng tiền {DisplayFormat.Vnd(facts.TotalAmount.Value)} vượt hạn mức tự động {DisplayFormat.Vnd(AutoApprovalLimitVnd)}.",
+                $"Khoản chi {DisplayFormat.Vnd(facts.TotalAmount.Value)} vượt hạn mức tự động {DisplayFormat.Vnd(AutoApprovalLimitVnd)}. Quản lý có đồng ý chuyển hồ sơ lên cấp có thẩm quyền không? [CÓ/KHÔNG]");
         }
 
         return ("AUTO_APPROVE",
-            $"Hóa đơn đủ dữ kiện, đúng số tiền, trong hạn 90 ngày, không có hạng mục cấm và không vượt {AutoApprovalLimitVnd:N0} VND.",
+            $"Hóa đơn đủ dữ kiện, đúng số tiền, trong hạn 90 ngày, không có hạng mục cấm và không vượt {DisplayFormat.Vnd(AutoApprovalLimitVnd)}.",
             string.Empty);
     }
 
+    public const string EscalationStatusPrefix = "ESCALATE_";
+
     public static bool IsEscalation(string? status) =>
-        status?.StartsWith("ESCALATE_", StringComparison.Ordinal) == true;
+        status?.StartsWith(EscalationStatusPrefix, StringComparison.Ordinal) == true;
 
     private static (string, string, string) Fact(string reason, string question) =>
         ("ESCALATE_FACT", reason, question);

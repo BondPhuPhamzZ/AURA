@@ -1,0 +1,16 @@
+@model AURA.ViewModels.ReceiptSubmitterInput
+@* Validation rules come from ReceiptSubmitterInput; asp-for renders maxlength and data-val-* from them. *@
+<div class="submitter-context-grid" aria-label="Ngữ cảnh người gửi">
+    <div class="submitter-field">
+        <label asp-for="SubmitterCode" class="form-label fw-semibold"></label>
+        <input asp-for="SubmitterCode" class="form-control submitter-input" />
+    </div>
+    <div class="submitter-field">
+        <label asp-for="SubmitterDisplayName" class="form-label fw-semibold"></label>
+        <input asp-for="SubmitterDisplayName" class="form-control submitter-input" />
+    </div>
+    <div class="submitter-field">
+        <label asp-for="SubmitterDepartment" class="form-label fw-semibold"></label>
+        <input asp-for="SubmitterDepartment" class="form-control submitter-input" />
+    </div>
+</div>

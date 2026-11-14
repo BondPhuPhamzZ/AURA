@@ -1,5 +1,15 @@
 # AURA Test Matrix
 
+> **Checkpoint 14/11 (PR #1, chưa publish):** Release/Debug **460/460** mỗi bản khi bật LocalDB,
+> OCR và PowerShell 5.1/7 integration; frontend **19/19**. Bổ sung test cho:
+> - validation theo model, định dạng VND/ngày, escape thuộc tính;
+> - truy vấn SQL có lọc và SLA cửa sổ quản lý;
+> - dialog xem ảnh và khung OCR fail-closed;
+> - bộ đo annotation giai đoạn 3.
+>
+> Kiểm tra thủ công từng bước: [MANUAL_FEATURE_TEST_CHECKLIST.md](MANUAL_FEATURE_TEST_CHECKLIST.md).
+> Các mốc bên dưới giữ nguyên theo ngày.
+
 > **Checkpoint 26/10:** full Debug/Release 371/371 mỗi bản với LocalDB và
 > PowerShell integration bật. Bao phủ retention SQL/ảnh/audit, backup UTC PS5.1/7,
 > startup drain, concurrency/rollback và egress approval trước HTTP. V3.1 qua gate

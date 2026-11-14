@@ -26,6 +26,62 @@ namespace AURA.Services
                 .ToListAsync();
         }
 
+        public Task<List<ReimbursementRequest>> GetManagerQueueAsync()
+        {
+            return _context.ReimbursementRequests
+                .AsNoTracking()
+                .Where(x => x.IsForwardedToManager &&
+                    x.Status.StartsWith(PolicyDecisionEngine.EscalationStatusPrefix))
+                .OrderBy(x => x.ForwardedAt == null)
+                .ThenBy(x => x.ForwardedAt)
+                .ThenBy(x => x.CreatedAt)
+                .ToListAsync();
+        }
+
+        public Task<List<ReimbursementRequest>> GetPendingHandoffsAsync()
+        {
+            return _context.ReimbursementRequests
+                .AsNoTracking()
+                .Where(x => !x.IsForwardedToManager &&
+                    x.Status.StartsWith(PolicyDecisionEngine.EscalationStatusPrefix))
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+        }
+
+        public Task<List<ReimbursementRequest>> GetRecentDriveRequestsAsync(DateTime sinceUtc, int limit)
+        {
+            return _context.ReimbursementRequests
+                .AsNoTracking()
+                .Where(x => x.SubmitterCode == DriveSandboxWorker.SubmitterCode && !x.IsForwardedToManager &&
+                    x.CreatedAt >= sinceUtc)
+                .OrderByDescending(x => x.QueuedAt)
+                .Take(Math.Clamp(limit, 1, 500))
+                .ToListAsync();
+        }
+
+        public Task<List<ReimbursementRequest>> GetRequestsWithAuditSinceAsync(DateTime sinceUtc)
+        {
+            // A correlated IN subquery, not a client-side ID list: EF Core 8 would send an ID
+            // collection through OPENJSON, which needs SQL compatibility level 130 or later.
+            var auditedIds = _context.AuditLogs
+                .Where(log => log.Timestamp >= sinceUtc)
+                .Select(log => log.RequestId);
+            return _context.ReimbursementRequests
+                .AsNoTracking()
+                .Where(x => auditedIds.Contains(x.Id))
+                .ToListAsync();
+        }
+
+        public Task<List<ReimbursementRequest>> GetRequestsCreatedBetweenAsync(DateTime fromUtc, DateTime toUtc)
+        {
+            if (toUtc <= fromUtc) throw new ArgumentOutOfRangeException(nameof(toUtc));
+            return _context.ReimbursementRequests
+                .AsNoTracking()
+                .Where(x => x.CreatedAt >= fromUtc && x.CreatedAt < toUtc)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+        }
+
         public async Task AddRequestWithAuditAsync(ReimbursementRequest request, string action, string details)
         {
             await _context.ReimbursementRequests.AddAsync(request);

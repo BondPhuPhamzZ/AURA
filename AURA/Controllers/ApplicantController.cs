@@ -2,6 +2,7 @@ using AURA.Interfaces;
 using AURA.Models;
 using AURA.Options;
 using AURA.Services;
+using AURA.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -94,9 +95,7 @@ public sealed class ApplicantController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ForwardAllToManager()
     {
-        var pending = (await _repository.GetAllRequestsAsync())
-            .Where(x => !x.IsForwardedToManager && PolicyDecisionEngine.IsEscalation(x.Status))
-            .ToList();
+        var pending = await _repository.GetPendingHandoffsAsync();
 
         var forwardedAt = DateTime.UtcNow;
         foreach (var request in pending)
@@ -139,10 +138,13 @@ public sealed class ApplicantController : Controller
     [ValidateAntiForgeryToken]
     [EnableRateLimiting("receipt-intake")]
     public async Task<IActionResult> UploadReceipt(IFormFile? receiptFile, decimal? claimedAmount,
-        string? submitterCode, string? submitterDisplayName, string? submitterDepartment,
+        ReceiptSubmitterInput submitter,
         [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,
         CancellationToken cancellationToken)
     {
+        // Field rules are declared once on ReceiptSubmitterInput; the form renders them via tag helpers.
+        if (!ModelState.IsValid) return BadRequest(new { error = FirstModelError() });
+
         var preliminaryError = ReceiptAttachmentPolicy.ValidateMetadata(receiptFile?.FileName,
             receiptFile?.ContentType, receiptFile?.Length ?? 0, _storageOptions.MaxFileSizeMb);
         if (preliminaryError is not null) return BadRequest(new { error = preliminaryError });
@@ -159,8 +161,8 @@ public sealed class ApplicantController : Controller
         {
             var sourceKey = ReceiptIntakeService.CreateManualIdempotencySourceKey(idempotencyKey);
             request = await _intake.AcceptAsync(new ReceiptIntakeInput(bytes, file.FileName, file.ContentType,
-                claimedAmount.GetValueOrDefault(), submitterCode, submitterDisplayName, submitterDepartment,
-                sourceKey),
+                claimedAmount.GetValueOrDefault(), submitter.SubmitterCode, submitter.SubmitterDisplayName,
+                submitter.SubmitterDepartment, sourceKey),
                 cancellationToken);
         }
         catch (ReceiptQueueCapacityException exception)
@@ -209,4 +211,10 @@ public sealed class ApplicantController : Controller
         return Json(ReimbursementResultDto.FromRequest(request));
     }
 
+    private string FirstModelError() =>
+        ModelState.Values
+            .SelectMany(entry => entry.Errors)
+            .Select(error => error.ErrorMessage)
+            .FirstOrDefault(message => !string.IsNullOrWhiteSpace(message))
+        ?? "Dữ liệu gửi lên không hợp lệ.";
 }
