@@ -2,6 +2,15 @@
 
 > **Checkpoint bổ sung 14/11:** [kiểm viewer với bốn hồ sơ synthetic đã lưu](../docs/EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). Profile cũ thiếu công tắc OCR đã được cập nhật; R3-06 không khoanh tổng bị phá. Đây là functional smoke, không thay số liệu thi hay phép đo P3 độc lập. Chưa publish PR #1.
 
+**14 November follow-up (same PR #1, not yet merged or published):**
+
+- **Viewer cards:** the four evidence cards below the receipt now keep a fixed field order and equal sizes (4, 2 or 1 columns by screen width). Raw OCR text is labelled `OCR:`.
+- **Dialog race:** a late close event could clear a just-reopened image; this is fixed.
+- **Amounts in reasons:** policy-generated reasons now write amounts as `1.050.000 VND` on every host. Records saved before this change keep their original text.
+- **Box review:** all 57 boxes on the 15 development receipts were checked by eye and sit on the correct text; no box lands on a subtotal.
+- **Commit attribution:** a commit hook and a GitHub workflow now reject AI co-author or attribution lines.
+- **Tests:** 460/460 with LocalDB, OCR and PowerShell 5.1/7 integration enabled; frontend 19/19.
+
 **14 November source update (not yet published; same PR #1):**
 
 - **What changed:** an optional local Tesseract OCR step can outline the merchant, identifier, printed date and final-total row inside the reviewer's receipt viewer. It is a reading aid only; facts, policy and decisions are unchanged.

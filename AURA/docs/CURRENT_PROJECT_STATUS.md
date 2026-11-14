@@ -1,5 +1,36 @@
 # Trạng thái AURA ngày 28/10/2026
 
+> **Cập nhật 14/11/2026 (lần 3) — chỉnh thẻ vùng bằng chứng, rà soát khung và chặn ghi công AI; chưa merge/publish.**
+>
+> - **Thẻ vùng bằng chứng** trong dialog xem ảnh:
+>   - luôn đúng 4 thẻ theo thứ tự cố định Đơn vị bán → Mã → Ngày → Tổng, kể cả thẻ "Không
+>     định vị được";
+>   - thẻ bằng nhau cả rộng lẫn cao: 4 cột trên desktop, 2×2 trên tablet, 1 cột trên mobile;
+>     chữ ngắt ở khoảng trắng hoặc gạch nối;
+>   - chữ OCR thô có tiền tố `OCR:` để không bị hiểu nhầm là dữ kiện AI.
+>
+>   Đo trên trình duyệt: desktop 4 × 226×73 px, tablet 4 × 344×73 px, mobile 4 × 319×73 px,
+>   không cuộn ngang.
+> - **Sửa race của dialog:** một sự kiện `close` tới muộn có thể xoá ảnh của lần mở kế tiếp.
+>   Đã tái hiện có kiểm soát và sửa bằng cách bỏ qua `close` khi dialog đã mở lại.
+> - **Lý do do luật C# sinh** (vượt hạn mức, lệch số tiền) nay dùng dấu chấm phân nhóm, ví
+>   dụ `1.050.000 VND`, trên mọi host. Hồ sơ đã lưu trước bản này giữ nguyên chuỗi cũ. Một
+>   test cũ ngầm phụ thuộc culture en-US đã được sửa.
+> - **Rà soát khung bằng mắt:** vẽ cả 57 khung lên 15 ảnh v3.1 (facts lấy từ manifest). Mọi
+>   khung nằm đúng tên đơn vị, dòng mã, dòng ngày và hàng tổng cuối, không lần nào rơi vào
+>   tạm tính. R3-06, R3-07, R3-08 bỏ qua đúng. Đây vẫn là tập phát triển, không thay phép
+>   đo khóa P3.
+> - **Chặn ghi công AI trong commit:**
+>   - hook `.githooks/commit-msg` (bật bằng `git config core.hooksPath .githooks`);
+>   - workflow `.github/workflows/commit-attribution.yml` quét mọi push và PR;
+>   - quy tắc ghi trong `CONTRIBUTING.md`.
+>
+>   Mọi nhánh, tag và PR trên GitHub đều không có dòng co-author; API Contributors chỉ còn
+>   chủ dự án. Commit cũ `41b90e2` không còn thuộc nhánh nào nhưng GitHub vẫn lưu, và ô
+>   Contributors ở trang repo là bộ đệm.
+> - **Kiểm thử:** Release và Debug mỗi bản **460/460** khi bật LocalDB, OCR và PowerShell
+>   5.1/7 integration; frontend **19/19**; build 0 cảnh báo; EF không có thay đổi model.
+
 > **Checkpoint 14/11 — kiểm viewer với facts đã lưu:** đã xem 12 PNG do chủ dự án cung cấp. Profile local cũ thiếu `EvidenceLocalization`; đã bật opt-in và kiểm bốn hồ sơ synthetic trên DB sao chép. R3-01/13/14 có bốn khung, R3-06 có ba khung và bỏ qua tổng. Chrome desktop/mobile, zoom/toggle/Esc và polling đã kiểm. Development tắt và Production đều chặn endpoint đúng thiết kế. Xem [báo cáo viewer 14/11](EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). P3, merge PR và publish mới vẫn mở.
 
 > **Cập nhật 14/11/2026 (lần 2) — công cụ cho giai đoạn 3 và checklist kiểm thử, chưa publish.**
