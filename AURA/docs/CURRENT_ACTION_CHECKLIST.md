@@ -33,7 +33,21 @@ Việc cần làm trước khi mở lại gate publish/pilot:
   - kiểm thử Release/Debug 451/451 với LocalDB + OCR integration, frontend 15/15; smoke trên tập phát triển 57/57 trường được vẽ, 3/3 trường bị phá hoặc không có đều không bị vẽ.
 
   Bật tính năng: `tools\Get-TesseractData.ps1` rồi chạy launcher với `-EnableEvidenceLocalization` ([runbook](RUNBOOK.md)).
-- [ ] Evidence localization giai đoạn 3: một người khác annotate tập ảnh mới chưa từng chạy và khóa trước khi đo; đo region recall, false highlight (đặc biệt số tiền) và thời gian người duyệt. Chưa bật overlay khi demo chính thức hoặc claim explainability trước khi đạt gate. Không dùng khung để tự sửa facts hay ra quyết định.
+- [x] Công cụ giai đoạn 3 (14/11, PR #1):
+  - công cụ đánh dấu offline [`tools/evidence_annotation`](../tools/evidence_annotation/README.md);
+  - bộ đo opt-in `AURA_RUN_LOCALIZATION_EVAL` với gate đề xuất;
+  - [checklist kiểm thử thủ công](MANUAL_FEATURE_TEST_CHECKLIST.md).
+
+  Kiểm thử: Release/Debug 458/458 với LocalDB + OCR integration, frontend 18/18.
+- [ ] Chủ dự án xác nhận gate đề xuất cho lần đo khóa: ≥ 30 ảnh chưa từng dùng, ≥ 5 ca đối chứng âm, 0 khung đặt nhầm ở tổng tiền, tỉ lệ khoanh nhầm ≤ 2% và recall ≥ 80% mỗi trường.
+- [ ] Evidence localization giai đoạn 3 — lần đo khóa:
+  - chuẩn bị bộ ≥ 30 ảnh synthetic **mới**, chưa từng chạy (sinh bằng generator với seed khác, hoặc ảnh có quyền sử dụng rõ ràng);
+  - một người khác người phát triển đánh dấu bằng công cụ, khóa SHA-256 rồi chạy bộ đo; lưu báo cáo ngoài Git và chỉ trích số liệu kèm SHA-256 annotation.
+
+  Chưa bật overlay khi demo chính thức hoặc claim explainability trước khi đạt gate. Không dùng khung để tự sửa facts hay ra quyết định.
+- [ ] GitHub Contributors còn hiện "claude" ở trang repo dù lịch sử `master` và API GitHub đã sạch (chỉ còn bộ đệm phía GitHub):
+  - lần push thường tiếp theo vào `master` (ví dụ merge PR #1) thường làm GitHub tính lại danh sách;
+  - nếu sau vài ngày vẫn còn, gửi GitHub Support yêu cầu làm mới bộ đệm contributors và dọn commit không còn tham chiếu `41b90e2`.
 
 - [x] Đối chiếu screenshot người dùng 27/10: ba JPEG R3-01/R3-06/R3-13 khớp hash fixture; R3-01 AUTO kèm nhãn duplicate, R3-06/R3-13 có thao tác quản lý; ba ảnh thật web bị `ESCALATE_PRIVACY` trước external inference. Chưa có log timestamp để đo latency Drive đầu cuối hoặc bằng chứng hosting. [Báo cáo giới hạn](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). Gate synthetic-only và staging riêng không đổi.
 

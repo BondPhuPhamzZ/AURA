@@ -1,5 +1,26 @@
 # Trạng thái AURA ngày 28/10/2026
 
+> **Cập nhật 14/11/2026 (lần 2) — công cụ cho giai đoạn 3 và checklist kiểm thử, chưa publish.**
+>
+> - **Công cụ đánh dấu:** [`tools/evidence_annotation`](../tools/evidence_annotation/README.md),
+>   chạy offline với CSP chặn mạng; người đánh dấu xuất `annotations.json` kèm SHA-256 để khóa.
+> - **Bộ đo opt-in:** đo recall, IoU và tỉ lệ khoanh nhầm của khung OCR so với annotation;
+>   kiểm SHA-256/EXIF từng ảnh; ghi báo cáo vào `test_kit/results/` (Git-ignored).
+> - **Gate đề xuất** (chủ dự án xác nhận):
+>   - ít nhất 30 ảnh chưa từng dùng và ít nhất 5 ca đối chứng âm;
+>   - 0 khung đặt nhầm ở tổng tiền;
+>   - tỉ lệ khoanh nhầm ≤ 2% và recall ≥ 80% mỗi trường.
+> - **Đã chạy:** một bộ 2 ảnh với khung do trợ lý ước lượng, chỉ để kiểm tra đường ống —
+>   không phải ground truth và không được lưu. **Phép đo khóa chưa chạy:** cần bộ ảnh mới và
+>   một người đánh dấu khác người phát triển.
+> - **Checklist kiểm thử thủ công:** [MANUAL_FEATURE_TEST_CHECKLIST.md](MANUAL_FEATURE_TEST_CHECKLIST.md),
+>   bao phủ mọi tính năng của PR #1.
+> - **Kiểm thử:** Release và Debug mỗi bản **458/458** khi bật LocalDB và OCR integration;
+>   frontend **18/18**; build ứng dụng và test đều 0 cảnh báo.
+> - **GitHub Contributors:** lịch sử `master` và các API `contributors`/`stats` của GitHub chỉ
+>   còn chủ dự án. Ô "Contributors" ở trang repo vẫn hiện "claude" do bộ đệm phía GitHub; cách
+>   xử lý xem [CURRENT_ACTION_CHECKLIST.md](CURRENT_ACTION_CHECKLIST.md).
+
 > **Cập nhật source 14/11/2026 — khung bằng chứng OCR cục bộ (giai đoạn 2), chưa publish.**
 > Nằm trên cùng nhánh/PR #1. Người dùng chọn Tesseract local và **chưa** làm quét malware.
 >

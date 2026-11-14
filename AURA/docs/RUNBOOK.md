@@ -221,6 +221,11 @@ thì ghi "Không định vị được".
   tập phát triển, không phải số liệu độ chính xác.
 - **File tạm:** khi đọc ảnh, leptonica trên Windows tạo một file tạm có cờ tự xoá khi
   đóng; kết quả OCR chỉ nằm trong bộ nhớ.
+- **Đo độ chính xác của khung (giai đoạn 3):** người khác người phát triển đánh dấu bằng
+  `node .\tools\evidence_annotation\serve.mjs`, khóa `annotations.json`, rồi chạy bộ đo với
+  `AURA_RUN_LOCALIZATION_EVAL=1` và `AURA_LOCALIZATION_SET`. Các bước và gate xem
+  [README công cụ](../tools/evidence_annotation/README.md); kiểm tra thủ công toàn bộ tính
+  năng xem [checklist](MANUAL_FEATURE_TEST_CHECKLIST.md).
 
 #### Duyệt ảnh trước khi gửi ra provider
 

@@ -12,6 +12,7 @@ This is a **source-and-evidence assessment**, not a certification or a statement
 - **Development-set smoke:** real OCR on the 15 synthetic v3.1 receipts placed 57/57 locatable fields. It did not draw the destroyed total (R3-06), the destroyed receipt number (R3-08) or the absent identifier (R3-07). This is not an accuracy result; independent annotation and an unseen set (stage 3) remain open.
 - **Tests:** Release and Debug each passed **451/451** with LocalDB and OCR integration enabled; frontend tests passed **15/15**.
 - **Hosting impact:** the publish output grows by about 13 MB of native DLLs, which are never loaded unless the feature is enabled on Development.
+- **Stage-3 tooling (later on 14 November):** an offline annotation tool (`tools/evidence_annotation`) and an opt-in locked-evaluation harness that reports recall, IoU and false-highlight against independent annotations. A proposed gate (≥ 30 unseen images, ≥ 5 negative controls, zero misplaced totals, ≤ 2 % false highlights and ≥ 80 % recall per field) awaits owner confirmation. No locked run has happened yet. Tests: Release and Debug each passed **458/458**; frontend **18/18**.
 
 ## Source update — 13 November 2026
 

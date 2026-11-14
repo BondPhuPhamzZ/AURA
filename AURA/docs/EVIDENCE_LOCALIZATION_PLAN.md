@@ -141,6 +141,30 @@ Tối thiểu nên annotate bốn field quan trọng trên tập development hi�
 
 ### P3 — evaluation
 
+> **Công cụ đã sẵn sàng (14/11/2026); phép đo chính thức chưa chạy.**
+>
+> - **Công cụ đánh dấu** [`tools/evidence_annotation`](../tools/evidence_annotation/README.md):
+>   - chạy offline, có CSP chặn mọi kết nối mạng; ảnh không rời trình duyệt;
+>   - người đánh dấu vẽ khung hoặc chọn "không có / không đọc được" cho 4 trường, và nhập
+>     giá trị in trên ảnh;
+>   - xuất `annotations.json` (`aura-evidence-annotations-v1`) kèm SHA-256 từng ảnh, và hiện
+>     SHA-256 của chính file để khóa;
+>   - trường chưa trả lời được xuất là `unset`, nên không thể bị tính nhầm thành ca đối chứng âm.
+> - **Bộ đo opt-in** (`AURA_RUN_LOCALIZATION_EVAL=1`):
+>   - kiểm định file annotation trước khi OCR, kiểm SHA-256 từng ảnh và bỏ qua ảnh có EXIF xoay;
+>   - chạy OCR thật và phân loại từng trường: đúng (IoU ≥ 0,5), đặt nhầm, bỏ sót, bỏ qua đúng,
+>     hoặc vẽ khi không có;
+>   - tính recall, tỉ lệ khoanh nhầm và IoU trung bình; ghi báo cáo kèm SHA-256 annotation vào
+>     `test_kit/results/` (Git-ignored).
+> - **Gate đề xuất** (chủ dự án xác nhận trước lần chạy khóa):
+>   - ít nhất 30 ảnh chưa từng dùng khi phát triển, và ít nhất 5 ca đối chứng âm;
+>   - không có khung đặt nhầm ở `totalAmount`;
+>   - tỉ lệ khoanh nhầm ≤ 2% và recall ≥ 80% cho mỗi trường.
+> - **Đã kiểm tra đường ống:** một bộ 2 ảnh (R3-01, R3-06) với khung do trợ lý ước lượng bằng
+>   mắt chạy trọn vòng. Bộ này **không phải ground truth** và không được lưu.
+> - **Còn thiếu để kết luận:** một bộ ảnh mới chưa từng chạy, và một người khác người phát
+>   triển đánh dấu, khóa file rồi chạy bộ đo.
+
 - Khóa annotation trước chạy; một reviewer khác kiểm box/field.
 - Đo region recall theo field, IoU, false-highlight rate, missing-region rate và thời gian reviewer.
 - Dùng ảnh xoay, scale, nhiều tỷ lệ, receipt dài, chữ nhỏ và vùng che làm negative controls.
@@ -160,9 +184,10 @@ Tối thiểu nên annotate bốn field quan trọng trên tập development hi�
 > **Cập nhật 14/11/2026:**
 > - P0 (xem ảnh trong trang) và P1 (overlay OCR local) đã có trong source, chưa publish.
 > - P1 chỉ dùng **local trên Development với ảnh synthetic**; hosting giữ tắt.
-> - P2 (typed quality issues) và P3 (annotation độc lập + tập unseen + đo IoU/false
->   highlight) vẫn mở. Chưa đủ cơ sở để bật overlay khi demo chính thức hay claim
->   explainability.
+> - P2 (typed quality issues) vẫn mở.
+> - P3 đã có công cụ đánh dấu, bộ đo và gate đề xuất, nhưng **chưa có lần đo khóa** trên bộ
+>   ảnh chưa từng chạy với người đánh dấu độc lập. Chưa đủ cơ sở để bật overlay khi demo chính
+>   thức hay claim explainability.
 
 - **GO** cho thiết kế/prototype sau khi freeze submission.
 - **NO-GO** cho việc sửa pipeline hoặc prompt ngay trước demo.

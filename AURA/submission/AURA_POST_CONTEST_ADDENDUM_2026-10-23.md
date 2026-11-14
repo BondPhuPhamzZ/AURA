@@ -8,6 +8,11 @@
 - **Development-set smoke:** on the 15 synthetic v3.1 receipts, 57/57 locatable fields were placed and the 3 destroyed or absent fields were not drawn. This is not an accuracy claim; independent annotation on unseen images is still required.
 - **Tests:** 451/451 with LocalDB and OCR integration enabled.
 - **Not built:** malware scanning, at the owner's choice.
+- **Measurement tooling added later the same day:**
+  - an offline annotation tool and a locked evaluation harness for those boxes;
+  - a proposed gate: at least 30 unseen images and 5 negative controls, zero misplaced totals, a false-highlight rate of 2 % or less and recall of 80 % or more per field.
+
+  No independent measurement has run yet. Tests: 458/458 with LocalDB and OCR integration enabled; frontend 18/18.
 
 **13 November source update (not yet published to SmartASP; PR #1 into `master`):**
 
