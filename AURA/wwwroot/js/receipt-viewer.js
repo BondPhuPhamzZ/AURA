@@ -48,6 +48,13 @@
         return { regions, unlocated };
     }
 
+    // Fixed card order for the four evidence fields; unknown fields go last.
+    const FIELD_ORDER = ['merchantName', 'identifier', 'documentDate', 'totalAmount'];
+    function fieldRank(field) {
+        const index = FIELD_ORDER.indexOf(field);
+        return index < 0 ? FIELD_ORDER.length : index;
+    }
+
     function describe(link) {
         const row = link.closest('tr');
         const code = row?.querySelector('.cell-code')?.textContent.trim() || '';
@@ -57,7 +64,7 @@
     }
 
     if (typeof module !== 'undefined' && module.exports)
-        module.exports = { isPlainActivation, receiptSource, evidenceUrl, validRegions, describe };
+        module.exports = { isPlainActivation, receiptSource, evidenceUrl, validRegions, fieldRank, describe };
     if (!root.document) return;
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -110,34 +117,41 @@
                 rect.addEventListener('click', () => selectField(region.field));
                 overlay.appendChild(rect);
 
-                const item = document.createElement('li');
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'receipt-evidence-item is-located';
-                button.dataset.field = region.field;
-                button.setAttribute('aria-pressed', 'false');
-                const label = document.createElement('strong');
-                label.textContent = region.label;
-                const text = document.createElement('span');
-                text.textContent = region.text ? `“${region.text}”` : 'Đã định vị';
-                button.append(label, text);
-                button.addEventListener('click', () => selectField(region.field));
-                item.appendChild(button);
-                evidenceList.appendChild(item);
             }
-            for (const missing of unlocated) {
+            // Every card is li > .receipt-evidence-item and the four fields keep one fixed order,
+            // so located and unlocated cards line up the same way on every receipt.
+            const cards = [
+                ...regions.map(region => ({ field: region.field, located: true, region })),
+                ...unlocated.map(missing => ({ field: missing.field, located: false, missing }))
+            ].sort((left, right) => fieldRank(left.field) - fieldRank(right.field));
+            for (const card of cards) {
                 const item = document.createElement('li');
-                item.className = 'receipt-evidence-item is-unlocated';
                 const label = document.createElement('strong');
-                label.textContent = missing.label;
-                const reason = document.createElement('span');
-                reason.textContent = `Không định vị được: ${missing.reason}`;
-                item.append(label, reason);
+                const detail = document.createElement('span');
+                let body;
+                if (card.located) {
+                    body = document.createElement('button');
+                    body.type = 'button';
+                    body.className = 'receipt-evidence-item is-located';
+                    body.dataset.field = card.field;
+                    body.setAttribute('aria-pressed', 'false');
+                    body.addEventListener('click', () => selectField(card.field));
+                    label.textContent = card.region.label;
+                    // Raw OCR text (may lack diacritics or split digits); the AI facts are unchanged.
+                    detail.textContent = card.region.text ? `OCR: “${card.region.text}”` : 'Đã định vị';
+                } else {
+                    body = document.createElement('div');
+                    body.className = 'receipt-evidence-item is-unlocated';
+                    label.textContent = card.missing.label;
+                    detail.textContent = `Không định vị được: ${card.missing.reason}`;
+                }
+                body.append(label, detail);
+                item.appendChild(body);
                 evidenceList.appendChild(item);
             }
             overlay.toggleAttribute('hidden', regions.length === 0 || !evidenceToggle.checked);
             evidenceStatus.textContent = regions.length
-                ? `Đã định vị ${regions.length} trường; chọn một trường để làm nổi khung. Khung chỉ hỗ trợ đọc, không thay dữ kiện hay quyết định.`
+                ? `Đã định vị ${regions.length} trường; chọn một trường để làm nổi khung. Chữ "OCR" là bản OCR đọc thô để đối chiếu vị trí; khung chỉ hỗ trợ đọc, không thay dữ kiện hay quyết định.`
                 : 'Chưa định vị được trường nào; hãy đọc trực tiếp ảnh gốc.';
         }
 
@@ -209,6 +223,9 @@
         // A click on the backdrop (the dialog box itself, outside its content) closes it.
         dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
         dialog.addEventListener('close', () => {
+            // A queued close event can arrive after the viewer was already reopened for another
+            // receipt; it must not clear the new image or its evidence.
+            if (dialog.open) return;
             image.removeAttribute('src');
             resetEvidence();
             // Fragment polling may have replaced the row; fall back to the same receipt link.

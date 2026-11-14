@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { isPlainActivation, receiptSource, evidenceUrl, validRegions, describe } = require('../../wwwroot/js/receipt-viewer.js');
+const { isPlainActivation, receiptSource, evidenceUrl, validRegions, fieldRank, describe } = require('../../wwwroot/js/receipt-viewer.js');
 
 const origin = 'http://127.0.0.1:5000';
 
@@ -63,4 +63,10 @@ test('malformed evidence payloads draw nothing (fail closed)', () => {
     for (const coordinateSpace of [{ ...space, width: 100 }, { ...space, orientationApplied: false }, undefined])
         assert.deepEqual(validRegions({ coordinateSpace, regions: [good] }), { regions: [], unlocated: [] });
     assert.deepEqual(validRegions(null), { regions: [], unlocated: [] });
+});
+
+test('evidence cards keep one fixed field order whether located or not', () => {
+    const order = ['totalAmount', 'merchantName', 'unknownField', 'documentDate', 'identifier']
+        .sort((left, right) => fieldRank(left) - fieldRank(right));
+    assert.deepEqual(order, ['merchantName', 'identifier', 'documentDate', 'totalAmount', 'unknownField']);
 });

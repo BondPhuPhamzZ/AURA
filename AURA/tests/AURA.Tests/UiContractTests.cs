@@ -87,6 +87,11 @@ public sealed class UiContractTests
         Assert.DoesNotContain("innerHTML", viewer, StringComparison.Ordinal);
         // <svg> has no hidden IDL property: assigning overlay.hidden would leave the boxes invisible.
         Assert.DoesNotContain("overlay.hidden", viewer, StringComparison.Ordinal);
+        // A late close event must not wipe a viewer that was reopened in the meantime.
+        Assert.Contains("if (dialog.open) return;", viewer, StringComparison.Ordinal);
+        var stylesheet = File.ReadAllText(Path.Combine(ProjectRoot, "wwwroot", "css", "site.css"));
+        Assert.Contains("grid-template-columns: repeat(4, minmax(0, 1fr));", stylesheet, StringComparison.Ordinal);
+        Assert.Contains("grid-auto-rows: 1fr;", stylesheet, StringComparison.Ordinal);
         Assert.Contains("overlay.toggleAttribute('hidden'", viewer, StringComparison.Ordinal);
         Assert.Contains("data-evidence-url=\"@(EvidenceLocalization.IsActive ?", dashboard, StringComparison.Ordinal);
         Assert.Contains("class=\"receipt-preview-link\" href=\"@item.ImageUrl\" target=\"_blank\"", queueView,
