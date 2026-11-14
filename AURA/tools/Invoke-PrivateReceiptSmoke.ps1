@@ -86,6 +86,10 @@ try {
                 $content.Headers.ContentType = [Net.Http.Headers.MediaTypeHeaderValue]::Parse($mediaType)
                 $multipart.Add($content, 'receiptFile', $file.Name)
                 $multipart.Add([Net.Http.StringContent]::new($token), '__RequestVerificationToken')
+                # Submitter context is required by the intake form model; use neutral smoke labels.
+                $multipart.Add([Net.Http.StringContent]::new('PRIVATE-SMOKE'), 'submitterCode')
+                $multipart.Add([Net.Http.StringContent]::new('Private receipt smoke'), 'submitterDisplayName')
+                $multipart.Add([Net.Http.StringContent]::new('Smoke QA'), 'submitterDepartment')
                 $response = $client.PostAsync("$root/Applicant/UploadReceipt", $multipart).GetAwaiter().GetResult()
                 $acceptedMs = $watch.ElapsedMilliseconds
                 if ([int]$response.StatusCode -ne 202) { throw "IntakeHttp$([int]$response.StatusCode)" }

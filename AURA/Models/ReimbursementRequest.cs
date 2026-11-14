@@ -57,13 +57,18 @@ namespace AURA.Models
 
         public bool DuplicatePolicyEnabled { get; set; }
 
-        [Required, StringLength(100)]
+        // Shared by the SQL schema, the web intake form and intake normalization.
+        public const int SubmitterCodeMaxLength = 100;
+        public const int SubmitterDisplayNameMaxLength = 200;
+        public const int SubmitterDepartmentMaxLength = 200;
+
+        [Required, StringLength(SubmitterCodeMaxLength)]
         public string SubmitterCode { get; set; } = "DEMO-EMPLOYEE";
 
-        [Required, StringLength(200)]
+        [Required, StringLength(SubmitterDisplayNameMaxLength)]
         public string SubmitterDisplayName { get; set; } = "Nhân viên demo";
 
-        [Required, StringLength(200)]
+        [Required, StringLength(SubmitterDepartmentMaxLength)]
         public string SubmitterDepartment { get; set; } = "Demo";
         
         public string Status { get; set; } = "PENDING"; // PENDING, ESCALATE, AUTO_APPROVE, REJECTED

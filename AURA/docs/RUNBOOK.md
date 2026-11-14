@@ -1,5 +1,7 @@
 # AURA Runbook
 
+> **Không thấy khung OCR?** Profile cũ chưa có `EvidenceLocalization` sẽ giữ tính năng tắt. Dừng app, chạy `tools\Get-TesseractData.ps1`, rồi `tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly -EnableEvidenceLocalization`, khởi động lại. Health phải báo `evidenceLocalizationEnabled=true`. Bấm ảnh/Xem hóa đơn trong bảng nhân viên hoặc quản lý; preview form và tab ảnh gốc không có overlay. Xem [báo cáo viewer 14/11](EVIDENCE_VIEWER_VALIDATION_2026-11-14.md).
+
 ## UX hiện hành và kiểm thử trước publish — 26/10
 
 Tabs và Forward/duyệt/Undo cập nhật fragment từ SQL, không tự reload. Giữ nguyên
@@ -196,6 +198,36 @@ bị trả 400. Đây không phải cơ chế đăng nhập hay quyền truy c�
 Không dùng `dotnet run --no-launch-profile` để thử retention; lệnh đó bỏ qua
 profile chung và có thể chọn cấu hình legacy. Dùng F5 profile **AURA** hoặc
 launcher trên, sau khi prepare. Giữ `AuraDb` lịch sử nguyên trạng.
+
+#### Khung vùng bằng chứng bằng OCR cục bộ (tùy chọn, chỉ local)
+
+Từ source 14/11/2026, dialog xem ảnh có thể vẽ khung cho 4 trường (đơn vị bán, mã định
+danh, ngày, tổng thanh toán) bằng Tesseract chạy ngay trên máy. Ảnh không gửi ra ngoài.
+Khung chỉ hỗ trợ đọc: không đổi dữ kiện hay quyết định, và trường nào không chắc chắn
+thì ghi "Không định vị được".
+
+```powershell
+.\tools\Get-TesseractData.ps1
+.\tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly -EnableEvidenceLocalization
+.\tools\Start-AuraRetentionSandbox.ps1
+```
+
+- **Script tải dữ liệu:** lấy `vie`/`eng` từ commit ghim của `tesseract-ocr/tessdata_fast`
+  vào `.tmp\tessdata` (đã bị Git-ignore). File nào sai SHA-256 thì không được cài.
+- **Lựa chọn được giữ:** launcher lưu lựa chọn vào active profile; muốn tắt thì prepare
+  lại với `-EnableEvidenceLocalization:$false`.
+- **Production luôn tắt:** dù cấu hình bật, Production vẫn tắt và `/healthz` báo
+  `evidenceLocalizationEnabled`.
+- **Test OCR thật (opt-in):** đặt `AURA_RUN_OCR_INTEGRATION=1` và
+  `AURA_TESSDATA_PATH=<đường dẫn tuyệt đối tới .tmp\tessdata>`. Kết quả chỉ là smoke trên
+  tập phát triển, không phải số liệu độ chính xác.
+- **File tạm:** khi đọc ảnh, leptonica trên Windows tạo một file tạm có cờ tự xoá khi
+  đóng; kết quả OCR chỉ nằm trong bộ nhớ.
+- **Đo độ chính xác của khung (giai đoạn 3):** người khác người phát triển đánh dấu bằng
+  `node .\tools\evidence_annotation\serve.mjs`, khóa `annotations.json`, rồi chạy bộ đo với
+  `AURA_RUN_LOCALIZATION_EVAL=1` và `AURA_LOCALIZATION_SET`. Các bước và gate xem
+  [README công cụ](../tools/evidence_annotation/README.md); kiểm tra thủ công toàn bộ tính
+  năng xem [checklist](MANUAL_FEATURE_TEST_CHECKLIST.md).
 
 #### Duyệt ảnh trước khi gửi ra provider
 

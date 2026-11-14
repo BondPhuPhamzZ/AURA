@@ -1,5 +1,7 @@
 # Tổng hợp bằng chứng đánh giá AURA
 
+> **Evidence chức năng 14/11:** [báo cáo viewer 14/11](EVIDENCE_VIEWER_VALIDATION_2026-11-14.md) phân biệt ảnh người dùng, kiểm browser/OCR trên facts đã lưu và các gate chưa chạy. Không cộng các ca lặp vào accuracy/holdout.
+
 **Mốc baseline nộp bài:** 14/10/2026. **Cập nhật trạng thái source:** 26/10/2026.
 
 **Mục đích:** tạo một chỉ mục công khai duy nhất cho các phép đo được dùng trong proposal, slide, Build Log, README và gói Demo Day. Source snapshot mới nhất được đối chiếu 26/10/2026; artifact đã nộp vẫn là snapshot lịch sử.
@@ -64,7 +66,7 @@ Hai lượt synthetic tuần tự trên cùng năm fixture đều 5/5 completed 
 | Lặp tuần tự cùng 12 ảnh | 11/12 exact, 0 missed, 1 over, P95 32,903 giây | Không phải holdout mới |
 | Năm upload khác nhau | 5/5 về trạng thái cuối; E2E P95 93,684 giây | Test queue integrity ở AI concurrency 1, không phải Verify SLA |
 | Human workflow | Synthetic escalation, quyết định quản lý, Audit và Undo đều pass | Evidence workflow, không phải xác nhận từ người dùng thật |
-| Evidence localization | Prototype overlay synthetic gắn với hash | Chưa nối extraction hoặc policy; chưa có benchmark annotation unseen |
+| Evidence localization | Prototype overlay synthetic gắn với hash; từ 13/11 có dialog xem ảnh gốc trong trang (P0); từ 14/11 có khung OCR Tesseract cục bộ (P1), chỉ chạy trên Development. Smoke tập phát triển v3.1: 57/57 trường có thể định vị được vẽ, 3/3 trường bị phá hoặc không có đều không bị vẽ | Không nối vào extraction hoặc policy. Đã có công cụ đánh dấu và bộ đo khóa SHA-256 (14/11), nhưng chưa có annotation độc lập hay tập unseen, nên chưa có số liệu recall/IoU/false-highlight |
 
 ## Bằng chứng lịch sử được giữ ngoài cây docs hiện hành
 

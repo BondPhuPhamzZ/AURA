@@ -25,8 +25,13 @@ namespace AURA.ViewComponents
         {
             try
             {
-                var requests = (await _repo.GetAllRequestsAsync()).ToDictionary(x => x.Id);
+                // Read the event window first, then every request touched at or after its oldest
+                // event, so a request created between the two reads is never shown as missing.
                 var logs = await _audit.GetRecentAsync(500);
+                var requests = logs.Count == 0
+                    ? new Dictionary<string, AURA.Models.ReimbursementRequest>()
+                    : (await _repo.GetRequestsWithAuditSinceAsync(logs.Min(x => x.Timestamp)))
+                        .ToDictionary(x => x.Id);
                 var items = AuditTrailProjector.Project(logs, requests);
                 return View(items);
             }

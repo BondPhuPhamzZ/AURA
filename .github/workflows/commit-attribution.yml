@@ -1,0 +1,38 @@
+name: Commit attribution check
+
+# Every commit reachable from the pushed or proposed head must be free of AI co-author or
+# AI attribution lines. The same pattern is enforced locally by .githooks/commit-msg.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Reject AI co-author or attribution lines
+        shell: bash
+        run: |
+          pattern='^[[:space:]]*co-authored-by:.*(claude|anthropic|openai|chatgpt|codex|copilot|gemini|cursor|devin|noreply@anthropic\.com)|generated (with|by) \[?(claude|chatgpt|codex|copilot|gemini)'
+          offenders=""
+          for sha in $(git rev-list HEAD); do
+            if git log -1 --format=%B "$sha" | grep -Eiq "$pattern"; then
+              offenders="$offenders $sha"
+            fi
+          done
+          if [ -n "$offenders" ]; then
+            echo "::error::Commits with AI co-author or attribution lines:"
+            echo "$offenders"
+            exit 1
+          fi
+          echo "No AI co-author or attribution lines found."

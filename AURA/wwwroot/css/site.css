@@ -296,6 +296,8 @@ main {
     border-left: 3px solid var(--colors-primary);
     background: #edf5ff;
     color: var(--colors-ink-subtle);
+    font-size: 0.875rem;
+    line-height: 1.45;
 }
 
 .ai-amount-note strong {
@@ -392,7 +394,9 @@ main {
 
 .extracted-facts-panel {
     position: relative;
+    display: flex;
     flex: 1 1 auto;
+    flex-direction: column;
     min-height: 0;
     padding: 20px;
     border: 1px solid transparent;
@@ -418,16 +422,27 @@ main {
     line-height: 1.1;
 }
 
+/* The placeholder fills the panel below the badge and sits in its optical
+   centre, matching the centred dropzone copy in the neighbouring column. */
 .extracted-facts-empty {
     display: flex;
+    flex: 1 1 auto;
     align-items: center;
+    justify-content: center;
     min-height: 160px;
+    padding: 0 clamp(8px, 6%, 48px) 46px;
     color: var(--colors-ink-subtle);
     font-size: 0.88rem;
     line-height: 1.6;
+    text-align: center;
+    text-wrap: balance;
 }
 
 .extracted-facts-unavailable {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    min-height: 0;
+    text-align: left;
     padding: 18px;
     border: 1px solid rgba(245, 158, 11, 0.45);
     border-radius: 6px;
@@ -1063,6 +1078,281 @@ main {
     text-decoration: none;
 }
 
+/* Long file names stay on one line; the full name is in the link title. */
+.receipt-preview-link > span {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* In-page receipt viewer (native dialog). */
+.receipt-viewer {
+    width: min(960px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    padding: 0;
+    border: 1px solid #83baf3;
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--colors-ink);
+    box-shadow: 0 24px 64px rgba(15, 42, 77, 0.28);
+}
+
+.receipt-viewer[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+.receipt-viewer::backdrop {
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.receipt-viewer-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--colors-border);
+}
+
+.receipt-viewer-title {
+    min-width: 0;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.receipt-viewer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.receipt-viewer-actions a.button-ghost-sm {
+    text-decoration: none;
+}
+
+.receipt-viewer-body {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    min-height: 240px;
+    overflow: auto;
+    padding: 12px;
+    background: #eaf2fb;
+}
+
+/* The stage shrink-wraps the image so the 0..1000 SVG overlay maps exactly onto its pixels. */
+.receipt-viewer-stage {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    line-height: 0;
+}
+
+.receipt-viewer.is-actual-size .receipt-viewer-stage {
+    max-width: none;
+}
+
+.receipt-viewer-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* The HTML hidden attribute is not reliably honoured on inline <svg>. */
+.receipt-viewer-overlay[hidden] {
+    display: none;
+}
+
+/* Leave room for the evidence list below the image in fit mode. */
+.receipt-viewer.has-evidence .receipt-viewer-image {
+    max-height: calc(100dvh - 340px);
+}
+
+.receipt-viewer.has-evidence.is-actual-size .receipt-viewer-image {
+    max-height: none;
+}
+
+/* On phones the whole dialog scrolls, so the receipt keeps its full width above the field list. */
+@media (max-width: 640px) {
+    .receipt-viewer.has-evidence[open] {
+        overflow-y: auto;
+    }
+
+    .receipt-viewer.has-evidence .receipt-viewer-body {
+        flex: 0 0 auto;
+    }
+
+    .receipt-viewer.has-evidence:not(.is-actual-size) .receipt-viewer-body {
+        overflow: visible;
+    }
+
+    .receipt-viewer.has-evidence .receipt-viewer-image {
+        max-height: 75dvh;
+    }
+}
+
+.receipt-viewer-overlay rect {
+    fill: rgba(37, 99, 235, 0.12);
+    stroke: #2563eb;
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+    cursor: pointer;
+}
+
+.receipt-viewer-overlay rect.is-active {
+    fill: rgba(245, 158, 11, 0.22);
+    stroke: #d97706;
+    stroke-width: 3;
+}
+
+.receipt-viewer-evidence {
+    padding: 12px 16px;
+    border-top: 1px solid var(--colors-border);
+}
+
+.receipt-viewer-evidence-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 12px;
+}
+
+.receipt-viewer-evidence-head h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.receipt-viewer-evidence-head label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+}
+
+.receipt-viewer-evidence-status {
+    margin: 6px 0 8px;
+    color: var(--colors-ink-subtle);
+    font-size: 0.8rem;
+}
+
+/* Always four cards (one per field): 4 columns on wide dialogs, 2 on tablets, 1 on phones.
+   Every row has the same height and each card fills its cell, so card sizes never depend
+   on how much OCR text a field happens to have. */
+.receipt-viewer-evidence-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.receipt-viewer-evidence-list > li {
+    display: flex;
+    min-width: 0;
+}
+
+.receipt-evidence-item {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 2px;
+    min-width: 0;
+    margin: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--colors-border);
+    border-radius: 6px;
+    background: #ffffff;
+    color: var(--colors-ink);
+    font: inherit;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    text-align: left;
+    /* Break at spaces and hyphens first; split a word only if it cannot fit at all. */
+    overflow-wrap: break-word;
+}
+
+@media (max-width: 900px) {
+    .receipt-viewer-evidence-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .receipt-viewer-evidence-list {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+button.receipt-evidence-item.is-located {
+    border-color: #93c5fd;
+    cursor: pointer;
+}
+
+button.receipt-evidence-item[aria-pressed="true"] {
+    border-color: #d97706;
+    background: rgba(245, 158, 11, 0.08);
+}
+
+.receipt-evidence-item.is-unlocated {
+    color: var(--colors-ink-subtle);
+    background: #f8fafc;
+}
+
+.receipt-viewer-image {
+    display: block;
+    max-width: 100%;
+    max-height: calc(100dvh - 190px);
+    object-fit: contain;
+    background: #ffffff;
+}
+
+/* Actual size: the image keeps its own pixels and the body scrolls in both directions. */
+.receipt-viewer.is-actual-size .receipt-viewer-body {
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.receipt-viewer.is-actual-size .receipt-viewer-image {
+    max-width: none;
+    max-height: none;
+}
+
+.receipt-viewer-status {
+    margin: 0;
+    color: var(--colors-ink-subtle);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.receipt-viewer-status.is-error {
+    padding: 14px 16px;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    border-radius: 6px;
+    background: rgba(245, 158, 11, 0.08);
+    color: #92400e;
+}
+
+.receipt-viewer-note {
+    margin: 0;
+    padding: 10px 16px;
+    border-top: 1px solid var(--colors-border);
+    color: var(--colors-ink-subtle);
+    font-size: 0.8rem;
+}
+
 .receipt-preview-link:hover {
     color: #1745a3;
 }
@@ -1084,7 +1374,76 @@ main {
 }
 
 .manager-table {
-    min-width: 1180px;
+    min-width: 1320px;
+}
+
+/* Review waiting time: informational ordering only, never an automatic decision. */
+.manager-queue-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+    margin-bottom: 8px;
+}
+
+.manager-queue-heading .form-header {
+    margin: 0;
+}
+
+.review-sla-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.review-sla-count,
+.review-sla-overdue {
+    padding: 4px 8px;
+    border: 1px solid;
+    border-radius: 6px;
+}
+
+.review-sla-count {
+    border-color: #83baf3;
+    background: #edf5ff;
+    color: #1d4ed8;
+}
+
+.review-sla-overdue {
+    border-color: #f87171;
+    background: rgba(239, 68, 68, 0.08);
+    color: #b91c1c;
+}
+
+.review-sla-note {
+    margin: 0 0 16px;
+    color: var(--colors-ink-subtle);
+    font-size: 0.82rem;
+}
+
+.review-wait {
+    display: grid;
+    gap: 4px;
+    min-width: 130px;
+}
+
+.review-wait strong {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.review-wait small {
+    color: var(--colors-ink-muted);
+}
+
+.manager-table tr.review-overdue > td:first-child {
+    box-shadow: inset 3px 0 0 #ef4444;
 }
 
 .manager-submitter,
@@ -1529,6 +1888,10 @@ main {
 
     .table-aura.responsive-cards tr[hidden] {
         display: none !important;
+    }
+
+    .table-aura.responsive-cards tr.review-overdue {
+        border-color: #f87171;
     }
 
     .table-aura.responsive-cards td {

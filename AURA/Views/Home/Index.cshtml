@@ -6,6 +6,7 @@
 @inject IOptions<ReceiptStorageOptions> ReceiptStorage
 @inject IOptions<VerifyOptions> VerifySettings
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostEnvironment
+@inject AURA.Services.EvidenceLocalizationService EvidenceLocalization
 @{
     var initialTab = ViewData["InitialTab"] as string ?? "applicant";
     var applicantDisplay = initialTab == "applicant" ? "block" : "none";
@@ -86,20 +87,7 @@
                             </button>
                         </div>
                     </div>
-                    <div class="submitter-context-grid" aria-label="Ngữ cảnh người gửi">
-                        <div class="submitter-field">
-                            <label for="submitterCode" class="form-label fw-semibold">Mã nhân viên</label>
-                            <input id="submitterCode" name="submitterCode" class="form-control submitter-input" maxlength="100" value="EMP-001" required />
-                        </div>
-                        <div class="submitter-field">
-                            <label for="submitterDisplayName" class="form-label fw-semibold">Người gửi</label>
-                            <input id="submitterDisplayName" name="submitterDisplayName" class="form-control submitter-input" maxlength="200" value="Gia Phú" required />
-                        </div>
-                        <div class="submitter-field">
-                            <label for="submitterDepartment" class="form-label fw-semibold">Bộ phận</label>
-                            <input id="submitterDepartment" name="submitterDepartment" class="form-control submitter-input" maxlength="200" value="Vận hành" required />
-                        </div>
-                    </div>
+                    <partial name="_SubmitterContextFields" model="AURA.ViewModels.ReceiptSubmitterInput.CreateDemo()" />
                 </div>
 
                 <div class="extracted-facts-column">
@@ -181,6 +169,43 @@
 <div class="tab-content-pane feature-card @(initialTab == "dashboard" ? "active" : null)" id="pane-dashboard" style="display: @dashboardDisplay;">
     <div id="dashboardSummaryHost">@await Component.InvokeAsync("DashboardSummary", new { year = dashboardYear, month = dashboardMonth })</div>
 </div>
+
+@* Outside every polled fragment host, so a 5-second refresh never closes or rebuilds it. *@
+<dialog id="receiptViewer" class="receipt-viewer" aria-labelledby="receiptViewerTitle"
+        data-evidence-url="@(EvidenceLocalization.IsActive ? Url.Action("Regions", "Evidence") : null)">
+    <div class="receipt-viewer-header">
+        <h2 id="receiptViewerTitle" class="receipt-viewer-title">Ảnh chứng từ</h2>
+        <div class="receipt-viewer-actions">
+            <button type="button" id="receiptViewerZoom" class="button-ghost-sm" aria-pressed="false">Kích thước gốc</button>
+            <a id="receiptViewerOpenTab" class="button-ghost-sm" href="#" target="_blank" rel="noopener">Mở tab mới</a>
+            <button type="button" class="button-ghost-sm" data-receipt-viewer-close aria-label="Đóng xem ảnh">Đóng</button>
+        </div>
+    </div>
+    <div class="receipt-viewer-body">
+        <p id="receiptViewerStatus" class="receipt-viewer-status" role="status" aria-live="polite">Đang tải ảnh…</p>
+        <div class="receipt-viewer-stage">
+            <img id="receiptViewerImage" class="receipt-viewer-image" alt="" hidden />
+            <svg id="receiptViewerOverlay" class="receipt-viewer-overlay" viewBox="0 0 1000 1000"
+                 preserveAspectRatio="none" aria-hidden="true" hidden></svg>
+        </div>
+    </div>
+    @if (EvidenceLocalization.IsActive)
+    {
+        <section id="receiptViewerEvidence" class="receipt-viewer-evidence" aria-labelledby="receiptViewerEvidenceTitle" hidden>
+            <div class="receipt-viewer-evidence-head">
+                <h3 id="receiptViewerEvidenceTitle">Vùng bằng chứng · OCR cục bộ, thử nghiệm</h3>
+                <label><input type="checkbox" id="receiptViewerEvidenceToggle" checked /> Hiện khung</label>
+            </div>
+            <p id="receiptViewerEvidenceStatus" class="receipt-viewer-evidence-status" role="status" aria-live="polite"></p>
+            <ul id="receiptViewerEvidenceList" class="receipt-viewer-evidence-list"></ul>
+        </section>
+    }
+    <p class="receipt-viewer-note">Ảnh gốc đã lưu, chỉ để xem; dữ kiện AI và quyết định không thay đổi. Esc để đóng.</p>
+</dialog>
+
+@section Scripts {
+    <script src="~/js/receipt-viewer.js" asp-append-version="true"></script>
+}
 
 <style>
     /* CSS for skeleton loading animation */
@@ -524,14 +549,14 @@
         const workflowAction = isProcessing
             ? '<span class="text-muted">Đang chờ</span>'
             : item.canForward
-            ? '<button type="button" class="button-primary button-compact" onclick="forwardToManager(\'' + escapeJsString(item.caseId) + '\', this)">Chuyển tiếp</button>'
+            ? '<button type="button" class="button-primary button-compact" onclick="forwardToManager(\'' + escapeHtml(escapeJsString(item.caseId)) + '\', this)">Chuyển tiếp</button>'
             : '<span class="text-muted">Không cần</span>';
         const factsAction = item.facts
             ? '<button type="button" class="button-ghost-sm facts-view-button" aria-pressed="' +
-              (selectedFactsCaseId === item.caseId ? 'true' : 'false') + '" onclick="showAnalysisFacts(\'' + escapeJsString(item.caseId) + '\')">Xem dữ kiện</button>'
+              (selectedFactsCaseId === item.caseId ? 'true' : 'false') + '" onclick="showAnalysisFacts(\'' + escapeHtml(escapeJsString(item.caseId)) + '\')">Xem dữ kiện</button>'
             : '';
         const receipt = item.receiptUrl
-            ? '<a class="receipt-preview-link" href="' + escapeHtml(item.receiptUrl) + '" target="_blank" rel="noopener">' +
+            ? '<a class="receipt-preview-link" href="' + escapeHtml(item.receiptUrl) + '" target="_blank" rel="noopener" title="' + escapeHtml(item.image) + '">' +
               '<img class="receipt-thumbnail" src="' + escapeHtml(item.receiptUrl) + '" alt="Ảnh chứng từ ' + escapeHtml(item.image) + '" loading="lazy" />' +
               '<span>' + escapeHtml(item.image) + '</span></a>'
             : escapeHtml(item.image);
@@ -577,10 +602,15 @@
         }
     }
 
+    // Used for both text and attribute values (href, src, alt, data-*), so quotes are
+    // escaped too; textContent/innerHTML alone leaves " and ' untouched.
     function escapeHtml(value) {
-        const element = document.createElement('div');
-        element.textContent = value == null ? '' : String(value);
-        return element.innerHTML;
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     function escapeJsString(value) {
@@ -811,6 +841,17 @@
         } catch { /* A stale tab entry expires with the browser session. */ }
     }
 
+    // Required-field messages are rendered by tag helpers from the server model
+    // (data-val-required); this only fails fast before any file leaves the browser.
+    function reportMissingRequiredField(form) {
+        const missing = Array.from(form.querySelectorAll('[data-val-required]'))
+            .find(input => !String(input.value || '').trim());
+        if (!missing) return true;
+        showToast(missing.dataset.valRequired, 'danger');
+        missing.focus();
+        return false;
+    }
+
     // A multi-file selection reuses the same validated HTTP 202 endpoint. This keeps storage,
     // hash checks, SQL queueing and worker behavior on one code path.
     async function submitUpload() {
@@ -819,6 +860,7 @@
             return;
         }
         if (!validateSelectedFiles(fileInput.files)) return;
+        if (!reportMissingRequiredField(uploadForm)) return;
         const files = Array.from(fileInput.files);
 
         const btn = document.getElementById('submitBtn');

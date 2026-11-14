@@ -21,6 +21,10 @@ public static class VietnamTime
         return TimeZoneInfo.ConvertTimeFromUtc(utcTimestamp, TimeZone);
     }
 
+    /// <summary>Converts a Vietnam wall-clock time (any Kind) to UTC.</summary>
+    public static DateTime ToUtc(DateTime vietnamTime) =>
+        TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(vietnamTime, DateTimeKind.Unspecified), TimeZone);
+
     private static TimeZoneInfo ResolveTimeZone()
     {
         foreach (var id in new[] { "SE Asia Standard Time", "Asia/Ho_Chi_Minh" })

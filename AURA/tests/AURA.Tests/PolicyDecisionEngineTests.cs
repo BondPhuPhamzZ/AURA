@@ -356,6 +356,30 @@ public sealed class PolicyDecisionEngineTests
         Assert.Contains("dòng tổng thanh toán cuối", result.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory]
+    [InlineData("en-US")]
+    [InlineData("vi-VN")]
+    public void Authority_reason_and_question_use_vietnamese_grouping_on_any_host(string hostCulture)
+    {
+        var original = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo(hostCulture);
+            var facts = ValidFacts();
+            facts.TotalAmount = 1_050_000;
+
+            var result = Decide(facts, 1_050_000);
+
+            Assert.Equal("ESCALATE_AUTHORITY", result.Status);
+            Assert.Equal("Tổng tiền 1.050.000 VND vượt hạn mức tự động 1.000.000 VND.", result.Reason);
+            Assert.StartsWith("Khoản chi 1.050.000 VND vượt hạn mức tự động 1.000.000 VND.", result.ManagerQuestion);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = original;
+        }
+    }
+
     [Fact]
     public void Reliable_receipt_over_limit_is_authority_escalation()
     {

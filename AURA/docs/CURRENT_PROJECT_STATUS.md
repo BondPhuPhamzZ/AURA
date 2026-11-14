@@ -1,5 +1,145 @@
 # Trạng thái AURA ngày 28/10/2026
 
+> **Cập nhật 14/11/2026 (lần 3) — chỉnh thẻ vùng bằng chứng, rà soát khung và chặn ghi công AI; chưa merge/publish.**
+>
+> - **Thẻ vùng bằng chứng** trong dialog xem ảnh:
+>   - luôn đúng 4 thẻ theo thứ tự cố định Đơn vị bán → Mã → Ngày → Tổng, kể cả thẻ "Không
+>     định vị được";
+>   - thẻ bằng nhau cả rộng lẫn cao: 4 cột trên desktop, 2×2 trên tablet, 1 cột trên mobile;
+>     chữ ngắt ở khoảng trắng hoặc gạch nối;
+>   - chữ OCR thô có tiền tố `OCR:` để không bị hiểu nhầm là dữ kiện AI.
+>
+>   Đo trên trình duyệt: desktop 4 × 226×73 px, tablet 4 × 344×73 px, mobile 4 × 319×73 px,
+>   không cuộn ngang.
+> - **Sửa race của dialog:** một sự kiện `close` tới muộn có thể xoá ảnh của lần mở kế tiếp.
+>   Đã tái hiện có kiểm soát và sửa bằng cách bỏ qua `close` khi dialog đã mở lại.
+> - **Lý do do luật C# sinh** (vượt hạn mức, lệch số tiền) nay dùng dấu chấm phân nhóm, ví
+>   dụ `1.050.000 VND`, trên mọi host. Hồ sơ đã lưu trước bản này giữ nguyên chuỗi cũ. Một
+>   test cũ ngầm phụ thuộc culture en-US đã được sửa.
+> - **Rà soát khung bằng mắt:** vẽ cả 57 khung lên 15 ảnh v3.1 (facts lấy từ manifest). Mọi
+>   khung nằm đúng tên đơn vị, dòng mã, dòng ngày và hàng tổng cuối, không lần nào rơi vào
+>   tạm tính. R3-06, R3-07, R3-08 bỏ qua đúng. Đây vẫn là tập phát triển, không thay phép
+>   đo khóa P3.
+> - **Chặn ghi công AI trong commit:**
+>   - hook `.githooks/commit-msg` (bật bằng `git config core.hooksPath .githooks`);
+>   - workflow `.github/workflows/commit-attribution.yml` quét mọi push và PR;
+>   - quy tắc ghi trong `CONTRIBUTING.md`.
+>
+>   Mọi nhánh, tag và PR trên GitHub đều không có dòng co-author; API Contributors chỉ còn
+>   chủ dự án. Commit cũ `41b90e2` không còn thuộc nhánh nào nhưng GitHub vẫn lưu, và ô
+>   Contributors ở trang repo là bộ đệm.
+> - **Kiểm thử:** Release và Debug mỗi bản **460/460** khi bật LocalDB, OCR và PowerShell
+>   5.1/7 integration; frontend **19/19**; build 0 cảnh báo; EF không có thay đổi model.
+
+> **Checkpoint 14/11 — kiểm viewer với facts đã lưu:** đã xem 12 PNG do chủ dự án cung cấp. Profile local cũ thiếu `EvidenceLocalization`; đã bật opt-in và kiểm bốn hồ sơ synthetic trên DB sao chép. R3-01/13/14 có bốn khung, R3-06 có ba khung và bỏ qua tổng. Chrome desktop/mobile, zoom/toggle/Esc và polling đã kiểm. Development tắt và Production đều chặn endpoint đúng thiết kế. Xem [báo cáo viewer 14/11](EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). P3, merge PR và publish mới vẫn mở.
+
+> **Cập nhật 14/11/2026 (lần 2) — công cụ cho giai đoạn 3 và checklist kiểm thử, chưa publish.**
+>
+> - **Công cụ đánh dấu:** [`tools/evidence_annotation`](../tools/evidence_annotation/README.md),
+>   chạy offline với CSP chặn mạng; người đánh dấu xuất `annotations.json` kèm SHA-256 để khóa.
+> - **Bộ đo opt-in:** đo recall, IoU và tỉ lệ khoanh nhầm của khung OCR so với annotation;
+>   kiểm SHA-256/EXIF từng ảnh; ghi báo cáo vào `test_kit/results/` (Git-ignored).
+> - **Gate đề xuất** (chủ dự án xác nhận):
+>   - ít nhất 30 ảnh chưa từng dùng và ít nhất 5 ca đối chứng âm;
+>   - 0 khung đặt nhầm ở tổng tiền;
+>   - tỉ lệ khoanh nhầm ≤ 2% và recall ≥ 80% mỗi trường.
+> - **Đã chạy:** một bộ 2 ảnh với khung do trợ lý ước lượng, chỉ để kiểm tra đường ống —
+>   không phải ground truth và không được lưu. **Phép đo khóa chưa chạy:** cần bộ ảnh mới và
+>   một người đánh dấu khác người phát triển.
+> - **Checklist kiểm thử thủ công:** [MANUAL_FEATURE_TEST_CHECKLIST.md](MANUAL_FEATURE_TEST_CHECKLIST.md),
+>   bao phủ mọi tính năng của PR #1.
+> - **Kiểm thử:** Release và Debug mỗi bản **458/458** khi bật LocalDB và OCR integration;
+>   frontend **18/18**; build ứng dụng và test đều 0 cảnh báo.
+> - **GitHub Contributors:** lịch sử `master` và các API `contributors`/`stats` của GitHub chỉ
+>   còn chủ dự án. Ô "Contributors" ở trang repo vẫn hiện "claude" do bộ đệm phía GitHub; cách
+>   xử lý xem [CURRENT_ACTION_CHECKLIST.md](CURRENT_ACTION_CHECKLIST.md).
+
+> **Cập nhật source 14/11/2026 — khung bằng chứng OCR cục bộ (giai đoạn 2), chưa publish.**
+> Nằm trên cùng nhánh/PR #1. Người dùng chọn Tesseract local và **chưa** làm quét malware.
+>
+> - **Đã làm:** trong dialog xem ảnh, người duyệt có thể thấy khung SVG đánh dấu đơn vị
+>   bán, mã định danh, ngày in và hàng tổng thanh toán. Chi tiết và gate xem
+>   [kế hoạch](EVIDENCE_LOCALIZATION_PLAN.md).
+> - **Điều kiện chạy:**
+>   - mặc định tắt, chỉ chạy trên host Development;
+>   - OCR Tesseract 5.2.0 chạy ngay trên máy, theo yêu cầu, với dữ liệu ngôn ngữ ghim
+>     SHA-256;
+>   - không lưu xuống DB, không có migration, không đổi worker/prompt/facts/quyết định.
+> - **Fail-closed:**
+>   - giá trị phải xuất hiện đúng một lần;
+>   - tổng tiền phải nằm cùng hàng với nhãn tổng in nguyên văn;
+>   - ảnh có EXIF xoay hoặc hồ sơ không có facts AI thì không vẽ.
+> - **Kiểm thử:** Release và Debug mỗi bản **451/451** khi bật LocalDB integration và OCR
+>   integration; frontend **15/15**.
+>   - Smoke OCR thật trên 15 ảnh synthetic v3.1: 57/57 trường có thể định vị được vẽ;
+>     tổng bị phá (R3-06), số biên nhận bị phá (R3-08) và ca không có mã (R3-07) đều
+>     không bị vẽ.
+>   - Đây là tập phát triển đã xem khi làm, không phải số liệu độ chính xác.
+>   - Kiểm bằng mắt trên LocalDB tạm (desktop, kích thước gốc, mobile): khung trùng đúng
+>     chữ. Lần kiểm đầu phát hiện SVG bị ẩn do dùng `hidden` sai cách; đã sửa và thêm test.
+> - **Còn mở:**
+>   - giai đoạn 3: annotation độc lập, tập ảnh mới chưa từng chạy, đo tỉ lệ khoanh
+>     nhầm/bỏ sót;
+>   - quét malware;
+>   - hosting vẫn tắt tính năng này.
+
+> **Cập nhật source 13/11/2026 — chưa publish SmartASP.** Thay đổi nằm trên nhánh
+> `codex/drive-pipeline-hardening` (PR #1 vào `master`). Site live vẫn là bản 28/10.
+> Đây không phải benchmark model, accuracy hay load test mới.
+>
+> - **Màn hình đọc dữ liệu có lọc SQL.** Trước đây mỗi tab, mỗi lần poll 5–15 giây,
+>   *Chuyển tiếp tất cả* và hai file export đều tải toàn bảng `ReimbursementRequests`
+>   (kể cả `ExtractedFactsJson`) rồi mới lọc trong bộ nhớ. Nay mỗi màn hình chỉ đọc
+>   phần cần thiết:
+>   - hàng đợi quản lý: escalation đã chuyển tiếp;
+>   - hàng đợi nhân viên: escalation chưa chuyển, cộng tối đa 20 hồ sơ Drive gần đây
+>     (chỉ ở local Development);
+>   - Audit: cửa sổ 500 sự kiện, rồi chỉ các hồ sơ có sự kiện kể từ mốc cũ nhất;
+>   - Dashboard/export: khoảng UTC của năm hoặc tháng theo giờ Việt Nam.
+>
+>   Tra hồ sơ cho Audit dùng subquery SQL thay cho danh sách ID, vì EF Core 8 sẽ gửi
+>   danh sách đó qua `OPENJSON` (cần compatibility level ≥130, chưa xác minh trên DB
+>   hosting). Không đổi schema, không có migration. Audit vẫn chỉ hiện 500 sự kiện mới nhất.
+> - **Thời gian chờ của quản lý.** Hàng đợi xếp ca chờ lâu nhất lên đầu, hiện thời gian
+>   chờ và thời điểm chuyển tiếp theo giờ Việt Nam. Ca vượt `ReviewSla:TargetHours`
+>   (mặc định 24, hợp lệ 1–720) có nhãn "Quá hạn". Đây chỉ là chỉ báo: hệ thống không
+>   tự duyệt, từ chối, giao việc hay gửi thông báo.
+> - **Nhất quán và an toàn giao diện:**
+>   - khung "Nội dung AI" lúc chưa có dữ liệu được căn giữa;
+>   - ba trường người gửi khai báo validation một lần trên model, form dùng tag helper.
+>     Upload web có trường trống hoặc quá dài nay trả HTTP 400 kèm thông báo tiếng Việt,
+>     thay vì âm thầm thay bằng giá trị demo; Drive/Verify giữ fallback phía server;
+>   - tiền VND và ngày giờ hiển thị giống nhau trên mọi culture của host;
+>   - khoảng kỳ báo cáo 2000–2100 định nghĩa ở một nơi;
+>   - hàm escape của bảng render bằng JS nay escape cả dấu nháy trong thuộc tính,
+>     vá lỗi chèn thuộc tính qua tên file (chỉ ảnh hưởng hàng của chính người upload).
+> - **Xem ảnh chứng từ ngay trong trang (giai đoạn 1 của kế hoạch evidence
+>   localization).** Bấm ảnh ở bảng nhân viên hoặc quản lý sẽ mở dialog:
+>   - ảnh vừa khung, có nút xem kích thước gốc, mở tab mới và đóng (Esc hoặc click nền);
+>   - dùng lại route `NoStore` hiện có và chỉ nhận URL ảnh cùng origin;
+>   - ảnh thiếu hoặc sai SHA-256 hiện thông báo rõ;
+>   - poll 5 giây không đóng dialog;
+>   - Ctrl/giữa chuột hoặc trình duyệt không hỗ trợ dialog vẫn mở tab như cũ.
+>
+>   Không khoanh vùng, không đổi facts/quyết định.
+> - **Kiểm thử:** Release **421/421** khi bật LocalDB integration; frontend **13/13**.
+>   Khi bật cả LocalDB và PowerShell integration, Release và Debug mỗi bản 419/421:
+>   hai ca `pwsh.exe` không khởi chạy được vì máy kiểm thử không cài PowerShell 7
+>   (lỗi môi trường), các ca Windows PowerShell 5.1 đều pass. Kiểm tra giao diện trên DB
+>   sandbox (Drive tắt, chặn gọi AI ra ngoài) và một LocalDB tạm có 3 ca synthetic đã
+>   chuyển tiếp (đã xóa sau khi kiểm); thao tác duyệt vẫn làm mới hàng đợi đúng. Dialog
+>   ảnh được kiểm trên LocalDB tạm khác, với fixture R3-01 synthetic khớp SHA-256 và
+>   một ca thiếu file (desktop và mobile). Chi tiết:
+>   [assessment](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
+> - **Chưa làm và lý do:**
+>   - quét malware: chưa có engine để kiểm chứng trên máy này;
+>   - thông báo email/Teams: chưa chốt người nhận và chưa có RBAC; giữ phạm vi supervised;
+>   - SignalR: polling hiện tại đã được kiểm chứng; hosting WebSocket chưa xác minh;
+>   - lưu trữ dùng chung nhiều host: cần bucket/IAM thật;
+>   - khoanh vùng bằng chứng (giai đoạn 2–3): cần nguồn tọa độ (OCR word box local,
+>     hoặc đổi schema/prompt để VLM trả box rồi benchmark lại) và tập ảnh có
+>     annotation chưa từng chạy. Xem [kế hoạch](EVIDENCE_LOCALIZATION_PLAN.md).
+
 > **Live synthetic demo:** Site SmartASP hiện trả `/healthz=ok`, zero pending
 > migration và đã chạy thành công R3-01 qua web → queue → OpenRouter →
 > `AUTO_APPROVE` → audit/ảnh. Ca đầu trả `AI_AUTH_ERROR`; sau khi chủ dự án cập

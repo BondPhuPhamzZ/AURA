@@ -1,7 +1,29 @@
 # AURA — Workflow đặc tả sản phẩm
 
+> **Đối chiếu 14/11:** [báo cáo viewer](../docs/EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). OCR định vị facts đã lưu khi mở dialog, chạy local Development opt-in; không sửa facts, không chạy lại VLM, không đổi policy/quyết định.
+
 Phiên bản: 2.3 — 13/10/2026
 Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — The Escalation Referee
+
+> **Ghi chú hậu cuộc thi 13/11/2026.** Nội dung bên dưới là đặc tả v2.3 đã nộp và được
+> giữ nguyên. Một số mục đã thay đổi trong source hiện hành; đọc cùng
+> [trạng thái hiện hành](../docs/CURRENT_PROJECT_STATUS.md):
+>
+> - **Mục 3, bước 2–3:** nhân viên không còn nhập số tiền; AURA tự đọc tổng tiền. Ba
+>   trường người gửi được validation phía server bằng model: thiếu hoặc quá dài trả
+>   400 kèm thông báo, không còn âm thầm thay bằng giá trị demo.
+> - **Mục 5.1–5.2:** hàng đợi quản lý xếp theo `ForwardedAt`, ca chờ lâu nhất lên đầu,
+>   hiện thời gian chờ và đánh dấu ca vượt `ReviewSla:TargetHours` (mặc định 24 giờ).
+>   Đây chỉ là chỉ báo ưu tiên; quản lý vẫn ra mọi quyết định, hệ thống không tự
+>   duyệt hay gửi nhắc việc. Bấm ảnh chứng từ sẽ mở dialog xem ảnh gốc ngay trên
+>   trang qua cùng route `GET /Applicant/Receipt/{id}`.
+> - **Mục 10, evidence localization:** đã có xem ảnh trong trang (13/11). Từ 14/11 có thêm
+>   khung OCR Tesseract cục bộ trong dialog: mặc định tắt, chỉ chạy trên Development,
+>   fail-closed. Khung chỉ hỗ trợ người duyệt đọc ảnh, **không** nằm trong pipeline
+>   extraction/policy và không thay facts hay quyết định. Chưa có annotation độc lập.
+> - **Mục 7:** từ 26/10, sau khi server commit, giao diện cập nhật fragment bằng GET
+>   và poll vùng đang xem thay vì tải lại toàn trang. Từ 13/11, mỗi fragment chỉ
+>   truy vấn SQL phần dữ liệu cần thiết. Vẫn chưa có SignalR.
 
 ## 1. Mục tiêu và nguyên tắc kiểm soát
 

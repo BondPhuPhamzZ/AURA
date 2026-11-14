@@ -100,9 +100,12 @@ public sealed class ReceiptIntakeService
                 Status = ProcessingStates.Pending,
                 DuplicateDetected = duplicate,
                 DuplicatePolicyEnabled = _policyOptions.EscalateDuplicateReceipts,
-                SubmitterCode = NormalizeIdentity(input.SubmitterCode, "DEMO-EMPLOYEE", 100),
-                SubmitterDisplayName = NormalizeIdentity(input.SubmitterDisplayName, "Nhân viên demo", 200),
-                SubmitterDepartment = NormalizeIdentity(input.SubmitterDepartment, "Demo", 200)
+                SubmitterCode = NormalizeIdentity(input.SubmitterCode, "DEMO-EMPLOYEE",
+                    ReimbursementRequest.SubmitterCodeMaxLength),
+                SubmitterDisplayName = NormalizeIdentity(input.SubmitterDisplayName, "Nhân viên demo",
+                    ReimbursementRequest.SubmitterDisplayNameMaxLength),
+                SubmitterDepartment = NormalizeIdentity(input.SubmitterDepartment, "Demo",
+                    ReimbursementRequest.SubmitterDepartmentMaxLength)
             };
             persistAttempted = true;
             try

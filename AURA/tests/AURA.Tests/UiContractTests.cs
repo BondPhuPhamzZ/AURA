@@ -24,6 +24,81 @@ public sealed class UiContractTests
     }
 
     [Fact]
+    public void Ai_facts_placeholder_is_centred_inside_its_panel()
+    {
+        var stylesheet = File.ReadAllText(Path.Combine(ProjectRoot, "wwwroot", "css", "site.css"));
+
+        var panel = ReadCssRule(stylesheet, ".extracted-facts-panel");
+        Assert.Contains("display: flex", panel, StringComparison.Ordinal);
+        Assert.Contains("flex-direction: column", panel, StringComparison.Ordinal);
+
+        var placeholder = ReadCssRule(stylesheet, ".extracted-facts-empty");
+        Assert.Contains("flex: 1 1 auto", placeholder, StringComparison.Ordinal);
+        Assert.Contains("align-items: center", placeholder, StringComparison.Ordinal);
+        Assert.Contains("justify-content: center", placeholder, StringComparison.Ordinal);
+        Assert.Contains("text-align: center", placeholder, StringComparison.Ordinal);
+
+        // Error notices keep their compact, left-aligned alert shape at the top of the panel.
+        var unavailable = ReadCssRule(stylesheet, ".extracted-facts-unavailable");
+        Assert.Contains("flex: 0 0 auto", unavailable, StringComparison.Ordinal);
+        Assert.Contains("text-align: left", unavailable, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Manager_queue_shows_waiting_time_without_automatic_decisions()
+    {
+        var queueView = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Shared", "Components",
+            "EscalationQueue", "Default.cshtml"));
+        var settings = File.ReadAllText(Path.Combine(ProjectRoot, "appsettings.json"));
+
+        Assert.Contains("@model AURA.ViewModels.ManagerQueueViewModel", queueView, StringComparison.Ordinal);
+        Assert.Contains("class=\"escalation-queue\"", queueView, StringComparison.Ordinal);
+        Assert.Contains("data-label=\"Thời gian chờ\"", queueView, StringComparison.Ordinal);
+        Assert.Contains("ReviewSlaPolicy.FormatWait", queueView, StringComparison.Ordinal);
+        Assert.Contains("hệ thống không tự duyệt hay từ chối khi quá hạn", queueView, StringComparison.Ordinal);
+        // Each card cell keeps one content element beside its mobile label.
+        Assert.Contains("<div class=\"review-wait\">", queueView, StringComparison.Ordinal);
+        Assert.Contains("\"ReviewSla\"", settings, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Receipt_viewer_dialog_sits_outside_polled_fragments_and_keeps_the_link_fallback()
+    {
+        var dashboard = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Home", "Index.cshtml"));
+        var viewer = File.ReadAllText(Path.Combine(ProjectRoot, "wwwroot", "js", "receipt-viewer.js"));
+        var queueView = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Shared", "Components",
+            "EscalationQueue", "Default.cshtml"));
+
+        var dialog = dashboard.IndexOf("<dialog id=\"receiptViewer\"", StringComparison.Ordinal);
+        Assert.True(dialog > dashboard.IndexOf("id=\"dashboardSummaryHost\"", StringComparison.Ordinal),
+            "The viewer must not live inside a fragment host that polling replaces.");
+        Assert.Contains("aria-labelledby=\"receiptViewerTitle\"", dashboard, StringComparison.Ordinal);
+        Assert.Contains("<script src=\"~/js/receipt-viewer.js\" asp-append-version=\"true\"></script>", dashboard,
+            StringComparison.Ordinal);
+
+        // Same image route, fallback for browsers without <dialog>, and modified clicks stay native.
+        Assert.Contains("typeof dialog.showModal !== 'function'", viewer, StringComparison.Ordinal);
+        Assert.Contains("isPlainActivation(event)", viewer, StringComparison.Ordinal);
+        Assert.Contains("Applicant\\/Receipt\\/", viewer, StringComparison.Ordinal);
+        // The only request the viewer makes is the opt-in, read-only evidence-regions GET.
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(viewer, @"fetch\("));
+        Assert.Contains("fetch(evidenceTarget", viewer, StringComparison.Ordinal);
+        Assert.Contains("validRegions(await response.json())", viewer, StringComparison.Ordinal);
+        Assert.DoesNotContain("innerHTML", viewer, StringComparison.Ordinal);
+        // <svg> has no hidden IDL property: assigning overlay.hidden would leave the boxes invisible.
+        Assert.DoesNotContain("overlay.hidden", viewer, StringComparison.Ordinal);
+        // A late close event must not wipe a viewer that was reopened in the meantime.
+        Assert.Contains("if (dialog.open) return;", viewer, StringComparison.Ordinal);
+        var stylesheet = File.ReadAllText(Path.Combine(ProjectRoot, "wwwroot", "css", "site.css"));
+        Assert.Contains("grid-template-columns: repeat(4, minmax(0, 1fr));", stylesheet, StringComparison.Ordinal);
+        Assert.Contains("grid-auto-rows: 1fr;", stylesheet, StringComparison.Ordinal);
+        Assert.Contains("overlay.toggleAttribute('hidden'", viewer, StringComparison.Ordinal);
+        Assert.Contains("data-evidence-url=\"@(EvidenceLocalization.IsActive ?", dashboard, StringComparison.Ordinal);
+        Assert.Contains("class=\"receipt-preview-link\" href=\"@item.ImageUrl\" target=\"_blank\"", queueView,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Mobile_manager_actions_stay_in_the_content_column()
     {
         var queueView = File.ReadAllText(Path.Combine(ProjectRoot, "Views", "Shared", "Components",
@@ -152,6 +227,15 @@ public sealed class UiContractTests
         Assert.Contains("overlay.toggleAttribute('hidden', shouldHide)", html, StringComparison.Ordinal);
         Assert.Contains("TAM TINH", File.ReadAllText(imagePath), StringComparison.Ordinal);
         Assert.Contains("TONG THANH TOAN", File.ReadAllText(imagePath), StringComparison.Ordinal);
+    }
+
+    private static string ReadCssRule(string stylesheet, string selector)
+    {
+        var start = stylesheet.IndexOf("\n" + selector + " {", StringComparison.Ordinal);
+        Assert.True(start >= 0, $"Missing top-level CSS rule {selector}.");
+        var end = stylesheet.IndexOf('}', start);
+        Assert.True(end > start);
+        return stylesheet[start..end];
     }
 
     private static string FindProjectRoot()

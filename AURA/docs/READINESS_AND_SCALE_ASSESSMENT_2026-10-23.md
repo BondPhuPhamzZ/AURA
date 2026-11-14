@@ -2,6 +2,47 @@
 
 This is a **source-and-evidence assessment**, not a certification or a statement that the public host runs this commit. The dated proposal, build log and five-slide deck remain the contest submission snapshot. See the [post-contest submission addendum](../submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) for a short outward-facing update.
 
+## Source update — 14 November 2026
+
+**Local OCR evidence boxes (stage 2, plan item P1). Not published.**
+
+- **What reviewers see:** the receipt dialog can outline the merchant, the canonical identifier, the printed date and the final-total row, using in-process Tesseract 5.2.0 with SHA-256-pinned `vie+eng` data.
+- **When it runs:** it is off by default, takes effect only on a Development host, and runs on demand. Results are cached only in memory. It writes nothing to SQL, needs no migration, and does not touch the worker, prompt, facts, policy or decisions.
+- **When it draws nothing:** matching is fail-closed. A value must appear exactly once, and the total must share a row with its verbatim label. Nothing is drawn for rotated (EXIF) images or for requests without AI facts.
+- **Development-set smoke:** real OCR on the 15 synthetic v3.1 receipts placed 57/57 locatable fields. It did not draw the destroyed total (R3-06), the destroyed receipt number (R3-08) or the absent identifier (R3-07). This is not an accuracy result; independent annotation and an unseen set (stage 3) remain open.
+- **Tests:** Release and Debug each passed **451/451** with LocalDB and OCR integration enabled; frontend tests passed **15/15**.
+- **Hosting impact:** the publish output grows by about 13 MB of native DLLs, which are never loaded unless the feature is enabled on Development.
+- **Stage-3 tooling (later on 14 November):** an offline annotation tool (`tools/evidence_annotation`) and an opt-in locked-evaluation harness that reports recall, IoU and false-highlight against independent annotations. A proposed gate (≥ 30 unseen images, ≥ 5 negative controls, zero misplaced totals, ≤ 2 % false highlights and ≥ 80 % recall per field) awaits owner confirmation. No locked run has happened yet. Tests: Release and Debug each passed **458/458**; frontend **18/18**.
+
+## Source update — 13 November 2026
+
+This update touches source and tests only. It has not been published to SmartASP and is not a new model, accuracy or load result.
+
+- **SQL-filtered screen reads.** Before this update, every tab, its 5–15 second poll, *Forward all* and both monthly exports loaded the whole `ReimbursementRequests` table, including `ExtractedFactsJson`, and then filtered in memory. Each now filters in SQL Server:
+  - the manager queue reads forwarded escalations;
+  - the employee queue reads unforwarded escalations plus at most 20 recent Drive rows, and only in local Development;
+  - the audit reads the 500-event window and then only the requests referenced from its oldest event onward;
+  - the dashboard and the exports read a UTC range for the Vietnam year or month.
+
+  The audit lookup is a SQL `IN` subquery, not a client-side ID list, because EF Core 8 would send that list through `OPENJSON`, which needs compatibility level 130 or higher; the hosting database level has not been verified. There is no schema change and no migration. This reduces the data each request reads; it is not a load test, and the audit still shows at most the latest 500 events.
+- **Reviewer waiting time.** The manager queue lists cases oldest handoff first and shows the wait and the Vietnam handoff time. Cases past `ReviewSla:TargetHours` (default 24) are marked overdue. Nothing is sent, assigned or decided automatically.
+- **Intake and display consistency:**
+  - submitter fields follow model-driven validation, so an empty or over-long field returns HTTP 400 instead of being silently replaced;
+  - VND amounts and dates are formatted the same way on any host culture;
+  - the JavaScript row renderer now escapes quotes in attribute values.
+- **In-page receipt viewer:** this is stage 1 (P0) of the [evidence-localization plan](EVIDENCE_LOCALIZATION_PLAN.md). Clicking a receipt in the employee or manager table opens a native dialog that reuses the NoStore receipt route:
+  - only same-origin receipt URLs are accepted;
+  - the image can be viewed fitted to the screen or at actual size;
+  - a missing or hash-mismatched image shows a clear message;
+  - polling does not close the dialog;
+  - focus returns to the link that opened it;
+  - modified clicks, and browsers without `<dialog>`, keep the original new-tab link.
+
+  No region is drawn and no fact or decision changes.
+- **Tests:**
+  - With LocalDB integration enabled, Release passed **421/421**. Frontend tests passed **13/13**.
+  - With LocalDB and PowerShell integration both enabled, Release and Debug each passed 419/421. The Windows PowerShell 5.1 backup cases passed, but the two `pwsh.exe` cases could not start because PowerShell 7 is not installed on this machine. This is an environment gap, not a regression.
+
 ## Verified fragment UX — 26 October 2026
 
 Tabs and committed Forward/decision/Undo actions now refresh the active read-only
@@ -70,7 +111,10 @@ not establish sustained-load capacity or independent usability acceptance.
 HITL exists as employee handoff, manager route-specific action, audit and Undo
 before retention expiry. FACT/PRIVACY acceptance is manual intake, not payment
 approval. Timely handling still requires an operator to open the app; there is
-no assigned reviewer, reminder/SLA notification or endpoint RBAC. The tabs are
+no assigned reviewer, reminder/SLA notification or endpoint RBAC. *(13 November
+source update: the manager queue now orders cases by handoff time and flags
+waits beyond `ReviewSla:TargetHours`; this is an in-app indicator only, with no
+notification and no automatic decision. See the section above.)* The tabs are
 demo roles, not an authorization boundary. Do not present the workflow as a
 fully autonomous finance agent or promise unattended approval quality.
 

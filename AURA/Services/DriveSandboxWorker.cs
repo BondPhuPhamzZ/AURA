@@ -10,6 +10,8 @@ namespace AURA.Services;
 /// <summary>Single-process, read-only synthetic Drive folder poller for local Development.</summary>
 public sealed class DriveSandboxWorker : BackgroundService
 {
+    /// <summary>Submitter code that marks receipts created by the local Drive sandbox.</summary>
+    public const string SubmitterCode = "DRIVE-SANDBOX";
     private const string FolderMime = "application/vnd.google-apps.folder";
     private readonly DriveSandboxOptions _options;
     private readonly IWebHostEnvironment _environment;
@@ -176,7 +178,7 @@ public sealed class DriveSandboxWorker : BackgroundService
 
         var intake = scope.ServiceProvider.GetRequiredService<ReceiptIntakeService>();
         await intake.AcceptAsync(new ReceiptIntakeInput(bytes, name!, mime!, 0,
-            "DRIVE-SANDBOX", "Synthetic Drive test", "Sandbox", sourceKey), cancellationToken);
+            SubmitterCode, "Synthetic Drive test", "Sandbox", sourceKey), cancellationToken);
     }
 
     private static bool HasParent(JsonElement file, string folderId) =>

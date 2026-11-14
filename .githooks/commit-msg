@@ -1,0 +1,15 @@
+#!/bin/sh
+# Rejects AI co-author or "generated with" attribution lines in commit messages.
+# Enable once per clone:  git config core.hooksPath .githooks
+# The same rule runs in .github/workflows/commit-attribution.yml for every push and PR.
+
+message_file="$1"
+pattern='^[[:space:]]*co-authored-by:.*(claude|anthropic|openai|chatgpt|codex|copilot|gemini|cursor|devin|noreply@anthropic\.com)|generated (with|by) \[?(claude|chatgpt|codex|copilot|gemini)'
+
+if grep -Eiq "$pattern" "$message_file"; then
+    echo "commit-msg: this repository does not accept AI co-author or AI attribution lines." >&2
+    echo "Remove the line below and commit again:" >&2
+    grep -Ein "$pattern" "$message_file" >&2
+    exit 1
+fi
+exit 0

@@ -1,5 +1,44 @@
 # AURA post-contest status addendum — 23 October 2026
 
+> **Checkpoint bổ sung 14/11:** [kiểm viewer với bốn hồ sơ synthetic đã lưu](../docs/EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). Profile cũ thiếu công tắc OCR đã được cập nhật; R3-06 không khoanh tổng bị phá. Đây là functional smoke, không thay số liệu thi hay phép đo P3 độc lập. Chưa publish PR #1.
+
+**14 November follow-up (same PR #1, not yet merged or published):**
+
+- **Viewer cards:** the four evidence cards below the receipt now keep a fixed field order and equal sizes (4, 2 or 1 columns by screen width). Raw OCR text is labelled `OCR:`.
+- **Dialog race:** a late close event could clear a just-reopened image; this is fixed.
+- **Amounts in reasons:** policy-generated reasons now write amounts as `1.050.000 VND` on every host. Records saved before this change keep their original text.
+- **Box review:** all 57 boxes on the 15 development receipts were checked by eye and sit on the correct text; no box lands on a subtotal.
+- **Commit attribution:** a commit hook and a GitHub workflow now reject AI co-author or attribution lines.
+- **Tests:** 460/460 with LocalDB, OCR and PowerShell 5.1/7 integration enabled; frontend 19/19.
+
+**14 November source update (not yet published; same PR #1):**
+
+- **What changed:** an optional local Tesseract OCR step can outline the merchant, identifier, printed date and final-total row inside the reviewer's receipt viewer. It is a reading aid only; facts, policy and decisions are unchanged.
+- **Where it runs:** it is off by default, runs only on a Development host, keeps images on the machine, and writes nothing to the database.
+- **When it draws nothing:** if a field is ambiguous, destroyed or rotated, no box is drawn.
+- **Development-set smoke:** on the 15 synthetic v3.1 receipts, 57/57 locatable fields were placed and the 3 destroyed or absent fields were not drawn. This is not an accuracy claim; independent annotation on unseen images is still required.
+- **Tests:** 451/451 with LocalDB and OCR integration enabled.
+- **Not built:** malware scanning, at the owner's choice.
+- **Measurement tooling added later the same day:**
+  - an offline annotation tool and a locked evaluation harness for those boxes;
+  - a proposed gate: at least 30 unseen images and 5 negative controls, zero misplaced totals, a false-highlight rate of 2 % or less and recall of 80 % or more per field.
+
+  No independent measurement has run yet. Tests: 458/458 with LocalDB and OCR integration enabled; frontend 18/18.
+
+**13 November source update (not yet published to SmartASP; PR #1 into `master`):**
+
+- **Database reads:** each screen now filters in SQL. Previously every tab, poll and export loaded the whole receipt table.
+- **Manager queue:** cases are ordered by handoff time. Waits beyond `ReviewSla:TargetHours` (default 24 hours) are marked "Quá hạn" as an in-app cue only. Nothing is sent, assigned or decided automatically, so the workflow stays supervised.
+- **Web intake validation:** submitter fields use model-driven validation. Empty or over-long values now return HTTP 400 instead of being silently replaced with demo values.
+- **Display and safety fixes:**
+  - VND amounts and dates no longer depend on the host culture;
+  - the JavaScript row renderer now escapes quotes;
+  - the empty AI-facts panel is centred.
+
+- **Receipt viewer:** reviewers can open a stored receipt at full size in an in-page dialog instead of a new tab. This is stage 1 of the evidence-localization plan; it draws no evidence regions and does not change facts or decisions.
+
+With LocalDB integration enabled, Release tests passed 421/421, and frontend tests passed 13/13. The two PowerShell 7 backup-script cases could not run because `pwsh` is not installed on the test machine. There is no schema change, no new model or accuracy result, and no change to the synthetic-only and Restricted-Drive-local boundary. See [current status](../docs/CURRENT_PROJECT_STATUS.md).
+
 **27 October owner check:** Three exact locked synthetic fixtures were placed in the local Restricted Drive test folder. Supplied screenshots show an AUTO result with a duplicate-content marker for R3-01 and subsequent human decisions for R3-06/R3-13. Three real web uploads were blocked from external inference by the synthetic exact-image approval gate and routed to privacy review. These screenshots do not provide upload-to-result timing, independent SQL/outbound traces or real-data accuracy evidence. [Dated evidence note](../docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). The submitted contest documents below remain historical; SmartASP Drive and unrestricted real receipts remain outside this checkpoint.
 
 **26 October Drive visibility update:** In the Development synthetic profile,

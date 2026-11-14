@@ -1,5 +1,7 @@
 # Checklist sau lần publish SmartASP 28/10 và các mốc lịch sử
 
+> **Checkpoint 14/11:** xem [báo cáo viewer 14/11](EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). Không đánh dấu toàn bộ checklist thủ công là đạt chỉ từ screenshot: Excel, hai tab và các bước không có evidence riêng vẫn cần xác nhận. Khung OCR đã kiểm với facts lưu của bốn hồ sơ, không phải benchmark mới. Restore hosting, merge và publish vẫn mở.
+
 > **Hiện hành:** GO cho việc chia sẻ URL dưới nhãn **demo synthetic có giám sát**:
 > health live ok, zero pending migration, R3-01 synthetic đã hoàn tất AUTO,
 > audit và ảnh đọc lại được. [Evidence live](SMARTASP_LIVE_VALIDATION_2026-10-28.md).
@@ -18,6 +20,46 @@ giai đoạn tương lai, không phải yêu cầu phải bật để chạy san
 
 Việc cần làm trước khi mở lại gate publish/pilot:
 
+- [x] Source 13/11 (PR #1, chưa publish), chi tiết ở [trạng thái hiện hành](CURRENT_PROJECT_STATUS.md):
+  - mỗi màn hình đọc SQL có lọc thay vì tải toàn bảng; không có migration;
+  - hàng đợi quản lý xếp ca chờ lâu nhất lên đầu và đánh dấu quá `ReviewSla:TargetHours`, không tự quyết định;
+  - validation người gửi khai báo trên model (form dùng tag helper);
+  - tiền và ngày hiển thị không phụ thuộc culture của host;
+  - vá lỗi escape dấu nháy trong bảng render bằng JS;
+  - xem ảnh chứng từ trong dialog ngay trên trang (giai đoạn 1 của [evidence localization](EVIDENCE_LOCALIZATION_PLAN.md)).
+
+  Kiểm thử: Release 421/421 với LocalDB, frontend 13/13. Khi bật thêm PowerShell integration, hai ca PowerShell 7 không chạy được vì máy kiểm thử không cài `pwsh` (419/421).
+- [x] Evidence localization giai đoạn 2 (14/11, PR #1, chưa publish):
+  - khung OCR Tesseract cục bộ trong dialog xem ảnh, mặc định tắt, chỉ chạy trên Development;
+  - fail-closed, không lưu DB, không đổi quyết định;
+  - kiểm thử Release/Debug 451/451 với LocalDB + OCR integration, frontend 15/15; smoke trên tập phát triển 57/57 trường được vẽ, 3/3 trường bị phá hoặc không có đều không bị vẽ.
+
+  Bật tính năng: `tools\Get-TesseractData.ps1` rồi chạy launcher với `-EnableEvidenceLocalization` ([runbook](RUNBOOK.md)).
+- [x] Công cụ giai đoạn 3 (14/11, PR #1):
+  - công cụ đánh dấu offline [`tools/evidence_annotation`](../tools/evidence_annotation/README.md);
+  - bộ đo opt-in `AURA_RUN_LOCALIZATION_EVAL` với gate đề xuất;
+  - [checklist kiểm thử thủ công](MANUAL_FEATURE_TEST_CHECKLIST.md).
+
+  Kiểm thử: Release/Debug 458/458 với LocalDB + OCR integration, frontend 18/18.
+- [ ] Chủ dự án xác nhận gate đề xuất cho lần đo khóa: ≥ 30 ảnh chưa từng dùng, ≥ 5 ca đối chứng âm, 0 khung đặt nhầm ở tổng tiền, tỉ lệ khoanh nhầm ≤ 2% và recall ≥ 80% mỗi trường.
+- [ ] Evidence localization giai đoạn 3 — lần đo khóa:
+  - chuẩn bị bộ ≥ 30 ảnh synthetic **mới**, chưa từng chạy (sinh bằng generator với seed khác, hoặc ảnh có quyền sử dụng rõ ràng);
+  - một người khác người phát triển đánh dấu bằng công cụ, khóa SHA-256 rồi chạy bộ đo; lưu báo cáo ngoài Git và chỉ trích số liệu kèm SHA-256 annotation.
+
+  Chưa bật overlay khi demo chính thức hoặc claim explainability trước khi đạt gate. Không dùng khung để tự sửa facts hay ra quyết định.
+- [x] Thẻ vùng bằng chứng (14/11, lần 3):
+  - đúng 4 thẻ, thứ tự cố định, kích thước bằng nhau, theo bố cục 4/2/1 cột;
+  - tiền tố `OCR:`;
+  - sửa race đóng/mở dialog;
+  - lý do do luật C# sinh dùng `1.050.000 VND`.
+
+  Rà soát bằng mắt cả 57 khung trên 15 ảnh dev v3.1: đều đúng vị trí. Release/Debug 460/460 với LocalDB + OCR + PowerShell 5.1/7, frontend 19/19.
+- [x] Chặn ghi công AI trong commit: hook `.githooks/commit-msg` (bật bằng `git config core.hooksPath .githooks`), workflow `commit-attribution.yml` cho mọi push/PR, quy tắc trong `CONTRIBUTING.md`. Mọi nhánh, tag và PR hiện không có dòng co-author.
+- [ ] GitHub Contributors còn hiện "claude" ở trang repo, dù lịch sử mọi nhánh và API GitHub đã sạch (chỉ còn bộ đệm phía GitHub):
+  - commit `41b90e2` không còn thuộc nhánh nào nhưng GitHub vẫn mở được bằng mã hash;
+  - lần push thường tiếp theo vào `master` (ví dụ merge PR #1) thường làm GitHub tính lại danh sách;
+  - nếu sau vài ngày vẫn còn, chủ repo gửi GitHub Support (mục "Remove cached views / unreachable commits") yêu cầu làm mới bộ đệm contributors và xoá commit không còn tham chiếu `41b90e2`.
+
 - [x] Đối chiếu screenshot người dùng 27/10: ba JPEG R3-01/R3-06/R3-13 khớp hash fixture; R3-01 AUTO kèm nhãn duplicate, R3-06/R3-13 có thao tác quản lý; ba ảnh thật web bị `ESCALATE_PRIVACY` trước external inference. Chưa có log timestamp để đo latency Drive đầu cuối hoặc bằng chứng hosting. [Báo cáo giới hạn](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). Gate synthetic-only và staging riêng không đổi.
 
 - [x] Review 26/10: Drive thật trên DB synthetic mới xử lý 3/3 JPEG đã duyệt; sau restart vẫn 3 job/6 audit, không nhận lại cùng nguồn. Folder còn 2 thư mục con và 1 TXT; connector không đệ quy. Một ảnh bị nhận diện trùng nhưng regression profile tắt duplicate escalation; chưa chứng minh chống chi trùng. Launcher thêm `-EnableSyntheticDrive` opt-in local, mặc định tắt. [Phạm vi và kết quả](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md).
@@ -25,7 +67,7 @@ Việc cần làm trước khi mở lại gate publish/pilot:
 - [x] Đồng bộ source/README lên default `master`, giữ mốc cũ qua `archive/master-before-hardening-20261026`. Đồng bộ Git không thay hosting, database hoặc secrets; [gate SmartASP](DEPLOYMENT.md) vẫn NO-GO cho full Drive Production.
 - [x] UX fragment 26/10: tab/Forward/manager/Undo/dashboard cập nhật vùng đang xem sau server commit; giữ ngày/kỳ/focus/cuộn và Back/Forward, chặn stale/overlap, dừng đọc khi document/pane ẩn. Release 377/377, frontend 8/8; browser/SQL xác minh hai tab trái quyết định và mất response sau commit đều một manager write, đọc 503 giữ hàng cũ + recovery. Một UI/model smoke AUTO, có facts, 4.530 ms. Production local đã kiểm; chưa phải hosting/load/user-study evidence. Raw proof giữ Git-ignored tại `test_kit/results/ux-fragments-20261026/`.
 - [ ] Hosting: người dùng chọn chuẩn bị artifact/hướng dẫn trước. Cần backup site/SQL/ảnh, DB demo mới, private paths, runtime secrets và smoke IIS/recycle/idle trên SmartASP trước GO publish. Không bật Drive bằng cách đổi public site sang Development; không dùng Site Guard WAF làm bằng chứng xác thực/phân quyền.
-- [ ] HITL/metadata nghiệp vụ: chốt ánh xạ nhân viên/phòng ban, duplicate policy, người nhận review và nhắc việc. Tabs demo chưa là quyền truy cập; giữ synthetic-only nếu chưa chốt các gate này.
+- [ ] HITL/metadata nghiệp vụ: chốt ánh xạ nhân viên/phòng ban, duplicate policy, người nhận review và nhắc việc. Ngày 13/11 đã có chỉ báo thời gian chờ/quá hạn trong app (mốc `ReviewSla:TargetHours` mặc định 24 giờ, cần chủ nghiệp vụ xác nhận); vẫn chưa gửi thông báo và chưa giao người duyệt. Tabs demo chưa là quyền truy cập; giữ synthetic-only nếu chưa chốt các gate này.
 - [x] Xác minh chốt 26/10: full Debug/Release 371/371 mỗi bản, không skip; EF sạch. Smoke restart phát hiện lỗi DNS thật, được giữ trong evidence; adapter nay trả known provider failure thay vì mã unexpected, không lộ raw diagnostic/không tự gửi lại. Recovery smoke `5143ab4`: AUTO, 11/11 facts, 7.578 ms, không lỗi/fallback. Backup checksum/hash và DB cũ đối chiếu lại đều khớp.
 - [x] Full regression qua approval gate trên `649885e`, DB/ảnh mới cô lập: 15/15 quyết định, 143/146 facts, không missed/over/provider/system error/fallback. Semantic R3-06 repair một lần vẫn unresolved, giữ FACT; P50/P95 5.139/32.739 ms. 15 ảnh/hash và terminal audit khớp, queue rỗng; 5 AUTO deadline đúng 7 ngày, 10 escalation giữ chưa hết hạn. Có EF MARS/savepoint warning, không claim runtime không warning. Xem [model evidence](MODEL_ROUTE_COMPARISON_2026-10-24.md).
 - [x] Controlled synthetic egress: `ApprovedImagesOnly` kiểm hash snapshot trước HTTP ở OpenRouter/remote Ollama, không bypass qua fallback/redirect; invalid approval file chặn startup trước migration. Full Debug/Release cuối **367/367 mỗi bản**, cả hai integration flags bật; 0 HTTP trong worker/SQL/HITL test. 49 ảnh được duyệt bao phủ byte copies của bộ 100 file. HTTP ảnh thêm byte đi PRIVACY không facts/served provider; approved R3-01 smoke AUTO, 11/11 facts, 7.234 ms. HTTP manager tiếp nhận thủ công vẫn giữ privacy trong dashboard/CSV, không duyệt hash, deadline đúng 7 ngày. Host lạ nhận 400; health sandbox ok. DB cũ vẫn 438 hồ sơ/6 migration, không có cột retention. [Chi tiết](CURRENT_PROJECT_STATUS.md). Profile cũ vẫn `LegacyConfigured`; không đồng nghĩa được phép gửi dữ liệu thật.
