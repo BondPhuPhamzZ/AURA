@@ -1,5 +1,7 @@
 # Gói nộp bài chính thức AURA
 
+> **Checkpoint 14/11:** [viewer/OCR local đã được kiểm với facts đã lưu](../docs/EVIDENCE_VIEWER_VALIDATION_2026-11-14.md); P3 độc lập và publish mới vẫn mở. Proposal/build log/slide là artifact lịch sử, cập nhật hiện hành nằm ở addendum và docs.
+
 **Hosting:** SmartASP trial được chủ dự án xác nhận hết hạn ngày **20/11/2026**. Link trong `AURA_SUBMISSION_LINKS.*` thuộc bản thi lịch sử; sau ngày hết hạn hãy clone repo và dùng hướng dẫn local trong README gốc, rồi liên hệ chủ dự án riêng để nhận API key. Bản source mới chỉ được ghi là live sau khi publish và smoke thành công.
 
 **Evidence bổ sung 27/10:** [Báo cáo kiểm thử Drive synthetic và privacy gate](../docs/USER_DRIVE_PRIVACY_CHECK_2026-10-27.md) là ghi chú source hiện hành. Các PDF/DOCX đã nộp vẫn là artifact lịch sử, không được hiểu là báo cáo triển khai SmartASP hoặc kiểm thử ảnh thật bằng model. Ảnh evidence riêng tư không nằm trong repo.

@@ -1,5 +1,7 @@
 # Checklist sau lần publish SmartASP 28/10 và các mốc lịch sử
 
+> **Checkpoint 14/11:** xem [báo cáo viewer 14/11](EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). Không đánh dấu toàn bộ checklist thủ công là đạt chỉ từ screenshot: Excel, hai tab và các bước không có evidence riêng vẫn cần xác nhận. Khung OCR đã kiểm với facts lưu của bốn hồ sơ, không phải benchmark mới. Restore hosting, merge và publish vẫn mở.
+
 > **Hiện hành:** GO cho việc chia sẻ URL dưới nhãn **demo synthetic có giám sát**:
 > health live ok, zero pending migration, R3-01 synthetic đã hoàn tất AUTO,
 > audit và ảnh đọc lại được. [Evidence live](SMARTASP_LIVE_VALIDATION_2026-10-28.md).

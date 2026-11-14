@@ -1,5 +1,7 @@
 # Trạng thái AURA ngày 28/10/2026
 
+> **Checkpoint 14/11 — kiểm viewer với facts đã lưu:** đã xem 12 PNG do chủ dự án cung cấp. Profile local cũ thiếu `EvidenceLocalization`; đã bật opt-in và kiểm bốn hồ sơ synthetic trên DB sao chép. R3-01/13/14 có bốn khung, R3-06 có ba khung và bỏ qua tổng. Chrome desktop/mobile, zoom/toggle/Esc và polling đã kiểm. Development tắt và Production đều chặn endpoint đúng thiết kế. Xem [báo cáo viewer 14/11](EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). P3, merge PR và publish mới vẫn mở.
+
 > **Cập nhật 14/11/2026 (lần 2) — công cụ cho giai đoạn 3 và checklist kiểm thử, chưa publish.**
 >
 > - **Công cụ đánh dấu:** [`tools/evidence_annotation`](../tools/evidence_annotation/README.md),

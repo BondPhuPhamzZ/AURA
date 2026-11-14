@@ -1,5 +1,7 @@
 # AURA — Workflow đặc tả sản phẩm
 
+> **Đối chiếu 14/11:** [báo cáo viewer](../docs/EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). OCR định vị facts đã lưu khi mở dialog, chạy local Development opt-in; không sửa facts, không chạy lại VLM, không đổi policy/quyết định.
+
 Phiên bản: 2.3 — 13/10/2026
 Phạm vi: baseline Sprint 1 và hardening chuẩn bị Sprint 2, Track A — The Escalation Referee
 

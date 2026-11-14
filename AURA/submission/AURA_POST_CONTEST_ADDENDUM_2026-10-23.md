@@ -1,5 +1,7 @@
 # AURA post-contest status addendum — 23 October 2026
 
+> **Checkpoint bổ sung 14/11:** [kiểm viewer với bốn hồ sơ synthetic đã lưu](../docs/EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). Profile cũ thiếu công tắc OCR đã được cập nhật; R3-06 không khoanh tổng bị phá. Đây là functional smoke, không thay số liệu thi hay phép đo P3 độc lập. Chưa publish PR #1.
+
 **14 November source update (not yet published; same PR #1):**
 
 - **What changed:** an optional local Tesseract OCR step can outline the merchant, identifier, printed date and final-total row inside the reviewer's receipt viewer. It is a reading aid only; facts, policy and decisions are unchanged.

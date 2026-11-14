@@ -1,5 +1,7 @@
 # AURA — Kế hoạch định vị evidence trên ảnh — 13/10/2026
 
+> **Smoke bổ sung 14/11:** facts AI đã lưu của R3-01/06/13/14 cho 4/3/4/4 trường định vị, R3-06 không có khung tổng. Đây là kiểm chức năng trên dữ liệu đã biết, không thay lần đo khóa P3. Xem [báo cáo viewer 14/11](EVIDENCE_VIEWER_VALIDATION_2026-11-14.md).
+
 ## Kết luận
 
 Tính năng cho người duyệt xem ảnh ngay trong AURA và bấm vào một field để thấy vùng evidence tương ứng là **khả thi** và phù hợp với mục tiêu minh bạch. Tuy nhiên baseline hiện tại chỉ có text facts/evidence; chưa có tọa độ, OCR token box hoặc ground truth vùng ảnh. Vì vậy có thể làm prototype sau submission freeze, nhưng chưa đủ dữ liệu để tuyên bố bounding-box accuracy hoặc đưa vùng khoanh vào quyết định tự động.

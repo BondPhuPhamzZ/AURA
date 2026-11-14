@@ -1,5 +1,7 @@
 # Checklist kiểm thử thủ công — các tính năng của PR #1 (11/2026)
 
+> **Đối chiếu evidence 14/11:** [báo cáo viewer 14/11](EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). Ảnh dialog người dùng chưa có OCR vì profile chưa bật cờ. Probe bổ sung đã kiểm khung bằng facts lưu và ranh giới Production; các mục khác chưa có ảnh/report không tự động được coi là đạt.
+
 Checklist này dùng để tự kiểm tra từng tính năng trên nhánh `codex/drive-pipeline-hardening`
 trước khi merge. Mọi bước chạy **local với ảnh synthetic** trong `test_kit/`; không dùng hóa
 đơn thật và không thao tác trên site SmartASP. Cột "Kỳ vọng" là kết quả đúng; kết quả khác

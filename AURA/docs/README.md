@@ -1,5 +1,7 @@
 # Tài liệu AURA
 
+> **Mới nhất 14/11:** [báo cáo viewer 14/11](EVIDENCE_VIEWER_VALIDATION_2026-11-14.md): nguyên nhân không thấy overlay, kiểm chứng trên facts đã lưu và cách bật local. Báo cáo theo ngày bên dưới giữ ý nghĩa tại thời điểm ghi nhận.
+
 **Trạng thái 28/10/2026:** AURA là supervised MVP đã chạy một ca synthetic trọn luồng trên [SmartASP live demo](https://bondphupham-001-site1.ltempurl.com/). Trial hosting hết hạn **20/11/2026**. Không dùng hóa đơn thật trên site công khai hoặc coi yêu cầu Strict ZDR là chứng nhận bảo vệ dữ liệu.
 
 ## Bắt đầu từ đây

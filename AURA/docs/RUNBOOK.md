@@ -1,5 +1,7 @@
 # AURA Runbook
 
+> **Không thấy khung OCR?** Profile cũ chưa có `EvidenceLocalization` sẽ giữ tính năng tắt. Dừng app, chạy `tools\Get-TesseractData.ps1`, rồi `tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly -EnableEvidenceLocalization`, khởi động lại. Health phải báo `evidenceLocalizationEnabled=true`. Bấm ảnh/Xem hóa đơn trong bảng nhân viên hoặc quản lý; preview form và tab ảnh gốc không có overlay. Xem [báo cáo viewer 14/11](EVIDENCE_VIEWER_VALIDATION_2026-11-14.md).
+
 ## UX hiện hành và kiểm thử trước publish — 26/10
 
 Tabs và Forward/duyệt/Undo cập nhật fragment từ SQL, không tự reload. Giữ nguyên

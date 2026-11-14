@@ -1,5 +1,7 @@
 # Tổng hợp bằng chứng đánh giá AURA
 
+> **Evidence chức năng 14/11:** [báo cáo viewer 14/11](EVIDENCE_VIEWER_VALIDATION_2026-11-14.md) phân biệt ảnh người dùng, kiểm browser/OCR trên facts đã lưu và các gate chưa chạy. Không cộng các ca lặp vào accuracy/holdout.
+
 **Mốc baseline nộp bài:** 14/10/2026. **Cập nhật trạng thái source:** 26/10/2026.
 
 **Mục đích:** tạo một chỉ mục công khai duy nhất cho các phép đo được dùng trong proposal, slide, Build Log, README và gói Demo Day. Source snapshot mới nhất được đối chiếu 26/10/2026; artifact đã nộp vẫn là snapshot lịch sử.
