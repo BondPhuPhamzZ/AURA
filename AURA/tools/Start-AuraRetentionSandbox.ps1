@@ -129,6 +129,9 @@ try {
     if ($EnableEvidenceLocalization) {
         Write-Output 'Local Tesseract evidence boxes are enabled in the receipt viewer; they are a reading aid, not a decision input.'
     }
+    else {
+        Write-Output 'Local evidence boxes are OFF. To enable: tools\Get-TesseractData.ps1, then tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly -EnableEvidenceLocalization; restart the app.'
+    }
     & dotnet build AURA.csproj --configuration Release --no-restore
     if ($LASTEXITCODE -ne 0) { throw 'Sandbox build failed.' }
     # Always build this exact configuration before using --no-build with EF/run.
