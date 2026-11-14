@@ -47,9 +47,18 @@ Việc cần làm trước khi mở lại gate publish/pilot:
   - một người khác người phát triển đánh dấu bằng công cụ, khóa SHA-256 rồi chạy bộ đo; lưu báo cáo ngoài Git và chỉ trích số liệu kèm SHA-256 annotation.
 
   Chưa bật overlay khi demo chính thức hoặc claim explainability trước khi đạt gate. Không dùng khung để tự sửa facts hay ra quyết định.
-- [ ] GitHub Contributors còn hiện "claude" ở trang repo dù lịch sử `master` và API GitHub đã sạch (chỉ còn bộ đệm phía GitHub):
+- [x] Thẻ vùng bằng chứng (14/11, lần 3):
+  - đúng 4 thẻ, thứ tự cố định, kích thước bằng nhau, theo bố cục 4/2/1 cột;
+  - tiền tố `OCR:`;
+  - sửa race đóng/mở dialog;
+  - lý do do luật C# sinh dùng `1.050.000 VND`.
+
+  Rà soát bằng mắt cả 57 khung trên 15 ảnh dev v3.1: đều đúng vị trí. Release/Debug 460/460 với LocalDB + OCR + PowerShell 5.1/7, frontend 19/19.
+- [x] Chặn ghi công AI trong commit: hook `.githooks/commit-msg` (bật bằng `git config core.hooksPath .githooks`), workflow `commit-attribution.yml` cho mọi push/PR, quy tắc trong `CONTRIBUTING.md`. Mọi nhánh, tag và PR hiện không có dòng co-author.
+- [ ] GitHub Contributors còn hiện "claude" ở trang repo, dù lịch sử mọi nhánh và API GitHub đã sạch (chỉ còn bộ đệm phía GitHub):
+  - commit `41b90e2` không còn thuộc nhánh nào nhưng GitHub vẫn mở được bằng mã hash;
   - lần push thường tiếp theo vào `master` (ví dụ merge PR #1) thường làm GitHub tính lại danh sách;
-  - nếu sau vài ngày vẫn còn, gửi GitHub Support yêu cầu làm mới bộ đệm contributors và dọn commit không còn tham chiếu `41b90e2`.
+  - nếu sau vài ngày vẫn còn, chủ repo gửi GitHub Support (mục "Remove cached views / unreachable commits") yêu cầu làm mới bộ đệm contributors và xoá commit không còn tham chiếu `41b90e2`.
 
 - [x] Đối chiếu screenshot người dùng 27/10: ba JPEG R3-01/R3-06/R3-13 khớp hash fixture; R3-01 AUTO kèm nhãn duplicate, R3-06/R3-13 có thao tác quản lý; ba ảnh thật web bị `ESCALATE_PRIVACY` trước external inference. Chưa có log timestamp để đo latency Drive đầu cuối hoặc bằng chứng hosting. [Báo cáo giới hạn](USER_DRIVE_PRIVACY_CHECK_2026-10-27.md). Gate synthetic-only và staging riêng không đổi.
 

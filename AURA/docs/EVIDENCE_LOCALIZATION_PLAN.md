@@ -129,6 +129,16 @@ Tối thiểu nên annotate bốn field quan trọng trên tập development hi�
 >
 > Kiểm tra bằng mắt trên LocalDB tạm (R3-01 thẳng, R3-12 nghiêng, một ca privacy không có
 > facts): khung trùng đúng vị trí chữ, kể cả khi đổi chế độ xem và trên mobile.
+>
+> **Rà soát toàn bộ 14/11 (lần 3):**
+> - Endpoint thật trả khung cho cả 15 ảnh v3.1 (facts lấy từ manifest). Cả 57 khung được vẽ
+>   lại lên ảnh gốc và soát từng khung: mọi khung đúng tên đơn vị, dòng mã (R3-12 chọn đúng
+>   "Số biên nhận", không lấy "Số chứng từ" ngay bên dưới), dòng ngày và hàng tổng cuối;
+>   không khung nào rơi vào tạm tính.
+> - R3-06 (tổng bị phá), R3-07 (không có mã) và R3-08 (mã bị phá) đều bỏ qua đúng.
+> - Thẻ bên dưới ảnh nay cố định 4 thẻ theo thứ tự trường, kích thước bằng nhau (4/2/1 cột)
+>   và ghi rõ `OCR:` cho chữ OCR thô.
+> - Đây vẫn là tập phát triển; không thay phép đo khóa P3.
 
 - Thêm `EvidenceRegion` dạng JSON phụ, chưa migration nếu lưu cùng facts versioned; tốt hơn là cột/bảng riêng khi cần query/audit.
 - Chỉ định vị merchant, ngày, canonical identifier và final total.

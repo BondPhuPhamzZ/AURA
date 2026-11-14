@@ -15,12 +15,14 @@ Chạy trong PowerShell, tại thư mục `AURA\AURA` của repo:
 git fetch origin
 git checkout codex/drive-pipeline-hardening
 git pull
+git config core.hooksPath .githooks
 dotnet tool restore
 dotnet restore
 .\tools\Get-TesseractData.ps1
 .\tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly -EnableEvidenceLocalization
 ```
 
+- [ ] `git config --get core.hooksPath` trả về `.githooks`: hook từ chối dòng co-author AI trong commit (xem `CONTRIBUTING.md` ở gốc repo).
 - [ ] `Get-TesseractData.ps1` báo `vie.traineddata` và `eng.traineddata` "downloaded and verified" (hoặc "already present and verified").
 - [ ] Bước prepare in ra tên DB `AURA_RetentionSandbox_yyyyMMdd` và dòng "Local Tesseract evidence boxes are enabled".
 - [ ] Mục 3–5 cần gọi AI. Kiểm tra key thử nghiệm đã có trong User Secrets
@@ -46,10 +48,11 @@ dotnet test .\tests\AURA.Tests\AURA.Tests.csproj -c Debug
 node --test .\tests\frontend\workflow-refresh.test.cjs .\tests\frontend\dashboard-escape.test.cjs .\tests\frontend\receipt-viewer.test.cjs .\tests\frontend\evidence-annotation.test.cjs
 ```
 
-- [ ] .NET: **458/458** pass, 0 skip.
+- [ ] .NET: **460/460** pass, 0 skip.
   - Không đặt hai biến integration thì vẫn phải pass (các ca LocalDB/OCR tự bỏ qua).
-  - Bật thêm `AURA_RUN_POWERSHELL_INTEGRATION=1` cần cả Windows PowerShell 5.1 và PowerShell 7 (`pwsh`).
-- [ ] Frontend: **18/18** pass.
+  - Bật thêm `AURA_RUN_POWERSHELL_INTEGRATION=1` cần cả Windows PowerShell 5.1 và PowerShell 7
+    (`pwsh.exe` phải nằm trên PATH của cửa sổ đang chạy test).
+- [ ] Frontend: **19/19** pass.
 - [ ] Dùng **Debug** khi app đang chạy: app khóa file Release đang dùng.
 
 ## 2. Cửa sổ nhân viên — giao diện và validation
@@ -80,6 +83,7 @@ lỗi; ghi lại mã hồ sơ và lý do để đối chiếu.
 | 4.1 | Bấm ảnh nhỏ của dòng R3-01 | Mở dialog trong trang (không mở tab mới), ảnh vừa khung, tiêu đề có tên file và mã hồ sơ |
 | 4.2 | Chờ 1–3 giây | Mục **Vùng bằng chứng · OCR cục bộ, thử nghiệm** báo đã định vị 4 trường; khung xanh nằm đúng tên công ty, `Số hóa đơn: 000142`, `Ngày hóa đơn: 05/10/2026` và hàng `TỔNG THANH TOÁN … 241.920 đ` (không phải dòng tạm tính) |
 | 4.3 | Bấm thẻ **Tổng thanh toán** ở danh sách, sau đó bấm thẳng vào một khung | Khung và thẻ tương ứng chuyển màu cam cùng lúc |
+| 4.3a | Nhìn 4 thẻ bên dưới ảnh, rồi thu cửa sổ về khoảng 768 px và 390 px | Luôn đúng thứ tự Đơn vị bán → Mã → Ngày → Tổng (kể cả thẻ "Không định vị được"); các thẻ **bằng nhau** cả rộng lẫn cao: 4 cột trên desktop, 2×2 trên tablet, 1 cột trên mobile; không có thanh cuộn ngang. Nội dung thẻ đã định vị bắt đầu bằng `OCR:` (chữ OCR đọc thô, có thể thiếu dấu) |
 | 4.4 | Bấm **Kích thước gốc**, cuộn trong ảnh | Ảnh hiện cỡ thật; khung vẫn trùng chữ; nút đổi thành **Vừa khung** |
 | 4.5 | Bỏ chọn **Hiện khung** | Khung biến mất, danh sách vẫn còn |
 | 4.6 | Nhấn **Esc** | Dialog đóng, focus quay về đúng ảnh nhỏ vừa bấm |
@@ -93,7 +97,7 @@ lỗi; ghi lại mã hồ sơ và lý do để đối chiếu.
 | # | Bước | Kỳ vọng |
 | --- | --- | --- |
 | 5.1 | Ở dòng R3-06 bấm **Chuyển tiếp**, sang tab **Cửa sổ quản lý** | Tiêu đề "Hồ sơ chờ quản lý duyệt"; chip "1 hồ sơ đang chờ"; cột **Thời gian chờ** hiện "Dưới 1 phút" và giờ chuyển tiếp; số tiền hiển thị với dấu chấm phân nhóm (ví dụ `0 VND` nếu AI không xác định được tổng) |
-| 5.2 | Chuyển tiếp thêm một ca nữa (ví dụ R3-13) | Ca chuyển tiếp **sớm hơn** nằm trên |
+| 5.2 | Chuyển tiếp thêm một ca nữa (ví dụ R3-13) | Ca chuyển tiếp **sớm hơn** nằm trên; lý do của R3-13 ghi `Tổng tiền 1.050.000 VND vượt hạn mức tự động 1.000.000 VND.` (dấu chấm; hồ sơ cũ tạo trước bản này có thể vẫn hiện dấu phẩy) |
 | 5.3 | (Tùy chọn) Dừng app, chạy `$env:ReviewSla__TargetHours='1'` rồi khởi động lại, chờ hơn 1 giờ | Ca chờ quá 1 giờ có nhãn đỏ **Quá hạn**, viền đỏ, chip "1 quá 1 giờ"; hệ thống **không** tự duyệt hay từ chối |
 | 5.4 | Bấm **Đồng ý duyệt** ở một ca | Toast xác nhận; ca biến khỏi hàng đợi mà không tải lại trang |
 | 5.5 | Sang **Lịch sử hành vi**, bấm **Hoàn tác** ở ca vừa duyệt | Ca quay lại hàng đợi quản lý; thời gian hiển thị dạng `dd/MM/yyyy HH:mm:ss` |

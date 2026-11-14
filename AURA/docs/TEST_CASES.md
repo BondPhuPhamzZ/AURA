@@ -1,7 +1,7 @@
 # AURA Test Matrix
 
-> **Checkpoint 14/11 (PR #1, chưa publish):** Release/Debug **458/458** mỗi bản khi bật LocalDB
-> và OCR integration; frontend **18/18**. Bổ sung test cho:
+> **Checkpoint 14/11 (PR #1, chưa publish):** Release/Debug **460/460** mỗi bản khi bật LocalDB,
+> OCR và PowerShell 5.1/7 integration; frontend **19/19**. Bổ sung test cho:
 > - validation theo model, định dạng VND/ngày, escape thuộc tính;
 > - truy vấn SQL có lọc và SLA cửa sổ quản lý;
 > - dialog xem ảnh và khung OCR fail-closed;
