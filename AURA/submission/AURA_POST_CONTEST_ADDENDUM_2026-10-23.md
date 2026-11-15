@@ -1,8 +1,10 @@
 # AURA post-contest status addendum — 23 October 2026
 
-> **Checkpoint bổ sung 14/11:** [kiểm viewer với bốn hồ sơ synthetic đã lưu](../docs/EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). Profile cũ thiếu công tắc OCR đã được cập nhật; R3-06 không khoanh tổng bị phá. Đây là functional smoke, không thay số liệu thi hay phép đo P3 độc lập. Chưa publish PR #1.
+> **Checkpoint bổ sung 14/11:** [kiểm viewer với bốn hồ sơ synthetic đã lưu](../docs/EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). Profile cũ thiếu công tắc OCR đã được cập nhật; R3-06 không khoanh tổng bị phá. Đây là functional smoke, không thay số liệu thi hay phép đo P3 độc lập. PR #1 đã merge vào `master`, chưa publish.
 
-**14 November follow-up (same PR #1, not yet merged or published):**
+**14 November merge:** PR #1 was merged into `master` (merge commit `c78d208`), keeping each change as its own commit. On `master`, Release tests passed 460/460 with LocalDB, OCR and PowerShell integration enabled, frontend tests passed 19/19, and the commit-attribution check passed. SmartASP still runs the 28 October build; nothing below is live until a publish and live smoke succeed.
+
+**14 November follow-up (PR #1, merged the same day; not yet published):**
 
 - **Viewer cards:** the four evidence cards below the receipt now keep a fixed field order and equal sizes (4, 2 or 1 columns by screen width). Raw OCR text is labelled `OCR:`.
 - **Dialog race:** a late close event could clear a just-reopened image; this is fixed.
