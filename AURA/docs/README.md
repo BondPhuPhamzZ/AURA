@@ -15,7 +15,7 @@
 | Thiết lập Drive synthetic trên localhost | [DRIVE_SANDBOX_LOCAL.md](DRIVE_SANDBOX_LOCAL.md) |
 | Quy tắc nghiệp vụ | [BUSINESS_RULES.md](../BUSINESS_RULES.md) · [bản giải thích tiếng Việt](BUSINESS_RULES_VI.md) |
 | Kịch bản kiểm thử và số liệu theo mốc | [TEST_CASES.md](TEST_CASES.md) · [EVALUATION_EVIDENCE.md](EVALUATION_EVIDENCE.md) |
-| Tự kiểm tra từng tính năng mới (PR #1, 11/2026) | [MANUAL_FEATURE_TEST_CHECKLIST.md](MANUAL_FEATURE_TEST_CHECKLIST.md) |
+| Tự kiểm tra từng tính năng mới (PR #1 đã merge, 11/2026) | [MANUAL_FEATURE_TEST_CHECKLIST.md](MANUAL_FEATURE_TEST_CHECKLIST.md) |
 | Đo khung bằng chứng với annotation độc lập (giai đoạn 3) | [EVIDENCE_LOCALIZATION_PLAN.md](EVIDENCE_LOCALIZATION_PLAN.md) · [công cụ đánh dấu](../tools/evidence_annotation/README.md) |
 | Mức sẵn sàng và giới hạn scale | [READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md](READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md) |
 

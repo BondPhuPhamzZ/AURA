@@ -4,7 +4,7 @@ This is a **source-and-evidence assessment**, not a certification or a statement
 
 ## Source update — 14 November 2026
 
-**Local OCR evidence boxes (stage 2, plan item P1). Not published.**
+**Local OCR evidence boxes (stage 2, plan item P1). Merged into `master` with PR #1 on 14 November; not published.**
 
 - **What reviewers see:** the receipt dialog can outline the merchant, the canonical identifier, the printed date and the final-total row, using in-process Tesseract 5.2.0 with SHA-256-pinned `vie+eng` data.
 - **When it runs:** it is off by default, takes effect only on a Development host, and runs on demand. Results are cached only in memory. It writes nothing to SQL, needs no migration, and does not touch the worker, prompt, facts, policy or decisions.

@@ -99,9 +99,9 @@ dùng một lượt synthetic mới trong bảng kết quả, không Undo chỉ 
 ## Gate còn mở
 
 - P3 chưa có ≥30 ảnh mới và annotation độc lập đã khóa; không suy ra accuracy từ bốn ca này.
-- Chưa publish PR #1, chưa có smoke hosting mới hoặc restore hosting được diễn tập.
+- PR #1 đã merge vào `master` (14/11) nhưng chưa publish; chưa có smoke hosting mới hoặc restore hosting được diễn tập.
 - Giữ Production synthetic-only, OCR/Drive/Verify/retention cleanup tắt và migration flag false.
-- Kiểm lại trên master sau merge; quyết định publish trước 18/11, trial hết hạn 20/11.
+- Đã kiểm lại trên `master` sau merge (Release 460/460, frontend 19/19); còn quyết định publish trước 18/11, trial hết hạn 20/11.
 
 Đối chiếu [kế hoạch](EVIDENCE_LOCALIZATION_PLAN.md),
 [checklist thủ công](MANUAL_FEATURE_TEST_CHECKLIST.md) và [deploy](DEPLOYMENT.md).

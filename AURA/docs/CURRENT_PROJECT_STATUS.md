@@ -1,6 +1,18 @@
 # Trạng thái AURA ngày 28/10/2026
 
-> **Cập nhật 14/11/2026 (lần 3) — chỉnh thẻ vùng bằng chứng, rà soát khung và chặn ghi công AI; chưa merge/publish.**
+> **Merge 14/11/2026 — PR #1 đã vào `master`, chưa publish.**
+>
+> - Merge commit `c78d208` giữ nguyên từng commit của nhánh `codex/drive-pipeline-hardening`;
+>   mọi mục 13–14/11 bên dưới nay nằm trên `master`.
+> - Kiểm lại trên `master`: Release **460/460** khi bật LocalDB, OCR và PowerShell integration;
+>   frontend **19/19**; workflow "Commit attribution check" đạt.
+> - Toàn bộ nhánh/tag trên GitHub không có dòng co-author AI; API `contributors`/`stats` chỉ còn
+>   chủ dự án. Ô Contributors ở trang repo vẫn hiện "claude" (kiểm 15/11) vì GitHub còn giữ
+>   commit `41b90e2` không thuộc nhánh nào; xử lý xem [checklist](CURRENT_ACTION_CHECKLIST.md).
+> - Site SmartASP vẫn là bản 28/10. Còn mở: quyết định publish trước 18/11 (trial hết hạn
+>   20/11), backup/restore hosting và smoke live; phép đo khung bằng chứng độc lập (giai đoạn 3).
+
+> **Cập nhật 14/11/2026 (lần 3) — chỉnh thẻ vùng bằng chứng, rà soát khung và chặn ghi công AI; merge cùng ngày (xem trên), chưa publish.**
 >
 > - **Thẻ vùng bằng chứng** trong dialog xem ảnh:
 >   - luôn đúng 4 thẻ theo thứ tự cố định Đơn vị bán → Mã → Ngày → Tổng, kể cả thẻ "Không
