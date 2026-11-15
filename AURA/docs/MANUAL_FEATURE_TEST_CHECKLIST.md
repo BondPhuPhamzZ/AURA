@@ -15,14 +15,12 @@ Chạy trong PowerShell, tại thư mục `AURA\AURA` của repo:
 git fetch origin
 git checkout master
 git pull
-git config core.hooksPath .githooks
 dotnet tool restore
 dotnet restore
 .\tools\Get-TesseractData.ps1
 .\tools\Start-AuraRetentionSandbox.ps1 -PrepareOnly -EnableEvidenceLocalization
 ```
 
-- [ ] `git config --get core.hooksPath` trả về `.githooks`: hook từ chối dòng co-author AI trong commit (xem `CONTRIBUTING.md` ở gốc repo).
 - [ ] `Get-TesseractData.ps1` báo `vie.traineddata` và `eng.traineddata` "downloaded and verified" (hoặc "already present and verified").
 - [ ] Bước prepare in ra tên DB `AURA_RetentionSandbox_yyyyMMdd` và dòng "Local Tesseract evidence boxes are enabled".
 - [ ] Mục 3–5 cần gọi AI. Kiểm tra key thử nghiệm đã có trong User Secrets

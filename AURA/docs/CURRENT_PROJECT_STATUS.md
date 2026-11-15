@@ -5,14 +5,11 @@
 > - Merge commit `c78d208` giữ nguyên từng commit của nhánh `codex/drive-pipeline-hardening`;
 >   mọi mục 13–14/11 bên dưới nay nằm trên `master`.
 > - Kiểm lại trên `master`: Release **460/460** khi bật LocalDB, OCR và PowerShell integration;
->   frontend **19/19**; workflow "Commit attribution check" đạt.
-> - Toàn bộ nhánh/tag trên GitHub không có dòng co-author AI; API `contributors`/`stats` chỉ còn
->   chủ dự án. Ô Contributors ở trang repo vẫn hiện "claude" (kiểm 15/11) vì GitHub còn giữ
->   commit `41b90e2` không thuộc nhánh nào; xử lý xem [checklist](CURRENT_ACTION_CHECKLIST.md).
+>   frontend **19/19**.
 > - Site SmartASP vẫn là bản 28/10. Còn mở: quyết định publish trước 18/11 (trial hết hạn
 >   20/11), backup/restore hosting và smoke live; phép đo khung bằng chứng độc lập (giai đoạn 3).
 
-> **Cập nhật 14/11/2026 (lần 3) — chỉnh thẻ vùng bằng chứng, rà soát khung và chặn ghi công AI; merge cùng ngày (xem trên), chưa publish.**
+> **Cập nhật 14/11/2026 (lần 3) — chỉnh thẻ vùng bằng chứng và rà soát khung; merge cùng ngày (xem trên), chưa publish.**
 >
 > - **Thẻ vùng bằng chứng** trong dialog xem ảnh:
 >   - luôn đúng 4 thẻ theo thứ tự cố định Đơn vị bán → Mã → Ngày → Tổng, kể cả thẻ "Không
@@ -32,14 +29,6 @@
 >   khung nằm đúng tên đơn vị, dòng mã, dòng ngày và hàng tổng cuối, không lần nào rơi vào
 >   tạm tính. R3-06, R3-07, R3-08 bỏ qua đúng. Đây vẫn là tập phát triển, không thay phép
 >   đo khóa P3.
-> - **Chặn ghi công AI trong commit:**
->   - hook `.githooks/commit-msg` (bật bằng `git config core.hooksPath .githooks`);
->   - workflow `.github/workflows/commit-attribution.yml` quét mọi push và PR;
->   - quy tắc ghi trong `CONTRIBUTING.md`.
->
->   Mọi nhánh, tag và PR trên GitHub đều không có dòng co-author; API Contributors chỉ còn
->   chủ dự án. Commit cũ `41b90e2` không còn thuộc nhánh nào nhưng GitHub vẫn lưu, và ô
->   Contributors ở trang repo là bộ đệm.
 > - **Kiểm thử:** Release và Debug mỗi bản **460/460** khi bật LocalDB, OCR và PowerShell
 >   5.1/7 integration; frontend **19/19**; build 0 cảnh báo; EF không có thay đổi model.
 
@@ -62,9 +51,6 @@
 >   bao phủ mọi tính năng của PR #1.
 > - **Kiểm thử:** Release và Debug mỗi bản **458/458** khi bật LocalDB và OCR integration;
 >   frontend **18/18**; build ứng dụng và test đều 0 cảnh báo.
-> - **GitHub Contributors:** lịch sử `master` và các API `contributors`/`stats` của GitHub chỉ
->   còn chủ dự án. Ô "Contributors" ở trang repo vẫn hiện "claude" do bộ đệm phía GitHub; cách
->   xử lý xem [CURRENT_ACTION_CHECKLIST.md](CURRENT_ACTION_CHECKLIST.md).
 
 > **Cập nhật source 14/11/2026 — khung bằng chứng OCR cục bộ (giai đoạn 2), chưa publish.**
 > Nằm trên cùng nhánh/PR #1. Người dùng chọn Tesseract local và **chưa** làm quét malware.
