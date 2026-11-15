@@ -11,7 +11,7 @@ AURA reviews expense receipts, extracts verifiable facts, applies deterministic 
 
 The queue survives restarts and currently permits one AI request at a time. A reviewer can accept, reject, or undo a decision. See the [business rules](AURA/BUSINESS_RULES.md) and [current project status](AURA/docs/CURRENT_PROJECT_STATUS.md) for exact behavior and evidence.
 
-**Live synthetic demo:** [Open AURA](https://bondphupham-001-site1.ltempurl.com/) on SmartASP through **20 November 2026**. Only approved synthetic images can reach the AI model; Restricted Drive intake runs locally. See the [live validation](AURA/docs/SMARTASP_LIVE_VALIDATION_2026-10-28.md). After the trial, use the local setup below and request a trial API key from the author privately.
+**Live synthetic demo:** [Open AURA](https://bondphupham-001-site1.ltempurl.com/) on SmartASP through **20 November 2026**. The live site still runs the 28 October build: the changes merged into `master` on 14 November (filtered SQL reads, reviewer waiting time, the in-page receipt viewer and the optional local evidence boxes) are not published there. Only approved synthetic images can reach the AI model; Restricted Drive intake runs locally. See the [live validation](AURA/docs/SMARTASP_LIVE_VALIDATION_2026-10-28.md). After the trial, use the local setup below and request a trial API key from the author privately.
 
 ## Explore the app
 
@@ -60,11 +60,10 @@ node --test .\tests\frontend\workflow-refresh.test.cjs .\tests\frontend\dashboar
 
 ## Scope and project files
 
-AURA already demonstrates durable intake, schema/Semantic validation, deterministic escalation, timely human intervention, audit, and reporting. The local Drive adapter shows how a Restricted folder can supply many synthetic receipts without repeated web uploads. Production rollout would additionally require verified user identity and permissions, real-data privacy approval, malware screening, provider and storage review, and multi-host load testing. The architecture keeps intake, policy, and storage boundaries separate for those later changes.
+AURA already demonstrates durable intake, schema/Semantic validation, deterministic escalation, timely human intervention, audit, and reporting. The local Drive adapter shows how a Restricted folder can supply many synthetic receipts without repeated web uploads. Production rollout would additionally require verified user identity and permissions, real-data privacy approval, malware screening, provider and storage review, and multi-host load testing. The optional evidence boxes have passed development-set and saved-facts checks only; an independent measurement on unseen, separately annotated receipts is still open. The architecture keeps intake, policy, and storage boundaries separate for those later changes.
 
 - [English proposal](AURA/submission/AURA_PROPOSAL_EN.pdf) · [Vietnamese proposal](AURA/submission/AURA_PROPOSAL_VI.pdf) · [five slides](AURA/submission/AURA_SLIDE.pptx) · [build log](AURA/submission/AURA_BUILD_LOG.pdf)
 - [Post-contest addendum](AURA/submission/AURA_POST_CONTEST_ADDENDUM_2026-10-23.md) · [operational runbook](AURA/docs/RUNBOOK.md) · [deployment guide](AURA/docs/DEPLOYMENT.md) · [readiness and scale assessment](AURA/docs/READINESS_AND_SCALE_ASSESSMENT_2026-10-23.md) · [manual feature test checklist](AURA/docs/MANUAL_FEATURE_TEST_CHECKLIST.md) · [contributing rules](CONTRIBUTING.md)
-
-[Local evidence viewer validation, 14 November](AURA/docs/EVIDENCE_VIEWER_VALIDATION_2026-11-14.md): saved-facts OCR smoke; independent localization evaluation remains open.
+- [Evidence localization plan](AURA/docs/EVIDENCE_LOCALIZATION_PLAN.md) · [evidence viewer validation, 14 November](AURA/docs/EVIDENCE_VIEWER_VALIDATION_2026-11-14.md) · [current action checklist](AURA/docs/CURRENT_ACTION_CHECKLIST.md)
 
 Author: **Phạm Gia Phú** — solo development during **MLAI Hackathon 2026**.
