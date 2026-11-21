@@ -353,7 +353,7 @@ hai phiên bản PowerShell; không stringify `DateTime` rồi parse lại theo 
    .\tools\Remove-ExpiredAuraLocalBackups.ps1 -BackupRoot (Join-Path $env:USERPROFILE 'AURA-Backups') -Apply
    ```
 
-   Lệnh thứ hai là xóa thực tế, chỉ chạy sau khi đọc kết quả report-only. Để tự động trên máy local, dùng Windows Task Scheduler chạy lặp mỗi **5 phút** và khi đăng nhập lại, bằng đúng Windows user có quyền xóa backup. Với máy chạy nền liên tục có thể thêm trigger **At startup** khi principal đã được cấu hình chạy trước đăng nhập. Bật **Run task as soon as possible after a scheduled start is missed** và chọn **Do not start a new instance** nếu task trước chưa xong. Action chạy `powershell.exe` với đối số `-NoProfile -File "<đường dẫn tuyệt đối tới Remove-ExpiredAuraLocalBackups.ps1>" -BackupRoot "<đường dẫn backup root>" -Apply`. Không dùng lịch chỉ một lần/ngày vì có thể giữ backup quá hạn gần một ngày khi máy vẫn bật. Kiểm tra lịch sử task và thư mục sau mỗi lần chạy; task hiện chưa được đăng ký tự động bởi AURA. App startup chỉ dọn DB/ảnh, không tự chạy script backup.
+   Lệnh thứ hai là xóa thực tế, chỉ chạy sau khi đọc kết quả report-only. Để tự động trên máy local, dùng Windows Task Scheduler chạy **mỗi ngày một lần** (ví dụ 21:00) và khi đăng nhập, bằng đúng Windows user có quyền xóa backup. Với máy chạy nền liên tục có thể thêm trigger **At startup** khi principal đã được cấu hình chạy trước đăng nhập. Bật **Run task as soon as possible after a scheduled start is missed** và chọn **Do not start a new instance** nếu task trước chưa xong. Action chạy `conhost.exe` với đối số `--headless powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -File "<đường dẫn tuyệt đối tới Remove-ExpiredAuraLocalBackups.ps1>" -BackupRoot "<đường dẫn backup root>" -Apply`. Không đặt action là `powershell.exe` trực tiếp: Windows mở cửa sổ console trước khi PowerShell đọc `-WindowStyle Hidden`, nên mỗi lần chạy sẽ chớp một cửa sổ trên màn hình; `conhost.exe --headless` không tạo cửa sổ. Lịch mỗi ngày có nghĩa là một backup set đã qua `purgeAtUtc` có thể còn trên máy tới lần chạy kế tiếp, tối đa khoảng một ngày khi máy vẫn bật. Mức trễ này chấp nhận được cho backup synthetic hạn 7 ngày; với dữ liệu thật cần quyết định lại lịch. Kiểm tra lịch sử task và thư mục sau mỗi lần chạy; task hiện chưa được đăng ký tự động bởi AURA. App startup chỉ dọn DB/ảnh, không tự chạy script backup.
 
 Script đăng ký backup giả định app và mọi writer đã dừng, `.bak` là snapshot mới nhất của đúng DB hiện tại, và source/backup receipt khớp mọi hồ sơ SQL. Nó kiểm hash receipt nhưng không thể chứng minh nội dung `.bak` là backup SQL hợp lệ; bật **Verify backup when finished** và **Perform checksum** trong SSMS, rồi restore drill riêng. SQL + file system không tạo snapshot nguyên tử; đây vẫn là rủi ro cần chấp nhận/đóng bằng quiesce và restore test trên đúng máy.
 
@@ -368,6 +368,20 @@ Xem task hiện tại trước khi tạo thêm, và cập nhật action nếu ch
 ```powershell
 Get-ScheduledTask -TaskName 'AURA-SyntheticBackupRetention'
 Get-ScheduledTaskInfo -TaskName 'AURA-SyntheticBackupRetention'
+```
+
+**Cập nhật 21/11:** lịch 5 phút với action `powershell.exe` làm chớp cửa sổ PowerShell khoảng
+một giây sau mỗi 5 phút. Task đã đổi sang chạy ẩn qua `conhost.exe --headless`, mỗi ngày lúc
+21:00 và khi đăng nhập. Chạy thử báo `LastTaskResult=0`; theo dõi tiến trình trong lúc chạy
+không thấy cửa sổ nào, trong khi phép đối chứng gọi thẳng `powershell.exe -WindowStyle Hidden`
+vẫn hiện một cửa sổ. Để áp dụng cho task đã có, thay hai đường dẫn rồi chạy:
+
+```powershell
+$script = '<đường dẫn tuyệt đối tới Remove-ExpiredAuraLocalBackups.ps1>'
+$root = '<đường dẫn backup root>'
+$action = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument ('--headless powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -File "{0}" -BackupRoot "{1}" -Apply' -f $script, $root)
+$triggers = @((New-ScheduledTaskTrigger -Daily -At 9pm), (New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\$env:USERNAME"))
+Set-ScheduledTask -TaskName 'AURA-SyntheticBackupRetention' -Action $action -Trigger $triggers
 ```
 
 Để tái lập route synthetic hiện hành, chuẩn bị profile trước rồi chạy một host:

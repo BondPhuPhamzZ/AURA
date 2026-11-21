@@ -319,8 +319,8 @@ Các ghi nhận từ 27/10 trở về trước bên dưới là lịch sử theo
 > Semantic R3-06 repair một lần, chưa giải quyết tổng bị che và giữ FACT. Health
 > trước/sau `ok`, queue rỗng; 5 AUTO có deadline 7 ngày. Backup SQL checksum +
 > VERIFYONLY và restore sandbox 15 ca khớp toàn bộ SQL/facts/audit/deadline và
-> 15/15 ảnh. Task local `AURA-SyntheticBackupRetention` đã đăng ký: mỗi 5 phút,
-> logon catch-up, quyền Limited/Interactive; LastTaskResult=0, probe quá hạn được
+> 15/15 ảnh. Task local `AURA-SyntheticBackupRetention` đã đăng ký: mỗi 5 phút (từ 21/11
+> đổi sang mỗi ngày, chạy ẩn; xem mục đầu file), logon catch-up, quyền Limited/Interactive; LastTaskResult=0, probe quá hạn được
 > xóa và backup chưa hết hạn được giữ. Task chỉ chạy khi user đang đăng nhập;
 > khi tắt máy/đăng xuất phải chờ lần chạy sau. Model test là Qwen3.8-27B với
 > Strict ZDR request, concurrency 1, fallback/Drive/Verify off. P95 cao hơn lượt
@@ -359,8 +359,9 @@ Các ghi nhận từ 27/10 trở về trước bên dưới là lịch sử theo
 > bật, không skip. Release build 0 warning/error, EF không pending model changes.
 > Hai script backup cũng từ chối đúng Git root ở thư mục cha ứng dụng, tránh
 > lưu backup nhạy cảm vào repo. Retention trên DB cũ vẫn tắt; task local synthetic
-> đã được kiểm tra ở checkpoint phía trên. Runbook dùng lịch 5 phút + catch-up sau đăng nhập, không dùng
-> lịch chỉ một lần/ngày. Privacy vẫn là gate mở vì triage chạy sau inference.
+> đã được kiểm tra ở checkpoint phía trên. Mốc 25/10 runbook dùng lịch 5 phút + catch-up sau
+> đăng nhập; từ 21/11 đổi sang mỗi ngày + khi đăng nhập, chạy ẩn qua `conhost.exe --headless`
+> (xem [runbook](RUNBOOK.md)). Privacy vẫn là gate mở vì triage chạy sau inference.
 
 > **Benchmark lịch sử 24/10 trên source `06346de`:** 15 ảnh v3.1 synthetic chạy qua
 > intake → SQL queue → OpenRouter → Semantic → policy: 15/15 quyết định đúng,
