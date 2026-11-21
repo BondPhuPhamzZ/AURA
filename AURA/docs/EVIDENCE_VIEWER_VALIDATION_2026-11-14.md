@@ -101,6 +101,6 @@ dùng một lượt synthetic mới trong bảng kết quả, không Undo chỉ 
 - P3 chưa có ≥30 ảnh mới và annotation độc lập đã khóa; không suy ra accuracy từ bốn ca này.
 - PR #1 đã merge vào `master` (14/11) nhưng chưa publish; chưa có smoke hosting mới hoặc restore hosting được diễn tập.
 - Giữ Production synthetic-only, OCR/Drive/Verify/retention cleanup tắt và migration flag false.
-- Đã kiểm lại trên `master` sau merge (Release 460/460, frontend 19/19); còn quyết định publish trước 18/11, trial hết hạn 20/11.
+- Đã kiểm lại trên `master` sau merge (Release 460/460, frontend 19/19). Trial SmartASP hết hạn 20/11 mà bản này chưa được publish; muốn có bản live phải chọn host mới.
 
 Đối chiếu [kế hoạch](EVIDENCE_LOCALIZATION_PLAN.md) và [deploy](DEPLOYMENT.md).

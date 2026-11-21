@@ -2,6 +2,8 @@
 
 > **Checkpoint bổ sung 14/11:** [kiểm viewer với bốn hồ sơ synthetic đã lưu](../docs/EVIDENCE_VIEWER_VALIDATION_2026-11-14.md). Profile cũ thiếu công tắc OCR đã được cập nhật; R3-06 không khoanh tổng bị phá. Đây là functional smoke, không thay số liệu thi hay phép đo P3 độc lập. PR #1 đã merge vào `master`, chưa publish.
 
+**21 November update:** the SmartASP trial ended on 20 November and the demo URL no longer responds (checked 21 November); the 14 November source was never published there, so AURA now runs locally only. A local background task that deletes expired synthetic backups now runs hidden once a day instead of flashing a PowerShell window every five minutes. No application code, schema or evaluation result changed.
+
 **14 November merge:** PR #1 was merged into `master` (merge commit `c78d208`), keeping each change as its own commit. On `master`, Release tests passed 460/460 with LocalDB, OCR and PowerShell integration enabled, and frontend tests passed 19/19. SmartASP still runs the 28 October build; nothing below is live until a publish and live smoke succeed.
 
 **14 November follow-up (PR #1, merged the same day; not yet published):**

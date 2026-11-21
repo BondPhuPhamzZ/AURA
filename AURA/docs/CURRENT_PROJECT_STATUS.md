@@ -1,13 +1,29 @@
 # Trạng thái AURA ngày 28/10/2026
 
+> **Cập nhật 21/11/2026 — hosting hết hạn, tác vụ dọn backup chạy ẩn.**
+>
+> - **SmartASP:** trial hết hạn 20/11; URL demo không còn phản hồi khi kiểm 21/11. Bản `master`
+>   từ 14/11 chưa từng được publish. AURA hiện chạy local theo README gốc và
+>   [JUDGE_LOCAL_SETUP.md](JUDGE_LOCAL_SETUP.md); muốn có bản live phải chọn host mới, backup,
+>   publish và smoke lại.
+> - **Tác vụ `AURA-SyntheticBackupRetention`:** action cũ gọi thẳng `powershell.exe` mỗi 5 phút
+>   nên chớp cửa sổ PowerShell trên màn hình. Nay chạy qua `conhost.exe --headless`, mỗi ngày
+>   21:00 và khi đăng nhập. Chạy thử: `LastTaskResult=0`, không tiến trình nào hiện cửa sổ; phép
+>   đối chứng với cách cũ vẫn hiện cửa sổ. Đổi lại, backup synthetic quá hạn có thể còn tới lần
+>   chạy kế tiếp (tối đa khoảng một ngày). Cách cấu hình xem [runbook](RUNBOOK.md).
+> - **Tài liệu:** checklist tự kiểm thử và checklist công việc cá nhân đã chuyển ra ngoài repo;
+>   `docs/` chỉ giữ hướng dẫn, báo cáo và evidence cho người đọc bên ngoài.
+> - Không đổi code ứng dụng, schema hay số liệu đánh giá. Phép đo khung bằng chứng độc lập (giai
+>   đoạn 3) vẫn mở.
+
 > **Merge 14/11/2026 — PR #1 đã vào `master`, chưa publish.**
 >
 > - Merge commit `c78d208` giữ nguyên từng commit của nhánh `codex/drive-pipeline-hardening`;
 >   mọi mục 13–14/11 bên dưới nay nằm trên `master`.
 > - Kiểm lại trên `master`: Release **460/460** khi bật LocalDB, OCR và PowerShell integration;
 >   frontend **19/19**.
-> - Site SmartASP vẫn là bản 28/10. Còn mở: quyết định publish trước 18/11 (trial hết hạn
->   20/11), backup/restore hosting và smoke live; phép đo khung bằng chứng độc lập (giai đoạn 3).
+> - Site SmartASP lúc đó vẫn là bản 28/10 (trial đã hết hạn 20/11, xem mục trên); phép đo khung
+>   bằng chứng độc lập (giai đoạn 3) vẫn mở.
 
 > **Cập nhật 14/11/2026 (lần 3) — chỉnh thẻ vùng bằng chứng và rà soát khung; merge cùng ngày (xem trên), chưa publish.**
 >

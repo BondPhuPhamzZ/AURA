@@ -11,7 +11,7 @@ AURA reviews expense receipts, extracts verifiable facts, applies deterministic 
 
 The queue survives restarts and currently permits one AI request at a time. A reviewer can accept, reject, or undo a decision. See the [business rules](AURA/BUSINESS_RULES.md) and [current project status](AURA/docs/CURRENT_PROJECT_STATUS.md) for exact behavior and evidence.
 
-**Live synthetic demo:** [Open AURA](https://bondphupham-001-site1.ltempurl.com/) on SmartASP through **20 November 2026**. The live site still runs the 28 October build: the changes merged into `master` on 14 November (filtered SQL reads, reviewer waiting time, the in-page receipt viewer and the optional local evidence boxes) are not published there. Only approved synthetic images can reach the AI model; Restricted Drive intake runs locally. See the [live validation](AURA/docs/SMARTASP_LIVE_VALIDATION_2026-10-28.md). After the trial, use the local setup below and request a trial API key from the author privately.
+**Live synthetic demo (ended):** the SmartASP trial that hosted the 28 October build ended on **20 November 2026**, and the public URL no longer responds (checked 21 November). The changes merged into `master` on 14 November (filtered SQL reads, reviewer waiting time, the in-page receipt viewer and the optional local evidence boxes) were never published there. The [live validation](AURA/docs/SMARTASP_LIVE_VALIDATION_2026-10-28.md) records what the hosted demo showed. To try AURA now, use the local setup below and request a trial API key from the author privately. Only approved synthetic images can reach the AI model; Restricted Drive intake runs locally.
 
 ## Explore the app
 
@@ -22,9 +22,9 @@ The queue survives restarts and currently permits one AI request at a time. A re
 | **Lịch sử hành vi** | Recorded processing and reviewer events. | Expanded timeline for one request. |
 | **Tổng quan** | Monthly workload and outcomes; CSV/Excel export. | Selected month, metrics, and table. |
 
-Use [labeled synthetic images](AURA/test_kit/v3_1/images) for a safe demo; the [larger synthetic fixture folder](AURA/test_kit/images) is also available. For the optional **local** batch demo, [request upload access to the owner's Restricted Drive folder](https://drive.google.com/drive/folders/1CozQh8rmg4rz_tJenwhbI1snZSKyYhZU?usp=drive_link) and wait for approval. The link alone grants no access. Drive intake is disabled on the public SmartASP site. The [demo video](https://drive.google.com/file/d/14Co4QjnoDeYPTORXcxi1u-r1MOuX2KM0/view?usp=sharing) remains available; it shows the recorded contest workflow.
+Use [labeled synthetic images](AURA/test_kit/v3_1/images) for a safe demo; the [larger synthetic fixture folder](AURA/test_kit/images) is also available. For the optional **local** batch demo, [request upload access to the owner's Restricted Drive folder](https://drive.google.com/drive/folders/1CozQh8rmg4rz_tJenwhbI1snZSKyYhZU?usp=drive_link) and wait for approval. The link alone grants no access. Drive intake was never enabled on the public SmartASP site. The [demo video](https://drive.google.com/file/d/14Co4QjnoDeYPTORXcxi1u-r1MOuX2KM0/view?usp=sharing) remains available; it shows the recorded contest workflow.
 
-If you wish to submit real receipts, contact the owner first and confirm that you have authority and all necessary permissions or consents for every image. The current synthetic demo blocks unapproved images **before external model inference**. Uploading a file does not authorize sending it to a provider. The Strict ZDR and data-collection-denial options are routing requests, not a guarantee that real data is safe for this public demo.
+If you wish to submit real receipts, contact the owner first and confirm that you have authority and all necessary permissions or consents for every image. The current synthetic demo blocks unapproved images **before external model inference**. Uploading a file does not authorize sending it to a provider. The Strict ZDR and data-collection-denial options are routing requests, not a guarantee that real data is safe in a demo.
 
 ## Run locally on Windows
 

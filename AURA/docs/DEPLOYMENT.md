@@ -1,6 +1,8 @@
 # Deploy AURA và xác minh Live URL
 
-> **Trạng thái 28/10/2026:** Bản hiện tại đã được publish tại [SmartASP live demo](https://bondphupham-001-site1.ltempurl.com/) và chạy một ca synthetic R3-01 thành công sau khi chủ dự án cập nhật API key. `/healthz` báo zero pending migration; ảnh, audit và bốn fragment đọc được. [Bằng chứng và giới hạn](SMARTASP_LIVE_VALIDATION_2026-10-28.md). Trial hết hạn **20/11/2026**; sau đó dùng hướng dẫn clone/local trong README và xin key qua kênh riêng. Giữ `Database__ApplyMigrationsOnStartup=false`; không chạy lại migration chỉ vì các bước lịch sử bên dưới.
+> **Cập nhật 21/11/2026:** trial SmartASP đã hết hạn ngày 20/11; URL `bondphupham-001-site1.ltempurl.com` không còn phản hồi khi kiểm 21/11. Source `master` từ 14/11 chưa từng được publish. Các bước bên dưới là hướng dẫn và evidence cho một host mới; phải backup, publish và smoke lại từ đầu trước khi ghi một URL mới là live.
+>
+> **Trạng thái 28/10/2026:** Bản 28/10 đã được publish tại SmartASP live demo (nay đã hết hạn) và chạy một ca synthetic R3-01 thành công sau khi chủ dự án cập nhật API key. `/healthz` báo zero pending migration; ảnh, audit và bốn fragment đọc được. [Bằng chứng và giới hạn](SMARTASP_LIVE_VALIDATION_2026-10-28.md). Trial hết hạn **20/11/2026**; sau đó dùng hướng dẫn clone/local trong README và xin key qua kênh riêng. Giữ `Database__ApplyMigrationsOnStartup=false`; không chạy lại migration chỉ vì các bước lịch sử bên dưới.
 
 > **Giới hạn gói SmartASP:** MSSQL 1/1 và quota 1000 MB đã phân bổ theo ảnh control panel 27/10. Chủ dự án đã chọn nâng cấp schema của DB hiện có tại chỗ sau backup; file backup chưa được restore thử. Không có DB staging riêng. [Phương án Azure Free từng đối chiếu](FREE_HOSTING_DECISION_2026-10-27.md) chưa được smoke.
 
