@@ -111,7 +111,7 @@ Nếu test LocalDB từ một execution sandbox bị `error 50` / `Cannot create
 
 Nếu `/healthz` treo hoặc `databaseAvailable=false` và log ứng dụng đồng thời có `SQL Network Interfaces, error: 50`, `0x89C50118` hoặc `Cannot create an automatic instance`, đây **không còn là warning**: runtime registration của LocalDB đang chặn kết nối. Quy trình phục hồi an toàn là đóng AURA; sao lưu cả `AuraDb.mdf` và `AuraDb_log.ldf`; export `HKCU\Software\Microsoft\Microsoft SQL Server\UserInstances`; đối chiếu từng `InstanceProcessId` với process thực tế và chỉ xóa entry runtime đã stale; chạy `sqllocaldb start MSSQLLocalDB`; rồi attach lại hai file `AuraDb` nếu instance mới báo `Cannot open database "AuraDb"`. Không xóa toàn bộ instance/folder, không xóa MDF và không dùng GUID registry lấy từ máy khác. Sau đó khởi động đúng `dotnet run --launch-profile AURA` và chỉ coi phục hồi hoàn tất khi `/healthz` trả `status=ok`, database true và pending migration bằng 0.
 
-Nếu warning chỉ xuất hiện trong execution context bị giới hạn nhưng full preflight vẫn có `0 failures` và health xác nhận database, lưu cả warning lẫn health làm bằng chứng minh bạch; không cố sửa registry sát giờ demo. Xem ma trận test tại `docs/TEST_CASES.md` và lịch freeze tại `docs/SUBMISSION_CHECKLIST.md`.
+Nếu warning chỉ xuất hiện trong execution context bị giới hạn nhưng full preflight vẫn có `0 failures` và health xác nhận database, lưu cả warning lẫn health làm bằng chứng minh bạch; không cố sửa registry sát giờ demo. Xem ma trận test tại `docs/TEST_CASES.md`.
 
 ### Sao lưu và diễn tập khôi phục local (SQL + ảnh)
 
@@ -226,8 +226,7 @@ thì ghi "Không định vị được".
 - **Đo độ chính xác của khung (giai đoạn 3):** người khác người phát triển đánh dấu bằng
   `node .\tools\evidence_annotation\serve.mjs`, khóa `annotations.json`, rồi chạy bộ đo với
   `AURA_RUN_LOCALIZATION_EVAL=1` và `AURA_LOCALIZATION_SET`. Các bước và gate xem
-  [README công cụ](../tools/evidence_annotation/README.md); kiểm tra thủ công toàn bộ tính
-  năng xem [checklist](MANUAL_FEATURE_TEST_CHECKLIST.md).
+  [README công cụ](../tools/evidence_annotation/README.md).
 
 #### Duyệt ảnh trước khi gửi ra provider
 
@@ -415,7 +414,7 @@ Test Kit v3/v3.1 là regression namespace riêng, không thay Verify/v2. Tái t�
 
 Để bảo toàn credit: build + ít nhất 196 automated test offline trước, deploy, chạy health/security smoke không ảnh; Verify 5 ảnh chỉ chạy trong Development cô lập khi thực sự cần. Bộ 15/30 ca chỉ chạy trong phiên đánh giá riêng bằng runner ngoài UI sau khi xác nhận quota và quyền gửi ảnh.
 
-Sau thay đổi contract giảm giá hoặc sửa lỗi live, làm theo cổng build/test/health trong `docs/CURRENT_PROJECT_STATUS.md` và `docs/SUBMISSION_CHECKLIST.md`. Không reset database và không chạy migration nếu facts vẫn nằm trong JSON hiện có; restart queue phải dùng chính DB cũ để chứng minh độ bền.
+Sau thay đổi contract giảm giá hoặc sửa lỗi live, làm theo cổng build/test/health trong `docs/CURRENT_PROJECT_STATUS.md`. Không reset database và không chạy migration nếu facts vẫn nằm trong JSON hiện có; restart queue phải dùng chính DB cũ để chứng minh độ bền.
 
 Sau official holdout 06/10, extraction dùng evidence contract v2. Dữ liệu JSON cũ vẫn đọc được nhưng không được chạy lại để viết đè official evidence. Mailbox sandbox thử nghiệm đã được gỡ và model hiện không có pending migration. Trước publish source 21/10 phải đạt Release build sạch, ít nhất 196/196 test và `dotnet ef migrations has-pending-model-changes` không có thay đổi. Thứ tự SmarterASP an toàn: backup DB/receipts và kiểm biến môi trường; giữ `Database__ApplyMigrationsOnStartup=false`, `Verify__Enabled=false`, `OpenRouter__DenyProviderDataCollection=true`, `OpenRouter__RequireZeroDataRetention=false` cho tới khi ZDR route được probe; publish Release đúng SHA; recycle; `/healthz` phải HTTP 200, `status=ok`, database/storage true, migration 0 và `verifyHarnessEnabled=false`. Sau đó chạy một synthetic smoke, kiểm dashboard/CSV và audit; không bật migration startup hoặc fallback.
 

@@ -121,7 +121,7 @@ chạy trên SmartASP Production.
 > `master` chỉ được chốt cho synthetic local, giữ nguyên
 > DB thi cũ. Chưa publish hoặc bật retention trên hosting/DB cũ. Không chạy các
 > bước deploy/migration bên dưới cho candidate mới khi chưa có quyết định riêng.
-> Xem [checklist hiện hành](CURRENT_ACTION_CHECKLIST.md); các bước/số liệu tiếp
+> Xem [trạng thái hiện hành](CURRENT_PROJECT_STATUS.md); các bước/số liệu tiếp
 > theo là hướng dẫn và evidence của baseline lịch sử.
 
 ## Gate lịch sử trước SmartASP staging — 26/10

@@ -47,8 +47,6 @@
 > - **Đã chạy:** một bộ 2 ảnh với khung do trợ lý ước lượng, chỉ để kiểm tra đường ống —
 >   không phải ground truth và không được lưu. **Phép đo khóa chưa chạy:** cần bộ ảnh mới và
 >   một người đánh dấu khác người phát triển.
-> - **Checklist kiểm thử thủ công:** [MANUAL_FEATURE_TEST_CHECKLIST.md](MANUAL_FEATURE_TEST_CHECKLIST.md),
->   bao phủ mọi tính năng của PR #1.
 > - **Kiểm thử:** Release và Debug mỗi bản **458/458** khi bật LocalDB và OCR integration;
 >   frontend **18/18**; build ứng dụng và test đều 0 cảnh báo.
 
@@ -813,8 +811,8 @@ Các artifact cuộc thi được giữ nguyên; xem [addendum hậu cuộc thi]
 > Rejection log được hardening để cùng source-version/reason chỉ ghi một lần;
 > vượt giới hạn scan 100 entries cũng fail-closed, không intake một phần.
 > Tại mốc đó **216/216** Release tests pass, build 0 warning/error, EF không pending
-> model changes. Xem [evidence Drive local](DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md),
-> [checklist/GO-NO-GO](DRIVE_SANDBOX_CHECKLIST.md) và [runbook](DRIVE_SANDBOX_LOCAL.md).
+> model changes. Xem [evidence Drive local](DRIVE_SANDBOX_EVIDENCE_TEMPLATE.md)
+> và [runbook](DRIVE_SANDBOX_LOCAL.md).
 
 > Bản source sau cuộc thi có thêm gate Verify chỉ dành cho Development và rate limit HTTP trong một process; 196/196 offline tests, Release build 0 warning và EF model không đổi. **Chưa publish/smoke bản hardening này trên live; chưa sẵn sàng cho dữ liệu người dùng thật.** Xem [báo cáo hardening 21/10](POST_CONTEST_HARDENING_2026-10-21.md). Các số live bên dưới là evidence lịch sử của bản trước, không xác nhận hành vi bản mới.
 

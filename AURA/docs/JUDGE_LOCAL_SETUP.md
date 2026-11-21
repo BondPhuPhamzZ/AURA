@@ -76,4 +76,4 @@ Chờ queue rỗng, lưu evidence riêng tư rồi nhấn Ctrl+C một lần. Kh
 - Port 5000 đã dùng: kiểm Visual Studio/terminal AURA đang chạy và dùng phiên đó; không kill process không rõ nguồn.
 - LocalDB không kết nối được: xem [runbook](RUNBOOK.md), giữ DB cũ/backup; không reset dữ liệu.
 
-Privacy cho dữ liệu thật, auth/RBAC, malware quarantine, hosting restore và nhiều host vẫn là gate tương lai. Xem [checklist hiện hành](CURRENT_ACTION_CHECKLIST.md).
+Privacy cho dữ liệu thật, auth/RBAC, malware quarantine, hosting restore và nhiều host vẫn là gate tương lai. Xem [trạng thái hiện hành](CURRENT_PROJECT_STATUS.md).

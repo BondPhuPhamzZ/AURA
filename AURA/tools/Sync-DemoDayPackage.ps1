@@ -58,7 +58,6 @@ $requiredCopies = @(
     @("$AppRoot\docs\README.md", "$DemoRoot\Evidence\00_INDEX_AND_SCOPE\README.md"),
     @("$AppRoot\docs\CURRENT_PROJECT_STATUS.md", "$DemoRoot\Evidence\00_INDEX_AND_SCOPE\CURRENT_PROJECT_STATUS.md"),
     @("$AppRoot\docs\EVALUATION_EVIDENCE.md", "$DemoRoot\Evidence\00_INDEX_AND_SCOPE\EVALUATION_EVIDENCE.md"),
-    @("$AppRoot\docs\SUBMISSION_CHECKLIST.md", "$DemoRoot\Evidence\01_RELEASE_GATES\SUBMISSION_CHECKLIST.md"),
     @("$AppRoot\submission\AURA_BUILD_LOG.pdf", "$DemoRoot\Evidence\01_RELEASE_GATES\AURA_BUILD_LOG.pdf"),
     @("$AppRoot\submission\AURA_WORKFLOW_SPEC.md", "$DemoRoot\Evidence\06_HUMAN_WORKFLOW\AURA_WORKFLOW_SPEC.md"),
     @("$AppRoot\docs\EVIDENCE_LOCALIZATION_PLAN.md", "$DemoRoot\Evidence\07_EVIDENCE_LOCALIZATION\EVIDENCE_LOCALIZATION_PLAN.md"),

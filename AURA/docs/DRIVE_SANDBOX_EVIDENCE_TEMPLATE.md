@@ -36,5 +36,5 @@ production còn malware quarantine, auth/RBAC cho ảnh và thao tác, consent,
 retention/backup, provider privacy, quản lý key, distributed coordination và
 capacity test. Sau E2E, toàn bộ 216 unit/regression tests pass, Release build
 0 warning/error và EF không có pending model changes. xUnit không thay thế E2E,
-và E2E này không thay thế pilot thật. Checklist và kế hoạch test tiếp theo ở
-[DRIVE_SANDBOX_CHECKLIST.md](DRIVE_SANDBOX_CHECKLIST.md).
+và E2E này không thay thế pilot thật. Cách chạy sandbox ở
+[DRIVE_SANDBOX_LOCAL.md](DRIVE_SANDBOX_LOCAL.md).

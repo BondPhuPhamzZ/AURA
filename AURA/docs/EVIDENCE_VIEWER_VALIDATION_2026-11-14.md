@@ -103,5 +103,4 @@ dùng một lượt synthetic mới trong bảng kết quả, không Undo chỉ 
 - Giữ Production synthetic-only, OCR/Drive/Verify/retention cleanup tắt và migration flag false.
 - Đã kiểm lại trên `master` sau merge (Release 460/460, frontend 19/19); còn quyết định publish trước 18/11, trial hết hạn 20/11.
 
-Đối chiếu [kế hoạch](EVIDENCE_LOCALIZATION_PLAN.md),
-[checklist thủ công](MANUAL_FEATURE_TEST_CHECKLIST.md) và [deploy](DEPLOYMENT.md).
+Đối chiếu [kế hoạch](EVIDENCE_LOCALIZATION_PLAN.md) và [deploy](DEPLOYMENT.md).
